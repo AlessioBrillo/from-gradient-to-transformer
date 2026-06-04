@@ -1,0 +1,25 @@
+name: "Question"
+description: Ask something about the content
+title: "[Question] "
+labels: [question]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+    validations:
+      required: true
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Related phase
+      options:
+        - Meta / Structure
+        - Phase 1 - Foundations
+        - Phase 2 - Classical ML
+        - Phase 3 - Deep Learning
+        - Phase 4 - NLP & Transformers
+        - Phase 5 - LLM Engineering
+        - Phase 6 - Production AI
+        - Phase 7 - Capstone
+        - General
