@@ -21,6 +21,7 @@ Obsidian vault for AI engineering: from gradient descent (Phases 1-3) to Transfo
 - `templates/` — note.md, exercise.md, proof.md, project.md
 
 ## Available commands
+
 ```bash
 bash scripts/new_note.sh <phase> <kind> "<Title>"
 # phase: 01_foundations | 02_classical_ml | 03_deep_learning | 04_nlp_and_transformers | 05_llm_engineering | 06_production_ai | 07_capstone

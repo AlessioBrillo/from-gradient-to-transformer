@@ -2,10 +2,10 @@ name: Markdown Lint
 on:
   push:
     branches: [main, dev]
-    paths: ["*.md", "**/*.md"]
+    paths: ["*.md", "**/*.md", ".markdownlint*"]
   pull_request:
     branches: [main]
-    paths: ["*.md", "**/*.md"]
+    paths: ["*.md", "**/*.md", ".markdownlint*"]
 jobs:
   lint:
     runs-on: ubuntu-latest
