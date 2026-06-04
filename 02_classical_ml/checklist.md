@@ -15,6 +15,8 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
 - [ ] Decision trees: impurity measures, pruning
 - [ ] Random forest: bagging, feature importance
 - [ ] Gradient boosting: XGBoost/LightGBM hands-on
+- [ ] Support Vector Machines: maximum margin, kernel trick, support vectors
+- [ ] Naive Bayes: probabilistic classifier, conditional independence assumption
 - [ ] Cross-validation: k-fold, stratified, grouped
 - [ ] Metrics: accuracy, precision, recall, F1, ROC-AUC, RMSE, MAE
 - [ ] Bias/variance diagnosis: learning curves, regularization path
