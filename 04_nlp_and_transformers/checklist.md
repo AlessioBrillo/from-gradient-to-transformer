@@ -17,5 +17,8 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
 - [ ] Positional encoding: sinusoidal, learned, RoPE
 - [ ] Transformer encoder: architecture, layer stack
 - [ ] Decoder-only architecture: causal masking, autoregressive generation
+- [ ] Encoder-only architecture (BERT): masked language modeling, bidirectional context
+- [ ] Scaling Laws: Kaplan & Chinchilla — optimal compute/data allocation
+- [ ] Computational optimizations: FlashAttention, KV cache
 - [ ] Sampling: temperature, top-k, top-p
 - [ ] Multi-modal primer: CLIP, cross-modal attention intuition

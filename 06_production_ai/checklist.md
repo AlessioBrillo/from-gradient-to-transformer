@@ -12,6 +12,7 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
 ## Skills
 - [ ] ML system design: end-to-end design doc written
 - [ ] Data versioning: DVC or lakeFS
+- [ ] Interpretability: SHAP, LIME, attention visualization, mechanistic interpretability awareness
 - [ ] Model versioning: MLflow, model registry
 - [ ] CI/CD for ML: GitHub Actions, pipeline automation
 - [ ] Containerization: Docker for model serving
@@ -20,5 +21,5 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
 - [ ] Rollback strategy: canary deployment, A/B testing
 - [ ] Cost analysis: compute, API, storage — ROI calculation
 - [ ] Product thinking: problem definition, business vs model metrics
-- [ ] Security: prompt injection mitigation, guardrails, OWASP LLM Top 10
+- [ ] Security: prompt injection mitigation, guardrails, adversarial robustness, model extraction prevention
 - [ ] Privacy: GDPR compliance, data minimization, PII detection

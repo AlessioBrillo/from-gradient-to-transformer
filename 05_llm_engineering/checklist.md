@@ -20,4 +20,7 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
 - [ ] RLHF: reward model, PPO intuition
 - [ ] DPO: direct preference optimization implementation on small dataset
 - [ ] Safety: prompt injection detection, content filtering, red teaming
-- [ ] Serving: inference optimization, batching, quantization basics
+- [ ] Inference optimization: KV cache, prefix caching, speculative decoding, batching
+- [ ] Structured output: JSON mode, grammar-constrained generation, function calling
+- [ ] Model quantization: GPTQ, AWQ, GGUF
+- [ ] Evaluation benchmarks: MMLU, HumanEval, GSM8K, MT-Bench awareness

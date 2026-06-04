@@ -13,6 +13,7 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
 - [ ] NumPy: matrix operations, vectorization, broadcasting
 - [ ] Gradient: numerical gradient check implemented
 - [ ] Chain rule: derived and applied by hand
+- [ ] Information theory: entropy, cross-entropy, KL divergence derived and applied
 - [ ] pandas: data cleaning, join, groupby, visualization
 - [ ] SQL: joins, aggregations, window functions on a public dataset
 - [ ] Git: init, commit, branch, push
