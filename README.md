@@ -1,5 +1,10 @@
 # From Gradient to Transformer
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![GitHub last commit](https://img.shields.io/github/last-commit/AlessioBrillo/from-gradient-to-transformer)](https://github.com/AlessioBrillo/from-gradient-to-transformer/commits/main)
+[![Markdown Lint](https://github.com/AlessioBrillo/from-gradient-to-transformer/actions/workflows/markdown-lint.yml/badge.svg)](https://github.com/AlessioBrillo/from-gradient-to-transformer/actions/workflows/markdown-lint.yml)
+[![GitHub Repo stars](https://img.shields.io/github/stars/AlessioBrillo/from-gradient-to-transformer?style=social)](https://github.com/AlessioBrillo/from-gradient-to-transformer)
+
 > My documented journey from **zero to AI Engineer / ML Specialist**,
 > with a final goal: **building a micro-LLM from scratch** with the same
 > architectural foundation as GPT / Claude (decoder-only Transformer).
