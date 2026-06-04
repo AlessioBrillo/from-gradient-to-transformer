@@ -3,13 +3,15 @@
 This is my personal AI engineering learning vault. I do not accept external pull
 requests or direct contributions.
 
-## You CAN:
+## You CAN
+
 - **Fork** the repo and adapt it for your own journey
 - **Open Issues** for suggestions, bug reports, or questions
 - **Start Discussions** to share ideas or resources
 - :star: **Star** the repo if you find it useful
 
-## You CANNOT:
+## You CANNOT
+
 - Submit Pull Requests (they will be closed without review)
 - Push directly to any branch
 

@@ -8,11 +8,13 @@ who engages with this repository, regardless of background or identity.
 ## Standards
 
 Examples of behavior that contributes to a positive environment:
+
 - Being respectful of differing viewpoints and experiences
 - Giving and gracefully accepting constructive feedback
 - Focusing on learning and growth
 
 Examples of unacceptable behavior:
+
 - Trolling, insulting or derogatory comments
 - Harassment of any kind
 - Publishing others' private information
