@@ -18,6 +18,7 @@ Rule: **do not move to the next phase until the gate is green.** The proof is pa
 - Linear algebra: vectors, matrices, matrix-vector product as transformation, eigenvalues, norms.
 - Calculus: derivatives, gradient, chain rule (the heart of backprop).
 - Probability and statistics: random variables, distributions, expectation/variance, Bayes, maximum likelihood.
+- **Information theory: entropy, cross-entropy, KL divergence** — the foundation of every loss function in classification and language modeling.
 - Scientific Python: NumPy (vectorization), pandas, matplotlib; environments with `uv`/venv; Git.
 - **Data fundamentals: SQL basics, ETL intuition, data quality checks, working with different file formats (CSV, JSON, Parquet).**
 
@@ -33,6 +34,7 @@ Rule: **do not move to the next phase until the gate is green.** The proof is pa
 2. Derive by hand then verify numerically the gradient of `f(x)=x²` and a sigmoid.
 3. Clean a real dataset with pandas (missing values, types, join) and produce 3 readable charts.
 4. **Write 5 SQL queries on a public dataset (joins, aggregations, window functions).**
+5. **Compute entropy, cross-entropy, and KL divergence by hand for simple distributions, then verify in NumPy. Connect cross-entropy to log-loss in classification.**
 
 **Proof to myself**
 > Explain the chain rule on paper and show how it applies to a composition of 3 functions.
@@ -49,6 +51,8 @@ Rule: **do not move to the next phase until the gate is green.** The proof is pa
 - Trees, random forest, gradient boosting (XGBoost/LightGBM).
 - Evaluation: train/val/test, cross-validation, metrics (accuracy, precision/recall, F1, ROC-AUC, RMSE).
 - Overfitting/underfitting, regularization, feature engineering, data leakage.
+- **Support Vector Machines (SVM) — maximum margin, kernel trick, support vectors** — the key to understanding generalization theory.
+- **Naive Bayes — probabilistic classifier, conditional independence assumption** — foundation for Bayesian thinking in ML.
 - Clustering (k-means), dimensionality reduction (PCA, t-SNE).
 
 **Resources**
@@ -78,6 +82,8 @@ Rule: **do not move to the next phase until the gate is green.** The proof is pa
 - Architectures: MLP, CNN (vision).
 - **Sequence modeling: RNN, LSTM, GRU — why they exist, their limitations, the vanishing gradient problem.**
 - **Reinforcement Learning fundamentals: policy, value function, reward, basic Q-learning. (Essential for understanding RLHF/DPO in Phase 5.)**
+- **Generative models beyond autoregressive: GANs, VAEs, diffusion models** — understanding the broader generative landscape and how they differ from autoregressive Transformers.
+- **Training tricks: gradient accumulation, gradient clipping, mixed precision training** — practical necessities for real training.
 
 **Resources**
 - **Andrej Karpathy — *Neural Networks: Zero to Hero*** (micrograd → makemore). The single best free course for building intuition.
@@ -86,6 +92,7 @@ Rule: **do not move to the next phase until the gate is green.** The proof is pa
 - *Deep Learning Specialization* — Andrew Ng; official PyTorch tutorials.
 - **Karpathy — *The spelled-out intro to neural networks and backpropagation*** (YouTube) for sequence modeling intuition.
 - **Richard Sutton — *Reinforcement Learning: An Introduction*** (classic RL reference, free online draft).
+- **FlashAttention papers (Dao et al., 2022, 2023)** — the computational breakthrough that made long-context Transformers practical.
 
 **Must exercises**
 1. Rewrite **micrograd** from scratch: a mini-autograd with backprop in pure Python.
@@ -111,6 +118,9 @@ Rule: **do not move to the next phase until the gate is green.** The proof is pa
 - The **Transformer** architecture (encoder-decoder) and the **decoder-only** variant (GPT/Claude).
 - Pre-training, causal language modeling, sampling (temperature, top-k, top-p).
 - **Multi-modal primer: how attention bridges modalities (CLIP, vision encoders, cross-modal embeddings).**
+- **Encoder-only Transformers (BERT) — masked language modeling, bidirectional context** — the other major Transformer variant, essential for understanding the full Transformer family.
+- **Scaling Laws (Kaplan et al., 2020; Hoffmann et al., 2022, "Chinchilla") — optimal model/data size, diminishing returns, compute-optimal training** — the theory behind why large models work and how to allocate resources.
+- **Computational optimizations: FlashAttention, KV cache, prefix caching** — how Transformers scale to long sequences and fast generation.
 
 **Resources**
 - Paper *Attention Is All You Need* (Vaswani et al., 2017) — actually read it.
@@ -119,6 +129,8 @@ Rule: **do not move to the next phase until the gate is green.** The proof is pa
 - *Hugging Face NLP/LLM Course* (huggingface.co/learn); Stanford **CS224N** and **CS25**.
 - *Speech and Language Processing* — Jurafsky & Martin (free chapters on attention/transformer).
 - **CLIP paper (Radford et al., 2021)** for multi-modal attention intuition.
+- **BERT paper (Devlin et al., 2019)** — encoder-only Transformer, the other half of the Transformer family.
+- **Scaling Laws papers: Kaplan et al. (2020) and Hoffmann et al. (2022, Chinchilla)** — mandatory reading for understanding why and how LLMs scale.
 
 **Must exercises**
 1. Implement a **BPE tokenizer** from scratch and apply it to an English text.
@@ -142,6 +154,10 @@ Rule: **do not move to the next phase until the gate is green.** The proof is pa
 - LLM evaluation (eval set, LLM-as-judge), guardrails, costs and latency, inference/serving.
 - **Alignment: RLHF and DPO — the theory and practice of shaping model behavior.**
 - **Safety: prompt injection, model extraction, content filtering, red teaming methodology.**
+- **Inference optimization: KV cache, prefix caching, speculative decoding, batching** — making LLMs fast enough for production.
+- **Structured output: JSON mode, grammar-constrained generation, function calling** — the critical interface between LLMs and programs.
+- **Evaluation benchmarks: MMLU, HumanEval, GSM8K, MT-Bench** — how the field measures progress and compares models.
+- **Model quantization and distillation: GPTQ, AWQ, GGUF, distillation** — running LLMs on limited hardware.
 
 **Resources**
 - **Chip Huyen — *AI Engineering* (O'Reilly, 2025)** + repo `chiphuyen/aie-book`. If you read one book, this is it.
@@ -149,6 +165,9 @@ Rule: **do not move to the next phase until the gate is green.** The proof is pa
 - *LLM Engineering Handbook* — Iusztin & Labonne.
 - Hugging Face *LLM Course*; DeepLearning.AI short courses; LangChain / LlamaIndex docs.
 - **DPO paper (Rafailov et al., 2023)** — direct preference optimization, simpler than RLHF.
+- **InstructGPT paper (Ouyang et al., 2022)** — the method behind ChatGPT's instruction-following abilities.
+- **Constitutional AI paper (Bai et al., 2022)** — alternative alignment approach without human preference labels.
+- **LLaMA paper (Touvron et al., 2023)** — open-source foundation model, modern architectural reference.
 - **OWASP Top 10 for LLM Applications** — the safety standard.
 
 **Must exercises**
@@ -172,6 +191,9 @@ Rule: **do not move to the next phase until the gate is green.** The proof is pa
 - Product thinking: defining the problem, business metrics vs model metrics, ROI.
 - Architecture durability and *scalability* (anti-obsolescence): abstracting model from product.
 - **Security: prompt injection mitigation, model extraction prevention, production guardrails.**
+- **Interpretability and explainability: SHAP, LIME, attention visualization, mechanistic interpretability** — understanding why models make decisions, essential for debugging and trust.
+- **Data versioning and experiment tracking: DVC, lakeFS, MLflow, Weights & Biases** — reproducibility at scale.
+- **Adversarial robustness: model extraction, data poisoning, evasion attacks** — securing models beyond prompt injection.
 - Ethics, governance, privacy (including GDPR for EU contexts).
 
 **Resources**
@@ -180,6 +202,7 @@ Rule: **do not move to the next phase until the gate is green.** The proof is pa
 - Google Cloud — MLOps guides; production chapters of *AI Engineering*.
 - Andrew Ng — *AI for Everyone* (for business language).
 - **OWASP LLM Top 10** — security reference for production AI.
+- **Christoph Molnar — *Interpretable Machine Learning*** (free online) for interpretability foundations.
 
 **Must exercises**
 1. Write a full **design doc** for a real AI system (data, model, serving, costs, risks).
@@ -188,6 +211,15 @@ Rule: **do not move to the next phase until the gate is green.** The proof is pa
 
 **Proof to myself**
 > Present the design doc as if you were in front of a non-technical stakeholder: 10 minutes, zero unnecessary jargon, clear numbers. Gate green when you convince without technical slides.
+
+---
+
+## Cross-cutting topics (studied throughout all phases)
+
+These are not a separate phase — they grow with you. Engage with them at each stage, at increasing depth.
+
+- **Ethics, fairness, and bias in AI**: dataset bias, representation, fairness metrics, regulatory frameworks (EU AI Act). Start asking "who does this system serve?" from Phase 1, deepen through each phase.
+- **Interpretability stack**: from SHAP/LIME at the feature level (Phase 2-3), to attention visualization (Phase 4), to mechanistic interpretability (Phase 5+). The ability to explain *why* a model behaves a certain way separates the expert from the operator.
 
 ---
 
