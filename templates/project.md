@@ -19,6 +19,6 @@ _(metrics, outputs, screenshots)_
 _(key takeaways, mistakes, surprises)_
 
 ## Links
-- GitHub: 
-- Demo: 
+- GitHub:
+- Demo:
 - Related skills: [[00_meta/02_skill-tree]]
