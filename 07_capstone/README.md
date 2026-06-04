@@ -20,11 +20,12 @@ Instead of the usual TinyShakespeare, train the model on **your own English corp
 
 ## Architectural parity with modern models
 | Component | "Classic" choice (GPT-2) | Modern choice (Llama/Mistral) | Your choice |
-|---|---|---|---|
-| Positional | Learned absolute | **RoPE** | _to decide_ |
-| Normalization | Post LayerNorm | **Pre RMSNorm** | _to decide_ |
-| MLP activation | GELU | **SwiGLU** | _to decide_ |
-| Attention | MHA | MHA / **GQA** | _to decide_ |
+|---|----|----|----|----|
+| Positional | Learned absolute | **RoPE** | *to decide* |
+| Normalization | Post LayerNorm | **Pre RMSNorm** | *to decide* |
+| MLP activation | GELU | **SwiGLU** | *to decide* |
+| Attention | MHA | MHA / **GQA** | *to decide* |
+
 Document in the writeup **why** you choose each option — that is the interview question.
 
 ## Reference resources
