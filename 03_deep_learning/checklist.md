@@ -19,4 +19,6 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
 - [ ] CNN: convolution, pooling, architectural patterns
 - [ ] RNN cell: implementation from scratch in NumPy
 - [ ] LSTM/GRU: understanding gates, vanishing gradient mitigation
+- [ ] Generative models: awareness of GANs, VAEs, diffusion models
+- [ ] Training tricks: gradient accumulation, gradient clipping, mixed precision
 - [ ] Reinforcement learning: policy, value function, Q-learning fundamentals
