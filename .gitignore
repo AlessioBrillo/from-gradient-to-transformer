@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Models and heavy data (do not version large binaries)
+*.pt
+*.ckpt
+*.bin
+*.safetensors
+07_capstone/data/*
+!07_capstone/data/.gitkeep
+07_capstone/experiments/*.log
+
+# Obsidian (local cache, do not share)
+.obsidian/workspace*
+.obsidian/cache
+
+# OS
+.DS_Store
