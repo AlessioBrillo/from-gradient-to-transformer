@@ -1,0 +1,21 @@
+name: "Bug Report"
+description: Report an error in code or a concept
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What's wrong?
+      description: Clear description of the error
+    validations:
+      required: true
+  - type: textarea
+    id: location
+    attributes:
+      label: Where is it?
+      description: File path and line if applicable
+  - type: textarea
+    id: fix
+    attributes:
+      label: Suggested fix (optional)

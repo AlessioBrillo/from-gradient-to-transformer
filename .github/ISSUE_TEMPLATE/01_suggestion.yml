@@ -1,0 +1,26 @@
+name: "Suggestion"
+description: Share an idea to improve the vault
+title: "[Suggestion] "
+labels: [feedback]
+body:
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Your suggestion
+      description: What would make this more useful?
+    validations:
+      required: true
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Related phase
+      options:
+        - Meta / Structure
+        - Phase 1 - Foundations
+        - Phase 2 - Classical ML
+        - Phase 3 - Deep Learning
+        - Phase 4 - NLP & Transformers
+        - Phase 5 - LLM Engineering
+        - Phase 6 - Production AI
+        - Phase 7 - Capstone
+        - General
