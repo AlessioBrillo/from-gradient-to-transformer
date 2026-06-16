@@ -57,7 +57,8 @@ def analyze_matrix(A):
 
 - **det(A) = 0**: The column space is a lower-dimensional subspace (e.g., a line in 2D), and the null space contains all vectors that map to zero. The transformation destroys information along the null space directions — you cannot recover what was lost.
 
-- **Change of basis and word embeddings**: Word embeddings like word2vec learn a basis (the embedding space) where semantic relationships correspond to vector arithmetic. "King - Man + Woman = Queen" works because the coordinate system (basis) was learned to make these relationships linear. Changing the basis rotates the space without changing the relationships — cosine similarity remains invariant under orthogonal transformations.
+- **Change of basis and word embeddings**: Word embeddings like word2vec learn a basis where semantic relationships correspond to vector arithmetic. "King - Man + Woman = Queen" works because the coordinate system (basis) was learned to make these relationships linear.
+Changing the basis rotates the space without changing the relationships — cosine similarity remains invariant under orthogonal transformations.
 
 ## Outcome
 - [x] Passed → check the skill in [[00_meta/02_skill-tree]]

@@ -50,4 +50,5 @@ The determinant in 3D: scalar triple product a · (b × c). It equals the volume
 - [[01_foundations/notes/determinant-and-area-scaling|Determinant and Area Scaling]]
 
 ## Insight
-Direct 4D visualization is impossible, but we rely on mathematical generalization: the same formulas for determinant, eigenvalues, matrix multiplication work in any dimension. The key intuition: all of linear algebra generalizes uniformly — if you understand 2D and 3D, the formulas for n-dimensions follow the same patterns. What helps: tracking rank (how many dimensions survive), eigenvalues (which directions get stretched), and dot products (how angles change).
+Direct 4D visualization is impossible, but we rely on mathematical generalization: the same formulas for determinant, eigenvalues, matrix multiplication work in any dimension. The key intuition: all of linear algebra generalizes uniformly — if you understand 2D and 3D, the formulas for n-dimensions follow the same patterns.
+What helps: tracking rank (how many dimensions survive), eigenvalues (which directions get stretched), and dot products (how angles change).

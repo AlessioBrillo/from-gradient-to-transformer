@@ -12,7 +12,8 @@ created: 2026-06-16
 The column space (range) of a matrix is the set of all possible outputs Av. The null space (kernel) is the set of all vectors v that map to zero: Av = 0.
 
 ## Why it exists / what problem it solves
-Column space tells you what outputs are reachable — it defines the **range** of the transformation. Null space tells you which inputs get squished to zero — the **information loss**. Together they determine whether a system of equations has zero, one, or infinitely many solutions. In neural networks: the column space of a weight matrix determines the directions the layer can express; the null space reveals the information lost.
+Column space tells you what outputs are reachable — it defines the **range** of the transformation. Null space tells you which inputs get squished to zero — the **information loss**. Together they determine whether a system of equations has zero, one, or infinitely many solutions.
+In neural networks: the column space of a weight matrix determines the directions the layer can express; the null space reveals the information lost.
 
 ## How it works
 - **Column space**: span of the columns of A. If v is in the column space, then Ax = v has a solution.
