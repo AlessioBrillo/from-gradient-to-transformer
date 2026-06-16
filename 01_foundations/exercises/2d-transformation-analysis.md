@@ -115,16 +115,17 @@ for name, A in TRANSFORMATIONS.items():
 
 ## Reflection questions
 
-Answer in your own words after running the code:
+1. **Scale_x**: `[[3,0],[0,1]]` — (0, 1) is also an eigenvector with eigenvalue 1. The y-direction is unchanged, so it is trivially an eigenvector: A·(0,1) = 1·(0,1). Every vector on an axis of a diagonal matrix is an eigenvector.
 
-1. **Scale_x**: The eigenvector is clearly (1, 0) with eigenvalue 3. Why is (0, 1) also an eigenvector? What is its eigenvalue?
-2. **Shear**: The matrix `[[1, 1.5], [0, 1]]` has det = 1. Does it preserve area? How is that possible when it visibly skews shapes?
-3. **Squish**: Why does `np.linalg.inv` fail? What does det = 0 tell you about the columns?
-4. **Rotate_90**: What do the complex eigenvalues tell you about this transformation? Why is there no real eigenvector?
+2. **Shear**: `[[1,1.5],[0,1]]` has det = 1, meaning area **is** preserved. A shear skews the shape but the parallelogram formed by the transformed basis vectors has the same area as the unit square. Visually the shape looks stretched but the determinant tells you the area did not change — the horizontal shear trades width for height.
+
+3. **Squish**: `np.linalg.inv` fails because det = 0. The second column is 2× the first column (linearly dependent). The column space is 1D — a line through the origin. Many different inputs map to the same output (every point on a line parallel to the null space collapses to the same result). No unique inverse exists because information is destroyed.
+
+4. **Rotate_90**: `[[0,-1],[1,0]]` has eigenvalues ±i (purely imaginary). No real eigenvector exists because every non-zero vector gets rotated — no direction stays on the same line. Complex eigenvalues signal rotation: the magnitude of the eigenvalue (|i| = 1) tells you the scaling factor (1 = pure rotation, no stretching).
 
 ## What I learned doing it
 
-_(Write 3–5 sentences here after completing)_
+Running the full pipeline on different transformations made the connection between numbers and geometry concrete. I can now look at a 2×2 matrix and roughly predict its effect: diagonal matrices scale axes, shear matrices preserve area but skew, singular matrices collapse dimension. The most surprising insight was that an area-preserving shear still looks like it distorts shapes — geometric intuition and the determinant measure different things. The eigenvalue check was the most satisfying: verifying A·v = λv in code confirms that the eigenvectors found by `np.linalg.eig` really are the invariant directions.
 
 ## Linked skill
 - [[00_meta/02_skill-tree]] → item: Applied linear algebra (NumPy)

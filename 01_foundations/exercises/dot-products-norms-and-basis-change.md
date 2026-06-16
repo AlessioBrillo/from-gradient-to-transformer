@@ -111,14 +111,17 @@ v_2d = A_wide @ v_3d  # what shape is this?
 
 ## Reflection questions
 
-1. If two vectors are orthogonal, what does their dot product tell you about their relationship?
-2. A projection onto w removes the component perpendicular to w. What happens if you project twice? (Proj(Proj(v)) = ?)
-3. Change of basis is everywhere in ML: word embeddings are vectors in a learned basis. If you rotate the embedding space, do the semantic relationships change? Why or why not?
-4. A neural network layer `nn.Linear(10, 64)` is a wide matrix. Why might expanding the dimension help learning?
+1. If v·w = 0, the vectors are perpendicular (orthogonal). Geometrically, the projection of v onto w is zero — they share no component along each other's direction. In high dimensions, orthogonality means independence: knowing one tells you nothing about the other.
+
+2. Proj(Proj(v)) = Proj(v). Once you remove the perpendicular component and keep only the part along w, projecting again does nothing — the result is already on the w-line. This idempotence (P² = P) is the defining property of a projection matrix.
+
+3. Rotating the embedding space changes the coordinates but the **relationships** stay the same. Dot products and cosine similarities are invariant under rotation (orthogonal transformation). If "king" - "man" + "woman" ≈ "queen" in one basis, it holds in any rotated basis — the semantic structure is in the geometry, not the coordinate numbers.
+
+4. Expanding from 10 → 64 dimensions creates more "knobs" to learn useful representations in. A wider layer can capture more features, separate classes with richer boundaries, and learn redundant patterns (robustness). The expansion gives the network room to find a good basis for the task — then the next layer can compress back to the output space.
 
 ## What I learned doing it
 
-_(Write 3-5 sentences here after completing)_
+This exercise clarified the deep connection between dot products and geometric operations like projection and orthogonality. The change-of-basis section was the most valuable conceptually: converting a vector from standard to B-coordinates and back shows exactly what `B_inv @ v_standard` means geometrically. I now see that a neural network layer Wx + b is just a change of basis (W) plus a translation (b). The most surprising takeaway is that the Frobenius norm of a weight matrix measures its overall "energy" — a concept that reappears in weight decay regularization.
 
 ## Linked skill
 - [[00_meta/02_skill-tree]] → item: Applied linear algebra (NumPy)
