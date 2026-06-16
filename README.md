@@ -1,9 +1,9 @@
 # From Gradient to Transformer
 
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
-<a href="https://github.com/AlessioBrillo/from-gradient-to-transformer/commits/main"><img src="https://img.shields.io/github/last-commit/AlessioBrillo/from-gradient-to-transformer" alt="GitHub last commit"></a>
+<a href="https://github.com/AlessioBrillo/from-gradient-to-transformer/commits/main"><img src="https://badgen.net/github/last-commit/AlessioBrillo/from-gradient-to-transformer" alt="GitHub last commit"></a>
 <a href="https://github.com/AlessioBrillo/from-gradient-to-transformer/actions/workflows/markdown-lint.yml"><img src="https://github.com/AlessioBrillo/from-gradient-to-transformer/actions/workflows/markdown-lint.yml/badge.svg" alt="Markdown Lint"></a>
-<a href="https://github.com/AlessioBrillo/from-gradient-to-transformer"><img src="https://img.shields.io/github/stars/AlessioBrillo/from-gradient-to-transformer?style=social" alt="GitHub Repo stars"></a>
+<a href="https://github.com/AlessioBrillo/from-gradient-to-transformer/stargazers"><img src="https://badgen.net/github/stars/AlessioBrillo/from-gradient-to-transformer" alt="GitHub Repo stars"></a>
 
 > My documented journey from **zero to AI Engineer / ML Specialist**,
 > with a final goal: **building a micro-LLM from scratch** with the same
