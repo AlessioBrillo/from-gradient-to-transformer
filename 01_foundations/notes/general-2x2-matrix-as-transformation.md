@@ -49,7 +49,7 @@ i_hat = np.array([1, 0])
 j_hat = np.array([0, 1])
 
 A = np.array([[2, 0], [0, 1]])   # scale x by 2
-print(A @ i_hat, A @ j_hat)      # [2, 0] [0, 1] → i-hat raddoppia, j-hat invariato
+print(A @ i_hat, A @ j_hat)      # [2, 0] [0, 1] → i-hat doubles, j-hat unchanged
 ```
 
 ## Links

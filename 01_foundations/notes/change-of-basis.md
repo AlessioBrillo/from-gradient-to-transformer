@@ -16,8 +16,8 @@ The same point in space has different coordinates depending on your reference fr
 
 ## How it works
 - Let B be a matrix whose columns are the new basis vectors (expressed in the standard basis).
-- A vector v with coordinates [v]ₛ in the standard basis has coordinates [v]₈ = B⁻¹v in the B-basis.
-- To convert FROM the B-basis back to standard: v = B · [v]₈.
+- A vector v with coordinates [v]_s in the standard basis has coordinates [v]_B = B⁻¹v in the B-basis.
+- To convert FROM the B-basis back to standard: v = B · [v]_B.
 
 ```python
 import numpy as np
