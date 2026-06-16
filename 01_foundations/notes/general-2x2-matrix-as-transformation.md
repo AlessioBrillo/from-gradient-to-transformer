@@ -58,5 +58,5 @@ print(A @ i_hat, A @ j_hat)      # [2, 0] [0, 1] → i-hat raddoppia, j-hat inva
 - [[01_foundations/notes/change-of-basis|Change of Basis]]
 - [[01_foundations/notes/determinant-and-area-scaling|Determinant and Area Scaling]]
 
-## Open questions
-- #question Can I predict the determinant just by looking at a, b, c, d? (ad − bc)
+## Insight
+Yes: det = ad − bc is immediate from the four entries. If a = 2, b = 1, c = 0, d = 3, then det = 2·3 − 1·0 = 6. The determinant is the area of the parallelogram formed by (a, c) and (b, d) — i.e., the transformed basis vectors. This geometric view: det = |det([i-hat', j-hat'])| where i-hat' and j-hat' are the columns.

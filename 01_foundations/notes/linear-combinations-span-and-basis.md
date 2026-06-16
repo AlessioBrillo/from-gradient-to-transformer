@@ -46,5 +46,5 @@ Standard basis in 2D: i-hat = (1, 0), j-hat = (0, 1). Any vector (x, y) = x·i-h
 - [[01_foundations/notes/vectors-and-linear-transformations|Vectors and Linear Transformations]]
 - [[01_foundations/notes/change-of-basis|Change of Basis]]
 
-## Open questions
-- #question Can I have a basis with more than 2 vectors in 2D? What happens to uniqueness?
+## Insight
+In 2D, any set of more than 2 vectors is linearly dependent — one vector can be expressed as a combination of the others. The representation is no longer unique: the same point can be reached by infinitely many combinations of the redundant vectors. The number of basis vectors equals the dimension of the space. In neural networks, overcomplete representations (more basis vectors than dimensions) are used in sparse coding, but they sacrifice uniqueness for robustness.

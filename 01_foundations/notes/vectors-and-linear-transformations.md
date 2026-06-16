@@ -33,5 +33,5 @@ A @ v  # matrix-vector product
 - [[01_foundations/notes/matrix-multiplication-as-composition|Matrix Multiplication as Composition]]
 - [[01_foundations/notes/general-2x2-matrix-as-transformation|General 2×2 Matrix as Transformation]]
 
-## Open questions
-- #question Why must the inner dimensions match for matrix multiplication?
+## Insight
+Each entry (i,j) of AB is the dot product of row i of A and column j of B. The dot product requires both vectors to have the same length — that length is the "inner dimension." Geometrically, the inner dimension is the dimension of the space being transformed: A maps from ℝⁿ → ℝᵐ, B maps from ℝᵖ → ℝⁿ, so AB maps ℝᵖ → ℝᵐ. The shared n is the dimension of the intermediate space.

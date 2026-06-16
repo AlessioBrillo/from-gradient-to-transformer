@@ -52,5 +52,5 @@ Neural network analogy:
 - [[01_foundations/notes/column-space-and-null-space|Column Space and Null Space]]
 - [[01_foundations/notes/change-of-basis|Change of Basis]]
 
-## Open questions
-- #question What happens with rank deficiency in a tall matrix? Which outputs are reachable?
+## Insight
+A tall matrix maps n-dim inputs to m-dim outputs (m > n). Its maximum rank is n. If rank < n, the column space dimension shrinks further — even fewer outputs are reachable. The unreachable region is the orthogonal complement of the column space. This is exactly what happens in underdetermined neural network layers: some output patterns can never be produced because the weight matrix lacks the rank to express them.

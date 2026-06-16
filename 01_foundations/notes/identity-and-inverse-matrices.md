@@ -41,5 +41,5 @@ A matrix with det = 0 has no inverse — there is no way to undo a transformatio
 - [[01_foundations/notes/column-space-and-null-space|Column Space and Null Space]]
 - [[01_foundations/notes/matrix-multiplication-as-composition|Matrix Multiplication as Composition]]
 
-## Open questions
-- #question What happens geometrically when we try to solve Av = x with a singular matrix? Infinite solutions or none?
+## Insight
+Both cases are possible. If x lies **in** the column space of A, there are infinitely many solutions: if v₀ is one solution, then v₀ + n is also a solution for any n in the null space. If x is **outside** the column space, no solution exists — the best we can do is find the least-squares approximation (minimizing |Av − x|²), which is the projection of x onto the column space.

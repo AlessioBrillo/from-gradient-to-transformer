@@ -42,5 +42,5 @@ Key properties:
 - [[01_foundations/notes/general-2x2-matrix-as-transformation|General 2×2 Matrix as Transformation]]
 - [[01_foundations/notes/identity-and-inverse-matrices|Identity and Inverse Matrices]]
 
-## Open questions
-- #question How does the determinant generalize to 3D? What does ad − bc become?
+## Insight
+In 3D, the determinant generalizes to the **scalar triple product**: a·(b×c) for a 3×3 matrix with columns a, b, c. The formula expands to a(ei − fh) − b(di − fg) + c(dh − eg) — a sum of 6 terms (3! for 3 dimensions). It measures volume scaling. For an n×n matrix, the determinant is a sum of n! terms, each product of n entries with a sign determined by the permutation parity.

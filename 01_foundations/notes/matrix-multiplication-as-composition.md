@@ -35,5 +35,5 @@ B @ A  # apply A then B — different result!
 - [[01_foundations/notes/column-space-and-null-space|Column Space and Null Space]]
 - [[01_foundations/notes/identity-and-inverse-matrices|Identity and Inverse Matrices]]
 
-## Open questions
-- #question Why is matrix multiplication defined this way and not element-wise? What breaks if we used Hadamard product instead?
+## Insight
+The Hadamard (element-wise) product does not correspond to composition of transformations. If A and B are linear transformations, then (A*B)(v) ∘ (B*v) ≠ A(Bv) — the composition is lost. Matrix multiplication as dot products is the only definition that makes matrix multiplication equivalent to function composition: (AB)v = A(Bv). This associativity is why we can stack neural network layers.

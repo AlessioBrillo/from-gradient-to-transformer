@@ -49,5 +49,5 @@ The determinant in 3D: scalar triple product a · (b × c). It equals the volume
 - [[01_foundations/notes/general-2x2-matrix-as-transformation|General 2×2 Matrix as Transformation]]
 - [[01_foundations/notes/determinant-and-area-scaling|Determinant and Area Scaling]]
 
-## Open questions
-- #question How do I visualize 4D+ transformations? Is it even useful to try?
+## Insight
+Direct 4D visualization is impossible, but we rely on mathematical generalization: the same formulas for determinant, eigenvalues, matrix multiplication work in any dimension. The key intuition is that all of linear algebra generalizes uniformly — if you understand 2D and 3D transformations, the formulas for n-dimensions follow the same patterns. What helps: tracking rank (how many dimensions survive), eigenvalues (which directions get stretched), and dot products (how angles change). These are the "visualization" tools for high-dimensional spaces.

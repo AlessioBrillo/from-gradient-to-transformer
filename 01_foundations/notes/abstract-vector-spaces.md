@@ -52,5 +52,5 @@ The power of abstraction: linear transformations between function spaces (Fourie
 - [[01_foundations/notes/linear-combinations-span-and-basis|Linear Combinations, Span, and Basis Vectors]]
 - [[01_foundations/notes/column-space-and-null-space|Column Space and Null Space]]
 
-## Open questions
-- #question Is the set of all probability distributions a vector space? What breaks?
+## Insight
+Probability distributions are **not** a vector space: they must sum to 1 and be non-negative. Scaling by -1 gives negative "probabilities", and adding two distributions exceeds the unit sum. This is why we work with log-probabilities (logits) instead — they live in a proper vector space.

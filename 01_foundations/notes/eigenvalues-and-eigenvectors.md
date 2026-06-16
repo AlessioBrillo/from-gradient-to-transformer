@@ -63,5 +63,5 @@ print(np.linalg.eigvals(A))         # same result
 - [[01_foundations/notes/change-of-basis|Change of Basis]]
 - [[01_foundations/notes/identity-and-inverse-matrices|Identity and Inverse Matrices]]
 
-## Open questions
-- #question Can a matrix have complex eigenvalues? What does that mean geometrically?
+## Insight
+Complex eigenvalues always come in conjugate pairs and signal **rotation** in the transformation. The magnitude |λ| = √(Re(λ)² + Im(λ)²) gives the scaling factor, and the angle arg(λ) gives the rotation amount. A 2×2 rotation matrix [[cosθ, -sinθ], [sinθ, cosθ]] has eigenvalues cosθ ± i·sinθ = e^{±iθ} — purely rotational, no real eigenvector exists because no direction stays on the same line.

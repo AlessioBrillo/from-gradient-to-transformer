@@ -50,5 +50,5 @@ If the null space contains only the zero vector, the transformation is injective
 - [[01_foundations/notes/identity-and-inverse-matrices|Identity and Inverse Matrices]]
 - [[01_foundations/notes/determinant-and-area-scaling|Determinant and Area Scaling]]
 
-## Open questions
-- #question In a neural network, is the null space of the first layer the information that is permanently lost? Can later layers recover it?
+## Insight
+Information in the null space of the first layer is **irrecoverable** from that layer's output alone — it was squished to zero. However, later layers can still learn useful features from the non-zero output components (the column space representation). This is why skip connections (ResNet) and residual streams (Transformer) help: they add the original input back, bypassing the null space of intermediate layers.

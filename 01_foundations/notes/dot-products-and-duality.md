@@ -71,5 +71,5 @@ np.linalg.norm(A, ord='fro')  # 5.477 — Frobenius norm
 - [[01_foundations/notes/vectors-and-linear-transformations|Vectors and Linear Transformations]]
 - [[01_foundations/notes/change-of-basis|Change of Basis]]
 
-## Open questions
-- #question How does duality generalize to higher dimensions? Is every row of a matrix a dual vector?
+## Insight
+Every row of a matrix **is** a dual vector — it takes a dot product with the input to produce one coordinate of the output. The entire matrix transformation is just a stack of dual vectors. This is why the row space of A is orthogonal to the null space: rows that are dual vectors evaluate to zero on null space vectors.
