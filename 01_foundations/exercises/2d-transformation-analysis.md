@@ -118,7 +118,7 @@ for name, A in TRANSFORMATIONS.items():
 Answer in your own words after running the code:
 
 1. **Scale_x**: The eigenvector is clearly (1, 0) with eigenvalue 3. Why is (0, 1) also an eigenvector? What is its eigenvalue?
-2. **Shear**: The matrix [[1, 1.5], [0, 1]] has det = 1. Does it preserve area? How is that possible when it visibly skews shapes?
+2. **Shear**: The matrix `[[1, 1.5], [0, 1]]` has det = 1. Does it preserve area? How is that possible when it visibly skews shapes?
 3. **Squish**: Why does `np.linalg.inv` fail? What does det = 0 tell you about the columns?
 4. **Rotate_90**: What do the complex eigenvalues tell you about this transformation? Why is there no real eigenvector?
 

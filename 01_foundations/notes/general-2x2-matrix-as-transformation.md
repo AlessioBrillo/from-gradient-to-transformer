@@ -9,7 +9,7 @@ created: 2026-06-16
 > **Series**: [Essence of Linear Algebra — 3Blue1Brown](https://youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab&si=IWGNxJnrtFTJegl0)
 
 ## What it is
-Every 2×2 matrix [[a, b], [c, d]] represents a linear transformation of 2D space. The four entries control where the basis vectors land.
+Every 2×2 matrix `[[a, b], [c, d]]` represents a linear transformation of 2D space. The four entries control where the basis vectors land.
 
 ## Why it exists / what problem it solves
 Understanding what each entry does lets you look at any matrix and immediately visualize the transformation — instead of treating it as a black box of numbers.
@@ -32,11 +32,11 @@ The columns of the matrix tell you where the basis vectors go:
 
 | Matrix | Effect | a | b | c | d |
 |--------|--------|---|---|---|---|
-| [[1,0],[0,1]] | Identity — nothing changes | 1 | 0 | 0 | 1 |
-| [[2,0],[0,1]] | Scale x by 2 | 2 | 0 | 0 | 1 |
-| [[1,1],[0,1]] | Horizontal shear | 1 | 1 | 0 | 1 |
-| [[0,1],[1,0]] | Swap axes (reflect over y=x) | 0 | 1 | 1 | 0 |
-| [[0,-1],[1,0]] | Rotate 90° CCW | 0 | -1 | 1 | 0 |
+| `[[1,0],[0,1]]` | Identity — nothing changes | 1 | 0 | 0 | 1 |
+| `[[2,0],[0,1]]` | Scale x by 2 | 2 | 0 | 0 | 1 |
+| `[[1,1],[0,1]]` | Horizontal shear | 1 | 1 | 0 | 1 |
+| `[[0,1],[1,0]]` | Swap axes (reflect over y=x) | 0 | 1 | 1 | 0 |
+| `[[0,-1],[1,0]]` | Rotate 90° CCW | 0 | -1 | 1 | 0 |
 
 ```python
 import numpy as np

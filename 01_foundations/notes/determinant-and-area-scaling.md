@@ -15,7 +15,7 @@ The determinant of a matrix measures how much the linear transformation scales t
 The determinant tells you whether a transformation squishes space (det = 0), preserves area (det = 1), stretches it (det > 1), or flips orientation (det < 0). It is the single number that summarizes the global scaling behavior of the transformation.
 
 ## How it works
-- For a 2×2 matrix [[a, b], [c, d]]: **det = ad − bc**.
+- For a 2×2 matrix `[[a, b], [c, d]]`: **det = ad − bc**.
 - Geometrically, it is the area of the parallelogram formed by the transformed basis vectors.
 - det = 0 means the transformation collapses space into a lower dimension (a line or a point) — the matrix is **singular** and has no inverse.
 - det < 0 means the transformation flips the orientation of space (a reflection).

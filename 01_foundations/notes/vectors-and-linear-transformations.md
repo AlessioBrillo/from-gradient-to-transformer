@@ -16,7 +16,7 @@ Vectors represent data as coordinates in space. Linear transformations (matrices
 
 ## How it works
 - A vector v = (v₁, v₂) is a point in 2D space.
-- A matrix A = [[a, b], [c, d]] applied to v gives A·v = (a·v₁ + b·v₂, c·v₁ + d·v₂).
+- A matrix A = `[[a, b], [c, d]]` applied to v gives A·v = (a·v₁ + b·v₂, c·v₁ + d·v₂).
 - The columns of A are where the basis vectors i-hat and j-hat land after the transformation.
 - Composing A then B is the matrix product BA.
 

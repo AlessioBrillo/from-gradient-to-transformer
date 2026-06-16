@@ -39,7 +39,7 @@ for i in range(2):
 Eigenvectors are not unique — any scalar multiple of an eigenvector is still an eigenvector with the same eigenvalue.
 
 ### Quick trick for computing eigenvalues (3B1B #15)
-For a 2×2 matrix [[a, b], [c, d]], the eigenvalues satisfy:
+For a 2×2 matrix `[[a, b], [c, d]]`, the eigenvalues satisfy:
 - λ₁ + λ₂ = trace = a + d
 - λ₁ · λ₂ = determinant = ad − bc
 - Characteristic equation: λ² − trace·λ + det = 0

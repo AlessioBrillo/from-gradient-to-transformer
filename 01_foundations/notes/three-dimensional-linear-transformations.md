@@ -15,7 +15,7 @@ A 3×3 matrix represents a linear transformation in 3D space. The same intuition
 Real-world data has many dimensions: images (thousands of pixels), embeddings (hundreds of numbers), hidden states (thousands of neurons). Understanding 3D transformations builds the intuition bridge from the 2D visual examples to the high-dimensional spaces that models actually operate in.
 
 ## How it works
-- A 3×3 matrix [[a, b, c], [d, e, f], [g, h, i]] transforms (x, y, z) → (x', y', z').
+- A 3×3 matrix `[[a, b, c], [d, e, f], [g, h, i]]` transforms (x, y, z) → (x', y', z').
 - The three columns are where i-hat, j-hat, and k-hat land.
 - The determinant measures **volume** scaling (3D analog of area).
 - Eigenvectors now have 3 components: direction in 3D space.

@@ -15,7 +15,7 @@ The identity matrix I is the transformation that does nothing. The inverse A⁻�
 Inverses let us solve systems of linear equations. Given Av = x, we can recover v = A⁻¹x — this is the foundation of solving for weights in linear regression, computing transformations back to original coordinates, and understanding whether a problem has a unique solution.
 
 ## How it works
-- Identity I = [[1, 0], [0, 1]]: i-hat and j-hat stay where they are.
+- Identity I = `[[1, 0], [0, 1]]`: i-hat and j-hat stay where they are.
 - A⁻¹ exists **if and only if** det(A) ≠ 0 (non-singular).
 - A⁻¹A = AA⁻¹ = I.
 - Geometrically: if A scales by 2, A⁻¹ scales by ½. If A rotates 90° clockwise, A⁻¹ rotates 90° counter-clockwise.
