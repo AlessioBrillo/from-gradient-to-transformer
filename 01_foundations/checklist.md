@@ -10,7 +10,7 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
 - [ ] **Proof passed** → I can move to the next phase.
 
 ## Skills
-- [ ] NumPy: matrix operations, vectorization, broadcasting
+- [~] NumPy: matrix operations, vectorization, broadcasting (exercise: [[01_foundations/exercises/2d-transformation-analysis]])
 - [ ] Gradient: numerical gradient check implemented
 - [ ] Chain rule: derived and applied by hand
 - [ ] Information theory: entropy, cross-entropy, KL divergence derived and applied

@@ -9,7 +9,7 @@ Rule: check a skill **only** when an exercise (in `exercises/`) **and** a proof 
 Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
 
 ## Phase 1 — Foundations
-- [ ] Applied linear algebra (NumPy) — proof: [[01_foundations/proofs/...]]
+- [~] Applied linear algebra (NumPy) — proof: pending (exercise done: [[01_foundations/exercises/2d-transformation-analysis]])
 - [ ] Gradient + chain rule (gradient check)
 - [ ] Probability and MLE
 - [ ] Information theory (entropy, cross-entropy, KL divergence)
