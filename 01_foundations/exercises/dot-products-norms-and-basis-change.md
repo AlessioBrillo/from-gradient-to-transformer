@@ -121,7 +121,8 @@ v_2d = A_wide @ v_3d  # what shape is this?
 
 ## What I learned doing it
 
-This exercise clarified the deep connection between dot products and geometric operations like projection and orthogonality. The change-of-basis section was the most valuable conceptually: converting a vector from standard to B-coordinates and back shows exactly what `B_inv @ v_standard` means geometrically. I now see that a neural network layer Wx + b is just a change of basis (W) plus a translation (b). The most surprising takeaway is that the Frobenius norm of a weight matrix measures its overall "energy" — a concept that reappears in weight decay regularization.
+This exercise clarified the deep connection between dot products and geometric operations like projection and orthogonality. The change-of-basis section was the most valuable conceptually: converting a vector from standard to B-coordinates and back shows exactly what `B_inv @ v_standard` means geometrically.
+I now see that a neural network layer Wx + b is just a change of basis (W) plus a translation (b). The Frobenius norm of a weight matrix measures its overall "energy" — a concept that reappears in weight decay regularization.
 
 ## Linked skill
 - [[00_meta/02_skill-tree]] → item: Applied linear algebra (NumPy)

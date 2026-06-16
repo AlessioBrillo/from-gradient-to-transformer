@@ -43,4 +43,4 @@ np.linalg.eig(A)   # eigenvalues and eigenvectors
 - [[01_foundations/notes/eigenvalues-and-eigenvectors|Eigenvalues and Eigenvectors]]
 
 ## Insight
-Broadcasting aligns dimensions from the right: an array of shape (3, 1) + (3,) becomes (3, 1) + (1, 3) = (3, 3). Size-1 dimensions are "stretched" to match the other array without copying data — broadcasting creates a **view** (virtual repetition), not a copy. This makes broadcasting memory-efficient: adding a (1000, 1) array to a (1, 1000) array creates a (1000, 1000) result without allocating intermediate copies.
+Broadcasting aligns dimensions from the right: an array of shape (3, 1) + (3,) becomes (3, 1) + (1, 3) = (3, 3). Size-1 dimensions are "stretched" to match the other array without copying data — broadcasting creates a **view** (virtual repetition), not a copy. This makes broadcasting memory-efficient: adding a (1000, 1) to a (1, 1000) creates a (1000, 1000) result without allocating intermediate copies.

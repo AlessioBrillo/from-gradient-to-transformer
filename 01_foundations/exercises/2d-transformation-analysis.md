@@ -125,7 +125,9 @@ for name, A in TRANSFORMATIONS.items():
 
 ## What I learned doing it
 
-Running the full pipeline on different transformations made the connection between numbers and geometry concrete. I can now look at a 2×2 matrix and roughly predict its effect: diagonal matrices scale axes, shear matrices preserve area but skew, singular matrices collapse dimension. The most surprising insight was that an area-preserving shear still looks like it distorts shapes — geometric intuition and the determinant measure different things. The eigenvalue check was the most satisfying: verifying A·v = λv in code confirms that the eigenvectors found by `np.linalg.eig` really are the invariant directions.
+Running the full pipeline on different transformations made the connection between numbers and geometry concrete. I can now look at a 2×2 matrix and roughly predict its effect: diagonal matrices scale axes, shear matrices preserve area but skew, singular matrices collapse dimension.
+The most surprising insight: an area-preserving shear still looks like it distorts shapes — geometric intuition and the determinant measure different things.
+The eigenvalue check was the most satisfying: verifying A·v = λv in code confirms that the eigenvectors found by `np.linalg.eig` really are the invariant directions.
 
 ## Linked skill
 - [[00_meta/02_skill-tree]] → item: Applied linear algebra (NumPy)

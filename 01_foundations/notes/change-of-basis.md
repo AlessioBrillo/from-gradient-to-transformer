@@ -54,4 +54,4 @@ PCA is the most important example: the eigenvectors of the covariance matrix for
 - [[01_foundations/notes/eigenvalues-and-eigenvectors|Eigenvalues and Eigenvectors]]
 
 ## Insight
-In a Transformer, each attention head projects the input into a **query**, **key**, and **value** space — these are learned basis changes. The query and key spaces align to measure relevance via dot products (attention scores), and the value space provides the new representation. Every attention layer is a dynamic, data-dependent change of basis where each token assembles its new coordinates from the values of other tokens.
+In a Transformer, each attention head projects the input into a **query**, **key**, and **value** space — these are learned basis changes. The query and key spaces align to measure relevance via dot products (attention scores), and the value space provides the new representation. Every attention layer is a dynamic, data-dependent change of basis where each token assembles its new coordinates from other tokens' values.
