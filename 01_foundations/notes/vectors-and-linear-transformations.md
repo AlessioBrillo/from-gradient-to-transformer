@@ -28,9 +28,10 @@ A @ v  # matrix-vector product
 ```
 
 ## Links
+- [[01_foundations/notes/linear-combinations-span-and-basis|Linear Combinations, Span, and Basis Vectors]]
+- [[01_foundations/notes/dot-products-and-duality|Dot Products and Duality]]
 - [[01_foundations/notes/matrix-multiplication-as-composition|Matrix Multiplication as Composition]]
 - [[01_foundations/notes/general-2x2-matrix-as-transformation|General 2×2 Matrix as Transformation]]
-- [[01_foundations/notes/determinant-and-area-scaling|Determinant and Area Scaling]]
 
 ## Open questions
 - #question Why must the inner dimensions match for matrix multiplication?

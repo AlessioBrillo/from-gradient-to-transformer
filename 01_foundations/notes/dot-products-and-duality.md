@@ -50,6 +50,23 @@ def is_orthogonal(v, w, tol=1e-10):
 ### Duality
 Every linear transformation from 2D to 1D can be represented as a dot product with a fixed vector. That vector is the "dual" of the transformation — this insight connects matrices (transformations) to vectors (dot products).
 
+### Norms (length of a vector)
+The norm (or magnitude) of a vector is derived from the dot product: |v| = √(v · v). Common norms in machine learning:
+- **L2 norm** (Euclidean): |v|₂ = √(Σ vᵢ²) — the straight-line distance, induced by the dot product.
+- **L1 norm**: |v|₁ = Σ |vᵢ| — sum of absolute values, used in Lasso regularization.
+- **Frobenius norm**: |A|_F = √(Σ Σ Aᵢⱼ²) — the L2 norm for matrices, the natural way to measure a matrix's "size".
+
+```python
+import numpy as np
+
+v = np.array([3, 4])
+np.linalg.norm(v, ord=2)   # 5.0 — L2 norm (default)
+np.linalg.norm(v, ord=1)   # 7.0 — L1 norm
+
+A = np.array([[1, 2], [3, 4]])
+np.linalg.norm(A, ord='fro')  # 5.477 — Frobenius norm
+```
+
 ## Links
 - [[01_foundations/notes/vectors-and-linear-transformations|Vectors and Linear Transformations]]
 - [[01_foundations/notes/change-of-basis|Change of Basis]]

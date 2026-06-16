@@ -54,8 +54,9 @@ print(A @ i_hat, A @ j_hat)      # [2, 0] [0, 1] → i-hat raddoppia, j-hat inva
 
 ## Links
 - [[01_foundations/notes/vectors-and-linear-transformations|Vectors and Linear Transformations]]
+- [[01_foundations/notes/three-dimensional-linear-transformations|Three-Dimensional Linear Transformations]]
+- [[01_foundations/notes/change-of-basis|Change of Basis]]
 - [[01_foundations/notes/determinant-and-area-scaling|Determinant and Area Scaling]]
-- [[01_foundations/notes/eigenvalues-and-eigenvectors|Eigenvalues and Eigenvectors]]
 
 ## Open questions
 - #question Can I predict the determinant just by looking at a, b, c, d? (ad − bc)

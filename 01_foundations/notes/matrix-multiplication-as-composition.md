@@ -31,8 +31,9 @@ B @ A  # apply A then B — different result!
 
 ## Links
 - [[01_foundations/notes/vectors-and-linear-transformations|Vectors and Linear Transformations]]
+- [[01_foundations/notes/nonsquare-matrices-as-transformations|Nonsquare Matrices as Transformations]]
+- [[01_foundations/notes/column-space-and-null-space|Column Space and Null Space]]
 - [[01_foundations/notes/identity-and-inverse-matrices|Identity and Inverse Matrices]]
-- [[01_foundations/notes/determinant-and-area-scaling|Determinant and Area Scaling]]
 
 ## Open questions
 - #question Why is matrix multiplication defined this way and not element-wise? What breaks if we used Hadamard product instead?

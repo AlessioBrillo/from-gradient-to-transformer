@@ -38,8 +38,9 @@ np.linalg.eig(A)   # eigenvalues and eigenvectors
 
 ## Links
 - [[01_foundations/notes/vectors-and-linear-transformations|Vectors and Linear Transformations]]
+- [[01_foundations/notes/three-dimensional-linear-transformations|Three-Dimensional Linear Transformations]]
+- [[01_foundations/notes/dot-products-and-duality|Dot Products and Duality]]
 - [[01_foundations/notes/eigenvalues-and-eigenvectors|Eigenvalues and Eigenvectors]]
-- [[01_foundations/notes/identity-and-inverse-matrices|Identity and Inverse Matrices]]
 
 ## Open questions
 - #question How does NumPy's broadcasting work under the hood? When does it copy data vs create a view?

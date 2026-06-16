@@ -34,10 +34,11 @@ v = np.array([4, 9])
 x = np.linalg.solve(A, v)          # [2, 3] — because 2*2=4, 3*3=9
 ```
 
-A matrix with det = 0 has no inverse — there is no way to undo a transformation that collapses information.
+A matrix with det = 0 has no inverse — there is no way to undo a transformation that collapses information. This connects directly to the [[01_foundations/notes/column-space-and-null-space|column space and null space]]: when the null space is non-trivial, multiple inputs map to the same output, making inversion impossible.
 
 ## Links
 - [[01_foundations/notes/determinant-and-area-scaling|Determinant and Area Scaling]]
+- [[01_foundations/notes/column-space-and-null-space|Column Space and Null Space]]
 - [[01_foundations/notes/matrix-multiplication-as-composition|Matrix Multiplication as Composition]]
 
 ## Open questions

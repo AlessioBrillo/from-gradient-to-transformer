@@ -38,8 +38,29 @@ for i in range(2):
 
 Eigenvectors are not unique — any scalar multiple of an eigenvector is still an eigenvector with the same eigenvalue.
 
+### Quick trick for computing eigenvalues (3B1B #15)
+For a 2×2 matrix [[a, b], [c, d]], the eigenvalues satisfy:
+- λ₁ + λ₂ = trace = a + d
+- λ₁ · λ₂ = determinant = ad − bc
+- Characteristic equation: λ² − trace·λ + det = 0
+- Solve: λ = (trace ± √(trace² − 4·det)) / 2
+
+```python
+import numpy as np
+
+A = np.array([[2, 1], [1, 2]])
+trace = np.trace(A)
+det = np.linalg.det(A)
+discriminant = trace**2 - 4*det
+lambda1 = (trace + np.sqrt(discriminant)) / 2
+lambda2 = (trace - np.sqrt(discriminant)) / 2
+print(lambda1, lambda2)             # [3., 1.]
+print(np.linalg.eigvals(A))         # same result
+```
+
 ## Links
 - [[01_foundations/notes/determinant-and-area-scaling|Determinant and Area Scaling]]
+- [[01_foundations/notes/change-of-basis|Change of Basis]]
 - [[01_foundations/notes/identity-and-inverse-matrices|Identity and Inverse Matrices]]
 
 ## Open questions
