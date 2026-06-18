@@ -33,16 +33,25 @@ Index and links for this phase. Detailed topics/resources/exercises: see [[00_me
 - [[01_foundations/notes/pandas-for-data-preparation|pandas for Data Preparation]]
 - [[01_foundations/notes/data-visualization-essentials|Data Visualization Essentials]]
 - [[01_foundations/notes/sql-for-data-pipelines|SQL for Data Pipelines]]
+- [[01_foundations/notes/eulers-number-and-exponential|Euler's Number and the Exponential Function]]
+- [[01_foundations/notes/integration-and-fundamental-theorem|Integration and the Fundamental Theorem of Calculus]]
+- [[01_foundations/notes/higher-order-derivatives-and-taylor-series|Higher-Order Derivatives and Taylor Series]]
+- [[01_foundations/notes/git-and-reproducible-environments|Git and Reproducible Environments]]
 
 ## Exercises
 - [[01_foundations/exercises/2d-transformation-analysis|2D Transformation Analysis]]
 - [[01_foundations/exercises/dot-products-norms-and-basis-change|Dot Products, Norms, and Change of Basis]]
 - [[01_foundations/exercises/gradient-verification|Gradient Verification]]
 - [[01_foundations/exercises/cross-entropy-from-first-principles|Cross-Entropy from First Principles]]
+- [[01_foundations/exercises/maximum-likelihood-estimation-in-practice|Maximum Likelihood Estimation in Practice]]
+- [[01_foundations/exercises/probability-sampling-and-expectation|Probability Sampling and Expectation]]
+- [[01_foundations/exercises/pipeline-eda-and-visualization|End-to-End EDA and Visualization Pipeline]]
 
 ## Proofs to myself
 - [[01_foundations/proofs/linear-algebra-foundations|Linear Algebra Foundations]]
 - [[01_foundations/proofs/chain-rule-and-gradient-check|Chain Rule and Gradient Check]]
+- [[01_foundations/proofs/probability-and-mle|Probability and MLE]]
+- [[01_foundations/proofs/information-theory-foundations|Information Theory Foundations]]
 
 ## Phase checklist → [[01_foundations/checklist]]
 

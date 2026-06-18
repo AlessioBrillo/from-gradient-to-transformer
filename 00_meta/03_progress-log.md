@@ -23,3 +23,11 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Built: 12 new notes (calculus ×4, probability ×3, information theory ×2, data tooling ×3), 2 new exercises (gradient verification, cross-entropy from first principles), 1 new proof (chain rule + gradient check); updated MOC, checklist, skill tree
 - Skills verified: Gradient + chain rule (gradient check) — exercise + proof both pass ✅
 - Open question: for probability and pandas, need dedicated exercises + proofs before marking complete; Git and reproducible environment notes still missing
+
+## 2026-06-18 (second session)
+- Watched: 3Blue1Brown Calculus Ch. 5 (e), Ch. 8 (integration/FTC), Ch. 10-11 (higher-order/Taylor); additional StatQuest episodes for probability, MLE, regularization, entropy
+- Built: 3 new calculus notes (e, integration/FTC, higher-order+Taylor), 3 new exercises (MLE, probability sampling, EDA pipeline), 2 new proofs (probability+MLE, information theory), 1 Git note; updated all notes with specific video/chapter references
+- Skills newly verified: Probability and MLE ✅, Information theory ✅
+- Skills in progress: pandas+EDA (exercise ready), SQL (notes ready)
+- Phase gate chain rule proof: ✅ PASSED — ready for Phase 2 transition
+- Remaining: SQL needs dedicated exercise + proof; review and mark all proofs as passed
