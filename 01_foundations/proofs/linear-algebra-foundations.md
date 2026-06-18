@@ -60,6 +60,10 @@ def analyze_matrix(A):
 - **Change of basis and word embeddings**: Word embeddings like word2vec learn a basis where semantic relationships correspond to vector arithmetic. "King - Man + Woman = Queen" works because the coordinate system (basis) was learned to make these relationships linear.
 Changing the basis rotates the space without changing the relationships — cosine similarity remains invariant under orthogonal transformations.
 
+## Links
+- [[01_foundations/notes/vectors-and-linear-transformations]]
+- [[01_foundations/notes/eigenvalues-and-eigenvectors]]
+
 ## Outcome
 - [x] Passed → check the skill in [[00_meta/02_skill-tree]]
 - [ ] Retry needed (what was missing): ...

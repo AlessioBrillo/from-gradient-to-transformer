@@ -10,12 +10,12 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
 
 ## Phase 1 — Foundations
 - [x] Applied linear algebra (NumPy) — proof: [[01_foundations/proofs/linear-algebra-foundations]] (exercises: [[01_foundations/exercises/2d-transformation-analysis]], [[01_foundations/exercises/dot-products-norms-and-basis-change]])
-- [ ] Gradient + chain rule (gradient check)
-- [ ] Probability and MLE
-- [ ] Information theory (entropy, cross-entropy, KL divergence)
-- [ ] pandas + EDA + visualization
+- [x] Gradient + chain rule (gradient check) — proof: [[01_foundations/proofs/chain-rule-and-gradient-check]] (exercise: [[01_foundations/exercises/gradient-verification]])
+- [x] Probability and MLE — proof: [[01_foundations/proofs/probability-and-mle]] (exercises: [[01_foundations/exercises/maximum-likelihood-estimation-in-practice]], [[01_foundations/exercises/probability-sampling-and-expectation]])
+- [x] Information theory (entropy, cross-entropy, KL divergence) — proof: [[01_foundations/proofs/information-theory-foundations]] (exercise: [[01_foundations/exercises/cross-entropy-from-first-principles]])
+- [~] pandas + EDA + visualization — exercise: [[01_foundations/exercises/pipeline-eda-and-visualization]]
 - [ ] SQL + data pipeline basics
-- [ ] Git + reproducible environment
+- [x] Git + reproducible environment — note: [[01_foundations/notes/git-and-reproducible-environments]]
 
 ## Phase 2 — Classical ML
 - [ ] Linear/logistic regression

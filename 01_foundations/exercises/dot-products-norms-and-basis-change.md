@@ -1,6 +1,7 @@
 ---
-tags: [type/exercise, phase/1]
+tags: [type/exercise, phase/1, state/review]
 skill: Applied linear algebra (NumPy)
+state: review
 created: 2026-06-16
 ---
 
@@ -123,6 +124,10 @@ v_2d = A_wide @ v_3d  # what shape is this?
 
 This exercise clarified the deep connection between dot products and geometric operations like projection and orthogonality. The change-of-basis section was the most valuable conceptually: converting a vector from standard to B-coordinates and back shows exactly what `B_inv @ v_standard` means geometrically.
 I now see that a neural network layer Wx + b is just a change of basis (W) plus a translation (b). The Frobenius norm of a weight matrix measures its overall "energy" — a concept that reappears in weight decay regularization.
+
+## Links
+- [[01_foundations/notes/dot-products-and-duality]]
+- [[01_foundations/notes/change-of-basis]]
 
 ## Linked skill
 - [[00_meta/02_skill-tree]] → item: Applied linear algebra (NumPy)
