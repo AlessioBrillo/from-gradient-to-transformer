@@ -1,5 +1,6 @@
 ---
-tags: [type/proof, phase/1]
+tags: [type/proof, phase/1, state/review]
+state: review
 created: 2026-06-18
 ---
 
@@ -88,6 +89,10 @@ ce_loss = cross_entropy(p_onehot, q_pred)
 nll = -np.log(0.7)
 print(f"\nClassification: CE = {ce_loss:.4f}, NLL = {nll:.4f}")
 ```
+
+## Links
+- [[01_foundations/notes/entropy-cross-entropy-and-kl-divergence]]
+- [[01_foundations/notes/mutual-information-and-representation-learning]]
 
 ## Outcome
 - [x] Passed → check the skill in [[00_meta/02_skill-tree]]

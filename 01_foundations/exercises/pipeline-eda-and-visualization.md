@@ -1,6 +1,7 @@
 ---
-tags: [type/exercise, phase/1]
+tags: [type/exercise, phase/1, state/review]
 skill: pandas + EDA + visualization
+state: review
 created: 2026-06-18
 ---
 
@@ -166,6 +167,10 @@ Key findings from Titanic EDA:
 The EDA pipeline is formulaic but each dataset has unique quirks. The Titanic dataset is small enough to iterate quickly but rich enough to demonstrate all major patterns: missing data handling, categorical encoding, correlation analysis, and feature engineering.
 
 The most important takeaway: **always check missing data first**. The deck column (77% missing) would silently break a model if not handled. The age column (20% missing) needs imputation. These decisions cascade into model quality.
+
+## Links
+- [[01_foundations/notes/pandas-for-data-preparation]]
+- [[01_foundations/notes/data-visualization-essentials]]
 
 ## Linked skill
 - [[00_meta/02_skill-tree]] → item: pandas + EDA + visualization

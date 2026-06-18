@@ -1,6 +1,7 @@
 ---
-tags: [type/exercise, phase/1]
+tags: [type/exercise, phase/1, state/review]
 skill: Gradient + chain rule (gradient check)
+state: review
 created: 2026-06-18
 ---
 
@@ -200,6 +201,10 @@ The softmax + cross-entropy gradient is the most beautiful simplification in dee
 ∂L/∂z_i = p_i − 1(i == y). One subtraction for the entire gradient. No complex derivative computation needed at the final layer — which is why every framework implements this fused operation (`CrossEntropyLoss` in PyTorch combines log-softmax + NLL loss).
 
 The gradient check pattern (finite-difference approximation + relative error comparison) is the standard verification technique used by library authors themselves — PyTorch's `torch.autograd.gradcheck` does exactly this.
+
+## Links
+- [[01_foundations/notes/chain-rule-and-backpropagation]]
+- [[01_foundations/notes/numerical-gradient-check]]
 
 ## Linked skill
 - [[00_meta/02_skill-tree]] → item: Gradient + chain rule (gradient check)

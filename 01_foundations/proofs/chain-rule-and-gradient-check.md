@@ -1,5 +1,6 @@
 ---
-tags: [type/proof, phase/1]
+tags: [type/proof, phase/1, state/review]
+state: review
 created: 2026-06-18
 ---
 
@@ -75,6 +76,10 @@ print(f"Gradient check PASSED (relative error = {rel_err:.2e})")
 **(13 lines of NumPy code — inside the function bodies)**
 
 The central difference formula (f(x+h) − f(x−h)) / (2h) is O(h²) accurate — much better than forward difference O(h). The relative error normalization ensures the check works for both tiny and huge gradient magnitudes.
+
+## Links
+- [[01_foundations/notes/chain-rule-and-backpropagation]]
+- [[01_foundations/notes/numerical-gradient-check]]
 
 ## Outcome
 - [x] Passed → check the skill in [[00_meta/02_skill-tree]]

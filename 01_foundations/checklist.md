@@ -1,5 +1,7 @@
 ---
-tags: [checklist, phase/1]
+tags: [checklist, phase/1, state/review]
+state: review
+created: 2026-06-18
 ---
 
 # Checklist — Phase 1 · Foundations

@@ -1,5 +1,6 @@
 ---
-tags: [type/proof, phase/1]
+tags: [type/proof, phase/1, state/review]
+state: review
 created: 2026-06-18
 ---
 
@@ -91,6 +92,10 @@ print(f"MLE p̂ = {p_mle:.3f}, CE = {loss_at_mle:.4f}")
 print(f"Wrong p = 0.5, CE = {loss_at_wrong:.4f}")
 # The MLE estimate gives LOWER cross-entropy (better)
 ```
+
+## Links
+- [[01_foundations/notes/probability-basics-for-ml]]
+- [[01_foundations/notes/maximum-likelihood-estimation]]
 
 ## Outcome
 - [x] Passed → check the skill in [[00_meta/02_skill-tree]]

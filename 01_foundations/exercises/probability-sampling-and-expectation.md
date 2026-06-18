@@ -1,6 +1,7 @@
 ---
-tags: [type/exercise, phase/1]
+tags: [type/exercise, phase/1, state/review]
 skill: Probability and MLE
+state: review
 created: 2026-06-18
 ---
 
@@ -123,6 +124,10 @@ print(f"Empirical: E[X] ≈ {np.mean(samples):.4f}, Var[X] ≈ {np.var(samples):
 The Law of Large Numbers is not just theory — it's why training on more data gives better estimates. The Central Limit Theorem explains why Gaussian noise assumptions are often reasonable even when the underlying data is not Gaussian.
 
 The covariance matrix estimation exercise clarifies why PCA needs enough samples: with n < p (more features than samples), the sample covariance matrix is rank-deficient and the eigenvalues are unreliable.
+
+## Links
+- [[01_foundations/notes/probability-basics-for-ml]]
+- [[01_foundations/notes/bayesian-thinking-and-regularization]]
 
 ## Linked skill
 - [[00_meta/02_skill-tree]] → item: Probability and MLE

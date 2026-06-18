@@ -1,6 +1,7 @@
 ---
-tags: [type/exercise, phase/1]
+tags: [type/exercise, phase/1, state/review]
 skill: Information theory (entropy, cross-entropy, KL divergence)
+state: review
 created: 2026-06-18
 ---
 
@@ -147,6 +148,10 @@ The equivalence between cross-entropy, negative log-likelihood, and KL divergenc
 - Information theory: minimizing coding inefficiency.
 - Statistics: maximizing likelihood of the observed labels.
 - Optimization: minimizing divergence between predicted and true distributions.
+
+## Links
+- [[01_foundations/notes/entropy-cross-entropy-and-kl-divergence]]
+- [[01_foundations/notes/maximum-likelihood-estimation]]
 
 ## Linked skill
 - [[00_meta/02_skill-tree]] → item: Information theory (entropy, cross-entropy, KL divergence)

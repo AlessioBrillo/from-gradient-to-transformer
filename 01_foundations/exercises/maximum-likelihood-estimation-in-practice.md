@@ -1,6 +1,7 @@
 ---
-tags: [type/exercise, phase/1]
+tags: [type/exercise, phase/1, state/review]
 skill: Probability and MLE
+state: review
 created: 2026-06-18
 ---
 
@@ -127,6 +128,10 @@ plt.grid(alpha=0.3)
 MLE recovers the true parameters reliably when the model is correctly specified. The NLL surface is convex for the Gaussian mean — a single global minimum at the sample mean.
 
 The critical insight: **cross-entropy loss is exactly NLL under a categorical model**, and **MSE loss is exactly NLL under a Gaussian model**. Every loss function in supervised learning is a negative log-likelihood in disguise. This unifies all of supervised learning under a single probabilistic framework.
+
+## Links
+- [[01_foundations/notes/maximum-likelihood-estimation]]
+- [[01_foundations/notes/probability-basics-for-ml]]
 
 ## Linked skill
 - [[00_meta/02_skill-tree]] → item: Probability and MLE

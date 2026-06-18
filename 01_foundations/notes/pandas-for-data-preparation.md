@@ -1,5 +1,5 @@
 ---
-tags: [type/lesson, phase/1]
+tags: [type/lesson, phase/1, state/review]
 state: review
 created: 2026-06-18
 ---

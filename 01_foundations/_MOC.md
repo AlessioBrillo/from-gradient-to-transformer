@@ -1,5 +1,7 @@
 ---
-tags: [moc, phase/1]
+tags: [moc, phase/1, state/review]
+state: review
+created: 2026-06-18
 ---
 
 # Phase 1 · Foundations — MOC
