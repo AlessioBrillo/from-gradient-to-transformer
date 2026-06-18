@@ -4,7 +4,9 @@ state: review
 created: 2026-06-18
 ---
 
-> **Series**: [Oxford Mathematics — Information Theory](https://youtube.com/playlist?list=PL4d5ZtfQonW3iAhXvTYCnoGEeRhxhKHMc&si=7FTfYrBynPzkFEzA)
+> **Series**: [Oxford Mathematics — Information Theory](https://youtube.com/playlist?list=PL4d5ZtfQonW3iAhXvTYCnoGEeRhxhKHMc&si=7FTfYrBynPzkFEzA) — Lecture 2: *Basic Properties of Information*
+>
+> **Also**: [StatQuest — Mutual Information, Clearly Explained](https://youtu.be/eJIp_mgVLwE) | [StatQuest — Entropy, Clearly Explained](https://youtu.be/YtebGVx-Fxw)
 
 ## What it is
 Mutual information I(X; Y) measures how much knowing X reduces uncertainty about Y — the amount of information one variable contains about another. It is the KL divergence between the joint distribution and the product of marginals.

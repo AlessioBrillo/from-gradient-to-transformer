@@ -4,7 +4,9 @@ state: review
 created: 2026-06-18
 ---
 
-> **Series**: [Essence of Calculus — 3Blue1Brown](https://youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr&si=UrW_Qk2DDRi0K3PQ)
+> **Series**: [StatQuest — Neural Networks Pt. 5: ArgMax and SoftMax](https://youtu.be/KpKog-L9veg) | [StatQuest — The SoftMax Derivative, Step-by-Step](https://youtu.be/M59JElEPgIg)
+>
+> **Also**: [Essence of Calculus — 3Blue1Brown](https://youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr&si=UrW_Qk2DDRi0K3PQ) — Chapter 4 (chain rule context)
 
 ## What it is
 Activation functions introduce non-linearity into neural networks; each has a specific derivative that is used during backpropagation.

@@ -5,6 +5,8 @@ created: 2026-06-18
 ---
 
 > **Series**: [StatQuest with Josh Starmer](https://youtube.com/playlist?list=PLblh5JKOoLUIcdlgu78MnlATeyx4cEVeR&si=9Ro_rZjawyoy_Gz_)
+>
+> **Key episodes**: [Probability vs Likelihood](https://youtu.be/pYxNSUDSFH4) | [Maximum Likelihood](https://youtu.be/XepXtl9YKwc) | [MLE — Exponential Distribution](https://youtu.be/p3T-_LMrvBc) | [MLE — Binomial](https://youtu.be/4KKV9yZCoM4) | [MLE — Normal Distribution](https://youtu.be/Dn6b9fCIUpM) | [R-squared Explained](https://youtu.be/2AQKmw14mHM)
 
 ## What it is
 Maximum Likelihood Estimation (MLE) is a method for finding the parameters θ that make the observed data most probable under a chosen model: θ̂ = argmax_θ P(data | θ).

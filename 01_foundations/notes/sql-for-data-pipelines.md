@@ -4,6 +4,8 @@ state: review
 created: 2026-06-18
 ---
 
+> **Practice**: [Mode Analytics SQL Tutorial](https://mode.com/sql-tutorial/) | [SQLZoo](https://sqlzoo.net/) | [LeetCode SQL Problems](https://leetcode.com/problemset/database/)
+
 ## What it is
 SQL (Structured Query Language) is the standard language for querying and manipulating relational databases. In the ML pipeline, SQL is used for data extraction, feature engineering, and preparing training datasets from production databases.
 

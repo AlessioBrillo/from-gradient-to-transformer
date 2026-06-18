@@ -4,7 +4,9 @@ state: review
 created: 2026-06-18
 ---
 
-> **Series**: [Essence of Calculus — 3Blue1Brown](https://youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr&si=UrW_Qk2DDRi0K3PQ)
+> **Series**: [Essence of Calculus — 3Blue1Brown](https://youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr&si=UrW_Qk2DDRi0K3PQ) — Chapters 1-3: *The essence of calculus*, *The paradox of the derivative*, *Derivative formulas through geometry*
+>
+> **Also**: [StatQuest — Gradient Descent, Step-by-Step](https://youtu.be/sDv4f4s2SB8) | [StatQuest — Stochastic Gradient Descent](https://youtu.be/vMh0zPT0tLI)
 
 ## What it is
 The derivative measures how fast a function changes at a point; the gradient assembles all partial derivatives into a vector pointing in the direction of steepest ascent.

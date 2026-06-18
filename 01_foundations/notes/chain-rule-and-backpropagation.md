@@ -4,7 +4,9 @@ state: review
 created: 2026-06-18
 ---
 
-> **Series**: [Essence of Calculus — 3Blue1Brown](https://youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr&si=UrW_Qk2DDRi0K3PQ)
+> **Series**: [Essence of Calculus — 3Blue1Brown](https://youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr&si=UrW_Qk2DDRi0K3PQ) — Chapter 4: *Visualizing the chain rule and product rule*
+>
+> **Also**: [StatQuest — The Chain Rule, Clearly Explained](https://youtu.be/wl1myxrtQHQ) | [StatQuest — Gradient Descent, Step-by-Step](https://youtu.be/sDv4f4s2SB8) | [StatQuest — Backpropagation Main Ideas](https://youtu.be/IN2XmBhILt4) | [StatQuest — Backpropagation Details](https://youtu.be/iyn2zdALii8)
 
 ## What it is
 The chain rule computes the derivative of a composite function. Backpropagation is the chain rule applied efficiently to neural networks — propagating error gradients from the output backward through every parameter.

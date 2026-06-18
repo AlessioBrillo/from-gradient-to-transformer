@@ -4,7 +4,9 @@ state: review
 created: 2026-06-18
 ---
 
-> **Series**: [Oxford Mathematics — Information Theory](https://youtube.com/playlist?list=PL4d5ZtfQonW3iAhXvTYCnoGEeRhxhKHMc&si=7FTfYrBynPzkFEzA)
+> **Series**: [Oxford Mathematics — Information Theory](https://youtube.com/playlist?list=PL4d5ZtfQonW3iAhXvTYCnoGEeRhxhKHMc&si=7FTfYrBynPzkFEzA) — Lecture 1: *Defining Entropy and Information*
+>
+> **Also**: [StatQuest — Entropy, Clearly Explained](https://youtu.be/YtebGVx-Fxw) | [StatQuest — Mutual Information](https://youtu.be/eJIp_mgVLwE) | [StatQuest — Cross Entropy (Neural Networks Pt. 6)](https://youtu.be/6ArSys5qHAU) | [StatQuest — Cross Entropy Derivatives (NN Pt. 7)](https://youtu.be/xBEh66V9gZo)
 
 ## What it is
 Entropy measures the average information content of a random variable — how many bits you need on average to encode a sample from its distribution. Cross-entropy and KL divergence extend this to compare two distributions, forming the foundation of every classification loss function in machine learning.

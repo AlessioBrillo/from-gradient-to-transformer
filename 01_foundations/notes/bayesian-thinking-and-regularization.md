@@ -5,6 +5,8 @@ created: 2026-06-18
 ---
 
 > **Series**: [StatQuest with Josh Starmer](https://youtube.com/playlist?list=PLblh5JKOoLUIcdlgu78MnlATeyx4cEVeR&si=9Ro_rZjawyoy_Gz_)
+>
+> **Key episodes**: [Bayes' Theorem](https://youtu.be/9wCnvr7Xw4E) | [Regularization Part 1: L2 Ridge](https://youtu.be/Q81RR3yKn30) | [Regularization Part 2: L1 Lasso](https://youtu.be/NGf0voTMlcs) | [Ridge vs Lasso Visualized](https://youtu.be/Xm2C_gTAl8c) | [Regularization Part 3: Elastic Net](https://youtu.be/1dKRdX9bfIo)
 
 ## What it is
 Bayesian thinking treats parameters as random variables with their own distributions. The prior encodes what we believe before seeing data; the posterior combines prior and data to produce an updated belief. Regularization in ML corresponds exactly to choosing a prior.

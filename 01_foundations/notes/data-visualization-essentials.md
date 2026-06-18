@@ -4,6 +4,10 @@ state: review
 created: 2026-06-18
 ---
 
+> **Series**: [StatQuest — Histograms, Clearly Explained](https://youtu.be/qBigTkBLU6g) | [StatQuest — Boxplots, Clearly Explained](https://youtu.be/fHLhBnmwUM0) | [StatQuest — Bar Charts Are Better Than Pie Charts](https://youtu.be/RiEZ_hEf96A)
+>
+> **Also**: [StatQuest — QQ Plots](https://youtu.be/okjYjClSjOg) | [StatQuest — R-squared Explained](https://youtu.be/2AQKmw14mHM)
+
 ## What it is
 Data visualization is the graphical representation of data to reveal patterns, outliers, distributions, and relationships that summary statistics alone cannot capture. The standard Python stack is matplotlib (low-level) + seaborn (high-level statistical plots).
 

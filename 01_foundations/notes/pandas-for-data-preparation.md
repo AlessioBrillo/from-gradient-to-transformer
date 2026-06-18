@@ -4,6 +4,10 @@ state: review
 created: 2026-06-18
 ---
 
+> **Series**: [StatQuest — One-Hot, Label, Target and K-Fold Target Encoding](https://youtu.be/589nCGeWG1w) | [StatQuest — Logs, Clearly Explained](https://youtu.be/VSi0Z04fWj0)
+>
+> **Practice**: [Kaggle — Pandas Micro-Course](https://www.kaggle.com/learn/pandas)
+
 ## What it is
 pandas is a Python library for tabular data manipulation built on top of NumPy, providing the DataFrame — a column-oriented, labeled, 2D data structure with row and column indices.
 

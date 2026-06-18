@@ -5,6 +5,8 @@ created: 2026-06-18
 ---
 
 > **Series**: [StatQuest with Josh Starmer](https://youtube.com/playlist?list=PLblh5JKOoLUIcdlgu78MnlATeyx4cEVeR&si=9Ro_rZjawyoy_Gz_)
+>
+> **Key episodes**: [Probability Distributions](https://youtu.be/oI3hZJqXJuc) | [Normal Distribution](https://youtu.be/rzFX5NWojp0) | [Conditional Probability](https://youtu.be/_IgyaD7vOOA) | [Bayes' Theorem](https://youtu.be/9wCnvr7Xw4E) | [Expected Values (Discrete)](https://youtu.be/KLs_7b7SKi4) | [Expected Values (Continuous)](https://youtu.be/OSPr6G6Ka-U) | [Central Limit Theorem](https://youtu.be/YAlJCEDH2uY) | [Covariance](https://youtu.be/qtaqvPAeEJY) | [Correlation](https://youtu.be/xZ_z8KWkhXE)
 
 ## What it is
 Probability theory quantifies uncertainty; statistics provides tools to infer properties of populations from samples. Random variables, distributions, expectation, and variance are the vocabulary of every loss function and evaluation metric in machine learning.

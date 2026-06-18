@@ -4,7 +4,7 @@ state: review
 created: 2026-06-18
 ---
 
-> **Series**: [Essence of Calculus — 3Blue1Brown](https://youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr&si=UrW_Qk2DDRi0K3PQ)
+> **Series**: [Essence of Calculus — 3Blue1Brown](https://youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr&si=UrW_Qk2DDRi0K3PQ) — Chapter 2: *The paradox of the derivative* (limits/finite differences intuition)
 
 ## What it is
 The numerical gradient check approximates the true gradient using finite differences, providing an independent verification that your analytical gradient (or backpropagation) implementation is correct.
