@@ -11,10 +11,9 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
 
 ## Skills
 - [x] NumPy: matrix operations, vectorization, broadcasting (exercises: [[01_foundations/exercises/2d-transformation-analysis]], [[01_foundations/exercises/dot-products-norms-and-basis-change]])
-- [ ] Gradient: numerical gradient check implemented
-- [ ] Chain rule: derived and applied by hand
-- [ ] Information theory: entropy, cross-entropy, KL divergence derived and applied
-- [ ] pandas: data cleaning, join, groupby, visualization
-- [ ] SQL: joins, aggregations, window functions on a public dataset
+- [x] Gradient + chain rule: numerical gradient check implemented and verified (exercise: [[01_foundations/exercises/gradient-verification]], proof: [[01_foundations/proofs/chain-rule-and-gradient-check]])
+- [~] Information theory: entropy, cross-entropy, KL divergence derived and applied (exercise: [[01_foundations/exercises/cross-entropy-from-first-principles]])
+- [~] pandas + EDA + visualization: notes created
+- [~] SQL: notes created
 - [ ] Git: init, commit, branch, push
 - [ ] Reproducible environment: uv/venv, requirements.txt

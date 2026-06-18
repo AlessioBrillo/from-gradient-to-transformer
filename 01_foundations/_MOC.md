@@ -21,13 +21,28 @@ Index and links for this phase. Detailed topics/resources/exercises: see [[00_me
 - [[01_foundations/notes/change-of-basis|Change of Basis]]
 - [[01_foundations/notes/eigenvalues-and-eigenvectors|Eigenvalues and Eigenvectors]]
 - [[01_foundations/notes/abstract-vector-spaces|Abstract Vector Spaces]]
+- [[01_foundations/notes/derivatives-and-gradient-descent|Derivatives and Gradient Descent]]
+- [[01_foundations/notes/chain-rule-and-backpropagation|Chain Rule and Backpropagation]]
+- [[01_foundations/notes/key-activation-functions-and-derivatives|Key Activation Functions and Their Derivatives]]
+- [[01_foundations/notes/numerical-gradient-check|Numerical Gradient Check]]
+- [[01_foundations/notes/probability-basics-for-ml|Probability Basics for ML]]
+- [[01_foundations/notes/maximum-likelihood-estimation|Maximum Likelihood Estimation]]
+- [[01_foundations/notes/bayesian-thinking-and-regularization|Bayesian Thinking and Regularization]]
+- [[01_foundations/notes/entropy-cross-entropy-and-kl-divergence|Entropy, Cross-Entropy, and KL Divergence]]
+- [[01_foundations/notes/mutual-information-and-representation-learning|Mutual Information and Representation Learning]]
+- [[01_foundations/notes/pandas-for-data-preparation|pandas for Data Preparation]]
+- [[01_foundations/notes/data-visualization-essentials|Data Visualization Essentials]]
+- [[01_foundations/notes/sql-for-data-pipelines|SQL for Data Pipelines]]
 
 ## Exercises
 - [[01_foundations/exercises/2d-transformation-analysis|2D Transformation Analysis]]
 - [[01_foundations/exercises/dot-products-norms-and-basis-change|Dot Products, Norms, and Change of Basis]]
+- [[01_foundations/exercises/gradient-verification|Gradient Verification]]
+- [[01_foundations/exercises/cross-entropy-from-first-principles|Cross-Entropy from First Principles]]
 
 ## Proofs to myself
 - [[01_foundations/proofs/linear-algebra-foundations|Linear Algebra Foundations]]
+- [[01_foundations/proofs/chain-rule-and-gradient-check|Chain Rule and Gradient Check]]
 
 ## Phase checklist → [[01_foundations/checklist]]
 

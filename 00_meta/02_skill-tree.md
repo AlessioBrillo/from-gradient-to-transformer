@@ -10,9 +10,9 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
 
 ## Phase 1 — Foundations
 - [x] Applied linear algebra (NumPy) — proof: [[01_foundations/proofs/linear-algebra-foundations]] (exercises: [[01_foundations/exercises/2d-transformation-analysis]], [[01_foundations/exercises/dot-products-norms-and-basis-change]])
-- [ ] Gradient + chain rule (gradient check)
+- [x] Gradient + chain rule (gradient check) — proof: [[01_foundations/proofs/chain-rule-and-gradient-check]] (exercise: [[01_foundations/exercises/gradient-verification]])
 - [ ] Probability and MLE
-- [ ] Information theory (entropy, cross-entropy, KL divergence)
+- [~] Information theory (entropy, cross-entropy, KL divergence) — exercise: [[01_foundations/exercises/cross-entropy-from-first-principles]]
 - [ ] pandas + EDA + visualization
 - [ ] SQL + data pipeline basics
 - [ ] Git + reproducible environment
