@@ -3,5 +3,6 @@ module.exports = {
   rules: {
     'body-max-line-length': [2, 'always', 200],
     'footer-max-line-length': [2, 'always', 200],
+    'type-enum': [2, 'always', ['feat', 'fix', 'docs', 'style', 'refactor', 'test', 'build', 'ci', 'chore', 'revert', 'merge']],
   },
 };
