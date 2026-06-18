@@ -10,7 +10,8 @@ created: 2026-06-18
 Euler's number e ≈ 2.71828 is the unique real number such that the exponential function f(x) = eˣ is its own derivative: d/dx eˣ = eˣ. This self-derivative property makes e the natural base for continuous growth, decay, and probability.
 
 ## Why it exists / what problem it solves
-Every exponential function aˣ has a derivative proportional to itself: d/dx aˣ = aˣ · ln(a). The constant ln(a) is a scaling factor. The number e is special because ln(e) = 1, eliminating the scaling factor and making eˣ the "purest" exponential — the one whose rate of change equals its value at every point. This property is why e appears in the sigmoid, softmax, cross-entropy, Gaussian distribution, and every continuous probability model.
+Every exponential function aˣ has a derivative proportional to itself: d/dx aˣ = aˣ · ln(a). The constant ln(a) is a scaling factor. The number e is special because ln(e) = 1, eliminating the scaling factor and making eˣ the "purest" exponential — the one whose rate of change equals its value at every point. This property is why e appears in the sigmoid, softmax, cross-entropy,
+  Gaussian distribution, and every continuous probability model.
 
 ## How it works
 
@@ -72,4 +73,5 @@ for x in x_test:
 - [[01_foundations/notes/derivatives-and-gradient-descent|Derivatives and Gradient Descent]]
 
 ## Insight
-The fact that eˣ is its own derivative is the hidden reason why softmax + cross-entropy produces such a clean gradient. In the chain rule for d/dz_i log(softmax(z)_i), the exponential function's self-derivative property makes terms cancel perfectly, leaving just (p_i − 1). If we used any other base b, the gradient would have an extra factor of ln(b) — absorbed by learned weights anyway, but mathematically less elegant.
+The fact that eˣ is its own derivative is the hidden reason why softmax + cross-entropy produces such a clean gradient. In the chain rule for d/dz_i log(softmax(z)_i), the exponential function's self-derivative property makes terms cancel perfectly, leaving just (p_i − 1). If we used any other base b, the gradient would have an extra factor of ln(b) — absorbed by learned weights
+  anyway, but mathematically less elegant.

@@ -87,4 +87,5 @@ This last point is crucial: **every training loss is a Monte Carlo estimate of a
 - [[01_foundations/notes/eulers-number-and-exponential|Euler's Number and the Exponential Function]]
 
 ## Insight
-The training loss (1/n) Σ L(x_i, y_i) is a Monte Carlo approximation of the true risk R(θ) = E_{(x,y)∼p_data}[L(x, y; θ)]. This is why larger datasets give better models — they provide a more accurate estimate of the integral over the true distribution. The Fundamental Theorem of Calculus connects the two: differentiation tells us how to improve our model (gradient descent), and integration tells us how to evaluate it (expected loss).
+The training loss (1/n) Σ L(x_i, y_i) is a Monte Carlo approximation of the true risk R(θ) = E_{(x,y)∼p_data}[L(x, y; θ)]. This is why larger datasets give better models — they provide a more accurate estimate of the integral over the true distribution. The Fundamental Theorem of Calculus connects the two: differentiation tells us how to improve our model (gradient descent), and
+  integration tells us how to evaluate it (expected loss).

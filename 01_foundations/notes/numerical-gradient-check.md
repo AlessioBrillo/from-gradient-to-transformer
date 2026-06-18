@@ -94,4 +94,5 @@ print("Gradient check PASSED ✓")
 - [[01_foundations/notes/key-activation-functions-and-derivatives|Key Activation Functions and Their Derivatives]]
 
 ## Insight
-The numerical gradient check is the unit test for backpropagation. In production deep learning frameworks, it is used during development to verify custom layers (PyTorch's `torch.autograd.gradcheck`). It cannot replace analytical gradients during training (too slow — O(n) forward passes per parameter), but it is the single most effective debugging tool when your model refuses to converge and you suspect a gradient bug.
+The numerical gradient check is the unit test for backpropagation. In production deep learning frameworks, it is used during development to verify custom layers (PyTorch's `torch.autograd.gradcheck`). It cannot replace analytical gradients during training (too slow — O(n) forward passes per parameter), but it is the single most effective debugging tool when your model refuses to
+  converge and you suspect a gradient bug.

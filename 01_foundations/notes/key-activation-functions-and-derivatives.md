@@ -12,7 +12,8 @@ created: 2026-06-18
 Activation functions introduce non-linearity into neural networks; each has a specific derivative that is used during backpropagation.
 
 ## Why it exists / what problem it solves
-A composition of linear transformations is itself linear — stacking any number of dense layers without activations collapses to a single linear transformation. Non-linear activations allow networks to represent arbitrary functions (universal approximation theorem). The derivative of each activation determines how gradients flow during training: saturating activations like sigmoid can kill gradients; non-saturating ones like ReLU keep them alive.
+A composition of linear transformations is itself linear — stacking any number of dense layers without activations collapses to a single linear transformation. Non-linear activations allow networks to represent arbitrary functions (universal approximation theorem). The derivative of each activation determines how gradients flow during training: saturating activations like sigmoid can
+  kill gradients; non-saturating ones like ReLU keep them alive.
 
 ## How it works
 
@@ -90,4 +91,5 @@ where ⊙ is element-wise multiplication and σ'(z_ℓ) is the activation deriva
 - [[01_foundations/notes/numerical-gradient-check|Numerical Gradient Check]]
 
 ## Insight
-The choice of activation function is a choice about **gradient flow**. Sigmoid and tanh squash their inputs, creating regions where the derivative is near-zero. ReLU and its variants keep gradients alive but introduce a different problem: the gradient is either 1 or 0, which means a neuron is either fully learning or fully dead. Modern architectures (Transformer, Llama) use GELU or SwiGLU — smooth approximations that avoid the hard cut-off of ReLU while keeping gradients healthy.
+The choice of activation function is a choice about **gradient flow**. Sigmoid and tanh squash their inputs, creating regions where the derivative is near-zero. ReLU and its variants keep gradients alive but introduce a different problem: the gradient is either 1 or 0, which means a neuron is either fully learning or fully dead. Modern architectures (Transformer, Llama) use GELU or
+  SwiGLU — smooth approximations that avoid the hard cut-off of ReLU while keeping gradients healthy.

@@ -10,7 +10,8 @@ created: 2026-06-18
 Higher-order derivatives measure curvature and beyond: the second derivative tells you how the slope is changing (concavity). Taylor series approximate any smooth function locally as a polynomial whose coefficients are the derivatives at a point.
 
 ## Why it exists / what problem it solves
-First derivatives (gradients) tell us which direction to move, but not how far — that is the role of curvature. Second derivatives (Hessian) govern learning rate selection, convergence speed, and the behavior of adaptive optimizers like Adam. Taylor series provide the theoretical foundation for gradient descent itself: gradient descent assumes a linear (first-order Taylor) approximation is good enough. Newton's method uses a quadratic (second-order Taylor) approximation for faster convergence.
+First derivatives (gradients) tell us which direction to move, but not how far — that is the role of curvature. Second derivatives (Hessian) govern learning rate selection, convergence speed, and the behavior of adaptive optimizers like Adam. Taylor series provide the theoretical foundation for gradient descent itself: gradient descent assumes a linear (first-order Taylor)
+  approximation is good enough. Newton's method uses a quadratic (second-order Taylor) approximation for faster convergence.
 
 ## How it works
 
@@ -133,4 +134,5 @@ plt.grid(alpha=0.3)
 - [[01_foundations/notes/numerical-gradient-check|Numerical Gradient Check]]
 
 ## Insight
-In high-dimensional spaces, saddle points vastly outnumber local minima. A point where ∇f = 0 is overwhelmingly likely to be a saddle (mixed curvature) rather than a true minimum. This is why first-order methods (gradient descent) can escape saddle points — they only see the gradient, which is zero at the saddle, but tiny perturbations from mini-batch noise push them away. Second-order methods that try to converge directly to a minimum can get stuck at saddles instead. This insight explains why SGD with mini-batches works so well in practice: the noise is a feature, not a bug.
+In high-dimensional spaces, saddle points vastly outnumber local minima. A point where ∇f = 0 is overwhelmingly likely to be a saddle (mixed curvature) rather than a true minimum. This is why first-order methods (gradient descent) can escape saddle points — they only see the gradient, which is zero at the saddle, but tiny perturbations from mini-batch noise push them away.
+  Second-order methods that try to converge directly to a minimum can get stuck at saddles instead. This insight explains why SGD with mini-batches works so well in practice: the noise is a feature, not a bug.

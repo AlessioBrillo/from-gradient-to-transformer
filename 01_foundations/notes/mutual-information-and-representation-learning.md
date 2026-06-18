@@ -79,4 +79,5 @@ If X → Y → Z (Markov chain), then I(X; Z) ≤ I(X; Y). Processing cannot cre
 - [[01_foundations/notes/probability-basics-for-ml|Probability Basics for ML]]
 
 ## Insight
-The InfoNCE loss — used in CLIP, SimCLR, and virtually every modern contrastive learning framework — is explicitly derived from mutual information maximization. When people say "CLIP learns aligned text-image representations by maximizing MI," they literally mean the loss function is a tractable lower bound on I(image; caption). The information theory foundations of modern deep learning are not theoretical abstraction — they are the actual loss functions running in production systems.
+The InfoNCE loss — used in CLIP, SimCLR, and virtually every modern contrastive learning framework — is explicitly derived from mutual information maximization. When people say "CLIP learns aligned text-image representations by maximizing MI," they literally mean the loss function is a tractable lower bound on I(image; caption). The information theory foundations of modern deep
+  learning are not theoretical abstraction — they are the actual loss functions running in production systems.

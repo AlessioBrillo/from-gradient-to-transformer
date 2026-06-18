@@ -141,4 +141,5 @@ WHERE rn <= 5000;  -- up to 5000 per class
 - [[01_foundations/notes/data-visualization-essentials|Data Visualization Essentials]]
 
 ## Insight
-SQL window functions are the superpower that most data scientists underuse. The ability to compute a rolling 30-day average per user, a rank within a department, or the time since the last purchase — all in a single query without leaving the database — eliminates entire classes of feature engineering bugs (data leakage from future information, incorrect group boundaries, off-by-one errors in time ordering). If you can write a CTE with a window function, you can build any training set.
+SQL window functions are the superpower that most data scientists underuse. The ability to compute a rolling 30-day average per user, a rank within a department, or the time since the last purchase — all in a single query without leaving the database — eliminates entire classes of feature engineering bugs (data leakage from future information, incorrect group boundaries, off-by-one
+  errors in time ordering). If you can write a CTE with a window function, you can build any training set.
