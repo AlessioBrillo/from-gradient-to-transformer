@@ -12,7 +12,9 @@ created: 2026-06-18
 Data visualization is the graphical representation of data to reveal patterns, outliers, distributions, and relationships that summary statistics alone cannot capture. The standard Python stack is matplotlib (low-level) + seaborn (high-level statistical plots).
 
 ## Why it exists / what problem it solves
-You cannot build a good model without understanding your data. EDA (Exploratory Data Analysis) is the process of visually inspecting data before modeling. A well-chosen chart can reveal skewed distributions, missing data patterns, correlations, interactions, and data quality issues that no statistical test will flag. In production, visualizations communicate model behavior to stakeholders who do not read confusion matrices.
+You cannot build a good model without understanding your data. EDA (Exploratory Data Analysis) is the process of visually inspecting data before modeling.
+A well-chosen chart can reveal skewed distributions, missing data patterns, correlations, interactions, and data quality issues that no statistical test will flag.
+In production, visualizations communicate model behavior to stakeholders who do not read confusion matrices.
 
 ## How it works
 

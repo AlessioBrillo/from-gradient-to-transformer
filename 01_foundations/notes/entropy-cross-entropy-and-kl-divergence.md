@@ -117,4 +117,5 @@ q₁ is closer to p than q₂ (lower cross-entropy, lower KL divergence).
 - [[01_foundations/notes/probability-basics-for-ml|Probability Basics for ML]]
 
 ## Insight
-Cross-entropy loss = negative log-likelihood of a categorical distribution = D_KL(one-hot ‖ predictions) + constant. Three different perspectives on exactly the same objective. Understanding this equivalence means you understand why classification works: you are measuring the "coding inefficiency" of using your predicted distribution q to represent the true distribution p, and minimizing that inefficiency forces q to match p.
+Cross-entropy loss = negative log-likelihood of a categorical distribution = D_KL(one-hot ‖ predictions) + constant. Three different perspectives on exactly the same objective.
+Understanding this equivalence means you understand why classification works: you are measuring the "coding inefficiency" of using your predicted distribution q to represent the true distribution p, and minimizing that inefficiency forces q to match p.

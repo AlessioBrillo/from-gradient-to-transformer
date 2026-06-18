@@ -105,4 +105,7 @@ print(f"Note: MAP is pulled toward prior (0) when data is scarce")
 - [[01_foundations/notes/entropy-cross-entropy-and-kl-divergence|Entropy, Cross-Entropy, and KL Divergence]]
 
 ## Insight
-The Bayesian view reframes regularization: weight decay is not a hack to prevent overfitting — it is a principled consequence of placing a Gaussian prior on your weights. L1 and L2 regularization correspond to different assumptions about the distribution of weights (Laplace vs Gaussian). When you choose a regularizer, you are implicitly choosing a prior belief about how your model should behave. This is why L2 is the default for deep networks: the Gaussian prior assumes most weights are small but non-zero, which matches the distributed representation hypothesis.
+The Bayesian view reframes regularization: weight decay is not a hack to prevent overfitting — it is a principled consequence of placing a Gaussian prior on your weights.
+L1 and L2 regularization correspond to different assumptions about the distribution of weights (Laplace vs Gaussian).
+When you choose a regularizer, you are implicitly choosing a prior belief about how your model should behave.
+This is why L2 is the default for deep networks: the Gaussian prior assumes most weights are small but non-zero, which matches the distributed representation hypothesis.
