@@ -174,4 +174,8 @@ print(f"Degree {degree}: avg bias² = {bias_sq.mean():.3f}, "
 - [[01_foundations/notes/derivatives-and-gradient-descent]]
 
 ## Insight
-The bias-variance decomposition is not just a theoretical curiosity — it is a **diagnostic tool**. If your model is underfitting (high training error), you are in the high-bias regime: add features, reduce regularization, use a more flexible model. If your model is overfitting (low training error, high validation error), you are in the high-variance regime: add regularization, reduce features, get more data. The decomposition tells you which lever to pull, not just that something is wrong.
+The bias-variance decomposition is not just a theoretical curiosity — it is a **diagnostic tool**.
+If your model is underfitting (high training error), you are in the high-bias regime: add features,
+reduce regularization, use a more flexible model. If your model is overfitting (low training error,
+high validation error), you are in the high-variance regime: add regularization, reduce features,
+get more data. The decomposition tells you which lever to pull, not just that something is wrong.

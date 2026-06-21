@@ -106,4 +106,8 @@ KKT stationarity gives w = Σ αᵢ yᵢ xᵢ — the weight vector is a linear 
 - [[01_foundations/notes/maximum-likelihood-estimation]]
 
 ## Insight
-The Lagrange multiplier λ in a regularized objective is not a free hyperparameter to tune by guesswork — it is the dual variable of a budget constraint. Cross-validation over λ is implicitly searching for the tightest budget that still achieves low training error. This dual perspective (primal: constraint on weights; dual: penalty on loss) is the foundation of the SVM, Lasso, and every regularized estimator. Understanding it now saves you from treating regularization as a hack.
+The Lagrange multiplier λ in a regularized objective is not a free hyperparameter to tune by
+guesswork — it is the dual variable of a budget constraint. Cross-validation over λ is implicitly
+searching for the tightest budget that still achieves low training error. This dual perspective
+(primal: constraint on weights; dual: penalty on loss) is the foundation of the SVM, Lasso, and
+every regularized estimator. Understanding it now saves you from treating regularization as a hack.

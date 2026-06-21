@@ -14,7 +14,11 @@ Convex optimization studies minimizing convex functions over convex sets. A func
 
 ## Why it exists / what problem it solves
 
-Not every optimization problem is equally hard. Convex problems have a **single global minimum** with no spurious local minima or saddle points. Gradient descent provably converges to the global optimum for convex losses — no matter where you start. This is why logistic regression and linear SVMs (both convex) have clean convergence guarantees, while neural networks (non-convex) require careful initialization and tuning.
+Not every optimization problem is equally hard. Convex problems have a **single global minimum**
+with no spurious local minima or saddle points. Gradient descent provably converges to the
+global optimum for convex losses — no matter where you start. This is why logistic regression
+and linear SVMs (both convex) have clean convergence guarantees, while neural networks
+(non-convex) require careful initialization and tuning.
 
 ## How it works
 
@@ -98,4 +102,8 @@ where μ is the strong convexity parameter (minimum eigenvalue of the Hessian). 
 - [[01_foundations/notes/lagrange-multipliers]]
 
 ## Insight
-Convexity is not about the shape of the loss landscape in the data space — it is about the shape in **parameter space**. MSE as a function of the residual is a parabola (convex), but MSE as a function of neural network weights is not. The distinction is invisible until you derive the second derivative with respect to the actual parameters. This is why feature engineering (making the problem more linearly separable) is often easier than making the model more powerful.
+Convexity is not about the shape of the loss landscape in the data space — it is about the shape
+in **parameter space**. MSE as a function of the residual is a parabola (convex), but MSE as a
+function of neural network weights is not. The distinction is invisible until you derive the
+second derivative with respect to the actual parameters. This is why feature engineering (making
+the problem more linearly separable) is often easier than making the model more powerful.

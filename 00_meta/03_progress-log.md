@@ -41,7 +41,11 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open: Phase 1 document gaps fully closed. Remaining before Phase 2: convex optimization, Lagrange multipliers, SVD depth, positive definite matrices, bias-variance decomposition, backprop MLP exercise, SVD compression exercise
 
 ## 2026-06-19 (second session)
-- Studied: convex optimization (set/function definitions, Hessian condition, convexity of ML losses), Lagrange multipliers (geometric derivation, KKT conditions, connection to regularization), positive definite matrices (quadratic forms, Cholesky, definiteness ↔ curvature), SVD in depth (Eckart-Young, pseudoinverse, PCA connection), bias-variance decomposition (derivation, tradeoff, regularization connection)
+- Studied: convex optimization (set/function definitions, Hessian condition, convexity of ML losses),
+  Lagrange multipliers (geometric derivation, KKT conditions, connection to regularization),
+  positive definite matrices (quadratic forms, Cholesky, definiteness ↔ curvature),
+  SVD in depth (Eckart-Young, pseudoinverse, PCA connection),
+  bias-variance decomposition (derivation, tradeoff, regularization connection)
 - Built: 7 new notes (convex-optimization-basics, positive-definite-matrices, lagrange-multipliers, singular-value-decomposition, bias-variance-decomposition, data-pipeline-fundamentals), 4 new proofs (convex-optimization, lagrange-multipliers, svd-foundations, bias-variance-decomposition), 2 new exercises (manual-backprop-mlp, svd-image-compression)
 - Updated: MOC with all new entries, bulk tag promotion (state/review → state/consolidated) across all 40+ Phase 1 files
 - Populated: references/papers/ with 5 reference entries (Deisenroth MML, Cover & Thomas, Eckart-Young, Boyd Convex Optimization, ISL)

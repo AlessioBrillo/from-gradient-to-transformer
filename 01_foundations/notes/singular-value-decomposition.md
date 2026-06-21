@@ -167,4 +167,9 @@ def pca_via_svd(X, n_components):
 - [[01_foundations/notes/positive-definite-matrices]]
 
 ## Insight
-SVD unifies three perspectives on the same object: **geometry** (A = rotate → scale → rotate), **algebra** (A = sum of rank-1 matrices σᵢ uᵢ vᵢᵀ), and **statistics** (A captures covariance structure, and truncating SVD = denoising). When you see a matrix in ML, always ask: what does the SVD reveal? For embeddings: the SVD of the weight matrix reveals the effective rank (how many latent dimensions are actually used). For attention: the SVD of the attention logits reveals the "head bandwidth" — how many independent patterns each head captures.
+SVD unifies three perspectives on the same object: **geometry** (A = rotate → scale → rotate),
+**algebra** (A = sum of rank-1 matrices σᵢ uᵢ vᵢᵀ), and **statistics** (A captures covariance
+structure, and truncating SVD = denoising). When you see a matrix in ML, always ask: what does
+the SVD reveal? For embeddings: the SVD of the weight matrix reveals the effective rank (how many
+latent dimensions are actually used). For attention: the SVD of the attention logits reveals the
+"head bandwidth" — how many independent patterns each head captures.

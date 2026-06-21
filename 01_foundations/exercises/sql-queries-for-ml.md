@@ -270,7 +270,11 @@ LEFT JOIN purchase_features pf ON ub.user_id = pf.user_id
 ORDER BY ub.total_spend DESC;
 ```
 
-**ML context**: This is the exact pattern you use in production to build a training set. Each CTE extracts a different view of the data (base attributes, behavioral features, transaction features). The final `SELECT` joins them into a flat table where each row = one observation and each column = one feature. The `COALESCE` calls handle missingness: a user with no sessions gets 0, not NULL. The `CASE WHEN` creates a categorical label (recency segment) directly in SQL.
+**ML context**: This is the exact pattern you use in production to build a training set.
+Each CTE extracts a different view of the data (base attributes, behavioral features, transaction features).
+The final `SELECT` joins them into a flat table where each row = one observation and each column = one feature.
+The `COALESCE` calls handle missingness: a user with no sessions gets 0, not NULL.
+The `CASE WHEN` creates a categorical label (recency segment) directly in SQL.
 
 ## What I learned doing it
 

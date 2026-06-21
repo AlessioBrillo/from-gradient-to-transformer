@@ -183,7 +183,10 @@ plt.tight_layout()
 
 ## What I learned doing it
 
-SVD image compression demonstrates the Eckart–Young theorem visually: the reconstructed image at rank k is the optimal rank-k approximation of the original, and the error equals the sum of squares of the discarded singular values. The elbow in the singular value spectrum tells you the "effective rank" of the image — the number of independent degrees of freedom needed to represent it at the desired fidelity.
+SVD image compression demonstrates the Eckart–Young theorem visually: the reconstructed image at rank k is
+the optimal rank-k approximation of the original, and the error equals the sum of squares of the discarded
+singular values. The elbow in the singular value spectrum tells you the "effective rank" of the image — the
+number of independent degrees of freedom needed to represent it at the desired fidelity.
 
 The denoising experiment shows that noise inflates the small singular values. Truncating them recovers a cleaner signal, but you pay a price: the signal component living in the discarded dimensions is also lost. The optimal truncation rank is where the marginal loss of signal equals the marginal removal of noise.
 

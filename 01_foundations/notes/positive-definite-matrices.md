@@ -112,4 +112,9 @@ This is the link between linear algebra (eigenvalues of symmetric matrices) and 
 - [[01_foundations/notes/singular-value-decomposition]]
 
 ## Insight
-The definiteness of a matrix is **scale-dependent**: multiplying A by −1 flips definiteness. This is why maximizing log-likelihood (concave) is equivalent to minimizing negative log-likelihood (convex). The convention in ML is to frame every problem as minimization of a convex (or at least non-convex) loss — not because maximization is harder, but because gradient descent is defined for minimization, and the convexity guarantee only applies in the "minimize" direction.
+The definiteness of a matrix is **scale-dependent**: multiplying A by −1 flips definiteness.
+This is why maximizing log-likelihood (concave) is equivalent to minimizing negative
+log-likelihood (convex). The convention in ML is to frame every problem as minimization of a
+convex (or at least non-convex) loss — not because maximization is harder, but because gradient
+descent is defined for minimization, and the convexity guarantee only applies in the "minimize"
+direction.

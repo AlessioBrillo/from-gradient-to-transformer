@@ -14,7 +14,11 @@ A data pipeline is the sequence of steps that moves raw data from its source to 
 
 ## Why it exists / what problem it solves
 
-Raw data is never ready for modeling. It lives in different systems (Postgres, logs, CSV dumps, JSON APIs), in different formats (tabular, nested, columnar), with different quality levels (missing values, type mismatches, duplicates, outliers). A data pipeline codifies the cleaning and transformation logic so that it is reproducible, testable, and auditable — rather than a sequence of ad-hoc Jupyter notebook cells.
+Raw data is never ready for modeling. It lives in different systems (Postgres, logs, CSV dumps,
+JSON APIs), in different formats (tabular, nested, columnar), with different quality levels
+(missing values, type mismatches, duplicates, outliers). A data pipeline codifies the cleaning
+and transformation logic so that it is reproducible, testable, and auditable — rather than a
+sequence of ad-hoc Jupyter notebook cells.
 
 ## How it works
 
