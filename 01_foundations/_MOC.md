@@ -1,6 +1,6 @@
 ---
-tags: [moc, phase/1, state/review]
-state: review
+tags: [moc, phase/1, state/consolidated]
+state: consolidated
 created: 2026-06-18
 ---
 
@@ -39,6 +39,12 @@ Index and links for this phase. Detailed topics/resources/exercises: see [[00_me
 - [[01_foundations/notes/integration-and-fundamental-theorem|Integration and the Fundamental Theorem of Calculus]]
 - [[01_foundations/notes/higher-order-derivatives-and-taylor-series|Higher-Order Derivatives and Taylor Series]]
 - [[01_foundations/notes/git-and-reproducible-environments|Git and Reproducible Environments]]
+- [[01_foundations/notes/data-pipeline-fundamentals|Data Pipeline Fundamentals]]
+- [[01_foundations/notes/convex-optimization-basics|Convex Optimization Basics]]
+- [[01_foundations/notes/positive-definite-matrices|Positive Definite Matrices and Quadratic Forms]]
+- [[01_foundations/notes/lagrange-multipliers|Lagrange Multipliers and KKT Conditions]]
+- [[01_foundations/notes/singular-value-decomposition|Singular Value Decomposition (SVD) — In Depth]]
+- [[01_foundations/notes/bias-variance-decomposition|Bias-Variance Decomposition]]
 
 ## Exercises
 - [[01_foundations/exercises/2d-transformation-analysis|2D Transformation Analysis]]
@@ -48,12 +54,21 @@ Index and links for this phase. Detailed topics/resources/exercises: see [[00_me
 - [[01_foundations/exercises/maximum-likelihood-estimation-in-practice|Maximum Likelihood Estimation in Practice]]
 - [[01_foundations/exercises/probability-sampling-and-expectation|Probability Sampling and Expectation]]
 - [[01_foundations/exercises/pipeline-eda-and-visualization|End-to-End EDA and Visualization Pipeline]]
+- [[01_foundations/exercises/sql-queries-for-ml|SQL Queries for ML Pipelines]]
+- [[01_foundations/exercises/manual-backprop-mlp|Manual Backpropagation Through a 2-Layer MLP]]
+- [[01_foundations/exercises/svd-image-compression|SVD Image Compression]]
 
 ## Proofs to myself
 - [[01_foundations/proofs/linear-algebra-foundations|Linear Algebra Foundations]]
 - [[01_foundations/proofs/chain-rule-and-gradient-check|Chain Rule and Gradient Check]]
 - [[01_foundations/proofs/probability-and-mle|Probability and MLE]]
 - [[01_foundations/proofs/information-theory-foundations|Information Theory Foundations]]
+- [[01_foundations/proofs/pandas-eda-proof|pandas + EDA Pipeline]]
+- [[01_foundations/proofs/sql-data-fundamentals|SQL and Data Fundamentals]]
+- [[01_foundations/proofs/convex-optimization|Convex Optimization]]
+- [[01_foundations/proofs/lagrange-multipliers|Lagrange Multipliers and KKT]]
+- [[01_foundations/proofs/svd-foundations|Singular Value Decomposition (SVD)]]
+- [[01_foundations/proofs/bias-variance-decomposition|Bias-Variance Decomposition]]
 
 ## Phase checklist → [[01_foundations/checklist]]
 

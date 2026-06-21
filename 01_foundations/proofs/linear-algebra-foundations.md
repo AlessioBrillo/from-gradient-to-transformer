@@ -1,5 +1,6 @@
 ---
 tags: [type/proof, phase/1]
+state: consolidated
 created: 2026-06-16
 ---
 
