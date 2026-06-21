@@ -225,24 +225,38 @@ These are not a separate phase — they grow with you. Engage with them at each 
 
 ## Phase 7 — Capstone: micro-LLM from scratch
 
-**Goal:** build, train, and document a **complete LLM from scratch**, with the same architectural foundation as modern models (decoder-only Transformer). This is the centerpiece of the portfolio. Operational details in [[07_capstone/README]].
+**Goal:** build, train, evaluate, and document a **complete LLM from scratch** on an Italian corpus. This is the centerpiece of both the portfolio and the research thesis: quantifying the Italian tokenization tax at micro scale. Operational details in [[07_capstone/README]].
+
+**Research thesis**
+> Quantify and partially close the "Italian tokenization tax" at micro scale by building a decoder-only Transformer from scratch with an Italian-optimized tokenizer, and measure the effect on fertility, perplexity, and a downstream Italian NLU task.
+
+**Experiment ladder (do in order)**
+1. **Tokenizer fertility study** — Train Italian BPE/Unigram tokenizers at several vocab sizes; measure fertility, Rényi efficiency, and compression ratio on Italian vs English; compare to GPT-2/Mistral/Gemma tokenizers. *This is the headline result.*
+2. **Micro-LM pretraining with tokenizer ablation** — Two identical decoder-only models (~10–50M params) on the same Italian corpus, differing only in tokenizer; compare bits-per-byte and tokens-to-convergence.
+3. **Positional encoding ablation** — Sinusoidal vs learned vs RoPE on the same micro-LM.
+4. **Downstream evaluation** — Fine-tune/probe on UINAUIL or ItaCoLA; report mean ± std over ≥3 seeds.
 
 **Topics / pipeline**
-- Data: corpus selection, cleaning, tokenizer (your own BPE).
+- Data: Italian corpus (PAISÀ, Wikipedia, clean mC4), cleaning, train/val split.
 - Decoder-only architecture: embedding + positional (RoPE) + blocks (attention + MLP) + norm (RMSNorm) + head.
 - Training loop: batch, loss (cross-entropy), optimizer, scheduler, checkpoint, logging.
 - Generation: sampling with temperature/top-k/top-p.
-- (Stretch) fine-tuning/instruction-tuning of a tiny version; architectural comparison with GPT/Llama.
+- Evaluation: tokenizer metrics (fertility, Rényi efficiency), bits-per-byte, perplexity, NLU task performance.
 
 **Resources**
 - **Sebastian Raschka — *Build a Large Language Model (From Scratch)*** (Manning) + official repo.
 - **Karpathy — `nanoGPT`, `minGPT`, `llm.c`**; videos *Let's build GPT* and *Let's reproduce GPT-2*.
-- Reference papers for modern choices: RoPE, RMSNorm, GQA, SwiGLU (Llama/Mistral series).
+- Reference papers: RoPE, RMSNorm, GQA, SwiGLU (Llama/Mistral series).
+- Orlando et al., *Minerva LLMs* (CLiC-it 2024) — Italian LLM reference point.
+- Moroni et al., *Optimizing LLMs for Italian* (Findings of NAACL 2025) — tokenizer fertility data.
+- Eldan & Li, *TinyStories* (2023) — micro-scale LM methodology.
+- Lyding et al., *PAISÀ* (WaC-9 2014) — Italian web corpus.
+- Sarti & Nissim, *IT5* (LREC-COLING 2024) — clean Italian mC4.
 
 **Must exercises**
 1. BPE tokenizer → dataset → model → training → generation, all yours, no blind copy-paste.
-2. Tracked experiments: model size vs loss, ablation on one component (e.g., with/without norm).
-3. Final **writeup** ([[07_capstone/writeup]]): architecture choices and *why*.
+2. Tracked experiments: tokenizer ablation, positional encoding ablation, ≥3 seeds per condition.
+3. Mini-paper (4–8 pages LaTeX): abstract, method, experiments, ablations, limitations, references.
 
 **Final proof (graduation)**
-> The model generates coherent text in the chosen domain **and** you can explain every component and why it is there. If an examiner asks "why RMSNorm and not BatchNorm?" and you answer confidently → you are an AI Engineer.
+> The model generates coherent Italian text, the tokenizer fertility analysis produces a headline number, every experiment is reproducible via `uv sync && make reproduce`, and you can explain every architectural choice and its effect on the Italian tokenization tax.

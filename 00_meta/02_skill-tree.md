@@ -34,7 +34,6 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
 - [ ] CNN and RNN/LSTM (implementation)
 - [ ] Generative models (GAN / VAE / diffusion awareness)
 - [ ] Reinforcement learning fundamentals
-- [ ] Training tricks (gradient accumulation, mixed precision, gradient clipping)
 
 ## Phase 4 — NLP & Transformers
 - [ ] BPE tokenizer from scratch
@@ -45,7 +44,6 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
 - [ ] Scaling Laws (Kaplan, Chinchilla)
 - [ ] Computational optimizations (FlashAttention, KV cache)
 - [ ] Sampling (temperature/top-k/top-p)
-- [ ] Multi-modal awareness (CLIP, cross-modal)
 
 ## Phase 5 — LLM Engineering
 - [ ] RAG end-to-end
@@ -56,21 +54,21 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
 - [ ] LLM safety and red teaming
 - [ ] Inference optimization (KV cache, structured output, speculative decoding)
 - [ ] Model quantization (GPTQ, AWQ, GGUF)
-- [ ] Cost/latency/serving reasoning
 
 ## Phase 6 — Production AI
 - [ ] ML system design doc
 - [ ] Deploy + monitoring + rollback
-- [ ] ROI calculation with sensitivity
-- [ ] Anti-obsolescence architecture
+- [ ] Experiment tracking (W&B)
+- [ ] Reproducibility harness
 - [ ] Interpretability (SHAP, LIME, mech interp)
 - [ ] Privacy/GDPR + governance
 - [ ] Production security (prompt injection, guardrails, adversarial robustness)
-- [ ] Data versioning + experiment tracking (DVC, MLflow/W&B)
 
-## Cross-cutting (studied across phases)
-- [ ] Ethics, fairness, bias in AI (dataset bias, fairness metrics, regulatory context)
-- [ ] Interpretability stack (feature → neuron → mechanistic)
+## Research Skills
+- [ ] Tokenizer fertility analysis (Italian vs English)
+- [ ] Reproducible experiment pipeline (≥3 seeds, mean ± std)
+- [ ] From-scratch decoder-only Transformer
+- [ ] Mini-paper writing (LaTeX, citations, ablations)
 
 ## Phase 7 — Capstone
 - [ ] Custom tokenizer + dataset

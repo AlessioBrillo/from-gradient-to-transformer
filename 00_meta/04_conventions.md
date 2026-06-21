@@ -10,6 +10,7 @@ Simple rules, always applied. Consistency is what makes the vault navigable 6 mo
 - Phase folders: `NN_name` (numeric prefix → guaranteed order).
 - Atomic notes: `kebab-case`, title = concept (e.g., `self-attention.md`, `bias-variance.md`).
 - Exercises: `ex-NN-description.md`. Proofs: `proof-concept.md`.
+- Python modules: `snake_case.py`, one class or logical group per file.
 
 ## Tags (few and useful)
 - `#phase/1` … `#phase/7` — phase membership.
@@ -31,9 +32,23 @@ Simple rules, always applied. Consistency is what makes the vault navigable 6 mo
 
 > If you cannot write point 2 ("why it exists"), you haven't yet understood the concept.
 
+## Anatomy of a research note
+Every research note (experiment, derivation, result) should make a **claim** supported by evidence:
+1. **Claim** — one sentence hypothesis or finding.
+2. **Method** — how it was tested.
+3. **Evidence** — numbers, figures, code output.
+4. **Limitations** — what the evidence does *not* prove.
+5. **Links** — to the code, to related concepts, to primary literature.
+
 ## Study → note workflow
 1. Study the resource. 2. Close everything. 3. Rewrite the concept **in your own words** (this is the moment you learn). 4. Do the exercise. 5. Do the proof. 6. Check the skill.
 
 ## Git commit
 One commit per study session, descriptive message:
 `phase3: note on backprop + micrograd exercise solved`. The git history becomes the objective proof of your journey — valuable for the portfolio.
+
+## Python code conventions
+- Type hints everywhere (enforced by `mypy --strict` where practical).
+- All experiments accept a `--seed` argument and call `set_seed()` at entry.
+- Every experiment script reports mean ± std over ≥3 seeds.
+- Import from `src.*` package paths, not relative imports.

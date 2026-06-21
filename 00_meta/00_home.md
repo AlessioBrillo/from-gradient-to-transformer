@@ -7,6 +7,12 @@ created: 2026-01-01
 
 Central map of the vault. Everything starts here.
 
+## Headline Result
+
+The primary research contribution: **quantifying the Italian tokenization tax** at micro scale. See [[portfolio/RESULTS]] for the latest findings and [[portfolio/README]] for all showcase artifacts.
+
+> If you have 30 seconds, read the thesis and headline result. If you have 30 minutes, read the mini-paper.
+
 ## Meta
 - [[01_roadmap]] — the complete path, phase by phase
 - [[02_skill-tree]] — competence tree (master checklist)
@@ -25,6 +31,7 @@ Central map of the vault. Everything starts here.
 - [[07_capstone/README|Phase 7 · Capstone micro-LLM]]
 
 ## How to Use the Graph
+
 Open **Graph View** (Ctrl/Cmd+O). The clusters that emerge are the signal that you are connecting concepts, not just accumulating them. If a note stays isolated (orphan), it almost always means you haven't understood it well enough to link it.
 
 > Golden rule: **one note = one atomic concept**. If you cannot title it in 5 words, break it apart.
