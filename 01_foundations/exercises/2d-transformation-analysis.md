@@ -1,7 +1,7 @@
 ---
-tags: [type/exercise, phase/1, state/review]
+tags: [type/exercise, phase/1, state/consolidated]
 skill: Applied linear algebra (NumPy)
-state: review
+state: consolidated
 created: 2026-06-16
 ---
 

@@ -31,3 +31,24 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Skills in progress: pandas+EDA (exercise ready), SQL (notes ready)
 - Phase gate chain rule proof: ✅ PASSED — ready for Phase 2 transition
 - Remaining: SQL needs dedicated exercise + proof; review and mark all proofs as passed
+
+## 2026-06-19
+- Studied: EDA pipeline consolidation (pandas proof), SQL for ML (exercise + proof), data pipeline fundamentals (ETL, formats, quality profiling)
+- Built: 4 new files — proof [[01_foundations/proofs/pandas-eda-proof]], exercise [[01_foundations/exercises/sql-queries-for-ml]], proof [[01_foundations/proofs/sql-data-fundamentals]], note [[01_foundations/notes/data-pipeline-fundamentals]]
+- Updated: checklist (phase gate + pandas/SQL skills [x]), skill-tree (pandas + SQL verified), MOC (new entries added)
+- Skills verified: pandas + EDA ✅, SQL + data pipelines ✅
+- Phase gate formally flagged in checklist ✅
+- Open: Phase 1 document gaps fully closed. Remaining before Phase 2: convex optimization, Lagrange multipliers, SVD depth, positive definite matrices, bias-variance decomposition, backprop MLP exercise, SVD compression exercise
+
+## 2026-06-19 (second session)
+- Studied: convex optimization (set/function definitions, Hessian condition, convexity of ML losses),
+  Lagrange multipliers (geometric derivation, KKT conditions, connection to regularization),
+  positive definite matrices (quadratic forms, Cholesky, definiteness ↔ curvature),
+  SVD in depth (Eckart-Young, pseudoinverse, PCA connection),
+  bias-variance decomposition (derivation, tradeoff, regularization connection)
+- Built: 7 new notes (convex-optimization-basics, positive-definite-matrices, lagrange-multipliers, singular-value-decomposition, bias-variance-decomposition, data-pipeline-fundamentals), 4 new proofs (convex-optimization, lagrange-multipliers, svd-foundations, bias-variance-decomposition), 2 new exercises (manual-backprop-mlp, svd-image-compression)
+- Updated: MOC with all new entries, bulk tag promotion (state/review → state/consolidated) across all 40+ Phase 1 files
+- Populated: references/papers/ with 5 reference entries (Deisenroth MML, Cover & Thomas, Eckart-Young, Boyd Convex Optimization, ISL)
+- Lab exercise: manual backprop through a full 2-layer MLP with numerical + PyTorch verification; SVD image compression with rank analysis and denoising
+- **Phase 1 status: COMPLETE** — all skills verified, all proofs passed, phase gate flagged, no remaining gaps
+- Open question: ready for Phase 2 — Classical Machine Learning. Approved topics: linear/logistic regression, trees/ensembles, SVM, evaluation, bias/variance diagnosis, feature engineering, data leakage

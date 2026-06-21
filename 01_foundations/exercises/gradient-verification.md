@@ -1,7 +1,7 @@
 ---
-tags: [type/exercise, phase/1, state/review]
+tags: [type/exercise, phase/1, state/consolidated]
 skill: Gradient + chain rule (gradient check)
-state: review
+state: consolidated
 created: 2026-06-18
 ---
 

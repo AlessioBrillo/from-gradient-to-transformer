@@ -13,8 +13,8 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
 - [x] Gradient + chain rule (gradient check) — proof: [[01_foundations/proofs/chain-rule-and-gradient-check]] (exercise: [[01_foundations/exercises/gradient-verification]])
 - [x] Probability and MLE — proof: [[01_foundations/proofs/probability-and-mle]] (exercises: [[01_foundations/exercises/maximum-likelihood-estimation-in-practice]], [[01_foundations/exercises/probability-sampling-and-expectation]])
 - [x] Information theory (entropy, cross-entropy, KL divergence) — proof: [[01_foundations/proofs/information-theory-foundations]] (exercise: [[01_foundations/exercises/cross-entropy-from-first-principles]])
-- [~] pandas + EDA + visualization — exercise: [[01_foundations/exercises/pipeline-eda-and-visualization]]
-- [ ] SQL + data pipeline basics
+- [x] pandas + EDA + visualization — proof: [[01_foundations/proofs/pandas-eda-proof]] (exercise: [[01_foundations/exercises/pipeline-eda-and-visualization]])
+- [x] SQL + data pipeline basics — proof: [[01_foundations/proofs/sql-data-fundamentals]] (exercise: [[01_foundations/exercises/sql-queries-for-ml]])
 - [x] Git + reproducible environment — note: [[01_foundations/notes/git-and-reproducible-environments]]
 
 ## Phase 2 — Classical ML

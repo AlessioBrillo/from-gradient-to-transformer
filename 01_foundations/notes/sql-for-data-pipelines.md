@@ -1,6 +1,6 @@
 ---
-tags: [type/lesson, phase/1, state/review]
-state: review
+tags: [type/lesson, phase/1, state/consolidated]
+state: consolidated
 created: 2026-06-18
 ---
 
