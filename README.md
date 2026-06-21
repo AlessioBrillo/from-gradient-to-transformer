@@ -22,7 +22,11 @@ uv sync && make reproduce  # regenerate all figures and tables
 
 ## Overview
 
-This repository is both a **research showcase** with a focused empirical contribution and a **structured learning journey** from gradient descent to a decoder-only Transformer. It spans seven phases — mathematical foundations, classical ML, deep learning, NLP & Transformers, LLM engineering, production AI, and a capstone micro-LLM — all documented as an Obsidian vault with derivations, exercises, and proofs.
+This repository is both a **research showcase** with a focused empirical contribution and a
+**structured learning journey** from gradient descent to a decoder-only Transformer. It spans
+seven phases — mathematical foundations, classical ML, deep learning, NLP & Transformers, LLM
+engineering, production AI, and a capstone micro-LLM — all documented as an Obsidian vault with
+derivations, exercises, and proofs.
 
 Every concept is marked as verified only after demonstrating it with an exercise and a reconstructed-from-memory proof. The result is a knowledge graph of linked, tested understanding rather than a collection of copied tutorials.
 
