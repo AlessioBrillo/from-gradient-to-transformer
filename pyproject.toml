@@ -1,7 +1,7 @@
 [project]
 name = "from-gradient-to-transformer"
-version = "0.1.0"
-description = "From gradient descent to a decoder-only Transformer: quantifying the Italian tokenization tax at micro scale."
+version = "0.2.0"
+description = "From gradient descent to mechanistic interpretability: train small transformers and reverse-engineer their internals."
 authors = [{ name = "Alessio Brillo" }]
 license = { text = "MIT" }
 readme = "README.md"
@@ -9,16 +9,16 @@ requires-python = ">=3.11"
 dependencies = [
     "torch>=2.2",
     "numpy>=1.26",
-    "tokenizers>=0.19",
-    "sentencepiece>=0.2",
-    "datasets>=2.19",
-    "transformers>=4.40",
+    "transformer-lens>=2.0",
+    "sae-lens>=1.0",
+    "circuitsvis>=1.0",
+    "einops>=0.8",
     "wandb>=0.17",
     "matplotlib>=3.8",
     "seaborn>=0.13",
-    "scikit-learn>=1.4",
-    "einops>=0.8",
     "tqdm>=4.66",
+    "datasets>=2.19",
+    "accelerate>=0.30",
 ]
 
 [project.optional-dependencies]
@@ -35,6 +35,9 @@ notebook = [
 paper = [
     "latexmk",
 ]
+sae = [
+    "sae-lens[vis]>=1.0",
+]
 
 [tool.ruff]
 target-version = "py311"
@@ -46,6 +49,7 @@ select = ["E", "F", "I", "N", "W"]
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
 "tests/*.py" = ["S101"]
+"src/experiments/*.py" = ["N806", "E741"]  # Uppercase B,S,D,Q,K,V is standard PyTorch convention
 
 [tool.mypy]
 python_version = "3.11"

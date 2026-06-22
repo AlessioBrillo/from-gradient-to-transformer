@@ -51,4 +51,15 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Populated: references/papers/ with 5 reference entries (Deisenroth MML, Cover & Thomas, Eckart-Young, Boyd Convex Optimization, ISL)
 - Lab exercise: manual backprop through a full 2-layer MLP with numerical + PyTorch verification; SVD image compression with rank analysis and denoising
 - **Phase 1 status: COMPLETE** — all skills verified, all proofs passed, phase gate flagged, no remaining gaps
-- Open question: ready for Phase 2 — Classical Machine Learning. Approved topics: linear/logistic regression, trees/ensembles, SVM, evaluation, bias/variance diagnosis, feature engineering, data leakage
+- Open question: ready for Phase 2 — Classical Machine Learning.
+
+## 2026-06-22 — Research Pivot: Into Mechanistic Interpretability
+- **Decision: pivot the repository's headline from Italian tokenization to mechanistic interpretability.**
+- Rationale: MI is the strongest research direction for small models — it produces citable, visually striking results, rewards software-engineering rigor, and aligns with where frontier labs are actively hiring. See the alignment paper (untracked) for full analysis.
+- New thesis: "From gradient to transformer to circuit — train small transformers and reverse-engineer the algorithms they learn."
+- Primary flagship: **grokking modular addition with Fourier reverse-engineering** (Nanda et al., ICLR 2023).
+- Fallback flagship: induction heads in a 2-layer attention-only transformer.
+- Updated: README, CLAUDE.md, pyproject.toml, Makefile, meta docs, portfolio, capstone — all reoriented to MI.
+- Phase 1 consolidated content kept; added MI forward-links connecting foundations to circuit concepts.
+- All 5 old experiment skeletons replaced with 6 MI rungs (induction heads, grokking, superposition, circuit patching, SAE dashboard, automated discovery).
+- Open question: which modulus for grokking? P=113 (canonical) vs P=59 (cheaper). Start with P=59 for fast iteration.

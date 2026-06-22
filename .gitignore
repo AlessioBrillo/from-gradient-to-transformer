@@ -18,8 +18,9 @@ venv/
 .obsidian/workspace*
 .obsidian/cache
 
-# Temporary alignment paper (do not version)
+# Temporary alignment papers (do not version)
 from-gradient-to-transformer-PhD.md
+refactor.md
 
 # OS
 .DS_Store

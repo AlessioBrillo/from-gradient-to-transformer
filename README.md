@@ -1,4 +1,4 @@
-# From Gradient to Transformer
+# From Gradient to Transformer to Circuit
 
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
 <a href="https://github.com/AlessioBrillo/from-gradient-to-transformer/commits/main"><img src="https://badgen.net/github/last-commit/AlessioBrillo/from-gradient-to-transformer" alt="GitHub last commit"></a>
@@ -6,27 +6,26 @@
 <a href="#"><img src="https://badgen.net/badge/tests/passing/green" alt="Tests"></a>
 <a href="#"><img src="https://badgen.net/badge/DOI/10.5281/zenodo.XXXXX/blue" alt="Zenodo DOI"></a>
 
-> **Thesis**: Quantify and partially close the "Italian tokenization tax" at micro scale by building a decoder-only Transformer from scratch with an Italian-optimized tokenizer, measuring the effect on fertility, perplexity, and a downstream Italian NLU task.
+> **Thesis**: I build a decoder-only transformer from scratch, then reverse-engineer the algorithms it learns. This repository demonstrates end-to-end research capability in mechanistic interpretability — training small models, forming causal hypotheses about their internals, and testing those hypotheses with activation patching, ablations, and sparse dictionary learning.
 
 ---
 
 ## Headline Result
 
-**Italian-optimized BPE (vocab 16k) reduces token fertility on Italian text by ~XX% compared to an English-centric tokenizer of equal vocabulary size.** See [[portfolio/RESULTS]] for the full table and [[portfolio/mini-paper]] for the writeup.
+**Grokking on modular addition (a+b mod P) with full mechanistic reverse-engineering.** A one-layer transformer learns addition via discrete Fourier transforms and trigonometric identities. I recover this algorithm by decomposing the learned embeddings in Fourier space, define progress measures that reveal a three-phase training dynamic (memorization → circuit formation → cleanup), and causally confirm the mechanism by ablating individual Fourier frequencies.
 
 ```bash
-uv sync && make reproduce  # regenerate all figures and tables
+cd from-gradient-to-transformer
+uv sync && make reproduce  # regenerate all experiment figures and tables
 ```
+
+*Primary experiment:* `src/experiments/exp2_grokking.py` · *Mini-paper:* `portfolio/mini-paper/paper.pdf`
 
 ---
 
 ## Overview
 
-This repository is both a **research showcase** with a focused empirical contribution and a
-**structured learning journey** from gradient descent to a decoder-only Transformer. It spans
-seven phases — mathematical foundations, classical ML, deep learning, NLP & Transformers, LLM
-engineering, production AI, and a capstone micro-LLM — all documented as an Obsidian vault with
-derivations, exercises, and proofs.
+This repository is both a **mechanistic interpretability research showcase** with a focused experimental arc and a **structured learning journey** from gradient descent to circuit-level understanding of transformer internals. It spans seven phases — mathematical foundations, classical ML, deep learning, NLP & Transformers, LLM instrumentation, reproducible research infrastructure, and a capstone that combines training with reverse-engineering — all documented as an Obsidian vault with derivations, exercises, and proofs.
 
 Every concept is marked as verified only after demonstrating it with an exercise and a reconstructed-from-memory proof. The result is a knowledge graph of linked, tested understanding rather than a collection of copied tutorials.
 
@@ -36,10 +35,14 @@ Every concept is marked as verified only after demonstrating it with an exercise
 
 | Experiment | Question | Status |
 |------------|----------|--------|
-| Exp 1 — Tokenizer fertility | Does an Italian-optimized tokenizer reduce the "Italian tax" vs English-centric ones? | [ ] Planned |
-| Exp 2 — Tokenizer ablation | Do gains in fertility translate to faster convergence and lower bits-per-byte? | [ ] Planned |
-| Exp 3 — Positional encoding | How do sinusoidal, learned, and RoPE compare at micro scale? | [ ] Planned |
-| Exp 4 — Downstream eval | Does a tokenizer-aware micro-LLM perform better on Italian NLU tasks? | [ ] Planned |
+| Rung 1 — Induction heads | Do induction heads emerge in a 2-layer attention-only transformer, and can I verify them causally? | [ ] Planned |
+| Rung 2 — Grokking modular addition **★** | Can I reproduce the grokking phase transition and reverse-engineer the Fourier multiplication algorithm? | [ ] Planned |
+| Rung 3 — Superposition geometry | How do features organize in a toy ReLU autoencoder under varying sparsity? | [ ] Planned |
+| Rung 4 — Circuit patching | Can I find and causally validate a specific circuit via activation/path patching? | [ ] Planned |
+| Rung 5 — Sparse autoencoder | Can I extract interpretable monosemantic features from a small model's residual stream? | [ ] Planned |
+| Rung 6 — Automated discovery | How does automated circuit discovery (ACDC) compare against a hand-found circuit? | [ ] Stretch |
+
+★ — **Primary flagship result.** See `src/experiments/exp2_grokking.py` and [[portfolio/RESULTS]] for the full table.
 
 ---
 
@@ -48,13 +51,13 @@ Every concept is marked as verified only after demonstrating it with an exercise
 | Phase | Folder | Theme |
 |-------|--------|-------|
 | 0 | `00_meta/` | Map, roadmap, skill-tree, conventions, journal |
-| 1 | `01_foundations/` | Math + Python + Tooling + Data basics |
-| 2 | `02_classical_ml/` | Classical machine learning |
-| 3 | `03_deep_learning/` | Neural networks, PyTorch, RNN, RL (incl. backprop from scratch) |
-| 4 | `04_nlp_and_transformers/` | NLP, attention, Transformer architecture |
-| 5 | `05_llm_engineering/` | Working with foundation models (RAG, fine-tuning, agents, alignment) |
-| 6 | `06_production_ai/` | MLOps, system design, product, security |
-| 7 | `07_capstone/` | Capstone: micro-LLM from scratch |
+| 1 | `01_foundations/` | Math + Python + Tooling — with MI forward-links (residual stream as vector space, QK/OV as low-rank factorization) |
+| 2 | `02_classical_ml/` | Classical ML — PCA as SAE ancestor, SVM margin as circuit intuition |
+| 3 | `03_deep_learning/` | Neural networks, training dynamics, grokking-relevant phenomena (delayed generalization, weight decay) |
+| 4 | `04_nlp_and_transformers/` | **LOAD-BEARING** — decoder-only transformer from scratch, QK/OV circuits, residual stream, induction heads, activation patching, logit lens |
+| 5 | `05_llm_engineering/` | Model instrumentation — hooks, activation caching, deterministic inference, activation harvesting |
+| 6 | `06_production_ai/` | Reproducible research infra — pinned environments, W&B tracking, `make reproduce`, CI smoke tests |
+| 7 | `07_capstone/` | **Capstone: train + reverse-engineer** — build a decoder-only transformer and reverse-engineer its internals |
 
 Every phase has the same internal anatomy:
 
@@ -71,13 +74,13 @@ NN_name/
 
 ## Progress Dashboard
 
-- [x] **Phase 1 — Foundations** (verified: linear algebra, calculus, probability, information theory, pandas, SQL, Git)
+- [x] **Phase 1 — Foundations** (verified: linear algebra, calculus, probability, information theory, data tools)
 - [ ] **Phase 2 — Classical ML**
 - [ ] **Phase 3 — Deep Learning**
-- [ ] **Phase 4 — NLP & Transformers**
-- [ ] **Phase 5 — LLM Engineering**
-- [ ] **Phase 6 — Production AI**
-- [ ] **Phase 7 — Capstone: micro-LLM**
+- [ ] **Phase 4 — NLP & Transformers** (LOAD-BEARING for MI)
+- [ ] **Phase 5 — LLM Engineering** (reframed: model instrumentation)
+- [ ] **Phase 6 — Production AI** (reframed: reproducible research infra)
+- [ ] **Phase 7 — Capstone: train + reverse-engineer**
 
 See [[00_meta/03_progress-log]] for the dated journal and [[00_meta/02_skill-tree]] for the complete skill tree.
 

@@ -1,9 +1,14 @@
-"""From Gradient to Transformer — research code.
+"""From Gradient to Transformer to Circuit.
+
+A research showcase and structured learning journey in mechanistic
+interpretability: train small transformers and reverse-engineer the
+algorithms they learn.
 
 Modules:
-    data:         Corpus loading and preprocessing
-    models:       Model architectures (micrograd, attention, decoder, micro-llm)
-    training:     Training loops, checkpointing, logging
-    generation:   Sampling utilities
-    experiments:  Reproducible experiment scripts
+    reproducibility: Seed control and deterministic execution.
+    experiments: MI experiment implementations (Rungs 1-6).
 """
+
+from src import experiments, reproducibility
+
+__all__ = ["reproducibility", "experiments"]

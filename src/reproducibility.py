@@ -1,5 +1,8 @@
 """Global seed control and deterministic execution.
 
+Ensures reproducible experiments across Python random, NumPy, PyTorch,
+and TransformerLens. Every experiment script should call set_seed() at entry.
+
 Usage:
     from src.reproducibility import set_seed
     set_seed(42)
@@ -15,8 +18,9 @@ import numpy as np
 def set_seed(seed: int = 42, deterministic: bool = True) -> None:
     """Set all random seeds for reproducibility.
 
-    Controls Python random, NumPy, PyTorch CPU/CUDA/MPS,
-    and enables PyTorch deterministic algorithms where possible.
+    Controls Python random, NumPy, PyTorch CPU/CUDA/MPS, and enables PyTorch
+    deterministic algorithms where possible. Also attempts to set seeds for
+    TransformerLens and other libraries if available.
 
     Args:
         seed: Random seed value.
@@ -25,6 +29,7 @@ def set_seed(seed: int = 42, deterministic: bool = True) -> None:
     """
     random.seed(seed)
     np.random.seed(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
 
     try:
         import torch
@@ -39,9 +44,19 @@ def set_seed(seed: int = 42, deterministic: bool = True) -> None:
         torch.mps.manual_seed(seed)
 
     if deterministic:
-        torch.use_deterministic_algorithms(True, warn_only=True)
+        try:
+            torch.use_deterministic_algorithms(True, warn_only=True)
+        except AttributeError:
+            pass  # older PyTorch version
         os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
-        os.environ["PYTHONHASHSEED"] = str(seed)
+
+    # TransformerLens seed (if available)
+    try:
+        import transformer_lens.utils as tl_utils
+
+        tl_utils.reset_hooks()
+    except (ImportError, AttributeError):
+        pass
 
 
 def worker_init_fn(seed: Optional[int] = None) -> callable:
@@ -64,13 +79,17 @@ def seed_info() -> dict:
     """Report current seed state across frameworks."""
     info = {
         "python_random": "set" if random.getstate() else "unknown",
-        "numpy_seed": np.random.get_state()[1][0],
+        "numpy_seed": int(np.random.get_state()[1][0]),
     }
     try:
         import torch
 
-        info["torch_seed"] = torch.initial_seed()
-        info["torch_deterministic"] = torch.are_deterministic_algorithms_enabled()
+        info["torch_seed"] = int(torch.initial_seed())
+        info["torch_deterministic"] = (
+            torch.are_deterministic_algorithms_enabled()
+            if hasattr(torch, "are_deterministic_algorithms_enabled")
+            else False
+        )
     except ImportError:
         pass
     return info

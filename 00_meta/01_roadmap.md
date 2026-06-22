@@ -2,11 +2,13 @@
 tags: [moc, roadmap]
 ---
 
-# Roadmap — From Gradient to Transformer
+# Roadmap — From Gradient to Transformer to Circuit
 
 Seven phases. Each phase has: **Goal**, **Topics**, **Resources**, **Must exercises**, **Proof to myself** (the gate to pass before moving to the next phase).
 
 Rule: **do not move to the next phase until the gate is green.** The proof is passed by reconstructing the concept *without looking at notes*.
+
+The spine: from foundational math, through classical ML and deep learning, to transformer architecture, model instrumentation, reproducible research infra, and finally a capstone that trains a decoder-only transformer and reverse-engineers its internals. Every phase builds toward **mechanistic interpretability (MI)** — the ability to read a neural network's learned algorithms like source code.
 
 ---
 
@@ -14,27 +16,28 @@ Rule: **do not move to the next phase until the gate is green.** The proof is pa
 
 **Goal:** acquire the mathematical and coding tools to actively engage with formulas. Understand *why* a derivative works, not just how to write it in NumPy. Build solid data manipulation skills from day one.
 
+**MI framing:** The residual stream is a vector space; attention heads compute low-rank (SVD-like) operations; the logit lens is a projection onto the vocabulary basis. Phase 1 gives you the linear-algebraic vocabulary to think about transformers this way.
+
 **Topics**
-- Linear algebra: vectors, matrices, matrix-vector product as transformation, eigenvalues, norms.
+- Linear algebra: vectors, matrices, matrix-vector product as transformation, eigenvalues, norms. → *MI connection: residual stream as vector space, QK/OV circuits as low-rank factorizations.*
 - Calculus: derivatives, gradient, chain rule (the heart of backprop).
 - Probability and statistics: random variables, distributions, expectation/variance, Bayes, maximum likelihood.
 - **Information theory: entropy, cross-entropy, KL divergence** — the foundation of every loss function in classification and language modeling.
 - Scientific Python: NumPy (vectorization), pandas, matplotlib; environments with `uv`/venv; Git.
-- **Data fundamentals: SQL basics, ETL intuition, data quality checks, working with different file formats (CSV, JSON, Parquet).**
+- Data fundamentals: SQL basics, ETL intuition, data quality checks.
 
 **Resources**
 - 3Blue1Brown — *Essence of Linear Algebra* and *Essence of Calculus* (YouTube, free).
 - *Mathematics for Machine Learning* — Deisenroth, Faisal, Ong (free PDF).
 - StatQuest (Josh Starmer) for visual stats and ML explanations.
-- *Python Data Science Handbook* — VanderPlas (free online); Kaggle micro-courses Python/Pandas.
-- **Mode Analytics SQL Tutorial** (free) for data fundamentals.
+- *Python Data Science Handbook* — VanderPlas (free online).
+- Elhage et al., *A Mathematical Framework for Transformer Circuits* (Anthropic, 2021) — MI framing for linear algebra.
 
 **Must exercises**
 1. Implement from scratch in NumPy: matrix-matrix product, normalization, PCA on a toy dataset.
 2. Derive by hand then verify numerically the gradient of `f(x)=x²` and a sigmoid.
 3. Clean a real dataset with pandas (missing values, types, join) and produce 3 readable charts.
-4. **Write 5 SQL queries on a public dataset (joins, aggregations, window functions).**
-5. **Compute entropy, cross-entropy, and KL divergence by hand for simple distributions, then verify in NumPy. Connect cross-entropy to log-loss in classification.**
+4. Compute entropy, cross-entropy, and KL divergence by hand, then verify in NumPy.
 
 **Proof to myself**
 > Explain the chain rule on paper and show how it applies to a composition of 3 functions.
@@ -44,25 +47,27 @@ Rule: **do not move to the next phase until the gate is green.** The proof is pa
 
 ## Phase 2 — Classical Machine Learning
 
-**Goal:** master the complete supervised model cycle and understand *evaluation* and *generalization*. Build bias/variance intuition.
+**Goal:** master the complete supervised model cycle and understand *evaluation* and *generalization*. Build intuition that maps forward to MI concepts.
+
+**MI framing:** PCA/dictionary learning is the conceptual ancestor of sparse autoencoders. SVM maximum-margin intuition maps to how attention heads separate features. Bias/variance diagnosis maps to understanding memorization vs. generalization in grokking.
 
 **Topics**
-- Supervised vs unsupervised; linear/logistic regression.
+- Supervised vs unsupervised; linear/logistic regression (linear feature intuition).
 - Trees, random forest, gradient boosting (XGBoost/LightGBM).
 - Evaluation: train/val/test, cross-validation, metrics (accuracy, precision/recall, F1, ROC-AUC, RMSE).
 - Overfitting/underfitting, regularization, feature engineering, data leakage.
-- **Support Vector Machines (SVM) — maximum margin, kernel trick, support vectors** — the key to understanding generalization theory.
-- **Naive Bayes — probabilistic classifier, conditional independence assumption** — foundation for Bayesian thinking in ML.
-- Clustering (k-means), dimensionality reduction (PCA, t-SNE).
+- **PCA — key forward link: the conceptual ancestor of sparse autoencoders (SAEs).** Both find a sparse, interpretable basis for data.
+- **Support Vector Machines — maximum margin, kernel trick, support vectors.** Margin intuition: attention heads also separate features via linear transformations.
+- Clustering (k-means), dimensionality reduction.
 
 **Resources**
 - *Machine Learning Specialization* — Andrew Ng (Coursera).
 - *Hands-On Machine Learning with Scikit-Learn, Keras & TensorFlow* — Géron (part 1).
-- scikit-learn documentation (their tutorials are excellent); Kaggle *Intro/Intermediate ML*.
+- scikit-learn documentation; Kaggle *Intro/Intermediate ML*.
 
 **Must exercises**
 1. Full pipeline on a Kaggle dataset: EDA → feature engineering → model → CV → metrics.
-2. Compare 3 models (linear, random forest, boosting) and justify the choice with numbers.
+2. PCA on a dataset: vary components, explain variance, visualize in 2D. *Connect to SAE sparsity.*
 3. Build a learning curve and bias/variance diagnosis by hand.
 
 **Proof to myself**
@@ -70,35 +75,34 @@ Rule: **do not move to the next phase until the gate is green.** The proof is pa
 
 ---
 
-## Phase 3 — Deep Learning (expanded: now includes RNNs, LSTMs, GRUs, and RL fundamentals)
+## Phase 3 — Deep Learning (expanded: training dynamics, grokking-relevant phenomena)
 
-**Goal:** understand a neural network *from the inside* — build backprop by hand, then move to PyTorch knowing what is under the hood. Bridge the gap to sequences to prepare for Transformers.
+**Goal:** understand a neural network *from the inside* — build backprop by hand, then move to PyTorch knowing what is under the hood. Build the training-dynamics intuition needed for MI work.
+
+**MI framing:** Grokking is a training-dynamics phenomenon (delayed generalization, phase transitions, weight decay's critical role). Understanding optimization is essential for reproducing and studying grokking.
 
 **Topics**
 - Neuron, layer, activation functions; forward and **backpropagation** (autograd).
 - PyTorch: tensors, `nn.Module`, optimizers, training loop, GPU.
-- Optimization: SGD, Adam, learning rate, batch, schedulers.
+- Optimization: SGD, AdamW, learning rate, batch, schedulers. **Weight decay — critical for grokking.**
 - Regularization: dropout, weight decay, batch/layer norm, early stopping.
 - Architectures: MLP, CNN (vision).
-- **Sequence modeling: RNN, LSTM, GRU — why they exist, their limitations, the vanishing gradient problem.**
-- **Reinforcement Learning fundamentals: policy, value function, reward, basic Q-learning. (Essential for understanding RLHF/DPO in Phase 5.)**
-- **Generative models beyond autoregressive: GANs, VAEs, diffusion models** — understanding the broader generative landscape and how they differ from autoregressive Transformers.
-- **Training tricks: gradient accumulation, gradient clipping, mixed precision training** — practical necessities for real training.
+- Sequence modeling: RNN, LSTM, GRU — why they exist, their limitations (context for why attention was invented).
+- **Grokking-relevant dynamics: delayed generalization, phase transitions, the role of weight decay in circuit formation.**
+- Training tricks: gradient accumulation, gradient clipping, mixed precision.
 
 **Resources**
-- **Andrej Karpathy — *Neural Networks: Zero to Hero*** (micrograd → makemore). The single best free course for building intuition.
-- *Practical Deep Learning for Coders* — fast.ai (perfect for software engineers).
+- Andrej Karpathy — *Neural Networks: Zero to Hero* (micrograd → makemore).
+- *Practical Deep Learning for Coders* — fast.ai.
 - *Dive into Deep Learning* (d2l.ai, free, with code).
-- *Deep Learning Specialization* — Andrew Ng; official PyTorch tutorials.
-- **Karpathy — *The spelled-out intro to neural networks and backpropagation*** (YouTube) for sequence modeling intuition.
-- **Richard Sutton — *Reinforcement Learning: An Introduction*** (classic RL reference, free online draft).
-- **FlashAttention papers (Dao et al., 2022, 2023)** — the computational breakthrough that made long-context Transformers practical.
+- Power et al., *Grokking: Generalization Beyond Overfitting on Small Algorithmic Datasets* (2022).
+- Nanda et al., *Progress Measures for Grokking via Mechanistic Interpretability* (ICLR 2023).
 
 **Must exercises**
 1. Rewrite **micrograd** from scratch: a mini-autograd with backprop in pure Python.
 2. Train an MLP on MNIST in PyTorch *without copying* the training loop.
 3. Controlled experiment: same model, varying learning rates; trace and explain the loss curves.
-4. **Implement an RNN cell from scratch in NumPy, train it on a character-level task (e.g., add two binary numbers).**
+4. **Reproduce a mini-grokking experiment:** train a small transformer on modular addition (tiny P) and observe the delayed generalization curve.
 
 **Proof to myself**
 > Draw the computation graph of `loss = MSE(W·x + b, y)` on paper and propagate gradients by hand.
@@ -106,111 +110,106 @@ Rule: **do not move to the next phase until the gate is green.** The proof is pa
 
 ---
 
-## Phase 4 — NLP & Transformers (expanded: sequence modeling bridge + multi-modal primer)
+## Phase 4 — NLP & Transformers (LOAD-BEARING for MI)
 
-**Goal:** understand *the architecture* that powers GPT and Claude. Build the bridge to the capstone. Gain awareness of how these concepts extend beyond text.
+**Goal:** understand *the architecture* that powers GPT and Claude. Build the decoder-only transformer from scratch. Then — critically — learn to *read* it: decompose attention into QK/OV circuits, identify induction heads, use the logit lens, and perform causal interventions with activation patching.
+
+**This is the most important phase for the MI thesis.** Every concept here directly feeds the capstone.
 
 **Topics**
-- Text representation: tokenization, **BPE**, embeddings.
-- Language models: n-gram → RNN → the leap to attention.
-- **Why attention was invented: the limitations of fixed-length context in RNNs.**
+- **Building from scratch:** text representation, tokenization, BPE, embeddings.
 - **Self-attention** and **multi-head attention**; positional encoding (absolute, RoPE).
-- The **Transformer** architecture (encoder-decoder) and the **decoder-only** variant (GPT/Claude).
-- Pre-training, causal language modeling, sampling (temperature, top-k, top-p).
-- **Multi-modal primer: how attention bridges modalities (CLIP, vision encoders, cross-modal embeddings).**
-- **Encoder-only Transformers (BERT) — masked language modeling, bidirectional context** — the other major Transformer variant, essential for understanding the full Transformer family.
-- **Scaling Laws (Kaplan et al., 2020; Hoffmann et al., 2022, "Chinchilla") — optimal model/data size, diminishing returns, compute-optimal training** — the theory behind why large models work and how to allocate resources.
-- **Computational optimizations: FlashAttention, KV cache, prefix caching** — how Transformers scale to long sequences and fast generation.
+- **Decoder-only architecture:** causal masking, autoregressive generation, full implementation.
+- **QK/OV circuit decomposition** — the key conceptual tool: every attention head computes two separate functions (what to attend to → QK; what to copy → OV).
+- **Residual stream as communication channel** — layers read from and write to a shared vector space.
+- **Induction heads** — the mechanism behind in-context learning: prefix-matching + copying.
+- **Logit lens** — projecting residual stream states to vocabulary to read the model's "thoughts."
+- **Activation patching / path patching / attribution patching** — causal intervention tools.
+- **TransformerLens:** `HookedTransformer`, hook points, `ActivationCache`, built-in patching utilities.
+- Encoder-only architecture (BERT): masked language modeling, bidirectional context (for completeness).
+- Scaling Laws (Kaplan, Chinchilla); computational optimizations (FlashAttention, KV cache).
 
 **Resources**
-- Paper *Attention Is All You Need* (Vaswani et al., 2017) — actually read it.
-- Jay Alammar — *The Illustrated Transformer* (the reference visual explanation).
-- **Karpathy — *Let's build GPT: from scratch, in code, spelled out*** (YouTube).
-- *Hugging Face NLP/LLM Course* (huggingface.co/learn); Stanford **CS224N** and **CS25**.
-- *Speech and Language Processing* — Jurafsky & Martin (free chapters on attention/transformer).
-- **CLIP paper (Radford et al., 2021)** for multi-modal attention intuition.
-- **BERT paper (Devlin et al., 2019)** — encoder-only Transformer, the other half of the Transformer family.
-- **Scaling Laws papers: Kaplan et al. (2020) and Hoffmann et al. (2022, Chinchilla)** — mandatory reading for understanding why and how LLMs scale.
+- Vaswani et al., *Attention Is All You Need* (NeurIPS 2017) — read it.
+- Jay Alammar — *The Illustrated Transformer*.
+- **Elhage et al., *A Mathematical Framework for Transformer Circuits* (Anthropic, 2021)** — THE paper for QK/OV, residual stream, virtual weights.
+- **Olsson, Elhage, Nanda et al., *In-context Learning and Induction Heads* (Anthropic, 2022)** — the induction heads paper.
+- **Nanda's TransformerLens demo notebooks** — the single best hands-on resource.
+- **ARENA Chapter 1** — build GPT-2, locate induction heads, IOI circuit.
+- **Anthropic Transformer Circuits thread** — the full series.
+- **Distill Circuits thread** — vision circuits for intuition transfer.
+- Karpathy — *Let's build GPT: from scratch, in code, spelled out* (YouTube).
 
 **Must exercises**
-1. Implement a **BPE tokenizer** from scratch and apply it to an English text.
-2. Implement the **self-attention block** in PyTorch and verify it on a toy input.
-3. Follow *Let's build GPT* and reconstruct it, annotating every line in your own words.
+1. Build a **decoder-only transformer from scratch** in PyTorch (embed → blocks → unembed). This will be the capstone model.
+2. **Load a model in TransformerLens**, inspect attention patterns, identify an induction head by its attention pattern.
+3. **Use the logit lens:** project residual stream states at each layer and observe how predictions refine.
+4. **Perform activation patching:** corrupt a specific position/layer and measure the change in output.
+5. **Implement the QK/OV decomposition** for a single attention head and explain what each part computes.
 
 **Proof to myself**
-> Explain what attention is to a non-technical colleague with a single analogy, then show the attention block code *without looking*. Gate green when you can hold both explanations.
+> Explain the residual stream metaphor to a non-technical colleague. Then show the QK/OV decomposition code for a single attention head *without looking*. Gate green when you can hold both explanations.
 
 ---
 
-## Phase 5 — LLM Engineering (expanded: now includes RLHF/DPO, alignment, safety, red teaming)
+## Phase 5 — LLM Engineering (reframed: Model Instrumentation)
 
-**Goal:** know how to build **products** on top of existing models. This is the most in-demand skill on the market today, and the one that directly interfaces with real projects.
+**Goal:** learn to *instrument* models — attach hooks, cache activations, run deterministic inference, and construct datasets specifically designed for circuit analysis. This is where the software-engineering background becomes a research asset.
+
+**Reframing from the standard "LLM Engineering" phase:** Instead of building RAG pipelines and agents, the focus is on the engineering that powers MI research — reliable, reproducible, scalable activation harvesting.
 
 **Topics**
-- Serious prompt engineering (system prompt, few-shot, structured output).
-- **RAG**: chunking, embedding, vector store, retrieval, retrieval evaluation.
-- Fine-tuning: full vs **LoRA/QLoRA**; when it helps and when it does not.
-- **Agents** and multi-agent orchestration; tool use; supervisor pattern.
-- LLM evaluation (eval set, LLM-as-judge), guardrails, costs and latency, inference/serving.
-- **Alignment: RLHF and DPO — the theory and practice of shaping model behavior.**
-- **Safety: prompt injection, model extraction, content filtering, red teaming methodology.**
-- **Inference optimization: KV cache, prefix caching, speculative decoding, batching** — making LLMs fast enough for production.
-- **Structured output: JSON mode, grammar-constrained generation, function calling** — the critical interface between LLMs and programs.
-- **Evaluation benchmarks: MMLU, HumanEval, GSM8K, MT-Bench** — how the field measures progress and compares models.
-- **Model quantization and distillation: GPTQ, AWQ, GGUF, distillation** — running LLMs on limited hardware.
+- **TransformerLens hooks deep-dive:** pre/post hooks on any layer, module, or attention head; caching and reusing activations.
+- **Deterministic inference:** seed control, deterministic algorithms, floating-point determinism across runs.
+- **Activation harvesting:** efficiently collecting activations across many prompts; storage formats and memory management.
+- **Dataset construction for circuit tasks:** synthetic data generation for IOI (indirect object identification), greater-than, docstring completion; ensuring balanced and controlled datasets.
+- **nnsight:** PyTorch-compatible intervention graphs (optional — for when you need remote execution on larger models).
+- Light touch: RAG, LoRA fine-tuning (useful context but not the focus).
 
 **Resources**
-- **Chip Huyen — *AI Engineering* (O'Reilly, 2025)** + repo `chiphuyen/aie-book`. If you read one book, this is it.
-- *Hands-On Large Language Models* — Alammar & Grootendorst.
-- *LLM Engineering Handbook* — Iusztin & Labonne.
-- Hugging Face *LLM Course*; DeepLearning.AI short courses; LangChain / LlamaIndex docs.
-- **DPO paper (Rafailov et al., 2023)** — direct preference optimization, simpler than RLHF.
-- **InstructGPT paper (Ouyang et al., 2022)** — the method behind ChatGPT's instruction-following abilities.
-- **Constitutional AI paper (Bai et al., 2022)** — alternative alignment approach without human preference labels.
-- **LLaMA paper (Touvron et al., 2023)** — open-source foundation model, modern architectural reference.
-- **OWASP Top 10 for LLM Applications** — the safety standard.
+- **TransformerLens documentation and demo notebooks** — the primary resource.
+- **Nanda's Concrete Steps to Get Started in Transformer Mechanistic Interpretability** — excellent practical guide.
+- **nnsight documentation** (for the intervention-graph approach).
+- *AI Engineering* — Chip Huyen (O'Reilly, 2025) — for the general engineering mindset.
 
 **Must exercises**
-1. Build an end-to-end **RAG** on your own corpus (e.g., documentation of one of your projects).
-2. Perform a **LoRA fine-tune** of a small model and measure the delta with your own eval set.
-3. Build a mini **agent** with 2-3 tools and a planning/execution loop.
-4. **Implement a simple DPO training loop on a small preference dataset. Document what changes in the model's outputs.**
+1. **Write a TransformerLens hook that captures all attention patterns** for a given model and stores them efficiently.
+2. **Build a synthetic IOI dataset** (subject, verb, object templates) and verify balance.
+3. **Implement a deterministic inference pipeline** that produces identical outputs across 3 runs with the same seed.
 
 **Proof to myself**
-> Take a real problem (one of your products) and design on a single page: data → retrieval → model → evaluation → costs. Defend every choice. Gate green when the design holds up.
+> Someone gives you a new model and a circuit-hypothesis to test. Design on a single page: data → hook placement → intervention → analysis. Defend every engineering choice → gate green.
 
 ---
 
-## Phase 6 — Production AI (MLOps + System Design + Product + Security)
+## Phase 6 — Production AI (reframed: Reproducible Research Infrastructure)
 
-**Goal:** turn models into **products that generate lasting value**. This is what separates "GPT users" from serious AI system designers.
+**Goal:** turn experiments into **reproducible, citable research**. This is what separates portfolio projects from PhD-level work. Every figure regenerates with one command, every experiment is tracked, and the entire pipeline is CI-tested.
+
+**Reframing from the standard "Production AI" phase:** Instead of deployment and MLOps for product, the infrastructure serves the research goal: making every result auditable, extendable, and trustworthy.
 
 **Topics**
-- **ML system design**: requirements, data, training/serving, drift, feedback loop.
-- **MLOps**: data/model versioning, CI/CD, monitoring, costs, reproducibility.
-- Product thinking: defining the problem, business metrics vs model metrics, ROI.
-- Architecture durability and *scalability* (anti-obsolescence): abstracting model from product.
-- **Security: prompt injection mitigation, model extraction prevention, production guardrails.**
-- **Interpretability and explainability: SHAP, LIME, attention visualization, mechanistic interpretability** — understanding why models make decisions, essential for debugging and trust.
-- **Data versioning and experiment tracking: DVC, lakeFS, MLflow, Weights & Biases** — reproducibility at scale.
-- **Adversarial robustness: model extraction, data poisoning, evasion attacks** — securing models beyond prompt injection.
-- Ethics, governance, privacy (including GDPR for EU contexts).
+- **Reproducibility harness:** global seed control, deterministic flags, pinned environment (`uv.lock`), `make reproduce`.
+- **Experiment tracking:** Weights & Biases for loss curves, progress measures, hyperparameter sweeps.
+- **CI for research:** GitHub Actions running fast smoke tests of each experiment (tiny model, few steps) on every push.
+- **Figure generation:** matplotlib/`sae-vis` scripts that produce publication-quality figures; every figure has a deterministic generator under version control.
+- **Feature dashboard deployment:** Hugging Face Spaces for the SAE feature browser.
+- **Mini-paper workflow:** LaTeX template, `make paper` target, citation management.
+- Light touch: system design, costs, security (the capstone's pipeline needs a design doc).
 
 **Resources**
-- **Chip Huyen — *Designing Machine Learning Systems*** (O'Reilly).
-- *Made With ML* — Goku Mohandas (MLOps end-to-end, free).
-- Google Cloud — MLOps guides; production chapters of *AI Engineering*.
-- Andrew Ng — *AI for Everyone* (for business language).
-- **OWASP LLM Top 10** — security reference for production AI.
-- **Christoph Molnar — *Interpretable Machine Learning*** (free online) for interpretability foundations.
+- Pineau et al., *Improving Reproducibility in ML Research* (JMLR 2021).
+- **SAELens** + **sae-vis** documentation.
+- Hugging Face Spaces documentation.
+- *Designing Machine Learning Systems* — Chip Huyen (O'Reilly).
 
 **Must exercises**
-1. Write a full **design doc** for a real AI system (data, model, serving, costs, risks).
-2. Put a model into production (even minimal) with monitoring and a rollback plan.
-3. Calculate the **ROI** of an AI feature with explicit assumptions and sensitivity analysis.
+1. **Set up W&B logging** for one experiment (grokking or induction heads). Log loss, accuracy, and a custom progress measure.
+2. **Write a CI workflow** that runs a smoke test of `exp2_grokking` (tiny P, 100 steps) on every push.
+3. **Build a `make reproduce` that regenerates at least the flagship figure.**
 
 **Proof to myself**
-> Present the design doc as if you were in front of a non-technical stakeholder: 10 minutes, zero unnecessary jargon, clear numbers. Gate green when you convince without technical slides.
+> Clone the repo on a clean machine, run `uv sync && make reproduce`, and get identical figures and numbers. Gate green: no manual steps needed.
 
 ---
 
@@ -218,45 +217,50 @@ Rule: **do not move to the next phase until the gate is green.** The proof is pa
 
 These are not a separate phase — they grow with you. Engage with them at each stage, at increasing depth.
 
-- **Ethics, fairness, and bias in AI**: dataset bias, representation, fairness metrics, regulatory frameworks (EU AI Act). Start asking "who does this system serve?" from Phase 1, deepen through each phase.
-- **Interpretability stack**: from SHAP/LIME at the feature level (Phase 2-3), to attention visualization (Phase 4), to mechanistic interpretability (Phase 5+). The ability to explain *why* a model behaves a certain way separates the expert from the operator.
+- **The MI literature map:** Elhage et al. (Mathematical Framework), Olsson et al. (Induction Heads), Nanda et al. (Grokking), Wang et al. (IOI circuit), Bricken et al. (Towards Monosemanticity), Cunningham et al. (SAEs) — read and re-read as your understanding deepens.
+- **Honest caveats about MI methods:** attribution patching is a linear approximation with known failure modes; activation patching can mislead through layernorm denominator effects; SAEs can learn illusory features. Document your methods and limitations explicitly.
+- **Incremental contribution mindset:** a bare reproduction of a known result is table stakes. Add a novel small ablation, test on a different setup, or improve the tooling, then document the delta.
 
 ---
 
-## Phase 7 — Capstone: micro-LLM from scratch
+## Phase 7 — Capstone: Train + Reverse-Engineer
 
-**Goal:** build, train, evaluate, and document a **complete LLM from scratch** on an Italian corpus. This is the centerpiece of both the portfolio and the research thesis: quantifying the Italian tokenization tax at micro scale. Operational details in [[07_capstone/README]].
+**Goal:** build a decoder-only transformer from scratch AND reverse-engineer its internals using the full MI toolkit. This is the centerpiece of both the portfolio and the research journey.
 
-**Research thesis**
-> Quantify and partially close the "Italian tokenization tax" at micro scale by building a decoder-only Transformer from scratch with an Italian-optimized tokenizer, and measure the effect on fertility, perplexity, and a downstream Italian NLU task.
+**Thesis:**
+> I build a decoder-only transformer from scratch, then reverse-engineer the algorithms it learns — grokking modular addition with Fourier decomposition, induction heads, circuit verification via activation patching, and sparse autoencoder feature extraction.
 
-**Experiment ladder (do in order)**
-1. **Tokenizer fertility study** — Train Italian BPE/Unigram tokenizers at several vocab sizes; measure fertility, Rényi efficiency, and compression ratio on Italian vs English; compare to GPT-2/Mistral/Gemma tokenizers. *This is the headline result.*
-2. **Micro-LM pretraining with tokenizer ablation** — Two identical decoder-only models (~10–50M params) on the same Italian corpus, differing only in tokenizer; compare bits-per-byte and tokens-to-convergence.
-3. **Positional encoding ablation** — Sinusoidal vs learned vs RoPE on the same micro-LM.
-4. **Downstream evaluation** — Fine-tune/probe on UINAUIL or ItaCoLA; report mean ± std over ≥3 seeds.
+**Experiment ladder (do in order; each is a defensible standalone result):**
+
+1. **Rung 1 — Induction heads in a 2-layer attention-only transformer** (safe fallback flagship). Train on repeated-random-token sequences; identify induction heads by their attention pattern; verify causally via ablation/patching.
+
+2. **Rung 2 — Grokking on modular addition + Fourier reverse-engineering (PRIMARY FLAGSHIP 🌟).** Train a 1-layer transformer on a+b mod P; observe the grokking phase transition; decompose embeddings in Fourier space to reveal the trigonometric algorithm; ablate frequencies to confirm the mechanism.
+
+3. **Rung 3 — Toy Models of Superposition reproduction.** Train a tiny ReLU autoencoder on synthetic sparse features; sweep sparsity; plot the geometric phase transition from monosemantic to superposed features.
+
+4. **Rung 4 — Circuit verification via activation/path patching.** Identify a circuit (IOI-style or task-specific) in GPT-2-small or the capstone model; causally verify each component's role with activation/path patching.
+
+5. **Rung 5 — Sparse autoencoder on residual stream.** Train an SAE on the capstone model's activations; build a feature dashboard; report sparsity/reconstruction tradeoff and dead feature rate.
+
+6. **Rung 6 (stretch) — Automated vs. hand-found circuit comparison.** Run ACDC on the Rung 4 task and compare the recovered subgraph to the manual circuit.
 
 **Topics / pipeline**
-- Data: Italian corpus (PAISÀ, Wikipedia, clean mC4), cleaning, train/val split.
-- Decoder-only architecture: embedding + positional (RoPE) + blocks (attention + MLP) + norm (RMSNorm) + head.
-- Training loop: batch, loss (cross-entropy), optimizer, scheduler, checkpoint, logging.
-- Generation: sampling with temperature/top-k/top-p.
-- Evaluation: tokenizer metrics (fertility, Rényi efficiency), bits-per-byte, perplexity, NLU task performance.
+- Model: decoder-only transformer (embedding → RoPE → blocks → RMSNorm → unembed).
+- Data: modular addition (a+b mod P), repeated-token sequences, synthetic IOI.
+- Training: AdamW, weight decay (critical for grokking), cosine LR schedule.
+- Analysis: TransformerLens hooks, activation caching, logit lens, Fourier decomposition.
+- Causal intervention: activation patching, path patching, attribution patching.
+- SAE: SAELens training, feature dashboard via `sae-vis`.
 
 **Resources**
-- **Sebastian Raschka — *Build a Large Language Model (From Scratch)*** (Manning) + official repo.
-- **Karpathy — `nanoGPT`, `minGPT`, `llm.c`**; videos *Let's build GPT* and *Let's reproduce GPT-2*.
-- Reference papers: RoPE, RMSNorm, GQA, SwiGLU (Llama/Mistral series).
-- Orlando et al., *Minerva LLMs* (CLiC-it 2024) — Italian LLM reference point.
-- Moroni et al., *Optimizing LLMs for Italian* (Findings of NAACL 2025) — tokenizer fertility data.
-- Eldan & Li, *TinyStories* (2023) — micro-scale LM methodology.
-- Lyding et al., *PAISÀ* (WaC-9 2014) — Italian web corpus.
-- Sarti & Nissim, *IT5* (LREC-COLING 2024) — clean Italian mC4.
+- **Nanda et al., *Progress Measures for Grokking via Mechanistic Interpretability* (ICLR 2023)** — the core paper for Rung 2.
+- **Olsson et al., *In-context Learning and Induction Heads* (Anthropic, 2022)** — for Rung 1.
+- **Elhage et al., *Toy Models of Superposition* (Anthropic, 2022)** — for Rung 3.
+- **Wang et al., *Interpretability in the Wild: a Circuit for IOI in GPT-2 small* (ICLR 2023)** — for Rung 4.
+- **Bricken et al., *Towards Monosemanticity* (Anthropic, 2023)** and **Cunningham et al. (ICLR 2024)** — for Rung 5.
+- **TransformerLens + SAELens** documentation.
+- Karpathy — `nanoGPT`, `minGPT` — architectural reference.
+- Raschka — *Build a Large Language Model (From Scratch)* (Manning).
 
-**Must exercises**
-1. BPE tokenizer → dataset → model → training → generation, all yours, no blind copy-paste.
-2. Tracked experiments: tokenizer ablation, positional encoding ablation, ≥3 seeds per condition.
-3. Mini-paper (4–8 pages LaTeX): abstract, method, experiments, ablations, limitations, references.
-
-**Final proof (graduation)**
-> The model generates coherent Italian text, the tokenizer fertility analysis produces a headline number, every experiment is reproducible via `uv sync && make reproduce`, and you can explain every architectural choice and its effect on the Italian tokenization tax.
+**Proof to myself (graduation)**
+> Someone asks: "How does your transformer implement modular addition?" Explain the Fourier algorithm, show the progress measures, and demonstrate a causal ablation that confirms the mechanism. Gate green when you can defend every step, training to reverse-engineering.

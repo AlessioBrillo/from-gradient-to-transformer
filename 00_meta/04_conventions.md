@@ -8,20 +8,23 @@ Simple rules, always applied. Consistency is what makes the vault navigable 6 mo
 
 ## File naming
 - Phase folders: `NN_name` (numeric prefix → guaranteed order).
-- Atomic notes: `kebab-case`, title = concept (e.g., `self-attention.md`, `bias-variance.md`).
+- Atomic notes: `kebab-case`, title = concept (e.g., `self-attention.md`, `induction-heads.md`).
 - Exercises: `ex-NN-description.md`. Proofs: `proof-concept.md`.
 - Python modules: `snake_case.py`, one class or logical group per file.
+- Experiments: `exp<N>_<experiment-name>.py` in `src/experiments/`.
 
 ## Tags (few and useful)
-- `#phase/1` … `#phase/7` — phase membership.
+- `#phase/N` — phase membership (1–7).
 - `#type/lesson` `#type/exercise` `#type/proof` `#type/moc`.
 - `#state/review` `#state/consolidated`.
 - `#question` — for what you haven't understood yet (then search all open `#question`).
+- `#research/experiment` — for experiment-specific notes, results, and design decisions.
 
 ## Links (the heart of Obsidian)
 - Every note links **at least 2** other notes. No orphan notes.
 - Use `[[wikilink]]`. For key concepts, create the note *before* writing it (red link): it is a shopping list of what you are missing.
 - Each phase has a `_MOC.md` that acts as an index and collects internal links.
+- Research experiments should link to both the code file and the primary literature.
 
 ## Anatomy of a lesson note
 1. **What it is** in one sentence.
@@ -46,9 +49,12 @@ Every research note (experiment, derivation, result) should make a **claim** sup
 ## Git commit
 One commit per study session, descriptive message:
 `phase3: note on backprop + micrograd exercise solved`. The git history becomes the objective proof of your journey — valuable for the portfolio.
+For MI experiments: `feat(grokking): reproduce modular addition with Fourier analysis`.
 
 ## Python code conventions
 - Type hints everywhere (enforced by `mypy --strict` where practical).
 - All experiments accept a `--seed` argument and call `set_seed()` at entry.
 - Every experiment script reports mean ± std over ≥3 seeds.
 - Import from `src.*` package paths, not relative imports.
+- Experiments use TransformerLens via `HookedTransformer` for hook-based analysis.
+- Figures are saved to `figures/` AND committed; each figure has a deterministic generating script.
