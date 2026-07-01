@@ -9,6 +9,7 @@ on:
       - 'pyproject.toml'
       - 'uv.lock'
       - 'Makefile'
+      - '.github/workflows/*.yml'
   pull_request:
     branches: [main]
     paths:
@@ -17,6 +18,7 @@ on:
       - 'pyproject.toml'
       - 'uv.lock'
       - 'Makefile'
+      - '.github/workflows/*.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -34,22 +36,21 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Cache uv + virtualenv
+      - name: Install uv
+        run: pip install uv
+
+      - name: Cache virtualenv
         id: cache
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.cache/uv
-            .venv
+          path: .venv
           key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
           restore-keys: |
             uv-${{ runner.os }}-
 
-      - name: Install uv + dependencies
+      - name: Sync dependencies (if cache miss)
         if: steps.cache.outputs.cache-hit != 'true'
-        run: |
-          pip install uv
-          uv sync --frozen --all-extras
+        run: uv sync --frozen --all-extras
 
       - name: Lint (ruff)
         run: uv run ruff check src/ tests/

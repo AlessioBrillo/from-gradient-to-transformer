@@ -9,6 +9,7 @@ Research showcase for `from-gradient-to-transformer`. The headline finding is th
 | Artifact | Link |
 |----------|------|
 | Headline results | [[portfolio/RESULTS]] |
+| Research plan | [[07_capstone/research-plan]] |
 | Mini-paper (LaTeX PDF) | `portfolio/mini-paper/paper.pdf` |
 | Model card | [[portfolio/model-card]] |
 | Interactive demo (SAE feature browser) | [HF Space] (TODO) |

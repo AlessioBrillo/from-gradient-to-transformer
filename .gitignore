@@ -21,6 +21,7 @@ venv/
 # Temporary alignment papers (do not version)
 from-gradient-to-transformer-PhD.md
 refactor.md
+paper.md
 
 # CI / Coverage
 .coverage
