@@ -19,7 +19,7 @@ Ordered cheapest/highest-signal → more ambitious. Each is a defensible standal
 - **Scale/task:** 2-layer, attention-only, ~1–4 heads/layer, trained on repeated-random-token sequences.
 - **Metric/visual:** per-token loss vs. context position; the induction attention pattern; prefix-matching + copying decomposition; the training-loss bump.
 - **Compute:** minutes to a couple hours on one GPU.
-- **Headline:** "Induction heads emerge and I show, causally (ablation/patching), that they implement [A][B]…[A]→[B]."
+- **Headline:** "Induction heads emerge and I show, causally (ablation/patching), that they implement `[A][B]...[A]->[B]`."
 - **Reference:** Olsson, Elhage, Nanda et al., Transformer Circuits Thread (Anthropic), 2022.
 
 ### Rung 2 — Grokking on Modular Addition (PRIMARY FLAGSHIP ★)
