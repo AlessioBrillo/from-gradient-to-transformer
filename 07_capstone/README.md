@@ -15,7 +15,7 @@ The capstone converges everything from Phases 1–6 into a single arc: **build a
 Do in order; each produces a defensible standalone result:
 
 ### Rung 1 — Induction Heads (reliable fallback flagship)
-Train a 2-layer attention-only transformer (~1–4 heads/layer) on repeated-random-token sequences. Identify induction heads by their characteristic attention pattern ([A][B]…[A]→[B]). Verify causally via head ablation and logit-lens analysis.
+Train a 2-layer attention-only transformer (~1–4 heads/layer) on repeated-random-token sequences. Identify induction heads by their characteristic attention pattern (\[A\]\[B\]…\[A\]→\[B\]). Verify causally via head ablation and logit-lens analysis.
 
 - *Metric:* Per-token loss vs. context position; induction attention pattern; prefix-matching + copying decomposition; training-loss bump.
 - *Compute:* Minutes to a couple hours on one GPU.

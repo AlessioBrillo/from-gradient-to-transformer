@@ -21,7 +21,7 @@ Final document: explain the model and results as if you had to defend them in a 
 
 ## 3. Induction Heads
 - Setup: 2-layer attention-only transformer on repeated random tokens.
-- The induction-head pattern: [A][B]…[A]→[B] via prefix-matching + copying.
+- The induction-head pattern: \[A\]\[B\]…\[A\]→\[B\] via prefix-matching + copying.
 - Training dynamics: the loss "bump" / phase change at induction head formation.
 - Causal verification: head ablation, logit-lens analysis, attention-pattern entropy.
 - *If this is the primary flagship (grokking fallback):* then this section is expanded with full detail and Section 2 is condensed.

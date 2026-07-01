@@ -12,7 +12,7 @@
 
 ## Headline Result
 
-**Grokking on modular addition (a+b mod P) with full mechanistic reverse-engineering.** A one-layer transformer learns addition via discrete Fourier transforms and trigonometric identities. I recover this algorithm by decomposing the learned embeddings in Fourier space, define progress measures that reveal a three-phase training dynamic (memorization → circuit formation → cleanup), and causally confirm the mechanism by ablating individual Fourier frequencies.
+**Grokking on modular addition (a+b mod P) with mechanistic reverse-engineering.** A one-layer transformer learns addition via discrete Fourier transforms and trigonometric identities. I recover this algorithm by decomposing embeddings in Fourier space, define progress measures that reveal training dynamics, and causally confirm the mechanism by ablating individual Fourier frequencies.
 
 ```bash
 cd from-gradient-to-transformer
@@ -25,7 +25,9 @@ uv sync && make reproduce  # regenerate all experiment figures and tables
 
 ## Overview
 
-This repository is both a **mechanistic interpretability research showcase** with a focused experimental arc and a **structured learning journey** from gradient descent to circuit-level understanding of transformer internals. It spans seven phases — mathematical foundations, classical ML, deep learning, NLP & Transformers, LLM instrumentation, reproducible research infrastructure, and a capstone that combines training with reverse-engineering — all documented as an Obsidian vault with derivations, exercises, and proofs.
+This repository is both a **mechanistic interpretability research showcase** with a focused experimental arc and a **structured learning journey** from gradient descent to circuit-level understanding of transformer internals.
+
+It spans seven phases — mathematical foundations, classical ML, deep learning, NLP & Transformers, LLM instrumentation, reproducible research infrastructure, and a capstone that combines training with reverse-engineering — all documented as an Obsidian vault with derivations, exercises, and proofs.
 
 Every concept is marked as verified only after demonstrating it with an exercise and a reconstructed-from-memory proof. The result is a knowledge graph of linked, tested understanding rather than a collection of copied tutorials.
 

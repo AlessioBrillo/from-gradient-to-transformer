@@ -9,7 +9,7 @@ Index and links for this phase. Detailed topics/resources/exercises: see [[00_me
 **This is the most important phase for the MI thesis.** Every concept here directly feeds the capstone. The goal is to learn to *read* transformers: QK/OV circuits, induction heads, logit lens, activation patching.
 
 ## Notes (lessons)
-_(link to notes in `notes/` as you write them)_
+*(link to notes in `notes/` as you write them)*
 
 Key topics to cover:
 - QK/OV circuit decomposition (Elhage et al. 2021)
@@ -20,7 +20,7 @@ Key topics to cover:
 - TransformerLens: HookedTransformer, hook points, ActivationCache
 
 ## Exercises
-_(link to exercises in `exercises/`)_
+*(link to exercises in `exercises/`)*
 
 Core exercises:
 - Build decoder-only transformer from scratch
@@ -28,7 +28,7 @@ Core exercises:
 - Perform activation patching to verify circuit components
 
 ## Proofs to myself
-_(link to proofs in `proofs/`)_
+*(link to proofs in `proofs/`)*
 
 ## Phase checklist → [[04_nlp_and_transformers/checklist]]
 

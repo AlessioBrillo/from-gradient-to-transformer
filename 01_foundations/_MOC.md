@@ -78,17 +78,17 @@ These connections bridge Phase 1 foundations to mechanistic interpretability con
 
 | Foundation Concept | MI Connection |
 |-------------------|---------------|
-| Vector spaces, span, basis | The [[04_nlp_and_transformers/_MOC|residual stream]] is a shared vector space; every layer reads and writes to it |
-| Change of basis | Projecting activations onto feature directions; [[04_nlp_and_transformers/_MOC|logit lens]] as projection onto vocabulary basis |
-| Matrix multiplication as composition | [[04_nlp_and_transformers/_MOC|QK/OV circuits]] compose to implement attention head functions |
+| Vector spaces, span, basis | The [residual stream](04_nlp_and_transformers/_MOC.md) is a shared vector space; every layer reads and writes to it |
+| Change of basis | Projecting activations onto feature directions; [logit lens](04_nlp_and_transformers/_MOC.md) as projection onto vocabulary basis |
+| Matrix multiplication as composition | [QK/OV circuits](04_nlp_and_transformers/_MOC.md) compose to implement attention head functions |
 | Low-rank matrices / SVD | Attention heads are low-rank operations: QK and OV circuits as factorizations |
-| Eigenvalues / eigenvectors | Understanding feature directions and the geometry of [[04_nlp_and_transformers/_MOC|superposition]] |
+| Eigenvalues / eigenvectors | Understanding feature directions and the geometry of [superposition](04_nlp_and_transformers/_MOC.md) |
 | Norms and distances | Measuring activation magnitudes, feature separation in attention space |
-| Cross-entropy / KL divergence | The loss landscape that drives [[03_deep_learning/_MOC|grokking dynamics]] and circuit formation |
-| Gradient chain rule | [[04_nlp_and_transformers/_MOC|Attribution patching (AtP)]] uses gradients to approximate causal effects |
-| PCA / dimensionality reduction | Conceptual ancestor of [[07_capstone/README|sparse autoencoders]] |
-| Bias-variance decomposition | Maps to memorization vs. generalization in [[07_capstone/README|grokking]] |
-| Convex optimization | Understanding loss landscapes, optimization dynamics in [[03_deep_learning/_MOC|training]] |
+| Cross-entropy / KL divergence | The loss landscape that drives [grokking dynamics](03_deep_learning/_MOC.md) and circuit formation |
+| Gradient chain rule | [Attribution patching (AtP)](04_nlp_and_transformers/_MOC.md) uses gradients to approximate causal effects |
+| PCA / dimensionality reduction | Conceptual ancestor of [sparse autoencoders](07_capstone/README.md) |
+| Bias-variance decomposition | Maps to memorization vs. generalization in [grokking](07_capstone/README.md) |
+| Convex optimization | Understanding loss landscapes, optimization dynamics in [training](03_deep_learning/_MOC.md) |
 
 ## Links
 - ⬅️ [[00_meta/00_home|Home]]

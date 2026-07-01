@@ -26,7 +26,7 @@ One term, one line, **linked** to the notes that use it. Keep only your own defi
 - **Residual stream** — the central communication channel of a transformer; each layer reads from and writes to this shared vector space. → [[04_nlp_and_transformers/_MOC]]
 - **QK circuit** — the attention head's query-key computation: which previous tokens to attend to. → [[04_nlp_and_transformers/_MOC]]
 - **OV circuit** — the attention head's output-value computation: what information to copy from the attended token. → [[04_nlp_and_transformers/_MOC]]
-- **Induction head** — an attention head that implements [A][B]…[A]→[B]: attends to the previous occurrence of the current token and copies what followed it. The mechanism behind much in-context learning. → [[04_nlp_and_transformers/_MOC]]
+- **Induction head** — an attention head that implements \[A\]\[B\]…\[A\]→\[B\]: attends to the previous occurrence of the current token and copies what followed it. The mechanism behind much in-context learning. → [[04_nlp_and_transformers/_MOC]]
 - **Logit lens** — technique to project the residual stream's final state into vocabulary space via the unembedding matrix, revealing what the model "thinks" at each layer. → [[04_nlp_and_transformers/_MOC]]
 
 ## Mechanistic Interpretability (Advanced)

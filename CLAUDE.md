@@ -1,7 +1,7 @@
 # From Gradient to Transformer to Circuit — CLAUDE.md
 
 ## Project
-Obsidian vault + mechanistic interpretability research codebase: from gradient descent (Phases 1-3) to Transformer (Phase 4), LLM instrumentation (Phase 5), reproducible research infra (Phase 6), and a capstone that trains a decoder-only transformer and reverse-engineers its internals (Phase 7). All content in English. Primary research direction: mechanistic interpretability at micro scale — grokking modular addition, induction heads, superposition, circuit discovery, and sparse autoencoder feature extraction.
+Obsidian vault + mechanistic interpretability research codebase: from gradient descent to Transformer, LLM instrumentation, reproducible infra, and a capstone training a decoder-only transformer with reverse-engineered internals. Focus: micro-scale mechanistic interpretability — grokking modular addition, induction heads, superposition, circuit discovery, and sparse autoencoder feature extraction.
 
 ## Rules
 - Work on `dev` branch. Never push directly to `main`.
