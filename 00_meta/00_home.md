@@ -9,7 +9,7 @@ Central map of the vault. Everything starts here.
 
 ## Headline Result
 
-The primary research contribution: **quantifying the Italian tokenization tax** at micro scale. See [[portfolio/RESULTS]] for the latest findings and [[portfolio/README]] for all showcase artifacts.
+The primary research contribution: **mechanistic reverse-engineering of a transformer's learned algorithms at micro scale**. See [[portfolio/RESULTS]] for the latest findings and [[portfolio/README]] for all showcase artifacts.
 
 > If you have 30 seconds, read the thesis and headline result. If you have 30 minutes, read the mini-paper.
 
@@ -28,7 +28,7 @@ The primary research contribution: **quantifying the Italian tokenization tax** 
 - [[04_nlp_and_transformers/_MOC|Phase 4 · NLP & Transformers]]
 - [[05_llm_engineering/_MOC|Phase 5 · LLM Engineering]]
 - [[06_production_ai/_MOC|Phase 6 · Production AI]]
-- [[07_capstone/README|Phase 7 · Capstone micro-LLM]]
+- [[07_capstone/README|Phase 7 · Capstone: train + reverse-engineer]]
 
 ## How to Use the Graph
 

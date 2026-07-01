@@ -1,7 +1,13 @@
 name: Conventional Commits
+
 on:
   pull_request:
     branches: [main, dev]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint-commits:
     runs-on: ubuntu-latest
@@ -10,3 +16,5 @@ jobs:
         with:
           fetch-depth: 0
       - uses: wagoid/commitlint-github-action@v5
+        with:
+          configFile: commitlint.config.js

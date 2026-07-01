@@ -1,29 +1,29 @@
-# From Gradient to Transformer — CLAUDE.md
+# From Gradient to Transformer to Circuit — CLAUDE.md
 
 ## Project
-Obsidian vault + research codebase for AI engineering: from gradient descent (Phases 1-3) to Transformer (Phase 4), LLM Engineering (Phase 5), Production AI (Phase 6), and micro-LLM capstone (Phase 7). All content in English. Primary research thesis: quantifying the "Italian tokenization tax" at micro scale.
+Obsidian vault + mechanistic interpretability research codebase: from gradient descent to Transformer, LLM instrumentation, reproducible infra, and a capstone training a decoder-only transformer with reverse-engineered internals. Focus: micro-scale mechanistic interpretability — grokking modular addition, induction heads, superposition, circuit discovery, and sparse autoencoder feature extraction.
 
 ## Rules
 - Work on `dev` branch. Never push directly to `main`.
 - All commits GPG-signed (configured globally).
 - Conventional Commits: `type(scope): message`
   - types: feat | fix | docs | refactor | test | chore
-  - scopes: meta | phase1..7 | ci | portfolio | templates | scripts | research | infra | paper
+  - scopes: meta | phase1..7 | ci | portfolio | templates | scripts | research | infra | paper | grokking | induction-heads | superposition | circuit-patching | sae
 - **CI must pass before merging dev -> main. Never bypass failed checks.**
 - Every note links at least 2 other notes. No orphan notes.
-- Tags: `#phase/N`, `#type/lesson|exercise|proof|moc`, `#state/review|consolidated`, `#question`
+- Tags: `#phase/N`, `#type/lesson|exercise|proof|moc`, `#state/review|consolidated`, `#question`, `#research/experiment`
 
 ## Layout
 - `00_meta/` — home, roadmap, skill-tree, conventions, glossary, progress-log, obsidian-setup
 - `01..06_*/notes/ exercises/ proofs/` — phase content (each has `_MOC.md` + `checklist.md`)
-- `07_capstone/src/` — micro-LLM source code
-- `src/` — shared research code (models, experiments, training, generation, reproducibility)
-- `tests/` — unit tests (pytest)
+- `07_capstone/` — capstone: train + reverse-engineer a decoder-only transformer
+- `src/` — shared research code (experiments, reproducibility, circuits, SAE)
+- `tests/` — unit tests (pytest) including per-experiment smoke tests
 - `figures/` — programmatically generated figures for the paper
 - `portfolio/` — RESULTS.md, mini-paper (LaTeX), model card
 - `checklists/` — reproducibility checklist, datasets
 - `scripts/new_note.sh` — create notes from templates
-- `templates/` — note.md, exercise.md, proof.md, project.md
+- `templates/` — note.md, exercise.md, proof.md, project.md, paper-note.md
 
 ## Available commands
 
@@ -35,6 +35,12 @@ bash scripts/new_note.sh <phase> <kind> "<Title>"
 pytest              # run all tests
 ruff check src/     # lint
 uv sync             # sync pinned environment
+
+# Experiment-specific reproducibility
+make reproduce              # regenerate all figures and tables
+make reproduce-grokking     # Rung 2: grokking modular addition (FLAGSHIP)
+make reproduce-induction    # Rung 1: induction heads
+make reproduce-sae          # Rung 5: SAE feature dashboard
 ```
 
 ## Skills

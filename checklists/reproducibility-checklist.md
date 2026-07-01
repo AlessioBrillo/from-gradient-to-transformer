@@ -8,17 +8,17 @@ Based on Pineau et al., "Improving Reproducibility in Machine Learning Research,
 
 ## Model
 
-- [x] Model architecture is fully specified (source code in `src/models/`)
-- [x] All hyperparameters are documented (in experiment configs)
-- [ ] Number of parameters reported
-- [ ] Training time reported
-- [ ] Hardware specifications reported
+- [x] Model architecture is fully specified (source code in `src/experiments/` and `07_capstone/src/`)
+- [x] All hyperparameters are documented (in experiment argparse and configs)
+- [ ] Number of parameters reported per experiment
+- [ ] Training time reported per experiment
+- [ ] Hardware specifications reported per experiment
 
 ## Data
 
-- [ ] All datasets used are named and their licenses documented
-- [ ] Data processing pipeline is deterministic and documented
-- [ ] Train/validation/test split is fixed and reproducible
+- [x] All datasets are synthetic (generated on-the-fly; seed-controlled)
+- [x] Data generation pipeline is deterministic (seed-controlled)
+- [x] Train/validation/test split is fixed and reproducible (seed-controlled)
 
 ## Experiments
 
@@ -33,11 +33,13 @@ Based on Pineau et al., "Improving Reproducibility in Machine Learning Research,
 - [x] Python environment is pinned (`uv.lock` / `pyproject.toml`)
 - [x] `make reproduce` regenerates all figures and tables
 - [x] All dependencies are listed with version constraints
+- [x] Per-experiment `make reproduce-<name>` targets for individual experiments
+- [x] CI smoke tests run on every push (tiny model, few steps)
 
 ## Paper
 
-- [ ] Results include comparison to a baseline
-- [ ] At least one ablation study is included
-- [ ] Limitations section is present
+- [ ] Results include comparison to primary literature (Nanda et al., Olsson et al., Elhage et al.)
+- [ ] At least one ablation study is included per experiment
+- [ ] Limitations section is present in the mini-paper
 - [ ] Primary literature is cited for all key claims
-- [ ] Dataset licenses are explicitly stated
+- [ ] Honest caveats about methods are documented (patching limitations, SAE illusions)

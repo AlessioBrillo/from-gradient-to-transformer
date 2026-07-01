@@ -4,75 +4,100 @@ tags: [portfolio, results]
 
 # Results — Headline Findings
 
-> **Thesis**: Quantify and partially close the "Italian tokenization tax" at micro scale by building a decoder-only Transformer from scratch with an Italian-optimized tokenizer, measuring the effect on fertility, perplexity, and a downstream Italian NLU task.
+> **Thesis**: I build a decoder-only transformer from scratch, then reverse-engineer the algorithms it learns — grokking modular addition with Fourier decomposition, induction heads, circuit verification via activation patching, and sparse autoencoder feature extraction.
 
 ---
 
-## Exp 1 — Tokenizer Fertility Study
+## Rung 2 — Grokking Modular Addition ★ (Primary Flagship)
 
-**Question**: Does an Italian-optimized tokenizer reduce the "Italian tax" compared to English-centric tokenizers of equal vocabulary size?
+**Question**: Can I reproduce the grokking phase transition on modular addition (a+b mod P) and reverse-engineer the discrete Fourier transform algorithm the model learns?
 
 **Status**: [ ] Planned
 
-| Tokenizer | Vocab | Italian Fertility (↓) | English Fertility (↓) | Ratio (It/En) |
-|-----------|-------|----------------------|-----------------------|----------------|
-| GPT-2 | 50,257 | — | — | — |
-| Mistral-7B | 32,768 | — | — | — |
-| Our BPE (English) | 16,000 | — | — | — |
-| **Our BPE (Italian-optimized)** | **16,000** | **—** | **—** | **—** |
+| Metric | Value |
+|--------|-------|
+| Modulus P | 113 |
+| Train fraction | ~30% |
+| Generalization step | — |
+| Fourier frequencies used | — |
+| Ablation: removing key frequencies → | — |
+| Ablation: removing ~95% of frequencies → | — |
 
-*Reference: Mistral-7B BPE tokenizer has fertility ~1.87 on Italian vs ~1.32 on English (Orlando et al., CLiC-it 2024). Our target: demonstrate that an Italian-optimized tokenizer of equal vocab size closes this gap.*
+*Reference: Nanda et al., "Progress Measures for Grokking via Mechanistic Interpretability," ICLR 2023 (oral). Target: reproduce the three-phase dynamic (memorization → circuit formation → cleanup) and confirm the Fourier algorithm via frequency ablation.*
 
 ---
 
-## Exp 2 — Tokenizer Ablation on Micro-LM
+## Rung 1 — Induction Heads (Fallback Flagship)
 
-**Question**: Do fertility gains translate to measurable improvements in training efficiency?
+**Question**: Do induction heads emerge in a 2-layer attention-only transformer trained on repeated tokens?
 
 **Status**: [ ] Planned
 
-| Tokenizer | Bits-per-Byte (↓) | Tokens to Convergence | Wall Time |
-|-----------|-------------------|----------------------|-----------|
-| English-centric BPE | — | — | — |
-| Italian-optimized BPE | — | — | — |
+| Metric | Value |
+|--------|-------|
+| Layers | 2 |
+| Heads per layer | — |
+| Induction heads identified | — |
+| Ablation: removing induction heads → | — |
+
+*Reference: Olsson, Elhage, Nanda et al., "In-context Learning and Induction Heads," Transformer Circuits Thread (Anthropic), 2022.*
 
 ---
 
-## Exp 3 — Positional Encoding Ablation
+## Rung 3 — Toy Models of Superposition
 
-**Question**: How do sinusoidal, learned, and RoPE compare at micro scale?
+**Question**: How do features organize in a toy ReLU autoencoder under varying sparsity, and can I observe the phase change from monosemantic to superposed features?
 
 **Status**: [ ] Planned
 
-| Encoding | Validation Perplexity (↓) |
-|----------|--------------------------|
-| Sinusoidal | — |
-| Learned | — |
-| RoPE | — |
+| Sparsity | Feature Dimension | Active Features | Geometry |
+|----------|-------------------|-----------------|----------|
+| — | — | — | — |
+
+*Reference: Elhage et al., "Toy Models of Superposition," Transformer Circuits Thread (Anthropic), 2022.*
 
 ---
 
-## Exp 4 — Downstream Italian NLU
+## Rung 4 — Circuit Verification via Activation Patching
 
-**Question**: Does tokenizer-aware pretraining improve performance on Italian NLU tasks?
+**Question**: Can I find and causally validate a specific circuit (IOI or task-specific) via activation/path patching, and measure its faithfulness and minimality?
 
 **Status**: [ ] Planned
 
-| Model | Task | Metric | Score (mean ± std) |
-|-------|------|--------|-------------------|
-| Baseline (English tokenizer) | — | — | — |
-| Italian-optimized tokenizer | — | — | — |
+| Component | Logit Diff Recovery | Faithfulness |
+|-----------|--------------------|--------------|
+| — | — | — |
+
+*Reference: Wang et al., "Interpretability in the Wild: a Circuit for Indirect Object Identification in GPT-2 small," ICLR 2023.*
 
 ---
 
-## Reference Results (from primary literature)
+## Rung 5 — Sparse Autoencoder Feature Dashboard
 
-| Source | Tokenizer | Italian Fertility | English Fertility | Corpus |
-|--------|-----------|-------------------|-------------------|--------|
-| Orlando et al., CLiC-it 2024 | Mistral-7B BPE | 1.87 | 1.32 | CulturaX |
-| Orlando et al., CLiC-it 2024 | Mistral-7B BPE | 2.05 | 1.57 | Wikipedia |
-| Moroni et al., NAACL 2025 | Gemma-7B | 1.42 | 1.18 | CulturaX |
-| Moroni et al., NAACL 2025 | Llama-3-8B | 1.67 | 1.15 | CulturaX |
-| Moroni et al., NAACL 2025 | Minerva-LLMs | 1.39 | — | CulturaX |
+**Question**: Can I train an SAE on the capstone model's residual stream and produce a browsable dashboard of interpretable monosemantic features?
 
-Our micro-scale results will differ in absolute numbers but should reproduce the *relative* Italian-vs-English gap pattern.
+**Status**: [ ] Planned
+
+| Metric | Value |
+|--------|-------|
+| Dictionary size | — |
+| L0 sparsity | — |
+| Loss recovered | — |
+| Dead features | — / — (—%) |
+
+*Reference: Bricken et al., "Towards Monosemanticity: Decomposing Language Models With Dictionary Learning," Transformer Circuits Thread (Anthropic), 2023.*
+
+---
+
+## Rung 6 — Automated vs. Hand-Found Circuit (Stretch)
+
+**Question**: How does automated circuit discovery (ACDC) compare against a hand-found circuit (Rung 4) — in edge recovery, runtime, and faithfulness?
+
+**Status**: [ ] Stretch
+
+| Method | Edges Selected | Recovery vs. Manual | Runtime |
+|--------|---------------|---------------------|---------|
+| Manual (Rung 4) | — | — | — |
+| ACDC | — | — | — |
+
+*Reference: Conmy et al., "Towards Automated Circuit Discovery for Mechanistic Interpretability," NeurIPS 2023 (spotlight).*

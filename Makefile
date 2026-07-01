@@ -1,4 +1,4 @@
-.PHONY: sync test lint reproduce clean paper
+.PHONY: sync test lint typecheck ci-check reproduce clean paper reproduce-grokking reproduce-induction reproduce-sae
 
 # --- Environment ---
 sync:
@@ -21,11 +21,30 @@ lint-fix:
 typecheck:
 	mypy src/ --ignore-missing-imports || true
 
+typecheck-strict:
+	mypy src/ --ignore-missing-imports
+
+# --- CI mirror (replica locale di .github/workflows/python-ci.yml) ---
+ci-check: lint typecheck test-cov
+
 # --- Reproducibility ---
 reproduce:
 	@echo "=== Regenerating all experiment figures and tables ==="
-	python -m src.experiments.exp1_tokenizer_fertility
+	python -m src.experiments.exp2_grokking
+	python -m src.experiments.exp1_induction_heads
 	@echo "Done. See figures/ and portfolio/RESULTS.md"
+
+reproduce-grokking:
+	@echo "=== Rung 2: Grokking modular addition (FLAGSHIP) ==="
+	python -m src.experiments.exp2_grokking
+
+reproduce-induction:
+	@echo "=== Rung 1: Induction heads ==="
+	python -m src.experiments.exp1_induction_heads
+
+reproduce-sae:
+	@echo "=== Rung 5: SAE feature dashboard ==="
+	python -m src.experiments.exp5_sae_dashboard
 
 # --- Mini-paper ---
 paper:
@@ -36,8 +55,7 @@ paper-clean:
 
 # --- Cleanup ---
 clean:
-	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-	find . -type f -name "*.pyc" -delete
-	rm -rf .pytest_cache
-	rm -rf .ruff_cache
-	rm -rf .mypy_cache
+	@echo "=== Cleaning temporary artifacts ==="
+	-python -c "import shutil, pathlib; [shutil.rmtree(p) for p in pathlib.Path('.').rglob('__pycache__')]" 2>nul || true
+	-python -c "import pathlib; [p.unlink() for p in pathlib.Path('.').rglob('*.pyc')]" 2>nul || true
+	-rm -rf .pytest_cache .ruff_cache .mypy_cache 2>nul || true

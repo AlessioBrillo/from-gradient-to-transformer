@@ -72,5 +72,25 @@ Index and links for this phase. Detailed topics/resources/exercises: see [[00_me
 
 ## Phase checklist → [[01_foundations/checklist]]
 
+## MI Forward-Links
+
+These connections bridge Phase 1 foundations to mechanistic interpretability concepts used in later phases:
+
+| Foundation Concept | MI Connection |
+|-------------------|---------------|
+| Vector spaces, span, basis | The [residual stream](04_nlp_and_transformers/_MOC.md) is a shared vector space; every layer reads and writes to it |
+| Change of basis | Projecting activations onto feature directions; [logit lens](04_nlp_and_transformers/_MOC.md) as projection onto vocabulary basis |
+| Matrix multiplication as composition | [QK/OV circuits](04_nlp_and_transformers/_MOC.md) compose to implement attention head functions |
+| Low-rank matrices / SVD | Attention heads are low-rank operations: QK and OV circuits as factorizations |
+| Eigenvalues / eigenvectors | Understanding feature directions and the geometry of [superposition](04_nlp_and_transformers/_MOC.md) |
+| Norms and distances | Measuring activation magnitudes, feature separation in attention space |
+| Cross-entropy / KL divergence | The loss landscape that drives [grokking dynamics](03_deep_learning/_MOC.md) and circuit formation |
+| Gradient chain rule | [Attribution patching (AtP)](04_nlp_and_transformers/_MOC.md) uses gradients to approximate causal effects |
+| PCA / dimensionality reduction | Conceptual ancestor of [sparse autoencoders](07_capstone/README.md) |
+| Bias-variance decomposition | Maps to memorization vs. generalization in [grokking](07_capstone/README.md) |
+| Convex optimization | Understanding loss landscapes, optimization dynamics in [training](03_deep_learning/_MOC.md) |
+
 ## Links
 - ⬅️ [[00_meta/00_home|Home]]
+- 🔬 [[04_nlp_and_transformers/_MOC|Phase 4 — Where MI concepts are studied in depth]]
+- 🔬 [[07_capstone/README|Capstone — Apply everything to train + reverse-engineer]]
