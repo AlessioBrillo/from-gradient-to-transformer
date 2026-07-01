@@ -1,4 +1,4 @@
-.PHONY: sync test lint reproduce clean paper reproduce-grokking reproduce-induction reproduce-sae
+.PHONY: sync test lint typecheck ci-check reproduce clean paper reproduce-grokking reproduce-induction reproduce-sae
 
 # --- Environment ---
 sync:
@@ -20,6 +20,12 @@ lint-fix:
 
 typecheck:
 	mypy src/ --ignore-missing-imports || true
+
+typecheck-strict:
+	mypy src/ --ignore-missing-imports
+
+# --- CI mirror (replica locale di .github/workflows/python-ci.yml) ---
+ci-check: lint typecheck test-cov
 
 # --- Reproducibility ---
 reproduce:

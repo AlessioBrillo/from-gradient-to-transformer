@@ -36,7 +36,7 @@ paper = [
     "latexmk",
 ]
 sae = [
-    "sae-lens[vis]>=1.0",
+    "sae-lens>=1.0",
 ]
 
 [tool.ruff]
@@ -55,6 +55,7 @@ select = ["E", "F", "I", "N", "W"]
 python_version = "3.11"
 strict = true
 ignore_missing_imports = true
+
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
