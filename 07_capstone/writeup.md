@@ -6,6 +6,8 @@ tags: [phase/7, capstone, writeup]
 
 Final document: explain the model and results as if you had to defend them in a conference poster session or research interview.
 
+See [[07_capstone/research-plan]] for the strategic breakdown: experiment ladder, timeline, flagships, tooling decisions, literature map, and honest caveats.
+
 ## 1. Thesis and Motivation
 - From gradient to transformer to circuit: the case for small-scale mechanistic interpretability.
 - Why micro-scale: the foundational results in MI were *obtained on tiny models* (1–2 layers, single-digit millions of parameters). Small scale is the *native* setting for circuit discovery, not a compromise.
