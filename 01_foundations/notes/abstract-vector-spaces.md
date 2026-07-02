@@ -22,6 +22,7 @@ A set V is a vector space over the reals if:
 - Scalar multiplication distributes over vector addition: c·(v + w) = c·v + c·w
 
 **Examples of vector spaces**:
+
 | Space | "Vectors" | "Scalar multiplication" |
 |-------|-----------|------------------------|
 | ℝⁿ | n-tuples of numbers | (x₁, …, xₙ) → (cx₁, …, cxₙ) |

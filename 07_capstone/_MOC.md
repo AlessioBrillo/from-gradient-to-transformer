@@ -11,6 +11,7 @@ Index and links for the capstone phase. Detailed plan: [[07_capstone/README]].
 - [[07_capstone/writeup]] — mini-paper outline: grokking, circuits, SAE
 
 ## Experiment ladder
+
 | Rung | Experiment | Status | Code |
 |------|------------|--------|------|
 | 1 | Induction heads | [ ] Planned | `src/experiments/exp1_induction_heads.py` |
