@@ -226,6 +226,7 @@ def train_model(
     optimizer = torch.optim.AdamW(
         model.parameters(), lr=lr, weight_decay=weight_decay
     )
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
     criterion = nn.CrossEntropyLoss()
 
     history = {
@@ -259,7 +260,8 @@ def train_model(
         train_acc = epoch_correct / epoch_total
         val_loss, val_acc = evaluate(model, val_loader)
 
-        # Embedding norm as a simple progress measure
+        scheduler.step()
+
         embed_norm = model.embed.weight.norm().item()
 
         history["train_loss"].append(train_loss)
@@ -268,11 +270,12 @@ def train_model(
         history["val_acc"].append(val_acc)
         history["embed_norm"].append(embed_norm)
 
+        current_lr = scheduler.get_last_lr()[0]
         if (epoch + 1) % 50 == 0 or epoch == 0:
             logger.info(
                 f"Epoch {epoch+1:4d} | train loss: {train_loss:.4f} | "
                 f"val loss: {val_loss:.4f} | val acc: {val_acc:.4f} | "
-                f"embed norm: {embed_norm:.2f}"
+                f"embed norm: {embed_norm:.2f} | lr: {current_lr:.2e}"
             )
 
     return history
@@ -479,7 +482,7 @@ def run_ablation_sweep(
 # Progress measures
 # ---------------------------------------------------------------------------
 def compute_progress_measures(
-    history: dict, fourier_result: dict
+    history: dict, fourier_result: dict, modulus: int
 ) -> dict:
     """Analyze the three phases of grokking.
 
@@ -494,7 +497,7 @@ def compute_progress_measures(
     embed_norm = np.array(history["embed_norm"])
 
     # Phase 1 → Phase 2: when val accuracy first exceeds 1/P (random chance)
-    random_baseline = 1.0 / 100  # approximate
+    random_baseline = 1.0 / modulus
     phase1_end = np.where(val_acc > random_baseline * 2)[0]
     phase1_end = int(phase1_end[0]) if len(phase1_end) > 0 else len(val_acc) // 3
 
@@ -777,7 +780,7 @@ def main() -> None:
     logger.info(f"Mass in top 20 freqs: {sparsity['total_mass_top_k']:.3f}")
 
     # Progress measures
-    phases = compute_progress_measures(history, fourier_result)
+    phases = compute_progress_measures(history, fourier_result, modulus)
     logger.info(f"Phase boundaries: {phases}")
 
     # Ablation sweep

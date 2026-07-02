@@ -278,42 +278,40 @@ def analyze_induction_heads(
 
     Returns:
         Tuple of (induction_head_indices, attention_patterns) where each
-        attention pattern is a numpy array of shape (n_heads, seq_len, seq_len).
+        attention pattern is a list of numpy arrays per layer.
     """
     model.eval()
-    all_patterns = []
+    n_layers = len(model.blocks)
+    per_layer_patterns: list[list] = [[] for _ in range(n_layers)]
 
     with torch.no_grad():
         for x, _ in loader:
             x = x.to(DEVICE)
             _, attn_records = model(x, record_attn=True)
             if attn_records is not None:
-                all_patterns.extend(attn_records)
-            if len(all_patterns) >= 32:  # enough samples
+                for layer_idx, pattern in enumerate(attn_records):
+                    per_layer_patterns[layer_idx].append(pattern.cpu())
+            if sum(len(p) for p in per_layer_patterns) >= 32 * n_layers:
                 break
 
-    if not all_patterns:
-        return [], []
-
     induction_heads_by_layer = []
-    for layer_idx, patterns in enumerate(all_patterns):
-        # patterns shape: (B, n_heads, S, S)
-        B, n_heads, S, _ = patterns.shape
+    all_patterns = []
+    for layer_idx, patterns in enumerate(per_layer_patterns):
+        if not patterns:
+            induction_heads_by_layer.append([])
+            all_patterns.append([])
+            continue
 
-        # Induction head signature: for each head, compute the diagonal+1 mass
-        diag_plus_one = torch.zeros(n_heads)
-        for h in range(n_heads):
-            # average probability mass on the diagonal+1 across all positions and batches
-            for b in range(B):
-                for pos in range(1, S):
-                    diag_plus_one[h] += patterns[b, h, pos, pos - 1]
-            diag_plus_one[h] /= B * (S - 1)
+        # Concatenate all batches for this layer: (B_total, n_heads, S, S)
+        cat = torch.cat(patterns, dim=0)
+        all_patterns.append(cat)
+        B, n_heads, S, _ = cat.shape
 
-        # Heads with > threshold are candidates
+        # Diagonal+1 mass: average over all positions and batches
+        diag = cat[:, :, 1:, :-1].diagonal(dim1=-2, dim2=-1).mean(dim=(0, -1))
+
         threshold = 0.3
-        induction_heads = (diag_plus_one > threshold).nonzero(
-            as_tuple=True
-        )[0].tolist()
+        induction_heads = (diag > threshold).nonzero(as_tuple=True)[0].tolist()
         induction_heads_by_layer.append(induction_heads)
 
     return induction_heads_by_layer, all_patterns

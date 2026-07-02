@@ -68,20 +68,17 @@ class SparseFeatureDataset(TensorDataset):
         # Generate sparse features
         features = []
         for _ in range(num_samples):
-            # Which features are active
             mask = rng.binomial(1, sparsity, size=n_features)
-            # Values for active features
             vals = mask * rng.exponential(size=n_features)
             features.append(vals)
 
         features = np.array(features, dtype=np.float32)
+        W = W.astype(np.float32)
+        embedded = features @ W
 
-        # Embed features into lower-dimensional space
-        embedded = features @ W  # (num_samples, n_dimensions)
-
-        self.W = torch.tensor(W, dtype=torch.float32)
-        self.features = torch.tensor(features)
-        self.embedded = torch.tensor(embedded)
+        self.W = torch.from_numpy(W)
+        self.features = torch.from_numpy(features)
+        self.embedded = torch.from_numpy(embedded)
 
         super().__init__(self.embedded, self.features)
 
