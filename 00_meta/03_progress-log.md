@@ -63,3 +63,11 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Phase 1 consolidated content kept; added MI forward-links connecting foundations to circuit concepts.
 - All 5 old experiment skeletons replaced with 6 MI rungs (induction heads, grokking, superposition, circuit patching, SAE dashboard, automated discovery).
 - Open question: which modulus for grokking? P=113 (canonical) vs P=59 (cheaper). Start with P=59 for fast iteration.
+
+## 2026-07-05 — Phase 2 Begins: Blocco 1 — Linear Models
+- Studied: scikit-learn API conventions, linear regression (SVD closed-form + SGD), logistic regression (cross-entropy, decision boundary geometry), connections to MI (QK/OV separation analogy)
+- Built: `src/models/linear_model.py` (LinearRegression, LogisticRegression from scratch), `src/evaluation/metrics.py` (accuracy, precision, recall, F1, RMSE, R², ROC-AUC, cross_val_score), `src/data/datasets.py` (make_classification, make_regression, make_moons, train_test_split)
+- Written: 3 notes (scikit-learn ecosystem, linear regression, logistic regression), 1 exercise (ex-01-linear-and-logistic-regression with MI forward-link), 1 proof (linear-logistic-regression)
+- Tests: 28 new tests, 44 total passing, ruff lint clean
+- Skills verified: Linear/logistic regression ✅
+- Open question: next session — Blocco 2 (Evaluation metrics + CV) + Blocco 3 (Decision trees, RF, boosting)

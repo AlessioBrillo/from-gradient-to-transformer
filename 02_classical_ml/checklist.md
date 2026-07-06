@@ -9,11 +9,11 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
 **MI framing:** PCA/dictionary learning is the conceptual ancestor of sparse autoencoders. SVM margin intuition maps to how attention heads separate representations. Bias/variance diagnosis maps to understanding memorization vs. generalization in grokking.
 
 ## Phase gate
-- [ ] **Proof passed** → I can move to the next phase.
+- [ ] **Proof passed** → I can move to the next phase. (gate proof: [[02_classical_ml/proofs/complete-ml-pipeline]] — not yet done)
 
 ## Skills
-- [ ] Linear regression: closed-form + gradient descent
-- [ ] Logistic regression: decision boundary, probabilistic interpretation
+- [x] Linear regression: closed-form + gradient descent (proof: [[02_classical_ml/proofs/linear-logistic-regression]], exercise: [[02_classical_ml/exercises/ex-01-linear-and-logistic-regression]])
+- [x] Logistic regression: decision boundary, probabilistic interpretation (same proof/exercise)
 - [ ] Decision trees: impurity measures, pruning
 - [ ] Random forest: bagging, feature importance
 - [ ] Gradient boosting: XGBoost/LightGBM hands-on

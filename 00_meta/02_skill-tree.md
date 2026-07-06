@@ -26,7 +26,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
 > - Numerical gradient check → gradient-based attribution patching (AtP)
 
 ## Phase 2 — Classical ML
-- [ ] Linear/logistic regression (linear feature intuition)
+- [x] Linear/logistic regression (linear feature intuition) — proof: [[02_classical_ml/proofs/linear-logistic-regression]] (exercise: [[02_classical_ml/exercises/ex-01-linear-and-logistic-regression]])
 - [ ] Trees / ensembles / boosting
 - [ ] Support Vector Machines (margin, kernel trick — circuit intuition)
 - [ ] Naive Bayes

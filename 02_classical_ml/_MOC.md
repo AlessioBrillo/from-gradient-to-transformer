@@ -9,13 +9,15 @@ Index and links for this phase. Detailed topics/resources/exercises: see [[00_me
 **MI framing:** PCA/dictionary learning → conceptual ancestor of sparse autoencoders. SVM margin → circuit intuition (how attention heads separate features). Bias/variance → memorization vs. generalization in grokking.
 
 ## Notes (lessons)
-_(link to notes in `notes/` as you write them)_
+- [[02_classical_ml/notes/scikit-learn-ecosystem|scikit-learn Ecosystem]]
+- [[02_classical_ml/notes/linear-regression|Linear Regression]]
+- [[02_classical_ml/notes/logistic-regression|Logistic Regression]]
 
 ## Exercises
-_(link to exercises in `exercises/`)_
+- [[02_classical_ml/exercises/ex-01-linear-and-logistic-regression|Linear and Logistic Regression]]
 
 ## Proofs to myself
-_(link to proofs in `proofs/`)_
+- [[02_classical_ml/proofs/linear-logistic-regression|Linear and Logistic Regression]]
 
 ## Phase checklist → [[02_classical_ml/checklist]]
 
