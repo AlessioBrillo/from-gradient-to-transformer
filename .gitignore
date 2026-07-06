@@ -5,6 +5,9 @@ __pycache__/
 venv/
 .ipynb_checkpoints/
 
+# Generated figures (regenerated with make reproduce)
+figures/
+
 # Models and heavy data (do not version large binaries)
 *.pt
 *.ckpt
