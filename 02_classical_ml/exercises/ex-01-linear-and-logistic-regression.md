@@ -77,7 +77,12 @@ plt.close()
 
 ## MI Forward Link: My Answer
 
-The feature weight vector w in logistic regression defines a direction in input space. The signed distance from a point to the decision boundary is X · w + b. This is **mathematically identical** to what an attention head's QK circuit computes: the dot product between a query and a key determines which positions to attend to. The "decision boundary" in attention is the threshold at which one token is preferred over another — the attention probability softmax replaces the logistic sigmoid.
+The feature weight vector w in logistic regression defines a direction in input space.
+The signed distance from a point to the decision boundary is X · w + b.
+This is **mathematically identical** to what an attention head's QK circuit computes:
+the dot product between a query and a key determines which positions to attend to.
+The "decision boundary" in attention is the threshold at which one token is preferred over another —
+the attention probability softmax replaces the logistic sigmoid.
 
 This isomorphism is the core insight of Elhage et al.'s QK/OV decomposition: **QK is a binary separation problem (attend vs. not-attend), and OV is a regression problem (what value to copy)**.
 

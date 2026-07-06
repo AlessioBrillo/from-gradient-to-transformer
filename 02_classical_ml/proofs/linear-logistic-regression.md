@@ -40,7 +40,12 @@ Sigmoid + MSE produces a non-convex loss with vanishing gradients when σ(z) ≈
 
 ### 4. Connection to attention QK circuit
 
-The logistic regression decision function f(X) = Xw + b defines a linear boundary. A transformer's QK circuit computes QKᵀ — a matrix of dot products between queries and keys. Each query position "decides" which keys to attend to via this dot product, which is exactly a binary separation problem (softmax replaces sigmoid). The weight direction in input space is analogous to the projection direction defined by the Q and K weight matrices.
+The logistic regression decision function f(X) = Xw + b defines a linear boundary.
+A transformer's QK circuit computes QKᵀ — a matrix of dot products between queries and keys.
+Each query position "decides" which keys to attend to via this dot product,
+which is exactly a binary separation problem (softmax replaces sigmoid).
+The weight direction in input space is analogous to the projection direction
+defined by the Q and K weight matrices.
 
 ## Outcome
 - [x] Passed → check the skill in [[00_meta/02_skill-tree]]

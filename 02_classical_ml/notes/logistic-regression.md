@@ -51,7 +51,12 @@ L2 penalty (controlled by `C`, inverse of regularization strength) prevents coef
 | L2 regularization | Weight decay in transformers (same math, different name) |
 | Feature weight magnitude | Logit lens projection magnitude per vocabulary token |
 
-The key insight: **attention heads compute a linear separation in the residual stream**, analogous to how logistic regression separates classes. The QK circuit computes "which positions matter" (a separation problem), and the OV circuit computes "what to copy from those positions" (a regression problem). This is the core of the Elhage et al. QK/OV decomposition — see [[04_nlp_and_transformers/_MOC|Transformer Circuits]].
+The key insight: **attention heads compute a linear separation in the residual stream**,
+analogous to how logistic regression separates classes. The QK circuit computes
+"which positions matter" (a separation problem), and the OV circuit computes
+"what to copy from those positions" (a regression problem).
+This is the core of the Elhage et al. QK/OV decomposition —
+see [[04_nlp_and_transformers/_MOC|Transformer Circuits]].
 
 ## Code reference
 - [[../../../src/models/linear_model.py|src/models/linear_model.py]] — `LogisticRegression` class
