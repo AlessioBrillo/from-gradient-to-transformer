@@ -25,7 +25,10 @@ All experiments are implemented in `src/experiments/` and produce figures in `fi
 | Fourier frequencies for 90% mass | 26/29 | — |
 | Fourier sparsity confirmed | ❌ (dense — needs longer training) | — |
 
-**Observations**: The model passes through the memorization phase (train loss → 0, embedding norm decreasing from 60→22) but hasn't reached the generalization phase within 1000 epochs at P=29. The Fourier analysis confirms the representation is still dense (26/29 frequencies for 90% mass). The cosine LR scheduler has been added per the canonical Nanda setup. A multi-seed, longer-duration run is needed.
+**Observations**: The model passes through memorization (train loss → 0, embedding
+norm 60→22) but hasn't generalized within 1000 epochs at P=29. The Fourier
+representation is still dense (26/29 freqs for 90% mass). Cosine LR scheduler
+added per Nanda canonical. A multi-seed, longer-duration run is needed.
 
 **Reference**: Nanda et al., "Progress Measures for Grokking via Mechanistic Interpretability," ICLR 2023 (oral).
 

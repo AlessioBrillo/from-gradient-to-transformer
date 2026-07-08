@@ -9,10 +9,11 @@ Index and links for this phase. Detailed topics/resources/exercises: see [[00_me
 **MI framing:** Training dynamics are central to grokking — delayed generalization, phase transitions, the critical role of weight decay in circuit formation. Understanding optimization from the inside is essential for the capstone.
 
 ## Notes (lessons)
-_(link to notes in `notes/` as you write them)_
+- [[03_deep_learning/notes/backpropagation-from-scratch|Backpropagation from Scratch]]
+- [[03_deep_learning/notes/training-dynamics-and-grokking|Training Dynamics and Grokking]]
 
 ## Exercises
-_(link to exercises in `exercises/`)_
+- [[03_deep_learning/exercises/ex-01-micrograd|Build micrograd: Autograd from Scratch]]
 
 ## Proofs to myself
 _(link to proofs in `proofs/`)_

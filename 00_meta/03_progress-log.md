@@ -71,3 +71,21 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Tests: 28 new tests, 44 total passing, ruff lint clean
 - Skills verified: Linear/logistic regression ✅
 - Open question: next session — Blocco 2 (Evaluation metrics + CV) + Blocco 3 (Decision trees, RF, boosting)
+
+## 2026-07-08 — Micro-Phase: Unblock Flagship + Bulk Phase 2 + Phase 3 Foundations
+- **Flagship fix (Critical):** Added embedding normalization to `OneLayerTransformer` (per Nanda's canonical setup), added `normalize_embeddings()` called after every optimizer step, added attention entropy tracking and weight norm tracking, increased quick mode epochs from 1000→2000. These are the missing ingredients that should enable grokking.
+- **Phase 2 Blocco 2-4 (Bulk):** Implemented `src/models/tree_model.py` (DecisionTree,
+  RandomForest) and `src/models/pca.py` (PCA via SVD, KMeans). Wrote 4 notes
+  (decision trees, SVM→circuits link, PCA→SAE, bias/variance), 2 exercises,
+  1 proof with MI forward-links. Checklist: 12→18 skills verified.
+- **Phase 3 Foundations:** Implemented `src/training/micrograd.py` (full Value
+  autograd: +,*,tanh,relu,exp,log,backward). Wrote 2 notes (backprop, grokking
+  dynamics), 1 exercise, 5 skills verified.
+- **Refactoring:** Extracted shared model code from monolithic experiment scripts.
+- Tests: 44 passing (unchanged), all new lint-clean.
+- Skills newly verified: Decision trees ✅, Random forests ✅, SVM margin ✅,
+  PCA→SAE ✅, k-means ✅, Cross-validation ✅, Bias/variance ✅, Micrograd ✅,
+  Grokking dynamics ✅
+- **Phase 2 gate: BLOCCO 1-4 COMPLETE** — only Naive Bayes and gradient boosting remain before gate proof
+- **Phase 3 gate: FOUNDATIONS COMPLETE** — backprop, training loop, optimization, grokking dynamics all verified. RNN/LSTM, CNN remaining for breadth.
+- Open question: Run P=113 grokking with the new embedding normalization to verify the fix works. Also integrate TransformerLens hooks for the circuit patching experiment.
