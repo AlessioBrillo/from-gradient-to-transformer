@@ -9,19 +9,20 @@ Index and links for this phase. Detailed topics/resources/exercises: see [[00_me
 **Reframing:** The focus is on the engineering that powers MI research — hooks, activation caching, deterministic inference, synthetic dataset construction for circuit tasks.
 
 ## Notes (lessons)
-_(link to notes in `notes/` as you write them)_
-
-Key topics:
-- TransformerLens hooks: pre/post on any module
-- Deterministic inference pipeline
-- Activation harvesting at scale
-- Synthetic dataset construction (IOI, greater-than, docstring)
+- [[05_llm_engineering/notes/01-transformer-lens-hooks|TransformerLens Hooks and Model Instrumentation]]
+- [[05_llm_engineering/notes/02-deterministic-inference|Deterministic Inference for Reproducible Research]]
+- [[05_llm_engineering/notes/03-activation-harvesting|Activation Harvesting at Scale]]
+- [[05_llm_engineering/notes/04-circuit-datasets|Synthetic Dataset Construction for Circuit Tasks]]
 
 ## Exercises
-_(link to exercises in `exercises/`)_
+- [[05_llm_engineering/exercises/ex-01-hook-instrumentation|Hook-Based Activation Capture]]
+- [[05_llm_engineering/exercises/ex-02-activation-harvesting|Activation Harvesting Across Prompts]]
+- [[05_llm_engineering/exercises/ex-03-circuit-dataset|Synthetic Circuit Dataset Construction]]
 
 ## Proofs to myself
-_(link to proofs in `proofs/`)_
+- [[05_llm_engineering/proofs/hook-intervention|Hook Intervention Changes Model Output]]
+- [[05_llm_engineering/proofs/determinism-necessity|Determinism is Necessary for Reproducible Activation Analysis]]
+- [[05_llm_engineering/proofs/activation-patching|Activation Patching Localizes Model Behavior]]
 
 ## Phase checklist → [[05_llm_engineering/checklist]]
 
