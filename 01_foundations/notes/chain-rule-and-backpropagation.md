@@ -12,7 +12,11 @@ created: 2026-06-18
 The chain rule computes the derivative of a composite function. Backpropagation is the chain rule applied efficiently to neural networks — propagating error gradients from the output backward through every parameter.
 
 ## Why it exists / what problem it solves
-Every neural network is a composition of hundreds or thousands of functions: layer after layer of linear transforms, activations, losses. Computing the gradient of the loss with respect to every parameter by differentiating the full expression symbolically is intractable. The chain rule decomposes the problem: compute local derivatives at each node and multiply them along the path from output to parameter.
+Every neural network is a composition of hundreds or thousands of functions:
+layer after layer of linear transforms, activations, losses. Computing the
+gradient of the loss w.r.t. every parameter by differentiating the full
+expression symbolically is intractable. The chain rule decomposes the problem:
+compute local derivatives at each node and multiply them along the path.
 
 ## How it works
 

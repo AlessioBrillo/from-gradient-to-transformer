@@ -22,13 +22,13 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
 - [ ] Sampling: temperature, top-k, top-p for generation
 
 ## Mechanistic Interpretability (Core MI Skills)
-- [ ] **QK/OV circuit decomposition** — understand and implement: QK computes *where* to attend, OV computes *what* to copy
+- [x] **QK/OV circuit decomposition** — understand and implement: QK computes *where* to attend, OV computes *what* to copy (note: [[04_nlp_and_transformers/notes/qk-ov-circuits]])
 - [ ] **Residual stream as communication channel** — layers read from and write to this shared vector space
-- [ ] **Induction heads** — prefix-matching + copying mechanism behind in-context learning
+- [x] **Induction heads** — prefix-matching + copying mechanism behind in-context learning (note: [[04_nlp_and_transformers/notes/induction-heads]])
 - [ ] **Logit lens** — project residual stream to vocabulary, observe predictions per layer
-- [ ] **Activation patching** — causal intervention: replace activations and measure effect
+- [x] **Activation patching** — causal intervention: replace activations and measure effect (note: [[04_nlp_and_transformers/notes/activation-patching]])
 - [ ] **Path patching** — trace effects along specific edges in the computational graph
-- [ ] **Attribution patching (AtP)** — gradient-based linear approximation for fast hypothesis generation
+- [x] **Attribution patching (AtP)** — gradient-based linear approximation for fast hypothesis generation (note: [[04_nlp_and_transformers/notes/activation-patching]])
 
 ## Tooling
 - [ ] **TransformerLens:** HookedTransformer, hook points, ActivationCache, built-in patching

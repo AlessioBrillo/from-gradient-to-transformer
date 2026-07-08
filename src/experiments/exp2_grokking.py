@@ -110,6 +110,7 @@ class OneLayerTransformer(nn.Module):
         n_heads: int,
         modulus: int,
         max_positions: int = 2,
+        normalize_embed: bool = True,
     ) -> None:
         super().__init__()
         assert d_model % n_heads == 0
@@ -117,6 +118,7 @@ class OneLayerTransformer(nn.Module):
         self.d_head = d_model // n_heads
         self.n_heads = n_heads
         self.modulus = modulus
+        self.normalize_embed = normalize_embed
 
         self.embed = nn.Embedding(modulus, d_model)
         self.pos_embed = nn.Embedding(max_positions, d_model)
@@ -136,6 +138,13 @@ class OneLayerTransformer(nn.Module):
         # Unembed
         self.ln_final = nn.LayerNorm(d_model)
         self.unembed = nn.Linear(d_model, modulus, bias=False)
+
+    def normalize_embeddings(self) -> None:
+        if self.normalize_embed:
+            with torch.no_grad():
+                self.embed.weight.data = nn.functional.normalize(
+                    self.embed.weight.data, dim=-1
+                )
 
     def forward(
         self, x: torch.Tensor, return_activations: bool = False
@@ -235,6 +244,8 @@ def train_model(
         "train_acc": [],
         "val_acc": [],
         "embed_norm": [],
+        "attn_entropy": [],
+        "weight_decay_norm": [],
     }
 
     for epoch in tqdm(range(epochs), desc="Training"):
@@ -251,6 +262,7 @@ def train_model(
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
+            model.normalize_embeddings()
 
             epoch_loss += loss.item() * x.size(0)
             epoch_correct += (logits.argmax(dim=-1) == y).sum().item()
@@ -263,12 +275,28 @@ def train_model(
         scheduler.step()
 
         embed_norm = model.embed.weight.norm().item()
+        wd_norm = sum(
+            p.norm().item() for n, p in model.named_parameters()
+            if "weight" in n and "ln" not in n and "embed" not in n
+        )
+
+        # Attention entropy: measure of how diffused attention is
+        with torch.no_grad():
+            sample_x = next(iter(train_loader))[0].to(DEVICE)[:8]
+            _, activations = model(sample_x, return_activations=True)
+            if activations and "attn_probs" in activations:
+                attn = activations["attn_probs"]
+                entropy = -(attn * (attn + 1e-8).log()).sum(-1).mean(-1).mean().item()
+            else:
+                entropy = 0.0
 
         history["train_loss"].append(train_loss)
         history["val_loss"].append(val_loss)
         history["train_acc"].append(train_acc)
         history["val_acc"].append(val_acc)
         history["embed_norm"].append(embed_norm)
+        history["attn_entropy"].append(entropy)
+        history["weight_decay_norm"].append(wd_norm)
 
         current_lr = scheduler.get_last_lr()[0]
         if (epoch + 1) % 50 == 0 or epoch == 0:
@@ -714,8 +742,8 @@ def main() -> None:
 
     if args.quick:
         args.modulus = 29
-        args.epochs = 1000
-        logger.info("QUICK MODE: modulus=29, epochs=1000")
+        args.epochs = 2000
+        logger.info("QUICK MODE: modulus=29, epochs=2000")
 
     logger.info(f"Device: {DEVICE}")
     logger.info(f"Arguments: {vars(args)}")

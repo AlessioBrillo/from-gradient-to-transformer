@@ -27,19 +27,19 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
 
 ## Phase 2 — Classical ML
 - [x] Linear/logistic regression (linear feature intuition) — proof: [[02_classical_ml/proofs/linear-logistic-regression]] (exercise: [[02_classical_ml/exercises/ex-01-linear-and-logistic-regression]])
-- [ ] Trees / ensembles / boosting
-- [ ] Support Vector Machines (margin, kernel trick — circuit intuition)
+- [x] Trees / ensembles / boosting — proof: [[02_classical_ml/proofs/trees-ensembles-pca]] (exercise: [[02_classical_ml/exercises/ex-02-decision-trees-and-ensembles]], code: `src/models/tree_model.py`)
+- [x] Support Vector Machines (margin, kernel trick — circuit intuition) — note: [[02_classical_ml/notes/svm-and-margin]]
 - [ ] Naive Bayes
-- [ ] Cross-validation + correct metrics
-- [ ] Bias/variance diagnosis
-- [ ] PCA / dictionary learning — **conceptual ancestor of sparse autoencoders**
+- [x] Cross-validation + correct metrics — code: `src/evaluation/metrics.py`
+- [x] Bias/variance diagnosis — note: [[02_classical_ml/notes/bias-variance-and-evaluation]]
+- [x] PCA / dictionary learning — **conceptual ancestor of sparse autoencoders** — proof: [[02_classical_ml/proofs/trees-ensembles-pca]] (exercise: [[02_classical_ml/exercises/ex-03-pca-and-feature-geometry]], code: `src/models/pca.py`)
 
 ## Phase 3 — Deep Learning
-- [ ] Backprop from scratch (micrograd)
-- [ ] PyTorch training loop from memory
-- [ ] Optimization (Adam/AdamW, LR schedulers)
-- [ ] Regularization (dropout, norm, **weight decay — critical for grokking**)
-- [ ] **Grokking dynamics: delayed generalization, phase transitions, progress measures**
+- [x] Backprop from scratch (micrograd) — code: `src/training/micrograd.py` (exercise: [[03_deep_learning/exercises/ex-01-micrograd]])
+- [x] PyTorch training loop from memory — note: [[03_deep_learning/notes/backpropagation-from-scratch]]
+- [x] Optimization (Adam/AdamW, LR schedulers) — note: [[03_deep_learning/notes/training-dynamics-and-grokking]]
+- [x] Regularization (dropout, norm, **weight decay — critical for grokking**) — same note
+- [x] **Grokking dynamics: delayed generalization, phase transitions, progress measures** — same note
 - [ ] RNN/LSTM (vanishing gradient context for why attention matters)
 
 ## Phase 4 — NLP & Transformers (LOAD-BEARING for MI)
