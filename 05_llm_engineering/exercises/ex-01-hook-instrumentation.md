@@ -62,7 +62,7 @@ print(f"Captured attn_out shape: {captured[0].shape}")
 ```
 
 ## What I learned doing it
-- 27 hook points fire per forward pass: 5 per block (resid_pre, resid_mid, resid_post, ln_attn, ln_mlp) + 4 per block from attn (Q, K, V, attn_probs, attn_out) + 3 from attn (attn_out is already counted) + 3 global (embed, ln_final, logits). Actually: 4 attn hooks + 4 KV pairs + 3 block hooks + 2 LN hooks + 2 MLP hooks = 15 per block × 3 blocks = 45 + 3 global = wait — let me just count the actual keys.
+- 27 hook points fire per forward pass: 5 per block (resid_pre, resid_mid, resid_post, ln_attn, ln_mlp) + 4 per block from attn (Q, K, V, attn_probs, attn_out) + 3 from attn (attn_out is already counted) + 3 global (embed, ln_final, logits).
 - The cache dict pattern is simpler than `register_forward_hook` for our use case, but native PyTorch hooks work on any model without built-in cache support.
 
 ## Linked skill
