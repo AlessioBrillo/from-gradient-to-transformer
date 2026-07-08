@@ -228,10 +228,36 @@ def train_model(
     lr: float,
     weight_decay: float,
     seed: int,
+    use_wandb: bool = False,
 ) -> dict:
-    """Train and return history with progress measures."""
+    """Train and return history with progress measures.
+
+    If use_wandb is True, logs metrics to Weights & Biases.
+    Falls back gracefully if wandb is not installed or not logged in.
+    """
     set_seed(seed)
     model = model.to(DEVICE)
+
+    _wandb = None
+    if use_wandb:
+        try:
+            import wandb as _wandb
+            _wandb.init(
+                project="from-gradient-to-transformer",
+                config={
+                    "modulus": model.modulus,
+                    "d_model": model.d_model,
+                    "n_heads": model.n_heads,
+                    "lr": lr,
+                    "weight_decay": weight_decay,
+                    "epochs": epochs,
+                    "seed": seed,
+                },
+            )
+        except Exception as e:
+            logger.warning(f"W&B init failed, continuing without: {e}")
+            _wandb = None
+
     optimizer = torch.optim.AdamW(
         model.parameters(), lr=lr, weight_decay=weight_decay
     )
@@ -298,6 +324,18 @@ def train_model(
         history["attn_entropy"].append(entropy)
         history["weight_decay_norm"].append(wd_norm)
 
+        if _wandb is not None:
+            _wandb.log({
+                "train/loss": train_loss,
+                "val/loss": val_loss,
+                "train/acc": train_acc,
+                "val/acc": val_acc,
+                "metrics/embed_norm": embed_norm,
+                "metrics/attn_entropy": entropy,
+                "metrics/weight_decay_norm": wd_norm,
+                "lr": scheduler.get_last_lr()[0],
+            }, step=epoch)
+
         current_lr = scheduler.get_last_lr()[0]
         if (epoch + 1) % 50 == 0 or epoch == 0:
             logger.info(
@@ -305,6 +343,9 @@ def train_model(
                 f"val loss: {val_loss:.4f} | val acc: {val_acc:.4f} | "
                 f"embed norm: {embed_norm:.2f} | lr: {current_lr:.2e}"
             )
+
+    if _wandb is not None:
+        _wandb.finish()
 
     return history
 
@@ -731,7 +772,13 @@ def main() -> None:
     )
     parser.add_argument("--batch-size", type=int, default=512, help="Batch size")
     parser.add_argument(
-        "--quick", action="store_true", help="Quick test with small modulus and fewer epochs"
+        "--quick", action="store_true", help="Quick test with smaller modulus and fewer epochs"
+    )
+    parser.add_argument(
+        "--micro", action="store_true", help="Micro test: tiny modulus, fast CPU iteration"
+    )
+    parser.add_argument(
+        "--wandb", action="store_true", help="Log metrics to Weights & Biases"
     )
     args = parser.parse_args()
 
@@ -739,6 +786,15 @@ def main() -> None:
         level=logging.INFO,
         format="%(asctime)s | %(levelname)s | %(message)s",
     )
+
+    if args.micro:
+        args.modulus = 11
+        args.d_model = 32
+        args.d_mlp = 64
+        args.n_heads = 2
+        args.epochs = 500
+        args.batch_size = 128
+        logger.info("MICRO MODE: modulus=11, d_model=32, epochs=500")
 
     if args.quick:
         args.modulus = 29
@@ -787,6 +843,7 @@ def main() -> None:
         lr=args.lr,
         weight_decay=args.weight_decay,
         seed=args.seed,
+        use_wandb=args.wandb,
     )
 
     # Fourier analysis

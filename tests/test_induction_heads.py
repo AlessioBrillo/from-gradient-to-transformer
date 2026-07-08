@@ -46,3 +46,27 @@ class TestInductionData:
         x, y = train[0]
         assert x.shape == (63,), f"Expected (63,), got {x.shape}"
         assert y.shape == (63,)
+
+    def test_repeated_prefix(self) -> None:
+        """Sequences should have the prefix repeated in the full tokens."""
+        train, _ = make_repeated_token_data(
+            vocab_size=8, seq_len=16, num_train=10, num_val=2, prefix_ratio=0.5, seed=42
+        )
+        # The underlying generation produces sequences where the first
+        # half is repeated. The input is tokens[:-1] (next-token shift).
+        # Check that the prefix pattern exists: positions [0,8) ≈ [8, 15)
+        # in the input tensor (original tokens[:-1])
+        x, y = train[0]
+        prefix_len = int(16 * 0.5)
+        # x[8] should equal x[0] (the repeated prefix start)
+        assert x[0] == x[prefix_len], "First token should repeat at prefix boundary"
+
+    def test_deterministic_seed(self) -> None:
+        """Same seed should produce same data."""
+        t1, _ = make_repeated_token_data(
+            vocab_size=32, seq_len=64, num_train=100, num_val=20, seed=42
+        )
+        t2, _ = make_repeated_token_data(
+            vocab_size=32, seq_len=64, num_train=100, num_val=20, seed=42
+        )
+        assert torch.equal(t1.tensors[0], t2.tensors[0]), "Deterministic seed check failed"
