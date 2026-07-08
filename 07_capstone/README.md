@@ -84,8 +84,12 @@ Shared research code lives in `src/` at the repository root (experiments, reprod
 
 Each choice is justified in the writeup.
 
-## Definition of Done
+## Progress
 
+- [x] Decoder-only transformer from scratch (`src/models/decoder_only_transformer.py`)
+- [x] RMSNorm, RoPE, causal MHA, autoregressive generation
+- [x] Hook points at every sublayer (27 cache entries per forward pass)
+- [x] Tests: 10 passing (shape, gradient, causal mask, generation, cache)
 - [ ] Pipeline runs end-to-end for at least one experiment
 - [ ] Grokking reproduction with progress measures and Fourier analysis
 - [ ] At least one circuit verification (activation patching)

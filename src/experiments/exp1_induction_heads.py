@@ -48,42 +48,47 @@ def make_repeated_token_data(
     seq_len: int = 64,
     num_train: int = 8192,
     num_val: int = 1024,
-    repeat_prob: float = 0.3,
+    prefix_ratio: float = 0.5,
     seed: int = 42,
 ) -> tuple[TensorDataset, TensorDataset]:
-    """Generate sequences with repeated tokens to induce induction heads.
+    """Generate sequences with repeated prefix to induce induction heads.
 
-    Each sequence is composed of tokens from a small vocabulary. A fraction
-    of tokens are repeated later in the sequence, creating the pattern that
-    induction heads exploit: [A][B]...[A] -> the model should predict [B]
-    after the second [A].
+    Canonical setup (Olsson et al., 2022):
+    Each sequence is [A_0, A_1, ..., A_k, A_0, A_1, ..., A_k, ...] where the
+    first half (prefix) is a random sequence and the second half repeats it.
+    This creates the pattern: [A][B]...[A] -> the model should predict [B]
+    after the second [A], which is the induction head signature.
+
+    For next-token prediction, at position k (where A_0 reappears), the correct
+    next token is A_1 (what followed A_0 the first time). An induction head
+    solves this by attending from position k to position 0 (matching A_0 with A_0)
+    and copying A_1 from position 1.
+
+    Args:
+        vocab_size: Size of vocabulary.
+        seq_len: Total sequence length.
+        num_train: Number of training samples.
+        num_val: Number of validation samples.
+        prefix_ratio: Fraction of sequence that is the unique prefix.
+        seed: Random seed.
 
     Returns:
         Tuple of (train_dataset, val_dataset) where each sample is
-        (input_ids, target_ids) shaped (seq_len,).
+        (input_ids, target_ids) shaped (seq_len-1,).
     """
     rng = np.random.default_rng(seed)
 
     def _generate(n: int) -> torch.Tensor:
         sequences = []
         for _ in range(n):
-            tokens = rng.integers(0, vocab_size, size=seq_len).tolist()
-            # Insert controlled repetitions: for each position with probability
-            # repeat_prob, insert a token that appeared earlier and make its
-            # successor predictable
-            for pos in range(1, seq_len - 2):
-                if rng.random() < repeat_prob:
-                    prev_token = tokens[pos - 1]
-                    # find where this token appeared before
-                    earlier = [
-                        i for i in range(pos - 1) if tokens[i] == prev_token
-                    ]
-                    if earlier:
-                        src = rng.choice(earlier)
-                        if src + 1 < pos:
-                            # copy the token that followed the earlier occurrence
-                            tokens[pos + 1] = tokens[src + 1]
-            sequences.append(tokens)
+            prefix_len = max(2, int(seq_len * prefix_ratio))
+            # Random prefix: the unique tokens
+            prefix = rng.integers(0, vocab_size, size=prefix_len).tolist()
+            # Repeat the prefix to fill the rest of the sequence
+            tokens = prefix.copy()
+            while len(tokens) < seq_len:
+                tokens.append(tokens[len(tokens) % prefix_len])
+            sequences.append(tokens[:seq_len])
         return torch.tensor(sequences, dtype=torch.long)
 
     train_ids = _generate(num_train)
@@ -317,6 +322,45 @@ def analyze_induction_heads(
     return induction_heads_by_layer, all_patterns
 
 
+def causal_ablation(
+    model: nn.Module, loader: DataLoader, layer: int, head: int
+) -> float:
+    """Ablate a specific attention head by zeroing its output.
+
+    Measures the accuracy drop when a head's contribution is removed,
+    which causally confirms its role in the circuit.
+
+    Returns:
+        Accuracy after head ablation.
+    """
+    model.eval()
+
+    def _zero_head_hook(
+        module: nn.Module, input: torch.Tensor, output: torch.Tensor
+    ) -> torch.Tensor:
+        B, S, D = output.shape
+        d_head = D // model.blocks[layer].n_heads
+        output_view = output.view(B, S, model.blocks[layer].n_heads, d_head)
+        output_view[:, :, head, :] = 0.0
+        return output_view.view(B, S, D)
+
+    block = model.blocks[layer]
+    hook = block.W_O.register_forward_hook(_zero_head_hook)
+
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for x, y in loader:
+            x, y = x.to(DEVICE), y.to(DEVICE)
+            logits, _ = model(x, record_attn=False)
+            preds = logits.argmax(dim=-1)
+            correct += (preds == y).sum().item()
+            total += y.numel()
+
+    hook.remove()
+    return correct / total
+
+
 def plot_induction_pattern(
     patterns: list,
     layer: int,
@@ -384,7 +428,7 @@ def main() -> None:
     )
     parser.add_argument("--n-layers", type=int, default=2, help="Number of layers")
     parser.add_argument("--n-heads", type=int, default=4, help="Heads per layer")
-    parser.add_argument("--epochs", type=int, default=500, help="Training epochs")
+    parser.add_argument("--epochs", type=int, default=1000, help="Training epochs")
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
     parser.add_argument(
         "--weight-decay", type=float, default=0.1, help="Weight decay"
@@ -398,12 +442,25 @@ def main() -> None:
     parser.add_argument(
         "--no-train", action="store_true", help="Skip training (analysis only)"
     )
+    parser.add_argument(
+        "--quick", action="store_true", help="Quick test (micro mode)"
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s | %(levelname)s | %(message)s",
     )
+
+    if args.quick:
+        args.vocab_size = 8
+        args.seq_len = 16
+        args.d_model = 32
+        args.epochs = 200
+        args.num_train = 512
+        args.batch_size = 32
+        logger.info("QUICK MODE: tiny config for fast iteration")
+
     logger.info(f"Device: {DEVICE}")
     logger.info(f"Arguments: {vars(args)}")
 
@@ -487,11 +544,24 @@ def main() -> None:
     if total_induction == 0:
         logger.warning(
             "No induction heads detected. Try: longer training, "
-            "higher repeat_prob in data, or lower threshold in detection."
+            "or lower threshold in detection."
         )
     else:
         logger.info("✓ Induction heads successfully identified!")
-        logger.info("Next step: run causal ablation to verify their role.")
+        logger.info("Running causal ablation to verify...")
+
+        # Ablate each detected induction head and measure accuracy drop
+        for layer_idx, heads in enumerate(induction_heads):
+            for head_idx in heads:
+                full_acc = history["val_acc"][-1] if not args.no_train else 0.0
+                ablated_acc = causal_ablation(
+                    model, val_loader, layer_idx, head_idx
+                )
+                logger.info(
+                    f"Ablation L{layer_idx}H{head_idx}: "
+                    f"accuracy {full_acc:.4f} → {ablated_acc:.4f} "
+                    f"(drop: {full_acc - ablated_acc:+.4f})"
+                )
 
 
 if __name__ == "__main__":

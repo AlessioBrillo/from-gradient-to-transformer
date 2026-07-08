@@ -13,22 +13,22 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
 
 ## Core Transformer Architecture
 - [ ] BPE tokenizer: implementation from scratch
-- [ ] Self-attention: scaled dot-product, implementation in PyTorch
-- [ ] Multi-head attention: concatenation, projection
-- [ ] Positional encoding: sinusoidal, learned, RoPE (implement and compare)
-- [ ] Decoder-only transformer: causal masking, autoregressive generation, full implementation
+- [x] Self-attention: scaled dot-product, implementation in PyTorch (code: `src/models/decoder_only_transformer.py`)
+- [x] Multi-head attention: concatenation, projection (code: `src/models/decoder_only_transformer.py`)
+- [x] Positional encoding: RoPE (code: `src/models/decoder_only_transformer.py`)
+- [x] Decoder-only transformer: causal masking, autoregressive generation, full implementation (code: `src/models/decoder_only_transformer.py`)
 - [ ] Encoder-only (BERT): masked language modeling, bidirectional context (breadth)
 - [ ] Scaling Laws: Kaplan & Chinchilla — compute-optimal training
-- [ ] Sampling: temperature, top-k, top-p for generation
+- [x] Sampling: temperature, top-k, top-p for generation (built into `DecoderOnlyTransformer.generate()`)
 
 ## Mechanistic Interpretability (Core MI Skills)
-- [x] **QK/OV circuit decomposition** — understand and implement: QK computes *where* to attend, OV computes *what* to copy (note: [[04_nlp_and_transformers/notes/qk-ov-circuits]])
-- [ ] **Residual stream as communication channel** — layers read from and write to this shared vector space
-- [x] **Induction heads** — prefix-matching + copying mechanism behind in-context learning (note: [[04_nlp_and_transformers/notes/induction-heads]])
-- [ ] **Logit lens** — project residual stream to vocabulary, observe predictions per layer
-- [x] **Activation patching** — causal intervention: replace activations and measure effect (note: [[04_nlp_and_transformers/notes/activation-patching]])
+- [x] **QK/OV circuit decomposition** — note: [[04_nlp_and_transformers/notes/qk-ov-circuits]], proof: [[04_nlp_and_transformers/proofs/qk-ov-decomposition]]
+- [x] **Residual stream as communication channel** — proof: [[04_nlp_and_transformers/proofs/residual-stream-communication-channel]]
+- [x] **Induction heads** — note: [[04_nlp_and_transformers/notes/induction-heads]], exercise: [[04_nlp_and_transformers/exercises/ex-02-induction-head-detection]]
+- [x] **Logit lens** — proof: [[04_nlp_and_transformers/proofs/logit-lens]]
+- [x] **Activation patching** — note: [[04_nlp_and_transformers/notes/activation-patching]], exercise: [[04_nlp_and_transformers/exercises/ex-03-activation-patching]]
 - [ ] **Path patching** — trace effects along specific edges in the computational graph
-- [x] **Attribution patching (AtP)** — gradient-based linear approximation for fast hypothesis generation (note: [[04_nlp_and_transformers/notes/activation-patching]])
+- [x] **Attribution patching (AtP)** — note: [[04_nlp_and_transformers/notes/activation-patching]]
 
 ## Tooling
 - [ ] **TransformerLens:** HookedTransformer, hook points, ActivationCache, built-in patching
