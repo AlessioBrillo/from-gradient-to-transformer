@@ -9,20 +9,20 @@ Index and links for this phase. Detailed topics/resources/exercises: see [[00_me
 **This is the most important phase for the MI thesis.** Every concept here directly feeds the capstone. The goal is to learn to *read* transformers: QK/OV circuits, induction heads, logit lens, activation patching.
 
 ## Notes (lessons)
-*(link to notes in `notes/` as you write them)*
+- [[04_nlp_and_transformers/notes/qk-ov-circuits|QK/OV Circuit Decomposition — The Central Abstraction]]
+- [[04_nlp_and_transformers/notes/induction-heads|Induction Heads — The Mechanism of In-Context Learning]]
+- [[04_nlp_and_transformers/notes/activation-patching|Activation Patching — Causal Intervention for Circuit Discovery]]
 
-Key topics to cover:
-- QK/OV circuit decomposition (Elhage et al. 2021)
-- Induction heads (Olsson et al. 2022)
+Key topics to cover (remaining):
 - Residual stream as communication channel
 - Logit lens technique
-- Activation patching / path patching / attribution patching
 - TransformerLens: HookedTransformer, hook points, ActivationCache
+- Build decoder-only transformer from scratch
 
 ## Exercises
 *(link to exercises in `exercises/`)*
 
-Core exercises:
+Core exercises (remaining):
 - Build decoder-only transformer from scratch
 - Identify induction heads via attention patterns
 - Perform activation patching to verify circuit components
