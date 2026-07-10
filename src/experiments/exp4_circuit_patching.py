@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from torch import nn
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from src.experiments.exp1_induction_heads import make_repeated_token_data as make_induction_data
@@ -335,7 +335,7 @@ def plot_head_ablation(
 
     fig, ax = plt.subplots(figsize=(8, 4))
     colors = ["crimson" if e > 0.1 else "gray" for e in effects]
-    bars = ax.bar(range(len(labels)), effects, color=colors)
+    ax.bar(range(len(labels)), effects, color=colors)
     ax.axhline(y=0.1, color="red", linestyle="--", alpha=0.5, label="Significant threshold")
     ax.set_xticks(range(len(labels)))
     ax.set_xticklabels(labels, rotation=45)
@@ -439,7 +439,8 @@ def main() -> None:
     logger.info("=" * 60)
     for layer in range(args.n_layers):
         layer_heads = [(l, h) for l, h in induction_heads if l == layer]
-        logger.info(f"  Layer {layer}: {len(layer_heads)} induction head(s): {[h for _, h in layer_heads]}")
+        head_ids = [h for _, h in layer_heads]
+        logger.info(f"  Layer {layer}: {len(layer_heads)} induction head(s): {head_ids}")
     total_found = len(induction_heads)
     total_heads = args.n_layers * args.n_heads
     logger.info(f"  Total induction heads: {total_found} / {total_heads}")
@@ -452,9 +453,8 @@ def main() -> None:
     logger.info("=" * 60)
 
     val_batch = next(iter(val_loader))[0][:32]
-    # Corrupted: shuffle the tokens to break the repetition
-    rng = np.random.default_rng(args.seed + 1)
     corrupted = val_batch.clone()
+    # Shuffle each sequence to break the repetition pattern
     for i in range(corrupted.size(0)):
         perm = torch.randperm(corrupted.size(1))
         corrupted[i] = corrupted[i, perm]

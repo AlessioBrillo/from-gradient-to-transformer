@@ -219,7 +219,6 @@ def compute_attention_entropy(
     """Compute per-layer attention entropy and diagonal+1 mass."""
     model.eval()
     n_layers = len(model.blocks)
-    n_heads = model.blocks[0].n_heads
 
     total_entropy = [0.0 for _ in range(n_layers)]
     total_diag1 = [0.0 for _ in range(n_layers)]
@@ -235,7 +234,6 @@ def compute_attention_entropy(
             for l, probs in enumerate(attn_records):
                 ent = -(probs * (probs + 1e-8).log()).sum(-1)
                 total_entropy[l] += ent.mean(dim=(0, 2)).sum().item()
-                S = probs.shape[-1]
                 diag1 = probs[:, :, 1:, :-1].diagonal(dim1=-2, dim2=-1)
                 total_diag1[l] += diag1.mean(dim=(0, -1)).sum().item()
             total_batches += 1
@@ -639,7 +637,8 @@ def main() -> None:
             loss_bump_idx = np.argmax(np.abs(np.diff(history["val_loss"])))
             logger.info(
                 f"Loss bump at epoch ~{loss_bump_idx} | "
-                f"Peak smoothed val acc: {val_smooth[max_smooth_idx]:.4f} at epoch ~{max_smooth_idx*10}"
+                f"Peak smoothed val acc: {val_smooth[max_smooth_idx]:.4f} "
+                f"at epoch ~{max_smooth_idx * 10}"
             )
         if len(diag1_mass) > 100:
             peak_diag1 = np.argmax(diag1_mass)
