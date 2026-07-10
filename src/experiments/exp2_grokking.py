@@ -647,11 +647,7 @@ def plot_progress_measures(
     ax.axhline(y=1.0, color="gray", linestyle="--", alpha=0.3)
 
     ax = axes[1]
-<<<<<<< HEAD
     ax.plot(epochs, history["unembed_norm"], label="Unembed norm (mean)", color="orange", lw=1)
-=======
-    ax.plot(epochs, history["unembed_norm"], label="Unembed norm (mean)", color="orange", linewidth=1)
->>>>>>> adf0b52 (fix(grokking): unembed normalization, weight decay groups, per-row norm tracking, progress measures plot)
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Row-wise L2 norm")
     ax.set_title("Unembedding Row Norms", fontsize=12)
