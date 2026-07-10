@@ -213,6 +213,42 @@ def evaluate(
     return total_loss / len(loader.dataset), total_correct / total_tokens
 
 
+def compute_attention_entropy(
+    model: nn.Module, loader: DataLoader
+) -> dict:
+    """Compute per-layer attention entropy and diagonal+1 mass."""
+    model.eval()
+    n_layers = len(model.blocks)
+
+    total_entropy = [0.0 for _ in range(n_layers)]
+    total_diag1 = [0.0 for _ in range(n_layers)]
+    total_batches = 0
+    sample_size = 0
+
+    with torch.no_grad():
+        for x, _ in loader:
+            x = x.to(DEVICE)
+            _, attn_records = model(x, record_attn=True)
+            if attn_records is None:
+                break
+            for l, probs in enumerate(attn_records):
+                ent = -(probs * (probs + 1e-8).log()).sum(-1)
+                total_entropy[l] += ent.mean(dim=(0, 2)).sum().item()
+                diag1 = probs[:, :, 1:, :-1].diagonal(dim1=-2, dim2=-1)
+                total_diag1[l] += diag1.mean(dim=(0, -1)).sum().item()
+            total_batches += 1
+            sample_size += 1
+            if sample_size >= 4:
+                break
+
+    if total_batches == 0:
+        return {"entropy": [0.0], "diag1_mass": [0.0]}
+    return {
+        "entropy": [e / total_batches for e in total_entropy],
+        "diag1_mass": [d / total_batches for d in total_diag1],
+    }
+
+
 def train_model(
     model: nn.Module,
     train_loader: DataLoader,
@@ -221,10 +257,34 @@ def train_model(
     lr: float,
     weight_decay: float,
     seed: int,
+    use_wandb: bool = False,
 ) -> dict:
     """Train the model and return training curves."""
     set_seed(seed)
     model = model.to(DEVICE)
+
+    _wandb = None
+    if use_wandb:
+        try:
+            import wandb as _wandb
+            _wandb.init(
+                project="from-gradient-to-transformer",
+                config={
+                    "model": "AttentionOnlyTransformer",
+                    "vocab_size": model.embed.num_embeddings,
+                    "d_model": model.embed.embedding_dim,
+                    "n_layers": len(model.blocks),
+                    "n_heads": model.blocks[0].n_heads,
+                    "lr": lr,
+                    "weight_decay": weight_decay,
+                    "epochs": epochs,
+                    "seed": seed,
+                },
+            )
+        except Exception as e:
+            logger.warning(f"W&B init failed: {e}")
+            _wandb = None
+
     optimizer = torch.optim.AdamW(
         model.parameters(), lr=lr, weight_decay=weight_decay
     )
@@ -233,7 +293,10 @@ def train_model(
     )
     criterion = nn.CrossEntropyLoss()
 
-    history = {"train_loss": [], "val_loss": [], "val_acc": []}
+    history = {
+        "train_loss": [], "val_loss": [], "val_acc": [],
+        "attn_entropy": [], "diag1_mass": [],
+    }
 
     for epoch in tqdm(range(epochs), desc="Training"):
         model.train()
@@ -255,16 +318,40 @@ def train_model(
         train_loss = epoch_loss / len(train_loader.dataset)
         val_loss, val_acc = evaluate(model, val_loader)
 
+        # Attention metrics every 50 epochs
+        if (epoch + 1) % 50 == 0:
+            attn_metrics = compute_attention_entropy(model, val_loader)
+            attn_entropy = sum(attn_metrics["entropy"])
+            diag1_mass = sum(attn_metrics["diag1_mass"])
+        else:
+            attn_entropy = history["attn_entropy"][-1] if history["attn_entropy"] else 0.0
+            diag1_mass = history["diag1_mass"][-1] if history["diag1_mass"] else 0.0
+
         history["train_loss"].append(train_loss)
         history["val_loss"].append(val_loss)
         history["val_acc"].append(val_acc)
+        history["attn_entropy"].append(attn_entropy)
+        history["diag1_mass"].append(diag1_mass)
+
+        if _wandb is not None:
+            _wandb.log({
+                "train/loss": train_loss,
+                "val/loss": val_loss,
+                "val/acc": val_acc,
+                "metrics/attn_entropy": attn_entropy,
+                "metrics/diag1_mass": diag1_mass,
+                "lr": scheduler.get_last_lr()[0],
+            }, step=epoch)
 
         if (epoch + 1) % 50 == 0:
             logger.info(
                 f"Epoch {epoch+1:4d} | train loss: {train_loss:.4f} | "
-                f"val loss: {val_loss:.4f} | val acc: {val_acc:.4f}"
+                f"val loss: {val_loss:.4f} | val acc: {val_acc:.4f} | "
+                f"attn entropy: {attn_entropy:.2f} | diag+1: {diag1_mass:.3f}"
             )
 
+    if _wandb is not None:
+        _wandb.finish()
     return history
 
 
@@ -387,25 +474,39 @@ def plot_induction_pattern(
 def plot_training_curves(
     history: dict, save_path: Path
 ) -> None:
-    """Plot training loss, validation loss, and accuracy."""
-    fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+    """Plot training + attention metrics."""
+    fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 
     epochs = range(1, len(history["train_loss"]) + 1)
 
-    axes[0].plot(epochs, history["train_loss"], label="Train Loss", alpha=0.8)
-    axes[0].plot(epochs, history["val_loss"], label="Val Loss", alpha=0.8)
-    axes[0].set_xlabel("Epoch")
-    axes[0].set_ylabel("Loss")
-    axes[0].set_title("Training Curves")
-    axes[0].legend()
-    axes[0].grid(True, alpha=0.3)
+    axes[0, 0].plot(epochs, history["train_loss"], label="Train Loss", alpha=0.8)
+    axes[0, 0].plot(epochs, history["val_loss"], label="Val Loss", alpha=0.8)
+    axes[0, 0].set_xlabel("Epoch")
+    axes[0, 0].set_ylabel("Loss")
+    axes[0, 0].set_title("Loss Curves", fontsize=13)
+    axes[0, 0].legend()
+    axes[0, 0].grid(True, alpha=0.3)
 
-    axes[1].plot(epochs, history["val_acc"], label="Val Accuracy", color="green")
-    axes[1].set_xlabel("Epoch")
-    axes[1].set_ylabel("Accuracy")
-    axes[1].set_title("Validation Accuracy")
-    axes[1].legend()
-    axes[1].grid(True, alpha=0.3)
+    axes[0, 1].plot(epochs, history["val_acc"], label="Val Accuracy", color="green")
+    axes[0, 1].set_xlabel("Epoch")
+    axes[0, 1].set_ylabel("Accuracy")
+    axes[0, 1].set_title("Validation Accuracy", fontsize=13)
+    axes[0, 1].legend()
+    axes[0, 1].grid(True, alpha=0.3)
+
+    axes[1, 0].plot(epochs, history["attn_entropy"], label="Attn Entropy", color="purple")
+    axes[1, 0].set_xlabel("Epoch")
+    axes[1, 0].set_ylabel("Entropy (nats)")
+    axes[1, 0].set_title("Attention Entropy (lower = more focused)", fontsize=13)
+    axes[1, 0].grid(True, alpha=0.3)
+
+    axes[1, 1].plot(epochs, history["diag1_mass"], label="Diag+1 Mass", color="orange")
+    axes[1, 1].set_xlabel("Epoch")
+    axes[1, 1].set_ylabel("Diagonal+1 mass")
+    axes[1, 1].set_title("Induction Head Signal (diag+1)", fontsize=13)
+    axes[1, 1].axhline(y=0.3, color="red", linestyle="--", alpha=0.3, label="Detection threshold")
+    axes[1, 1].legend()
+    axes[1, 1].grid(True, alpha=0.3)
 
     fig.tight_layout()
     fig.savefig(save_path, dpi=150, bbox_inches="tight")
@@ -428,7 +529,7 @@ def main() -> None:
     )
     parser.add_argument("--n-layers", type=int, default=2, help="Number of layers")
     parser.add_argument("--n-heads", type=int, default=4, help="Heads per layer")
-    parser.add_argument("--epochs", type=int, default=1000, help="Training epochs")
+    parser.add_argument("--epochs", type=int, default=5000, help="Training epochs")
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
     parser.add_argument(
         "--weight-decay", type=float, default=0.1, help="Weight decay"
@@ -443,7 +544,13 @@ def main() -> None:
         "--no-train", action="store_true", help="Skip training (analysis only)"
     )
     parser.add_argument(
-        "--quick", action="store_true", help="Quick test (micro mode)"
+        "--quick", action="store_true", help="Quick test (reduced config)"
+    )
+    parser.add_argument(
+        "--wandb", action="store_true", help="Log metrics to Weights & Biases"
+    )
+    parser.add_argument(
+        "--save-model", action="store_true", help="Save trained model"
     )
     args = parser.parse_args()
 
@@ -453,13 +560,15 @@ def main() -> None:
     )
 
     if args.quick:
-        args.vocab_size = 8
-        args.seq_len = 16
+        args.vocab_size = 16
+        args.seq_len = 24
         args.d_model = 32
-        args.epochs = 200
-        args.num_train = 512
+        args.n_layers = 2
+        args.n_heads = 4
+        args.epochs = 500
+        args.num_train = 1024
         args.batch_size = 32
-        logger.info("QUICK MODE: tiny config for fast iteration")
+        logger.info("QUICK MODE: reduced config for fast iteration")
 
     logger.info(f"Device: {DEVICE}")
     logger.info(f"Arguments: {vars(args)}")
@@ -505,6 +614,7 @@ def main() -> None:
             lr=args.lr,
             weight_decay=args.weight_decay,
             seed=args.seed,
+            use_wandb=args.wandb,
         )
 
         # Plot training curves
@@ -512,6 +622,31 @@ def main() -> None:
             history,
             save_path=FIGURES_DIR / "exp1_training_bump.png",
         )
+
+        if args.save_model:
+            model_path = FIGURES_DIR / "exp1_trained_model.pt"
+            torch.save(model.state_dict(), model_path)
+            logger.info(f"Saved model to {model_path}")
+
+        # Loss bump detection
+        val_accs = np.array(history["val_acc"])
+        diag1_mass = np.array(history["diag1_mass"])
+        if len(val_accs) > 100:
+            val_smooth = np.convolve(val_accs, np.ones(10)/10, mode='valid')
+            max_smooth_idx = np.argmax(val_smooth)
+            loss_bump_idx = np.argmax(np.abs(np.diff(history["val_loss"])))
+            logger.info(
+                f"Loss bump at epoch ~{loss_bump_idx} | "
+                f"Peak smoothed val acc: {val_smooth[max_smooth_idx]:.4f} "
+                f"at epoch ~{max_smooth_idx * 10}"
+            )
+        if len(diag1_mass) > 100:
+            peak_diag1 = np.argmax(diag1_mass)
+            diag1_at_end = diag1_mass[-1]
+            logger.info(
+                f"Peak diag+1 mass at epoch {peak_diag1} (value: {diag1_mass[peak_diag1]:.3f}) | "
+                f"Final diag+1 mass: {diag1_at_end:.3f}"
+            )
 
     # Analyze induction heads
     induction_heads, all_patterns = analyze_induction_heads(model, val_loader)

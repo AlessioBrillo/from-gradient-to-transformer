@@ -145,6 +145,9 @@ class OneLayerTransformer(nn.Module):
                 self.embed.weight.data = nn.functional.normalize(
                     self.embed.weight.data, dim=-1
                 )
+                self.unembed.weight.data = nn.functional.normalize(
+                    self.unembed.weight.data, dim=-1
+                )
 
     def forward(
         self, x: torch.Tensor, return_activations: bool = False
@@ -258,8 +261,19 @@ def train_model(
             logger.warning(f"W&B init failed, continuing without: {e}")
             _wandb = None
 
+    decay_params = []
+    no_decay_params = []
+    for name, param in model.named_parameters():
+        if "embed" in name or "ln" in name or "pos_embed" in name:
+            no_decay_params.append(param)
+        else:
+            decay_params.append(param)
     optimizer = torch.optim.AdamW(
-        model.parameters(), lr=lr, weight_decay=weight_decay
+        [
+            {"params": decay_params, "weight_decay": weight_decay},
+            {"params": no_decay_params, "weight_decay": 0.0},
+        ],
+        lr=lr,
     )
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
     criterion = nn.CrossEntropyLoss()
@@ -270,6 +284,9 @@ def train_model(
         "train_acc": [],
         "val_acc": [],
         "embed_norm": [],
+        "embed_norm_max": [],
+        "embed_norm_min": [],
+        "unembed_norm": [],
         "attn_entropy": [],
         "weight_decay_norm": [],
     }
@@ -300,7 +317,12 @@ def train_model(
 
         scheduler.step()
 
-        embed_norm = model.embed.weight.norm().item()
+        embed_norm = model.embed.weight.norm(dim=-1)
+        embed_norm_mean = embed_norm.mean().item()
+        embed_norm_max = embed_norm.max().item()
+        embed_norm_min = embed_norm.min().item()
+        unembed_norm = model.unembed.weight.norm(dim=-1)
+        unembed_norm_mean = unembed_norm.mean().item()
         wd_norm = sum(
             p.norm().item() for n, p in model.named_parameters()
             if "weight" in n and "ln" not in n and "embed" not in n
@@ -320,7 +342,10 @@ def train_model(
         history["val_loss"].append(val_loss)
         history["train_acc"].append(train_acc)
         history["val_acc"].append(val_acc)
-        history["embed_norm"].append(embed_norm)
+        history["embed_norm"].append(embed_norm_mean)
+        history["embed_norm_max"].append(embed_norm_max)
+        history["embed_norm_min"].append(embed_norm_min)
+        history["unembed_norm"].append(unembed_norm_mean)
         history["attn_entropy"].append(entropy)
         history["weight_decay_norm"].append(wd_norm)
 
@@ -330,7 +355,10 @@ def train_model(
                 "val/loss": val_loss,
                 "train/acc": train_acc,
                 "val/acc": val_acc,
-                "metrics/embed_norm": embed_norm,
+                "metrics/embed_norm_mean": embed_norm_mean,
+                "metrics/embed_norm_max": embed_norm_max,
+                "metrics/embed_norm_min": embed_norm_min,
+                "metrics/unembed_norm": unembed_norm_mean,
                 "metrics/attn_entropy": entropy,
                 "metrics/weight_decay_norm": wd_norm,
                 "lr": scheduler.get_last_lr()[0],
@@ -341,7 +369,9 @@ def train_model(
             logger.info(
                 f"Epoch {epoch+1:4d} | train loss: {train_loss:.4f} | "
                 f"val loss: {val_loss:.4f} | val acc: {val_acc:.4f} | "
-                f"embed norm: {embed_norm:.2f} | lr: {current_lr:.2e}"
+                f"embed norm: {embed_norm_mean:.2f} ({embed_norm_min:.2f}-{embed_norm_max:.2f}) | "
+                f"unembed norm: {unembed_norm_mean:.2f} | "
+                f"lr: {current_lr:.2e}"
             )
 
     if _wandb is not None:
@@ -596,6 +626,49 @@ def compute_progress_measures(
 # ---------------------------------------------------------------------------
 # Plotting
 # ---------------------------------------------------------------------------
+def plot_progress_measures(
+    history: dict,
+    save_path: Path,
+) -> None:
+    """Plot embedding/unembed norms and attention entropy over training."""
+    fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+
+    epochs = range(1, len(history["embed_norm"]) + 1)
+
+    ax = axes[0]
+    ax.plot(epochs, history["embed_norm"], label="Embed norm (mean)", linewidth=1)
+    ax.plot(epochs, history["embed_norm_max"], label="Embed norm (max)", linewidth=0.8, alpha=0.5)
+    ax.plot(epochs, history["embed_norm_min"], label="Embed norm (min)", linewidth=0.8, alpha=0.5)
+    ax.set_xlabel("Epoch")
+    ax.set_ylabel("Row-wise L2 norm")
+    ax.set_title("Embedding Row Norms (should converge to 1.0)", fontsize=12)
+    ax.legend(fontsize=8)
+    ax.grid(True, alpha=0.3)
+    ax.axhline(y=1.0, color="gray", linestyle="--", alpha=0.3)
+
+    ax = axes[1]
+    ax.plot(epochs, history["unembed_norm"], label="Unembed norm (mean)", color="orange", lw=1)
+    ax.set_xlabel("Epoch")
+    ax.set_ylabel("Row-wise L2 norm")
+    ax.set_title("Unembedding Row Norms", fontsize=12)
+    ax.legend(fontsize=8)
+    ax.grid(True, alpha=0.3)
+    ax.axhline(y=1.0, color="gray", linestyle="--", alpha=0.3)
+
+    ax = axes[2]
+    ax.plot(epochs, history["attn_entropy"], label="Attention entropy", color="green", linewidth=1)
+    ax.set_xlabel("Epoch")
+    ax.set_ylabel("Entropy (nats)")
+    ax.set_title("Attention Entropy (lower = more focused)", fontsize=12)
+    ax.legend(fontsize=8)
+    ax.grid(True, alpha=0.3)
+
+    fig.tight_layout()
+    fig.savefig(save_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    logger.info(f"Saved progress measures to {save_path}")
+
+
 def plot_grokking_curve(
     history: dict,
     save_path: Path,
@@ -780,6 +853,12 @@ def main() -> None:
     parser.add_argument(
         "--wandb", action="store_true", help="Log metrics to Weights & Biases"
     )
+    parser.add_argument(
+        "--diagnose", action="store_true", help="Print per-row norms and Fourier details each epoch"
+    )
+    parser.add_argument(
+        "--save-model", action="store_true", help="Save trained model to figures/ dir"
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -789,12 +868,14 @@ def main() -> None:
 
     if args.micro:
         args.modulus = 11
-        args.d_model = 32
-        args.d_mlp = 64
+        args.d_model = 64
+        args.d_mlp = 256
         args.n_heads = 2
-        args.epochs = 500
-        args.batch_size = 128
-        logger.info("MICRO MODE: modulus=11, d_model=32, epochs=500")
+        args.epochs = 5000
+        args.weight_decay = 1.0
+        args.train_fraction = 0.5
+        args.batch_size = 64
+        logger.info("MICRO MODE: modulus=11, d_model=64, d_mlp=256, epochs=5000, train=50%")
 
     if args.quick:
         args.modulus = 29
@@ -890,6 +971,16 @@ def main() -> None:
         modulus=modulus,
         save_path=FIGURES_DIR / "exp2_frequency_ablation.png",
     )
+
+    plot_progress_measures(
+        history,
+        save_path=FIGURES_DIR / "exp2_progress_measures.png",
+    )
+
+    if args.save_model:
+        model_path = FIGURES_DIR / "exp2_trained_model.pt"
+        torch.save(model.state_dict(), model_path)
+        logger.info(f"Saved trained model to {model_path}")
 
     # Summary
     logger.info("=" * 60)
