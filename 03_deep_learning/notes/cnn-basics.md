@@ -31,7 +31,8 @@ Key design choices:
 - Channels (width multiplier: 64 → 128 → 256 as spatial dims halve)
 
 ## MI forward link
-Convolution kernels are the closest classical analog to attention heads: each kernel learns a local pattern detector, and stacking layers builds hierarchical representations. The key difference is that convolution is **position-invariant** (same kernel at all positions) while attention is **content-aware** (attends based on token identity, not position). This makes attention strictly more expressive — and less sample-efficient, which is why CNNs still dominate in data-scarce vision tasks.
+Convolution kernels are the closest classical analog to attention heads: each kernel learns a local pattern detector, and stacking layers builds hierarchical representations. The key difference is that convolution is **position-invariant** (same kernel at all positions) while attention is **content-aware** (attends based on token identity, not position).
+This makes attention strictly more expressive — and less sample-efficient, which is why CNNs still dominate in data-scarce vision tasks.
 
 ## Implementation (minimal PyTorch)
 ```python

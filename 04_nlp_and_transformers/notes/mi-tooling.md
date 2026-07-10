@@ -62,6 +62,7 @@ attention_heads(attn_probs, tokens)
 ```
 
 ## When to use what
+
 | Tool | Best for |
 |------|----------|
 | TransformerLens | Quick hooking, caching, patching on standard models |

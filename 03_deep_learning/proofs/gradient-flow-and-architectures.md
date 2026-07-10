@@ -40,6 +40,7 @@ Residual connections: `xₖ₊₁ = xₖ + F(xₖ)`
 - Pooling creates hard nonlinearities (max is piecewise linear, gradient passes through argmax)
 
 ### Key numbers
+
 | Architecture | Effective gradient path | Gradient norm at depth=10 | Parallel? |
 |---|---|---|---|
 | Plain MLP (10 layers) | 10 products | ≈ 0.001 (vanishes) | Yes |

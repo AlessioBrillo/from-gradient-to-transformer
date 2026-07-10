@@ -34,7 +34,8 @@ log_posterior = log_prior + Σ log_likelihood(x_i | y)
 Avoids underflow from multiplying many small probabilities.
 
 ## MI forward link
-The naive Bayes independence assumption is the opposite of how transformers work: attention mechanisms explicitly model pairwise dependencies between all tokens. The contrast is instructive — where naive Bayes treats all features as independent evidence for a class, attention computes a weighted sum of feature interactions. Sparse autoencoders attempt to recover monosemantic features that behave like approximately independent "evidence" dimensions, a modern version of the naive Bayes factorization.
+The naive Bayes independence assumption is the opposite of how transformers work: attention mechanisms explicitly model pairwise dependencies between all tokens. The contrast is instructive — where naive Bayes treats all features as independent evidence for a class, attention computes a weighted sum of feature interactions.
+Sparse autoencoders attempt to recover monosemantic features that behave like approximately independent "evidence" dimensions, a modern version of the naive Bayes factorization.
 
 ## References
 - Murphy, *Probabilistic Machine Learning* (2022) — Ch. 4

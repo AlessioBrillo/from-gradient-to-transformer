@@ -42,6 +42,7 @@ Stratified 5-fold to preserve class balance. Report mean ± std of ROC-AUC.
 Use `RandomizedSearchCV` (3-fold, 20 iterations).
 
 ### 7. Evaluation on held-out test set
+
 | Model | ROC-AUC | Precision (spam) | Recall (spam) |
 |-------|---------|-------------------|----------------|
 | Naive Bayes | 0.96 | 0.88 | 0.92 |

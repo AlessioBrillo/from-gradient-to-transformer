@@ -27,7 +27,8 @@ Byte-Pair Encoding (Sennrich et al., 2016):
 - **Special tokens**: [PAD], [UNK], [BOS], [EOS], [SEP], [CLS], [MASK]
 
 ## MI forward link
-The tokenizer determines the "vocabulary of thought" for the model. Sparse autoencoders discover features in the residual stream that are more aligned with semantic concepts than with individual tokens — in effect, the SAE learns a *semantic tokenizer* on top of the BPE tokenizer. Understanding BPE's limitations (splitting "unethical" into "un" + "ethical" vs "uneth" + "ical") helps explain the kind of superposition that SAEs must resolve.
+The tokenizer determines the "vocabulary of thought" for the model. Sparse autoencoders discover features in the residual stream that are more aligned with semantic concepts than with individual tokens — in effect, the SAE learns a *semantic tokenizer* on top of the BPE tokenizer.
+Understanding BPE's limitations (splitting "unethical" into "un" + "ethical" vs "uneth" + "ical") helps explain the kind of superposition that SAEs must resolve.
 
 ## Implementation
 See `src/models/bpe_tokenizer.py` for a minimal BPE implementation.
