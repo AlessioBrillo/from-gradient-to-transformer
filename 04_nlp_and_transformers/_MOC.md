@@ -12,23 +12,21 @@ Index and links for this phase. Detailed topics/resources/exercises: see [[00_me
 - [[04_nlp_and_transformers/notes/qk-ov-circuits|QK/OV Circuit Decomposition — The Central Abstraction]]
 - [[04_nlp_and_transformers/notes/induction-heads|Induction Heads — The Mechanism of In-Context Learning]]
 - [[04_nlp_and_transformers/notes/activation-patching|Activation Patching — Causal Intervention for Circuit Discovery]]
-
-Key topics to cover (remaining):
-- Residual stream as communication channel
-- Logit lens technique
-- TransformerLens: HookedTransformer, hook points, ActivationCache
-- Build decoder-only transformer from scratch
+- [[04_nlp_and_transformers/notes/bpe-tokenizer|BPE Tokenizer — From Scratch]]
+- [[04_nlp_and_transformers/notes/scaling-laws|Scaling Laws — Kaplan & Chinchilla]]
+- [[04_nlp_and_transformers/notes/path-patching|Path Patching — Tracing Causal Edges]]
+- [[04_nlp_and_transformers/notes/mi-tooling|MI Tooling — TransformerLens, SAELens, nnsight, CircuitsVis]]
 
 ## Exercises
-*(link to exercises in `exercises/`)*
-
-Core exercises (remaining):
-- Build decoder-only transformer from scratch
-- Identify induction heads via attention patterns
-- Perform activation patching to verify circuit components
+- [[04_nlp_and_transformers/exercises/ex-01-transformer-from-scratch|Build a Decoder-Only Transformer from Scratch]]
+- [[04_nlp_and_transformers/exercises/ex-02-induction-head-detection|Identify Induction Heads via Attention Patterns]]
+- [[04_nlp_and_transformers/exercises/ex-03-activation-patching|Activation Patching to Verify Circuit Components]]
 
 ## Proofs to myself
-*(link to proofs in `proofs/`)*
+- [[04_nlp_and_transformers/proofs/qk-ov-decomposition|QK/OV Circuit Decomposition]]
+- [[04_nlp_and_transformers/proofs/residual-stream-communication-channel|Residual Stream as Communication Channel]]
+- [[04_nlp_and_transformers/proofs/logit-lens|Logit Lens — Reading the Residual Stream]]
+- [[04_nlp_and_transformers/proofs/circuit-analysis-complete|Gate Proof: Complete Circuit Analysis Pipeline]]
 
 ## Phase checklist → [[04_nlp_and_transformers/checklist]]
 
