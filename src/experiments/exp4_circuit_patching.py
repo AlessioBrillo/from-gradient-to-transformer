@@ -1,17 +1,16 @@
-#!/usr/bin/env python3
-"""Rung 4 — Circuit verification via activation patching.
+"""Rung 4 — Circuit verification via activation patching on induction heads.
 
-Identifies a specific circuit (IOI-style or task-specific) in a decoder-only
-transformer and causally validates each component's role via activation
-patching and path patching. Reports faithfulness, minimality, and completeness
-of the recovered circuit.
+Trains a decoder-only transformer on repeated-token prediction, identifies
+induction heads, then runs activation patching to causally validate the
+circuit. Reports faithfulness and ablates individual components.
 
 Usage:
-    python -m src.experiments.exp4_circuit_patching --seed 42
+    python -m src.experiments.exp4_circuit_patching --seed 42 [--quick]
 
 Output:
-    - figures/exp4_circuit_diagram.png
+    - figures/exp4_attention_patterns.png
     - figures/exp4_patching_results.png
+    - figures/exp4_head_ablation.png
     - Console: circuit components, logit-diff recovery, faithfulness scores
 """
 
@@ -22,314 +21,351 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from torch import nn
+from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
+from src.experiments.exp1_induction_heads import make_repeated_token_data as make_induction_data
+from src.models.decoder_only_transformer import DecoderOnlyTransformer
 from src.reproducibility import set_seed
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
 FIGURES_DIR = Path("figures")
 FIGURES_DIR.mkdir(exist_ok=True)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-# ---------------------------------------------------------------------------
-# IOI-style synthetic dataset
-# ---------------------------------------------------------------------------
-def make_ioi_dataset(
-    num_samples: int = 1024,
-    vocab: list[str] | None = None,
-    seed: int = 42,
-) -> tuple[list[list[int]], list[int]]:
-    """Generate a synthetic Indirect Object Identification dataset.
-
-    Template: "When [A] and [B] went to the store, [A] gave a book to [C]"
-    where A, B are names and C is the indirect object (should be B, not A).
-
-    Returns:
-        Tuple of (tokenized_sequences, correct_answer_indices).
-    """
-    rng = np.random.default_rng(seed)
-
-    names = ["Alice", "Bob", "Charlie", "Diana", "Eve", "Frank",
-             "Grace", "Henry", "Ivy", "Jack"]
-    verbs = ["gave", "handed", "passed", "sent", "offered", "tossed"]
-    objects = ["book", "pen", "key", "cup", "hat", "bag"]
-
-    token_to_id: dict[str, int] = {}
-    id_to_token: dict[int, str] = {}
-
-    def _tokenize(text: str) -> list[int]:
-        ids = []
-        for word in text.split():
-            word_lower = word.lower().strip(".,")
-            if word_lower not in token_to_id:
-                idx = len(token_to_id)
-                token_to_id[word_lower] = idx
-                id_to_token[idx] = word_lower
-            ids.append(token_to_id[word_lower])
-        return ids
-
-    # Special tokens
-    _ = _tokenize("when and went to the store gave a to")
-
-    sequences = []
-    answers = []
-
-    for _ in range(num_samples):
-        a, b = rng.choice(names, size=2, replace=False)
-        verb = rng.choice(verbs)
-        obj = rng.choice(objects)
-
-        template = f"When {a} and {b} went to the store {a} {verb} a {obj} to"
-        token_ids = _tokenize(template)
-        sequences.append(token_ids)
-
-        # Answer should be B (the second name)
-        b_id = token_to_id[b.lower()]
-        answers.append(b_id)
-
-    # Build the tokenizer mapping for reference
-    return sequences, answers, (token_to_id, id_to_token)
 
 
-# ---------------------------------------------------------------------------
-# Simple transformer for circuit analysis
-# ---------------------------------------------------------------------------
-class CircuitTransformer(torch.nn.Module):
-    """Minimal decoder-only transformer with hookable activations."""
 
-    def __init__(
-        self,
-        vocab_size: int,
-        d_model: int,
-        n_layers: int,
-        n_heads: int,
-        max_seq_len: int,
-    ) -> None:
-        super().__init__()
-        assert d_model % n_heads == 0
-        self.d_model = d_model
-        self.d_head = d_model // n_heads
-        self.n_heads = n_heads
-        self.n_layers = n_layers
-
-        self.embed = torch.nn.Embedding(vocab_size, d_model)
-        self.pos_embed = torch.nn.Embedding(max_seq_len, d_model)
-
-        # Per-layer components
-        self.W_Q = torch.nn.ParameterList()
-        self.W_K = torch.nn.ParameterList()
-        self.W_V = torch.nn.ParameterList()
-        self.W_O = torch.nn.ParameterList()
-        self.ln_pre = torch.nn.ModuleList()
-
-        for _ in range(n_layers):
-            self.W_Q.append(torch.nn.Parameter(
-                torch.randn(n_heads * self.d_head, d_model) * 0.02
-            ))
-            self.W_K.append(torch.nn.Parameter(
-                torch.randn(n_heads * self.d_head, d_model) * 0.02
-            ))
-            self.W_V.append(torch.nn.Parameter(
-                torch.randn(n_heads * self.d_head, d_model) * 0.02
-            ))
-            self.W_O.append(torch.nn.Parameter(
-                torch.randn(d_model, n_heads * self.d_head) * 0.02
-            ))
-            self.ln_pre.append(torch.nn.LayerNorm(d_model))
-
-        self.ln_final = torch.nn.LayerNorm(d_model)
-        self.unembed = torch.nn.Linear(d_model, vocab_size, bias=False)
-
-        # Hook storage for patching
-        self._hook_cache: dict[str, torch.Tensor] = {}
-
-    def _attn(
-        self, x: torch.Tensor, layer: int
-    ) -> tuple[torch.Tensor, torch.Tensor]:
-        B, S, D = x.shape
-        Q = (self.W_Q[layer] @ x.unsqueeze(-1)).squeeze(-1)
-        K = (self.W_K[layer] @ x.unsqueeze(-1)).squeeze(-1)
-        V = (self.W_V[layer] @ x.unsqueeze(-1)).squeeze(-1)
-
-        Q = Q.view(B, S, self.n_heads, self.d_head).transpose(1, 2)
-        K = K.view(B, S, self.n_heads, self.d_head).transpose(1, 2)
-        V = V.view(B, S, self.n_heads, self.d_head).transpose(1, 2)
-
-        scores = Q @ K.transpose(-2, -1) / (self.d_head ** 0.5)
-        mask = torch.triu(
-            torch.full((S, S), float("-inf"), device=x.device), diagonal=1
-        )
-        probs = (scores + mask).softmax(dim=-1)
-
-        out = (probs @ V).transpose(1, 2).contiguous().view(B, S, -1)
-        out = self.W_O[layer] @ out.unsqueeze(-1)
-        out = out.squeeze(-1)
-        return probs, out
-
-    def forward(
-        self,
-        x: torch.Tensor,
-        cache_name: str | None = None,
-        patching: dict | None = None,
-    ) -> torch.Tensor:
-        B, S = x.shape
-        positions = torch.arange(S, device=x.device).unsqueeze(0)
-        h = self.embed(x) + self.pos_embed(positions)
-
-        for layer in range(self.n_layers):
-            cache_key = f"pre_{layer}" if cache_name else None
-
-            if patching and cache_key in patching:
-                # Replace activation with patched value
-                h = patching[cache_key]
-
-            h_ln = self.ln_pre[layer](h)
-            probs, attn_out = self._attn(h_ln, layer)
-            h = h + attn_out
-
-            if cache_name and cache_key:
-                self._hook_cache[cache_key] = h.detach().cpu()
-
-        h = self.ln_final(h)
-        logits = self.unembed(h)
-        return logits
-
-
-# ---------------------------------------------------------------------------
-# Activation patching
-# ---------------------------------------------------------------------------
-def run_activation_patching(
-    model: torch.nn.Module,
-    clean_inputs: torch.Tensor,
-    patch_inputs: torch.Tensor,
-    patch_positions: list[int],
-    layers_to_patch: list[int],
+@torch.no_grad()
+def compute_attention_patterns(
+    model: DecoderOnlyTransformer, inputs: torch.Tensor
 ) -> dict:
-    """Run activation patching: replace activations at specified positions/layers.
+    """Compute per-layer attention probabilities averaged over heads."""
+    model.eval()
+    logits, cache = model(inputs[:8], return_cache=True)
+    probs = {}
+    for layer in range(model.n_layers):
+        prefix = f"blocks.{layer}.attn"
+        attn_probs = cache[f"{prefix}.attn_probs"]
+        probs[f"layer_{layer}"] = attn_probs.mean(dim=1)  # avg over heads
+    return probs, cache
 
-    For each (layer, position) combination, we replace the residual stream
-    activation at that position with the activation from a corrupted run,
-    and measure the change in logit difference.
+
+def detect_induction_heads(
+    model: DecoderOnlyTransformer, inputs: torch.Tensor, threshold: float = 0.3
+) -> list[tuple[int, int]]:
+    """Detect induction heads by diagonal+1 attention pattern."""
+    model.eval()
+    induction_heads = []
+    with torch.no_grad():
+        logits, cache = model(inputs[:8], return_cache=True)
+
+    for layer in range(model.n_layers):
+        prefix = f"blocks.{layer}.attn"
+        attn_probs = cache[f"{prefix}.attn_probs"]  # (B, n_heads, S, S_kv)
+        if attn_probs is None:
+            continue
+        B, n_heads, S, _ = attn_probs.shape
+        diag1 = attn_probs.diagonal(offset=1, dim1=-2, dim2=-1)
+        diag1_mass = diag1.mean(dim=-1)  # (B, n_heads)
+        avg_diag1 = diag1_mass.mean(dim=0)  # (n_heads,)
+        for head in range(n_heads):
+            if avg_diag1[head] > threshold and S > 1:
+                induction_heads.append((layer, head))
+
+    return induction_heads
+
+
+def train_model(
+    model: DecoderOnlyTransformer,
+    train_loader: DataLoader,
+    val_loader: DataLoader,
+    epochs: int = 2000,
+    lr: float = 1e-3,
+    weight_decay: float = 0.1,
+    seed: int = 42,
+) -> dict:
+    """Train the model and return history."""
+    set_seed(seed)
+    model.train()
+    opt = torch.optim.AdamW(
+        model.parameters(), lr=lr, weight_decay=weight_decay
+    )
+    history = {"train_loss": [], "val_loss": [], "val_acc": []}
+
+    for epoch in tqdm(range(epochs), desc="Training"):
+        model.train()
+        total_loss = 0.0
+        for x, y in train_loader:
+            opt.zero_grad()
+            logits, _ = model(x)
+            loss = nn.functional.cross_entropy(
+                logits.view(-1, logits.size(-1)), y.view(-1)
+            )
+            loss.backward()
+            opt.step()
+            total_loss += loss.item()
+
+        model.eval()
+        val_loss = 0.0
+        correct = 0
+        total = 0
+        with torch.no_grad():
+            for x, y in val_loader:
+                logits, _ = model(x)
+                loss = nn.functional.cross_entropy(
+                    logits.view(-1, logits.size(-1)), y.view(-1)
+                )
+                val_loss += loss.item()
+                preds = logits.argmax(dim=-1)
+                correct += (preds == y).sum().item()
+                total += y.numel()
+
+        history["train_loss"].append(total_loss / len(train_loader))
+        history["val_loss"].append(val_loss / len(val_loader))
+        history["val_acc"].append(correct / total)
+
+        if (epoch + 1) % 200 == 0:
+            logger.info(
+                f"Epoch {epoch+1:4d} | train loss: {history['train_loss'][-1]:.4f} "
+                f"| val loss: {history['val_loss'][-1]:.4f} "
+                f"| val acc: {history['val_acc'][-1]:.4f}"
+            )
+
+    return history
+
+
+def run_activation_patching(
+    model: DecoderOnlyTransformer,
+    clean_inputs: torch.Tensor,
+    corrupted_inputs: torch.Tensor,
+    layers_to_patch: list[int],
+    positions_to_patch: list[int],
+    batch_size: int = 32,
+) -> dict:
+    """Run residual stream activation patching.
+
+    For each (layer, position), patches the resid_mid (attention output)
+    from corrupted → clean and measures logit-diff recovery.
 
     Returns:
-        Dict mapping (layer, position) -> logit_diff_recovery.
+        dict mapping (layer, position) -> (clean_logit_diff, patched_logit_diff, recovery)
     """
     model.eval()
     results = {}
 
-    # Get clean and corrupted base activations
     with torch.no_grad():
-        clean_logits = model(clean_inputs)
-        _ = model(patch_inputs)  # corrupted run for patching
+        clean_logits, clean_cache = model(clean_inputs[:batch_size], return_cache=True)
+        _, corrupted_cache = model(corrupted_inputs[:batch_size], return_cache=True)
 
-    # Compute clean logit difference (correct answer - incorrect baseline)
-    clean_diff = _logit_diff(clean_logits)
+    # Logit diff on the LAST token position (from BOS)
+    def logit_diff(logits: torch.Tensor) -> torch.Tensor:
+        last_logits = logits[:, -1, :]
+        top_two = last_logits.topk(2, dim=-1)
+        return top_two.values[:, 0] - top_two.values[:, 1]
 
-    # For each layer/position, run patching
+    clean_diff = logit_diff(clean_logits).mean().item()
+    logger.info(f"Clean logit diff: {clean_diff:.4f}")
+
     for layer in tqdm(layers_to_patch, desc="Patching layers"):
-        for pos in patch_positions:
-            # Create a cache of the corrupted activation at this layer
-            # and run the forward pass with the patched value
-            patched_logits = _patch_and_forward(
-                model, clean_inputs, patch_inputs, layer, pos
-            )
-            patched_diff = _logit_diff(patched_logits)
+        target_module = model.blocks[layer].mlp
+        corrupted_act = corrupted_cache[f"blocks.{layer}.resid_mid"]
 
-            # Recovery: 1.0 means patching had no effect (not necessary)
-            # 0.0 means patching completely recovered the clean behavior
-            recovery = (patched_diff - clean_diff).abs().mean().item()
-            results[(layer, pos)] = recovery
+        for pos in positions_to_patch:
+            patch_act = corrupted_act[:, pos:pos + 1, :].to(DEVICE)
+
+            def make_hook(p_act: torch.Tensor, p_pos: int):
+                def hook(module, input):
+                    x = input[0].clone()
+                    x[:, p_pos:p_pos + 1, :] = p_act
+                    return (x,)
+                return hook
+
+            hook_handle = target_module.register_forward_pre_hook(
+                make_hook(patch_act, pos)
+            )
+
+            with torch.no_grad():
+                patched_logits, _ = model(clean_inputs[:batch_size])
+
+            hook_handle.remove()
+
+            patched_diff = logit_diff(patched_logits).mean().item()
+            recovery = (patched_diff - clean_diff) / (-clean_diff) if clean_diff != 0 else 0.0
+            results[(layer, pos)] = {
+                "clean_diff": clean_diff,
+                "patched_diff": patched_diff,
+                "recovery": recovery,
+            }
 
     return results
 
 
-def _logit_diff(logits: torch.Tensor) -> torch.Tensor:
-    """Compute logit difference between top two predictions."""
-    top_two = logits.topk(2, dim=-1)
-    return top_two.values[..., 0] - top_two.values[..., 1]
-
-
-def _patch_and_forward(
-    model: torch.nn.Module,
-    clean: torch.Tensor,
-    patch: torch.Tensor,
-    layer: int,
-    position: int,
-) -> torch.Tensor:
-    """Run forward pass with activation at (layer, position) patched."""
-    # Simplified patching: for a fully functional implementation,
-    # use TransformerLens' activation patching utilities
+def run_head_ablation(
+    model: DecoderOnlyTransformer,
+    inputs: torch.Tensor,
+    induction_heads: list[tuple[int, int]],
+    batch_size: int = 32,
+) -> dict:
+    """Zero-ablate individual induction heads and measure effect."""
     model.eval()
+    results = {}
+
     with torch.no_grad():
-        # Run clean forward, replacing the residual at specified (layer, pos)
-        # This is a conceptual sketch — full implementation uses hook points
-        # via TransformerLens for precise per-position patching
-        logits = model(clean)
-    return logits
+        clean_logits, _ = model(inputs[:batch_size])
+
+    def logit_diff(logits):
+        last_logits = logits[:, -1, :]
+        top_two = last_logits.topk(2, dim=-1)
+        return top_two.values[:, 0] - top_two.values[:, 1]
+
+    clean_diff = logit_diff(clean_logits).mean().item()
+
+    for layer, head in tqdm(induction_heads, desc="Ablating heads"):
+        d_head = model.d_model // model.n_heads
+
+        def make_ablation_hook(h_layer: int, h_head: int, d_h: int):
+            def hook(module, input, output):
+                attn_out, kv = output
+                B, S, D = attn_out.shape
+                W_O = module.W_O.weight.view(model.n_heads, d_h, D)
+
+                with torch.no_grad():
+                    head_output = attn_out @ W_O[h_head].T.unsqueeze(0) / model.n_heads
+                    # Zero the head contribution
+                    attn_out = attn_out - head_output
+                return attn_out, kv
+            return hook
+
+        hook_handle = model.blocks[layer].attn.register_forward_hook(
+            make_ablation_hook(layer, head, d_head)
+        )
+
+        with torch.no_grad():
+            ablated_logits, _ = model(inputs[:batch_size])
+
+        hook_handle.remove()
+
+        ablated_diff = logit_diff(ablated_logits).mean().item()
+        effect = (ablated_diff - clean_diff) / (-clean_diff) if clean_diff != 0 else 0.0
+        results[(layer, head)] = {
+            "clean_diff": clean_diff,
+            "ablated_diff": ablated_diff,
+            "effect": effect,
+        }
+
+    return results
 
 
-# ---------------------------------------------------------------------------
-# Plotting
-# ---------------------------------------------------------------------------
-def plot_circuit_diagram(
-    results: dict,
-    n_layers: int,
+def plot_attention_patterns(
+    attention_probs: dict,
     save_path: Path,
+    max_layers: int = 2,
 ) -> None:
-    """Plot a circuit diagram showing patching effects per component."""
-    fig, ax = plt.subplots(figsize=(10, 6))
+    """Plot attention probability matrices for each layer."""
+    n_layers = min(len(attention_probs), max_layers)
+    fig, axes = plt.subplots(1, n_layers, figsize=(6 * n_layers, 5))
 
-    # Organize results by layer and position
-    layers = sorted(set(k[0] for k in results))
-    positions = sorted(set(k[1] for k in results))
+    if n_layers == 1:
+        axes = [axes]
 
-    patching_matrix = np.zeros((len(layers), len(positions)))
-    for i, layer in enumerate(layers):
-        for j, pos in enumerate(positions):
-            patching_matrix[i, j] = results.get((layer, pos), 0.0)
-
-    im = ax.imshow(
-        patching_matrix,
-        cmap="RdYlBu_r",
-        aspect="auto",
-        vmin=0,
-        vmax=1,
-    )
-    ax.set_xticks(range(len(positions)))
-    ax.set_xticklabels([f"Pos {p}" for p in positions])
-    ax.set_yticks(range(len(layers)))
-    ax.set_yticklabels([f"Layer {lyr}" for lyr in layers])
-    ax.set_xlabel("Token Position")
-    ax.set_ylabel("Layer")
-    ax.set_title("Activation Patching Effects (logit-diff recovery)", fontsize=14)
-    fig.colorbar(im, ax=ax, shrink=0.8, label="Effect Size")
+    for i in range(n_layers):
+        key = f"layer_{i}"
+        if key not in attention_probs:
+            continue
+        probs = attention_probs[key][0].numpy()
+        im = axes[i].imshow(probs, cmap="Blues", aspect="auto", vmin=0, vmax=0.5)
+        axes[i].set_title(f"Layer {i} — Attention (avg over heads)", fontsize=13)
+        axes[i].set_xlabel("Key position")
+        axes[i].set_ylabel("Query position")
+        fig.colorbar(im, ax=axes[i], shrink=0.8)
 
     fig.tight_layout()
     fig.savefig(save_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
-    logger.info(f"Saved circuit diagram to {save_path}")
+    logger.info(f"Saved attention patterns to {save_path}")
 
 
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
+def plot_patching_results(
+    results: dict,
+    n_layers: int,
+    n_positions: int,
+    save_path: Path,
+) -> None:
+    """Plot activation patching heatmap."""
+    positions = sorted(set(k[1] for k in results))
+    layers = sorted(set(k[0] for k in results))
+
+    matrix = np.zeros((len(layers), len(positions)))
+    for (l, p), v in results.items():
+        li = layers.index(l)
+        pi = positions.index(p)
+        matrix[li, pi] = v["recovery"]
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    vmax = max(abs(matrix.min()), abs(matrix.max()), 0.01)
+    im = ax.imshow(matrix, cmap="RdYlBu_r", aspect="auto", vmin=-vmax, vmax=vmax)
+    ax.set_xticks(range(len(positions)))
+    ax.set_xticklabels([f"Pos {p}" for p in positions])
+    ax.set_yticks(range(len(layers)))
+    ax.set_yticklabels([f"Layer {l}" for l in layers])
+    ax.set_xlabel("Token Position")
+    ax.set_ylabel("Layer")
+    ax.set_title("Activation Patching — Logit-diff Recovery", fontsize=14)
+    fig.colorbar(im, ax=ax, shrink=0.8, label="Recovery (1 = circuit essential)")
+
+    fig.tight_layout()
+    fig.savefig(save_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    logger.info(f"Saved patching results to {save_path}")
+
+
+def plot_head_ablation(
+    results: dict,
+    save_path: Path,
+) -> None:
+    """Plot head ablation effects."""
+    heads = sorted(results.keys(), key=lambda x: (x[0], x[1]))
+    labels = [f"L{h[0]}.H{h[1]}" for h in heads]
+    effects = [results[h]["effect"] for h in heads]
+
+    fig, ax = plt.subplots(figsize=(8, 4))
+    colors = ["crimson" if e > 0.1 else "gray" for e in effects]
+    bars = ax.bar(range(len(labels)), effects, color=colors)
+    ax.axhline(y=0.1, color="red", linestyle="--", alpha=0.5, label="Significant threshold")
+    ax.set_xticks(range(len(labels)))
+    ax.set_xticklabels(labels, rotation=45)
+    ax.set_ylabel("Logit-diff drop (fraction)")
+    ax.set_title("Head Ablation — Causal Effect on Induction", fontsize=14)
+    ax.legend()
+    ax.grid(True, axis="y", alpha=0.3)
+
+    fig.tight_layout()
+    fig.savefig(save_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    logger.info(f"Saved head ablation plot to {save_path}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Rung 4: Circuit verification via activation patching"
     )
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    parser.add_argument("--vocab-size", type=int, default=32, help="Vocabulary size")
+    parser.add_argument("--seq-len", type=int, default=24, help="Sequence length")
     parser.add_argument("--d-model", type=int, default=64, help="Model dimension")
-    parser.add_argument("--n-layers", type=int, default=4, help="Number of layers")
+    parser.add_argument("--n-layers", type=int, default=2, help="Number of layers")
     parser.add_argument("--n-heads", type=int, default=4, help="Heads per layer")
-    parser.add_argument("--num-samples", type=int, default=256, help="IOI samples")
+    parser.add_argument("--epochs", type=int, default=3000, help="Training epochs")
+    parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
+    parser.add_argument("--num-train", type=int, default=8192, help="Training samples")
+    parser.add_argument("--quick", action="store_true", help="Quick test mode")
     parser.add_argument(
-        "--no-train", action="store_true", help="Skip training (analysis only)"
+        "--no-train", action="store_true", help="Skip training (untrained model)"
     )
     args = parser.parse_args()
 
@@ -337,69 +373,157 @@ def main() -> None:
         level=logging.INFO,
         format="%(asctime)s | %(levelname)s | %(message)s",
     )
+
+    if args.quick:
+        args.vocab_size = 16
+        args.seq_len = 12
+        args.d_model = 32
+        args.n_layers = 2
+        args.n_heads = 2
+        args.epochs = 500
+        args.num_train = 1024
+        logger.info("QUICK MODE: reduced config for fast iteration")
+
     logger.info(f"Device: {DEVICE}")
     logger.info(f"Arguments: {vars(args)}")
 
     set_seed(args.seed)
 
-    # Generate IOI dataset
-    sequences, answers, (token_to_id, id_to_token) = make_ioi_dataset(
-        num_samples=args.num_samples,
+    # Data
+    train_dataset, val_dataset = make_induction_data(
+        vocab_size=args.vocab_size,
+        seq_len=args.seq_len,
+        num_train=args.num_train,
         seed=args.seed,
     )
-    vocab_size = len(token_to_id)
-    logger.info(f"Vocabulary size: {vocab_size}")
-    logger.info(f"Generated {len(sequences)} IOI samples")
+    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=256, shuffle=False)
+    logger.info(f"Data: train={args.num_train} sequences, seq_len={args.seq_len}")
 
-    # Build model
-    max_seq_len = max(len(s) for s in sequences)
-    model = CircuitTransformer(
-        vocab_size=vocab_size,
+    # Model
+    model = DecoderOnlyTransformer(
+        vocab_size=args.vocab_size,
         d_model=args.d_model,
         n_layers=args.n_layers,
         n_heads=args.n_heads,
-        max_seq_len=max_seq_len,
+        max_seq_len=args.seq_len,
     )
+    model.to(DEVICE)
     n_params = sum(p.numel() for p in model.parameters())
     logger.info(f"Model parameters: {n_params:,}")
 
-    # For a full experiment, the model would be trained on next-token prediction
-    # of the IOI dataset. Here we use a randomly initialized model to
-    # demonstrate the patching methodology.
-
     if not args.no_train:
-        logger.info("Training would go here in a full run.")
+        history = train_model(
+            model=model,
+            train_loader=train_loader,
+            val_loader=val_loader,
+            epochs=args.epochs,
+            lr=args.lr,
+            seed=args.seed,
+        )
         logger.info(
-            "For this demo, skip training and use the untrained model."
+            f"Training done | final val acc: {history['val_acc'][-1]:.4f}"
         )
 
-    # Convert sequences to tensors
-    max_len = max(len(s) for s in sequences)
-    padded = torch.zeros((len(sequences), max_len), dtype=torch.long)
-    for i, seq in enumerate(sequences):
-        padded[i, :len(seq)] = torch.tensor(seq)
+    # Induction head detection
+    sample_inputs = next(iter(val_loader))[0][:8]
+    attention_probs, _ = compute_attention_patterns(model, sample_inputs)
+    plot_attention_patterns(
+        attention_probs,
+        save_path=FIGURES_DIR / "exp4_attention_patterns.png",
+    )
 
+    induction_heads = detect_induction_heads(model, sample_inputs)
     logger.info("=" * 60)
-    logger.info("Circuit Verification via Activation Patching")
+    logger.info("Induction Head Detection")
     logger.info("=" * 60)
-    logger.info(
-        "This experiment demonstrates the activation patching methodology. "
-        "In a full run, the model is trained on IOI-style data, then each "
-        "attention head and MLP layer is probed for its causal role."
+    for layer in range(args.n_layers):
+        layer_heads = [(l, h) for l, h in induction_heads if l == layer]
+        logger.info(f"  Layer {layer}: {len(layer_heads)} induction head(s): {[h for _, h in layer_heads]}")
+    total_found = len(induction_heads)
+    total_heads = args.n_layers * args.n_heads
+    logger.info(f"  Total induction heads: {total_found} / {total_heads}")
+    if not induction_heads:
+        logger.warning("No induction heads detected.")
+
+    # Activation patching
+    logger.info("=" * 60)
+    logger.info("Activation Patching — Causal Circuit Analysis")
+    logger.info("=" * 60)
+
+    val_batch = next(iter(val_loader))[0][:32]
+    # Corrupted: shuffle the tokens to break the repetition
+    rng = np.random.default_rng(args.seed + 1)
+    corrupted = val_batch.clone()
+    for i in range(corrupted.size(0)):
+        perm = torch.randperm(corrupted.size(1))
+        corrupted[i] = corrupted[i, perm]
+
+    layers_to_patch = list(range(args.n_layers))
+    positions_to_patch = list(range(max(2, args.seq_len // 4), args.seq_len, 2))
+
+    patching_results = run_activation_patching(
+        model=model,
+        clean_inputs=val_batch,
+        corrupted_inputs=corrupted,
+        layers_to_patch=layers_to_patch,
+        positions_to_patch=positions_to_patch,
+        batch_size=min(32, val_batch.size(0)),
     )
-    logger.info("")
-    logger.info("Expected circuit components (IOI canonical, Wang et al. 2023):")
-    logger.info("  1. Duplicate-token heads (attending to the repeated A)")
-    logger.info("  2. S-inhibition heads (inhibiting attention to A)")
-    logger.info("  3. Induction heads (copying B)")
-    logger.info("  4. Name-mover heads (moving the correct name to output)")
-    logger.info("  5. Previous-token heads (positional signal)")
-    logger.info("")
-    logger.info(
-        "For the full implementation with TransformerLens hooks and "
-        "per-component patching, see the complete version in "
-        "07_capstone/experiments/"
-    )
+
+    if patching_results:
+        plot_patching_results(
+            patching_results,
+            n_layers=args.n_layers,
+            n_positions=len(positions_to_patch),
+            save_path=FIGURES_DIR / "exp4_patching_results.png",
+        )
+
+        # Summarize circuit importance
+        logger.info("\nCircuit component importance (top by recovery):")
+        sorted_results = sorted(
+            patching_results.items(), key=lambda x: x[1]["recovery"], reverse=True
+        )
+        for (layer, pos), vals in sorted_results[:6]:
+            logger.info(
+                f"  Layer {layer}, Pos {pos}: recovery={vals['recovery']:.3f} "
+                f"(clean_diff={vals['clean_diff']:.3f}, patched_diff={vals['patched_diff']:.3f})"
+            )
+
+    # Head ablation
+    if induction_heads:
+        logger.info("=" * 60)
+        logger.info("Head Ablation — Causal Validation")
+        logger.info("=" * 60)
+        ablation_results = run_head_ablation(
+            model=model,
+            inputs=val_batch,
+            induction_heads=induction_heads,
+        )
+        plot_head_ablation(
+            ablation_results,
+            save_path=FIGURES_DIR / "exp4_head_ablation.png",
+        )
+
+        for (layer, head), vals in ablation_results.items():
+            logger.info(
+                f"  Layer {layer}, Head {head}: effect={vals['effect']:.3f} "
+                f"(diff drop: {vals['clean_diff']:.3f} → {vals['ablated_diff']:.3f})"
+            )
+    else:
+        logger.info("Skipping head ablation: no induction heads detected.")
+
+    # Summary
+    logger.info("=" * 60)
+    logger.info("Circuit Summary")
+    logger.info("=" * 60)
+    if induction_heads:
+        for (layer, head) in induction_heads:
+            logger.info(f"  Induction head: L{layer}H{head}")
+    logger.info(f"  Total heads patched: {len(patching_results)}")
+    if induction_heads:
+        logger.info(f"  Heads ablated: {len(ablation_results)}")
+    logger.info("Done.")
 
 
 if __name__ == "__main__":
