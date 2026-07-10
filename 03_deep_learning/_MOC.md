@@ -11,12 +11,15 @@ Index and links for this phase. Detailed topics/resources/exercises: see [[00_me
 ## Notes (lessons)
 - [[03_deep_learning/notes/backpropagation-from-scratch|Backpropagation from Scratch]]
 - [[03_deep_learning/notes/training-dynamics-and-grokking|Training Dynamics and Grokking]]
+- [[03_deep_learning/notes/rnn-from-scratch|RNN From Scratch — Why Attention Exists]]
+- [[03_deep_learning/notes/cnn-basics|CNN Basics — Convolution, Pooling, Architecture]]
 
 ## Exercises
 - [[03_deep_learning/exercises/ex-01-micrograd|Build micrograd: Autograd from Scratch]]
+- [[03_deep_learning/exercises/ex-02-rnn-and-cnn|RNN and CNN for Context]]
 
 ## Proofs to myself
-_(link to proofs in `proofs/`)_
+- [[03_deep_learning/proofs/gradient-flow-and-architectures|Gate Proof: Gradient Flow and Architecture Design]]
 
 ## Phase checklist → [[03_deep_learning/checklist]]
 
