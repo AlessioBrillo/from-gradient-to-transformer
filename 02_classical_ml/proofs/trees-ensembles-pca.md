@@ -36,3 +36,8 @@ PCA finds the orthogonal directions of maximum variance in the data.
 The first component captures the direction of highest variance, the second captures the most remaining variance orthogonal to the first, etc.
 
 **MI connection:** PCA is the conceptual ancestor of sparse autoencoders (SAEs). PCA learns a dense, orthogonal basis; SAEs learn a sparse, overcomplete basis. The residual stream features are superposed (not orthogonal), which is why PCA fails where SAEs succeed. Understanding PCA's limitations = understanding why we need dictionary learning for MI.
+
+## Links
+
+- [[01_foundations/notes/singular-value-decomposition]] — SVD is the engine behind PCA and a core linear algebra primitive for understanding attention head decomposition.
+- [[04_nlp_and_transformers/notes/qk-ov-circuits]] — the progression from PCA to SAE mirrors how QK/OV circuits decompose attention into separate "where" and "what" functions.

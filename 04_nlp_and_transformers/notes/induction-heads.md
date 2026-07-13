@@ -45,3 +45,9 @@ Induction heads are the most reproduced result in MI because:
 - The pattern is visually unmistakable
 - Ablation produces clear, measurable effects
 - The mechanism is simple enough to fully understand
+
+## Links
+
+- [[04_nlp_and_transformers/notes/qk-ov-circuits]]
+- [[04_nlp_and_transformers/notes/activation-patching]]
+- [[07_capstone/README]]

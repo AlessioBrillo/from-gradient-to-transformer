@@ -1,3 +1,7 @@
+---
+tags: [type/exercise, phase/4, state/review]
+---
+
 # Exercise 03 — Activation Patching for Causal Circuit Verification
 
 ## Objective
@@ -103,3 +107,9 @@ assert results[(unimportant_layer, unimportant_pos)] < 0.2
 - Wang et al., "Interpretability in the Wild: a Circuit for IOI in GPT-2 small," ICLR 2023
 - Nanda's TransformerLens demo: activation patching notebook
 - Zhang & Nanda, "Interchange Interventions," 2023
+
+## Links
+
+- [[04_nlp_and_transformers/notes/activation-patching]] — the theory note on activation patching that this exercise implements in code.
+- [[04_nlp_and_transformers/notes/path-patching]] — path patching extends single-node patching to edge-level interventions; the natural next step after mastering this exercise.
+

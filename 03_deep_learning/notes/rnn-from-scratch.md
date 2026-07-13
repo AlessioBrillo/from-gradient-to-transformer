@@ -47,3 +47,8 @@ class RNNCell(nn.Module):
             outputs.append(h)
         return torch.stack(outputs, dim=1), h
 ```
+
+## Links
+
+- [[04_nlp_and_transformers/notes/qk-ov-circuits]] — attention solves the sequential bottleneck that makes RNNs struggle
+- [[03_deep_learning/notes/backpropagation-from-scratch]] — the reverse-mode autograd that trains every RNN parameter

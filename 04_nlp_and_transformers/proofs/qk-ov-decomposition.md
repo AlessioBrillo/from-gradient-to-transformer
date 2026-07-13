@@ -1,3 +1,7 @@
+---
+tags: [type/proof, phase/4, state/review]
+---
+
 # Proof — QK/OV Circuit Decomposition
 
 I can decompose any attention head into two independent functions: the **QK circuit** (what to attend to) and the **OV circuit** (what to copy from attended positions). This is the central abstraction of mechanistic interpretability (Elhage et al., 2021).
@@ -57,3 +61,9 @@ def decompose_head(W_Q, W_K, W_V, W_O):
 I can explain this to a non-technical colleague: *"An attention head has two independent parts — one decides which past tokens to look at, and the other decides what information to copy from them."*
 
 **I have reconstructed this analysis from memory without referring to notes.**
+
+## Links
+
+- [[04_nlp_and_transformers/notes/induction-heads]] — induction heads are the canonical concrete example of a circuit that factorizes into a QK prefix-match and an OV copy operation.
+- [[04_nlp_and_transformers/proofs/logit-lens]] — the logit lens reveals each head's contribution to the final prediction, completing the QK/OV analysis.
+

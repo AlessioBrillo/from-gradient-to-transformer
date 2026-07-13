@@ -38,3 +38,8 @@ Attention heads compute two separate functions:
 The "separability" intuition from SVMs maps to how attention heads learn to separate relevant from irrelevant information in the residual stream.
 
 The kernel trick's implicit high-dimensional mapping is conceptually related to how the residual stream implicitly provides a rich feature space through the composition of layers.
+
+## Links
+
+- [[04_nlp_and_transformers/notes/qk-ov-circuits]] — margin intuition for separating features maps directly to how QK circuits separate relevant from irrelevant information in the residual stream.
+- [[04_nlp_and_transformers/_MOC]] — Phase 4 master note on NLP, transformers, and mechanistic interpretability.

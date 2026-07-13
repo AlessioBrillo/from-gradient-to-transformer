@@ -1,3 +1,7 @@
+---
+tags: [type/exercise, phase/3, state/review]
+---
+
 # Exercise 01 — Build micrograd: Autograd from Scratch
 
 ## Objective
@@ -52,3 +56,14 @@ def numerical_grad(f, x, eps=1e-6):
 - Trained binary classifier with loss curve
 - Numerical gradient verification (< 1e-4 error)
 - Computation graph drawing for `3*x + 2*y + 1`
+
+## Links
+
+- [[03_deep_learning/notes/backpropagation-from-scratch]] — the theory note that this exercise builds as a code implementation.
+- [[01_foundations/proofs/chain-rule-and-gradient-check]] — the chain rule derivation that micrograd's autograd engine implements in practice.
+
+
+## Links
+
+- [[03_deep_learning/notes/backpropagation-from-scratch]] — the theory behind the Value class you are building
+- [[01_foundations/proofs/chain-rule-and-gradient-check]] — the numerical gradient check that verifies your autograd implementation

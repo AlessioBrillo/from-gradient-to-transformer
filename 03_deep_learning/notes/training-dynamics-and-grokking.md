@@ -55,3 +55,9 @@ The canonical progress measures for grokking (Nanda et al. 2023):
 4. Small moduli (P < 30) may need more epochs than expected
 5. Multiple seeds (3-5) are essential because grokking timing is seed-sensitive
 6. Normalizing embeddings during training prevents the model from escaping weight decay pressure
+
+## Links
+
+- [[07_capstone/README]] — the capstone grokking experiment that reproduces this phenomenon
+- [[02_classical_ml/notes/bias-variance-and-evaluation]] — generalisation metrics that diagnose memorisation vs generalisation
+- [[00_meta/01_roadmap]] — where grokking fits in the broader curriculum arc

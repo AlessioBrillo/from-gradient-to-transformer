@@ -50,3 +50,9 @@ print(w1.grad, w2.grad, b.grad)  # gradients for the optimizer
 ```
 
 This is exactly what PyTorch does, scaled to millions of parameters.
+
+## Links
+
+- [[01_foundations/notes/chain-rule-and-backpropagation]] — the scalar and vector chain rule that underlies all of backprop
+- [[03_deep_learning/exercises/ex-01-micrograd]] — build your own autograd engine (micrograd exercise)
+- [[04_nlp_and_transformers/notes/qk-ov-circuits]] — how gradient flow through attention circuits enables the transformer

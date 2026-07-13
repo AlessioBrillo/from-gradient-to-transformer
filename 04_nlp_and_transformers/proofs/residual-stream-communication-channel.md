@@ -1,3 +1,7 @@
+---
+tags: [type/proof, phase/4, state/review]
+---
+
 # Proof — The Residual Stream as a Communication Channel
 
 The residual stream is the central highway of a transformer. Every layer reads from it and writes to it. Understanding this is essential for all MI work.
@@ -61,3 +65,9 @@ def trace_residual_stream(model, x):
 **I can explain the residual stream metaphor to a non-technical colleague: *"Think of the residual stream as a shared whiteboard. Each layer reads what's written, adds its own notes, and passes the whiteboard to the next layer."***
 
 **I have reconstructed this analysis from memory without referring to notes.**
+
+## Links
+
+- [[04_nlp_and_transformers/notes/qk-ov-circuits]] — the QK/OV circuits that write to and read from the residual stream, making the additive update concrete.
+- [[04_nlp_and_transformers/proofs/logit-lens]] — the logit lens technique that exploits the shared vector space to read partial predictions at every layer.
+

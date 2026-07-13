@@ -79,6 +79,7 @@ class Attention(nn.Module):
         self.n_heads = n_heads
         self.d_head = d_model // n_heads
         self.max_seq_len = max_seq_len
+        self.head_mask: Optional[torch.Tensor] = None
 
         self.W_Q = nn.Linear(d_model, d_model, bias=False)
         self.W_K = nn.Linear(d_model, d_model, bias=False)
@@ -123,6 +124,13 @@ class Attention(nn.Module):
 
         attn_out = attn_probs @ V
         attn_out = attn_out.transpose(1, 2).contiguous().view(B, S, D)
+
+        if self.head_mask is not None:
+            mask = self.head_mask.repeat_interleave(self.d_head).view(1, 1, D).to(
+                x.device, x.dtype
+            )
+            attn_out = attn_out * mask
+
         attn_out = self.W_O(attn_out)
 
         if cache is not None:
@@ -323,7 +331,7 @@ class DecoderOnlyTransformer(nn.Module):
             if generated.size(1) > self.max_seq_len:
                 generated = generated[:, -self.max_seq_len:]
 
-            logits, cache = self(generated[:, -1:], past_kv=past_kv)
+            logits, cache = self(generated[:, -1:], past_kv=past_kv, return_cache=True)
 
             if cache is not None:
                 for i in range(self.n_layers):

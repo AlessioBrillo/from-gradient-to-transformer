@@ -1,3 +1,7 @@
+---
+tags: [type/exercise, phase/2, state/review]
+---
+
 # Exercise 02 — Decision Trees and Random Forests
 
 ## Objective
@@ -36,3 +40,9 @@ Write 3-4 sentences connecting ensemble methods to transformer circuits:
 - Plots: depth vs. accuracy, n_estimators vs. accuracy
 - Table: comparison of your implementation vs. sklearn
 - Paragraph: MI connection
+
+## Links
+
+- [[02_classical_ml/proofs/trees-ensembles-pca]] — the formal proof of decision tree splitting, random forest variance reduction, and PCA that this exercise verifies in code.
+- [[03_deep_learning/notes/training-dynamics-and-grokking]] — links ensemble pruning to the grokking phase change where models shed unnecessary circuits.
+

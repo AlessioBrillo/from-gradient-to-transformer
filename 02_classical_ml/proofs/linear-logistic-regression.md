@@ -1,5 +1,5 @@
 ---
-tags: [type/proof, phase/2]
+tags: [type/proof, phase/2, state/review]
 created: 2026-07-05
 ---
 
@@ -50,3 +50,9 @@ defined by the Q and K weight matrices.
 ## Outcome
 - [x] Passed → check the skill in [[00_meta/02_skill-tree]]
 - [ ] Retry needed (what was missing): ...
+
+## Links
+
+- [[01_foundations/proofs/chain-rule-and-gradient-check]] — chain rule derivation and numerical gradient verification that underpin the logistic regression gradient derivation.
+- [[04_nlp_and_transformers/notes/qk-ov-circuits]] — the QK circuit's dot-product separation is the same geometry as the logistic regression decision boundary.
+

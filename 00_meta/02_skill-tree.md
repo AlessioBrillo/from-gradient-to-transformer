@@ -43,24 +43,24 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
 - [ ] RNN/LSTM (vanishing gradient context for why attention matters)
 
 ## Phase 4 — NLP & Transformers (LOAD-BEARING for MI)
-- [ ] BPE tokenizer from scratch
-- [ ] Self-attention implemented (scaled dot-product)
-- [ ] Multi-head + positional encoding (RoPE, sinusoidal)
-- [ ] Decoder-only transformer from scratch (causal masking)
-- [ ] **QK/OV circuit decomposition** (Elhage et al. 2021)
-- [ ] **Residual stream as communication channel**
-- [ ] **Induction heads: prefix-matching + copying mechanism**
-- [ ] **Logit lens: projecting residual stream to vocabulary**
-- [ ] **Activation patching / path patching / attribution patching**
-- [ ] **TransformerLens: HookedTransformer, hook points, ActivationCache**
-- [ ] Scaling Laws (Kaplan, Chinchilla)
-- [ ] Computational optimizations (FlashAttention, KV cache)
+- [x] BPE tokenizer from scratch — code: `src/models/bpe_tokenizer.py`
+- [x] Self-attention implemented (scaled dot-product) — code: `src/models/decoder_only_transformer.py`
+- [x] Multi-head + positional encoding (RoPE, sinusoidal) — code: `src/models/decoder_only_transformer.py`
+- [x] Decoder-only transformer from scratch (causal masking) — code: `src/models/decoder_only_transformer.py`
+- [x] **QK/OV circuit decomposition** — proof: [[04_nlp_and_transformers/proofs/qk-ov-decomposition]]
+- [x] **Residual stream as communication channel** — proof: [[04_nlp_and_transformers/proofs/residual-stream-communication-channel]]
+- [x] **Induction heads: prefix-matching + copying mechanism** — proof: [[04_nlp_and_transformers/proofs/circuit-analysis-complete]]
+- [x] **Logit lens: projecting residual stream to vocabulary** — proof: [[04_nlp_and_transformers/proofs/logit-lens]]
+- [x] **Activation patching / path patching / attribution patching** — proof: [[04_nlp_and_transformers/proofs/circuit-analysis-complete]]
+- [x] **TransformerLens: HookedTransformer, hook points, ActivationCache** — note: [[04_nlp_and_transformers/notes/mi-tooling]]
+- [x] Scaling Laws (Kaplan, Chinchilla) — note: [[04_nlp_and_transformers/notes/scaling-laws]]
+- [ ] Computational optimizations (FlashAttention, KV cache) — breadth
 
 ## Phase 5 — LLM Engineering (reframed: model instrumentation)
-- [ ] **Hooks and activation caching** (TransformerLens, nnsight)
-- [ ] **Deterministic inference for reproducible circuit analysis**
-- [ ] **Activation harvesting at scale**
-- [ ] **Dataset construction for circuit tasks** (IOI, greater-than, docstring)
+- [x] **Hooks and activation caching** — exercise: [[05_llm_engineering/exercises/ex-01-hook-instrumentation]], proof: [[05_llm_engineering/proofs/hook-intervention]]
+- [x] **Deterministic inference for reproducible circuit analysis** — exercise: [[05_llm_engineering/exercises/ex-02-activation-harvesting]], proof: [[05_llm_engineering/proofs/determinism-necessity]]
+- [x] **Activation harvesting at scale** — exercise: [[05_llm_engineering/exercises/ex-02-activation-harvesting]], proof: [[05_llm_engineering/proofs/activation-patching]]
+- [x] **Dataset construction for circuit tasks** — exercise: [[05_llm_engineering/exercises/ex-03-circuit-dataset]]
 - [ ] RAG (light touch — retrieval as circuit analysis context)
 - [ ] LoRA fine-tuning (light touch)
 
@@ -73,17 +73,17 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
 - [ ] ML system design (minimal — design doc for the capstone pipeline)
 
 ## Research Skills (Mechanistic Interpretability)
-- [ ] **Induction head reproduction** — attention-pattern analysis, causal verification
-- [ ] **Grokking reproduction + Fourier reverse-engineering** — the primary flagship 🌟
-- [ ] **Toy Models of Superposition** — feature geometry, phase changes
-- [ ] **Circuit discovery via activation patching** — find + causally validate
-- [ ] **Sparse autoencoder training** — SAELens, feature dashboard
+- [x] **Induction head reproduction** — attention-pattern analysis, causal verification
+- [x] **Grokking reproduction + Fourier reverse-engineering** — the primary flagship 🌟 (P=113 needs GPU)
+- [x] **Toy Models of Superposition** — feature geometry, phase changes
+- [x] **Circuit discovery via activation patching** — find + causally validate
+- [x] **Sparse autoencoder training** — SAELens, feature dashboard (synthetic activations)
 - [ ] **Automated circuit discovery** — ACDC, AtP, attribution patching
 - [ ] Mini-paper writing (LaTeX, citations, ablations, limitations)
 
 ## Phase 7 — Capstone
-- [ ] From-scratch decoder-only transformer (the model to reverse-engineer)
-- [ ] Grokking experiment end-to-end (training + analysis + figures)
-- [ ] At least one circuit verification (activation patching on the capstone model)
-- [ ] SAE feature dashboard (browsable artifact)
+- [x] From-scratch decoder-only transformer (the model to reverse-engineer) — `src/models/decoder_only_transformer.py`
+- [~] Grokking experiment end-to-end (training + analysis + figures) — CPU-bound P=113
+- [x] At least one circuit verification (activation patching on the capstone model) — exp4
+- [~] SAE feature dashboard (browsable artifact) — trained on synthetic, upgrade to real activations
 - [ ] Mini-paper with all ablations and primary-literature citations

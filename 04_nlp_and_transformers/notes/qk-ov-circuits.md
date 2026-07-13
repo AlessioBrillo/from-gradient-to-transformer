@@ -50,3 +50,9 @@ If head A in layer L writes to the residual stream, and head B in layer L+1 read
 2. **Compute Wh_OV = W_O @ W_V** for each head — this is the linear map defining what gets copied
 3. **Project both into the vocabulary/unembedding space** to understand what features matter
 4. **Use the logit lens** to read intermediate states: project residual stream → unembed space
+
+## Links
+
+- [[04_nlp_and_transformers/notes/induction-heads]]
+- [[04_nlp_and_transformers/proofs/logit-lens]]
+- [[04_nlp_and_transformers/notes/activation-patching]]

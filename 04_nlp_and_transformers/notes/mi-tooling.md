@@ -75,3 +75,9 @@ attention_heads(attn_probs, tokens)
 - Bricken et al., *Towards Monosemanticity* (2023)
 - ndif.com — *nnsight documentation*
 - Anthropic, *circuitsvis: Visualization tools for mechanistic interpretability*
+
+## Links
+
+- [[04_nlp_and_transformers/notes/activation-patching]]
+- [[05_llm_engineering/notes/01-transformer-lens-hooks]]
+- [[04_nlp_and_transformers/notes/qk-ov-circuits]]

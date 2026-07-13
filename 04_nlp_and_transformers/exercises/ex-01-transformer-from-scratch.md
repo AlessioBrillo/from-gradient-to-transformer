@@ -1,3 +1,7 @@
+---
+tags: [type/exercise, phase/4, state/review]
+---
+
 # Exercise 01 — Build a Decoder-Only Transformer from Scratch
 
 ## Objective
@@ -135,3 +139,9 @@ This model is the analysis vehicle for everything that follows. The hook points 
 - **Induction head detection**: find the diagonal+1 attention pattern
 
 **Don't move on until generating works and hook points capture all intermediate activations.**
+
+## Links
+
+- [[04_nlp_and_transformers/notes/qk-ov-circuits]] — the QK/OV abstraction that this transformer's attention heads implement and that you will analyze with the hook points built here.
+- [[04_nlp_and_transformers/notes/mi-tooling]] — the MI tooling guide that explains how to use the cache dict and hook points for circuit analysis.
+

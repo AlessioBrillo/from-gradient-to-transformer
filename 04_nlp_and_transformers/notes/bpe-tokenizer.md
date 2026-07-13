@@ -37,3 +37,8 @@ See `src/models/bpe_tokenizer.py` for a minimal BPE implementation.
 - Sennrich et al., *Neural Machine Translation of Rare Words with Subword Units* (ACL 2016)
 - Radford et al., *Language Models are Unsupervised Multitask Learners* (GPT-2, 2019)
 - Kudo & Richardson, *SentencePiece: A simple and language independent subword tokenizer* (2018)
+
+## Links
+
+- [[04_nlp_and_transformers/notes/qk-ov-circuits]]
+- [[01_foundations/notes/probability-basics-for-ml]]

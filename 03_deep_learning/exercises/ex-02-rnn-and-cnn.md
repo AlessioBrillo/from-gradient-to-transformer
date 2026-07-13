@@ -1,3 +1,7 @@
+---
+tags: [type/exercise, phase/3, state/review]
+---
+
 # Exercise 02 — RNN and CNN for Context
 
 ## Objective
@@ -29,3 +33,14 @@ Remove the pooling layers and only use stride-2 convolutions. How does this affe
 
 ### MI Forward Link
 Write 2-3 sentences comparing the convolutional kernel's local receptive field to the attention head's content-dependent receptive field.
+
+## Links
+
+- [[03_deep_learning/notes/rnn-from-scratch]] — the theory note on RNN internals that this exercise implements.
+- [[03_deep_learning/notes/cnn-basics]] — the theory note on CNN internals that this exercise implements.
+
+
+## Links
+
+- [[03_deep_learning/notes/rnn-from-scratch]] — the RNN cell you implement in task 1
+- [[03_deep_learning/notes/cnn-basics]] — the convolution and pooling operations you use in task 3

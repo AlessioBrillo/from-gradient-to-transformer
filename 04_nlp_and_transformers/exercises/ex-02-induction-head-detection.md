@@ -1,3 +1,7 @@
+---
+tags: [type/exercise, phase/4, state/review]
+---
+
 # Exercise 02 — Detect Induction Heads by Attention Pattern
 
 ## Objective
@@ -71,3 +75,9 @@ for layer, head in induction_heads:
 
 ## Reference
 Olsson, Elhage, Nanda et al., "In-context Learning and Induction Heads," Transformer Circuits Thread (Anthropic), 2022.
+
+## Links
+
+- [[04_nlp_and_transformers/notes/induction-heads]] — the theory note on induction head formation, prefix-matching, and the diagonal+1 attention pattern.
+- [[04_nlp_and_transformers/notes/activation-patching]] — the causal intervention technique used in this exercise to confirm that detected induction heads are causally necessary.
+
