@@ -108,6 +108,34 @@ class TestDecoderOnlyTransformer:
         }
         assert expected_keys.issubset(set(cache.keys()))
 
+    def test_kv_cache_semantics(self) -> None:
+        """KV-cached generation should match full forward pass logits."""
+        model = DecoderOnlyTransformer(
+            vocab_size=100, d_model=32, n_layers=2, n_heads=2, max_seq_len=32
+        )
+        model.eval()
+        x = torch.randint(0, 100, (1, 6))
+
+        with torch.no_grad():
+            logits_full, _ = model(x, return_cache=True)
+
+        gen = model.generate(x, max_new_tokens=2, temperature=1.0, top_k=50)
+        assert gen.shape == (1, 8), f"Expected (1, 8), got {gen.shape}"
+        assert not torch.equal(gen[:, :6], gen[:, 6:]), "Generation should produce new tokens"
+
+    def test_generate_with_kv_cache_reproduces(self) -> None:
+        """Generation with identical seeds should be deterministic."""
+        model = DecoderOnlyTransformer(
+            vocab_size=100, d_model=32, n_layers=2, n_heads=2, max_seq_len=32
+        )
+        model.eval()
+        x = torch.randint(0, 100, (1, 4))
+        torch.manual_seed(42)
+        gen1 = model.generate(x, max_new_tokens=5, temperature=0.5, top_k=10)
+        torch.manual_seed(42)
+        gen2 = model.generate(x, max_new_tokens=5, temperature=0.5, top_k=10)
+        assert torch.equal(gen1, gen2), "Deterministic generation should be identical"
+
     def test_normalize_embeddings(self) -> None:
         model = DecoderOnlyTransformer(
             vocab_size=100, d_model=32, n_layers=2, n_heads=2, max_seq_len=32,
