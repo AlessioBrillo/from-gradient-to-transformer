@@ -55,4 +55,3 @@ defined by the Q and K weight matrices.
 
 - [[01_foundations/proofs/chain-rule-and-gradient-check]] — chain rule derivation and numerical gradient verification that underpin the logistic regression gradient derivation.
 - [[04_nlp_and_transformers/notes/qk-ov-circuits]] — the QK circuit's dot-product separation is the same geometry as the logistic regression decision boundary.
-

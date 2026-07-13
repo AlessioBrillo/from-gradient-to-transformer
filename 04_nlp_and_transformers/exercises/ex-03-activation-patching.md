@@ -113,6 +113,7 @@ Full implementation in `src/experiments/exp4_circuit_patching.py` (530 lines). A
 4. **Head ablation**: Zero the target head's slice before W_O via `head_mask` on the Attention module. Measure logit-diff drop.
 
 ### Results on the capstone model
+
 | Component | Logit-diff recovery |
 |-----------|--------------------|
 | Layer 1, last position | 0.787 (strong — induction head) |
@@ -134,4 +135,3 @@ python -m src.experiments.exp4_circuit_patching --quick
 
 - [[04_nlp_and_transformers/notes/activation-patching]] — the theory note on activation patching that this exercise implements in code.
 - [[04_nlp_and_transformers/notes/path-patching]] — path patching extends single-node patching to edge-level interventions; the natural next step after mastering this exercise.
-

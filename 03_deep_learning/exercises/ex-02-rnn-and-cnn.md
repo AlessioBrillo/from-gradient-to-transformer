@@ -123,7 +123,9 @@ for epoch in range(5):
 Replace `MaxPool2d(2)` with `nn.Conv2d(32, 32, 3, stride=2)` — parameter count increases (learnable instead of static), accuracy similar but training slower.
 
 ### MI Forward Link
-A convolutional kernel's receptive field is fixed by kernel size — it applies the same learned pattern everywhere, independent of content. An attention head's receptive field is dynamic: QK dot products determine which positions are attended based on the actual input content. This content-dependent routing is what makes transformers more flexible than CNNs for language, where the relevant context varies per token.
+A convolutional kernel's receptive field is fixed by kernel size — it applies the same learned pattern everywhere, independent of content.
+An attention head's receptive field is dynamic: QK dot products determine which positions are attended based on the actual input content.
+This content-dependent routing makes transformers more flexible than CNNs for language, where relevant context varies per token.
 
 ## Links
 

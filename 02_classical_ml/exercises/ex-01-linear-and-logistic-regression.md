@@ -99,4 +99,3 @@ This isomorphism is the core insight of Elhage et al.'s QK/OV decomposition: **Q
 
 - [[02_classical_ml/proofs/linear-logistic-regression]] — the formal proof that this exercise verifies in code.
 - [[04_nlp_and_transformers/notes/qk-ov-circuits]] — QK/OV decomposition paper; the linear decision boundary geometry from this exercise is identical to the QK separation logic.
-

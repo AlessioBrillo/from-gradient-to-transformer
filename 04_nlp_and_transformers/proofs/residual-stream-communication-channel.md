@@ -70,4 +70,3 @@ def trace_residual_stream(model, x):
 
 - [[04_nlp_and_transformers/notes/qk-ov-circuits]] — the QK/OV circuits that write to and read from the residual stream, making the additive update concrete.
 - [[04_nlp_and_transformers/proofs/logit-lens]] — the logit lens technique that exploits the shared vector space to read partial predictions at every layer.
-

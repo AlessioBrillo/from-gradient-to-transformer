@@ -100,7 +100,9 @@ sk_acc = np.mean(sk_rf.predict(X_test) == y_test)
 ```
 
 ### MI Forward Link
-Attention heads operate as an ensemble of specialized information selectors, each reading different positions and features via their QK/OV circuits. Like random forests reduce variance by combining diverse trees, multi-head attention reduces representational bias by combining diverse head views. The phase change in grokking — where the model prunes unnecessary circuits — is analogous to cost-complexity pruning in decision trees, where weak branches are removed to improve generalization.
+Attention heads operate as an ensemble of specialized information selectors, each reading different positions and features via their QK/OV circuits.
+Like random forests reduce variance by combining diverse trees, multi-head attention reduces representational bias by combining diverse head views.
+The phase change in grokking — where the model prunes unnecessary circuits — is analogous to cost-complexity pruning in decision trees, where weak branches are removed to improve generalization.
 
 ## Deliverables
 - Plots: depth vs. accuracy, n_estimators vs. accuracy
@@ -111,4 +113,3 @@ Attention heads operate as an ensemble of specialized information selectors, eac
 
 - [[02_classical_ml/proofs/trees-ensembles-pca]] — the formal proof of decision tree splitting, random forest variance reduction, and PCA that this exercise verifies in code.
 - [[03_deep_learning/notes/training-dynamics-and-grokking]] — links ensemble pruning to the grokking phase change where models shed unnecessary circuits.
-

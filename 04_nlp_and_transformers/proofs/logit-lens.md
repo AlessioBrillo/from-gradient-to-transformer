@@ -93,4 +93,3 @@ for i in range(len(layer_order) - 1):
 
 - [[04_nlp_and_transformers/notes/qk-ov-circuits]] — the QK/OV circuits whose per-layer contributions the logit lens measures by projecting the residual stream through the unembedding.
 - [[04_nlp_and_transformers/proofs/residual-stream-communication-channel]] — the residual stream as a shared vector space is the foundation that makes the logit lens mathematically valid.
-

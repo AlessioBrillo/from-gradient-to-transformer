@@ -57,9 +57,3 @@ Residual connections: `xₖ₊₁ = xₖ + F(xₖ)`
 
 - [[01_foundations/proofs/chain-rule-and-gradient-check]] — foundational chain rule derivation that underpins every gradient flow analysis in this proof.
 - [[04_nlp_and_transformers/notes/qk-ov-circuits]] — the residual connections that solve vanishing gradients are the same pathway through which QK/OV circuits compose across layers.
-
-
-## Links
-
-- [[01_foundations/proofs/chain-rule-and-gradient-check]] — the foundational proof that reverse-mode autograd is correct
-- [[04_nlp_and_transformers/notes/qk-ov-circuits]] — how attention circuits give the transformer its O(1) gradient path

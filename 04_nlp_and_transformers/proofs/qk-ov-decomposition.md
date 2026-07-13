@@ -66,4 +66,3 @@ I can explain this to a non-technical colleague: *"An attention head has two ind
 
 - [[04_nlp_and_transformers/notes/induction-heads]] — induction heads are the canonical concrete example of a circuit that factorizes into a QK prefix-match and an OV copy operation.
 - [[04_nlp_and_transformers/proofs/logit-lens]] — the logit lens reveals each head's contribution to the final prediction, completing the QK/OV analysis.
-
