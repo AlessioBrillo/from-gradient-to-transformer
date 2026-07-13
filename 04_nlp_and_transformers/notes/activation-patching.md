@@ -71,3 +71,9 @@ patched_logits = model.run_with_hooks(
 - "Attribution patching is a flawed linear approximation (bad for large activations like the residual stream)"
 - "Activation patching can mislead via the layernorm denominator and subspace projection illusions"
 - "Circuit faithfulness metrics are not robust" (Heimersheim & Janiak 2024)
+
+## Links
+
+- [[04_nlp_and_transformers/notes/induction-heads]]
+- [[04_nlp_and_transformers/notes/path-patching]]
+- [[04_nlp_and_transformers/notes/mi-tooling]]

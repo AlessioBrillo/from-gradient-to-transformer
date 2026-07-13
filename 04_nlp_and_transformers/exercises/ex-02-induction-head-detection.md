@@ -1,3 +1,7 @@
+---
+tags: [type/exercise, phase/4, state/review]
+---
+
 # Exercise 02 — Detect Induction Heads by Attention Pattern
 
 ## Objective
@@ -69,5 +73,35 @@ for layer, head in induction_heads:
     print(f"Ablation L{layer}H{head}: {full_acc:.4f} → {ablated_acc:.4f}")
 ```
 
+## Solution
+
+Full implementation in `src/experiments/exp1_induction_heads.py` (703 lines). Approach:
+
+1. **Data**: `make_repeated_token_data` generates sequences where even positions copy odds — e.g., `[a, b, a, b, c, d, c, d, ...]`.
+2. **Model**: `AttentionOnlyTransformer` — 2-layer, no MLP, no bias (attention-only). This isolates the induction mechanism.
+3. **Detection**: `diagonal+1 mass` — for each head, average attention probability at position `(i, i+1)`. Heads with mass > 0.3 are induction heads.
+4. **Causal ablation**: Zero the W_O output for the target head via a forward hook. Measure accuracy before/after.
+5. **Training metrics**: Attention entropy (decreases as heads specialize), diag+1 mass (increases as induction heads form).
+
+### Running the experiment
+```bash
+python -m src.experiments.exp1_induction_heads --quick
+# Quick test: 2 layers, 2 heads, d_model=32, 500 epochs — induction heads emerge by epoch 50
+```
+
+### Verification
+```python
+# Tests pass in tests/test_induction_heads.py:
+# - Model output shape and gradient flow
+# - Causal mask works (upper triangle near zero)
+# - Dataset has correct repeated-prefix structure
+# - Seed determinism between runs
+```
+
 ## Reference
 Olsson, Elhage, Nanda et al., "In-context Learning and Induction Heads," Transformer Circuits Thread (Anthropic), 2022.
+
+## Links
+
+- [[04_nlp_and_transformers/notes/induction-heads]] — the theory note on induction head formation, prefix-matching, and the diagonal+1 attention pattern.
+- [[04_nlp_and_transformers/notes/activation-patching]] — the causal intervention technique used in this exercise to confirm that detected induction heads are causally necessary.

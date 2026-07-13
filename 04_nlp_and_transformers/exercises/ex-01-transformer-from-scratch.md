@@ -1,3 +1,7 @@
+---
+tags: [type/exercise, phase/4, state/review]
+---
+
 # Exercise 01 — Build a Decoder-Only Transformer from Scratch
 
 ## Objective
@@ -122,6 +126,32 @@ assert (attn_probs[0, 0] * upper).sum() < 0.01
 generated = model.generate(input_ids, max_new_tokens=20, temperature=0.8, top_k=10)
 ```
 
+## Solution
+
+The complete implementation lives at `src/models/decoder_only_transformer.py` (355 lines). Architecture:
+
+| Component | Implementation |
+|-----------|---------------|
+| **RMSNorm** | `RMSNorm` class — scale-only normalization, no mean-centering |
+| **RoPE** | `RotaryEmbedding` — rotates Q/K by position angle, `_rotate_half` helper |
+| **Attention** | `Attention` — MHA with causal mask, RoPE, optional KV caching, head_mask for ablation |
+| **MLP** | `MLP` — ReLU activation, two linear projections, dropout |
+| **TransformerBlock** | Pre-RMSNorm → Attn → Residual → Pre-RMSNorm → MLP → Residual |
+| **DecoderOnlyTransformer** | Embed → N blocks → ln_final → unembed, 27 cache entries per forward pass |
+
+The cache dict captures activations at every sublayer (`resid_pre`, `ln_attn`, `Q/K/V/probs/out`, `resid_mid`, `ln_mlp`, `mlp_pre`, `mlp_out`, `resid_post`, `hook_ln_final`, `hook_logits`) — enabling QK/OV decomposition, logit lens, and activation patching without architecture changes.
+
+### Verification
+```python
+# All tests pass in tests/test_decoder_only_transformer.py
+# Key assertions:
+# - Shape: (B, S, vocab_size) output
+# - Gradients flow through all parameters
+# - Causal mask: upper triangular attention < 0.01
+# - Generation: outputs (B, S+new_tokens) tensor
+# - Cache: all 27 expected keys present
+```
+
 ## Deliverables
 - `src/models/decoder_only_transformer.py` with the complete implementation
 - Output shape, gradient flow, causal mask, and generation tests
@@ -135,3 +165,8 @@ This model is the analysis vehicle for everything that follows. The hook points 
 - **Induction head detection**: find the diagonal+1 attention pattern
 
 **Don't move on until generating works and hook points capture all intermediate activations.**
+
+## Links
+
+- [[04_nlp_and_transformers/notes/qk-ov-circuits]] — the QK/OV abstraction that this transformer's attention heads implement and that you will analyze with the hook points built here.
+- [[04_nlp_and_transformers/notes/mi-tooling]] — the MI tooling guide that explains how to use the cache dict and hook points for circuit analysis.

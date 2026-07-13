@@ -54,3 +54,8 @@ Path patching is the most precise causal tool in circuit analysis — it isolate
 - Wang et al., *Interpretability in the Wild: a Circuit for Indirect Object Identification in GPT-2 small* (ICLR 2023)
 - Goldowsky-Dill et al., *Localizing Model Behavior with Path Patching* (2023)
 - Nanda, *Patching vs. Patching* (blog post, 2023)
+
+## Links
+
+- [[04_nlp_and_transformers/notes/activation-patching]]
+- [[04_nlp_and_transformers/proofs/circuit-analysis-complete]]

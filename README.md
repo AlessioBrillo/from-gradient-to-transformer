@@ -37,12 +37,12 @@ Every concept is marked as verified only after demonstrating it with an exercise
 
 | Experiment | Question | Status |
 |------------|----------|--------|
-| Rung 1 — Induction heads | Do induction heads emerge in a 2-layer attention-only transformer, and can I verify them causally? | [ ] Planned |
-| Rung 2 — Grokking modular addition **★** | Can I reproduce the grokking phase transition and reverse-engineer the Fourier multiplication algorithm? | [ ] Planned |
-| Rung 3 — Superposition geometry | How do features organize in a toy ReLU autoencoder under varying sparsity? | [ ] Planned |
-| Rung 4 — Circuit patching | Can I find and causally validate a specific circuit via activation/path patching? | [ ] Planned |
-| Rung 5 — Sparse autoencoder | Can I extract interpretable monosemantic features from a small model's residual stream? | [ ] Planned |
-| Rung 6 — Automated discovery | How does automated circuit discovery (ACDC) compare against a hand-found circuit? | [ ] Stretch |
+| Rung 1 — Induction heads | Do induction heads emerge in a 2-layer attention-only transformer, and can I verify them causally? | ✅ Complete |
+| Rung 2 — Grokking modular addition **★** | Can I reproduce the grokking phase transition and reverse-engineer the Fourier multiplication algorithm? | ⏳ CPU-bound (P=113 needs GPU) |
+| Rung 3 — Superposition geometry | How do features organize in a toy ReLU autoencoder under varying sparsity? | ✅ Complete |
+| Rung 4 — Circuit patching | Can I find and causally validate a specific circuit via activation/path patching? | ✅ Complete |
+| Rung 5 — Sparse autoencoder | Can I extract interpretable monosemantic features from a small model's residual stream? | ✅ Complete (synthetic activations) |
+| Rung 6 — Automated discovery | How does automated circuit discovery (ACDC) compare against a hand-found circuit? | 🛠 Placeholder (stretch goal) |
 
 ★ — **Primary flagship result.** See `src/experiments/exp2_grokking.py` and [[portfolio/RESULTS]] for the full table.
 
@@ -77,12 +77,12 @@ NN_name/
 ## Progress Dashboard
 
 - [x] **Phase 1 — Foundations** (verified: linear algebra, calculus, probability, information theory, data tools)
-- [ ] **Phase 2 — Classical ML**
-- [ ] **Phase 3 — Deep Learning**
-- [ ] **Phase 4 — NLP & Transformers** (LOAD-BEARING for MI)
-- [ ] **Phase 5 — LLM Engineering** (reframed: model instrumentation)
+- [x] **Phase 2 — Classical ML** (linear/logistic regression, trees/forests, SVM, PCA/k-means, CV/metrics, bias/variance)
+- [x] **Phase 3 — Deep Learning** (micrograd, training dynamics, grokking, RNN/CNN breadth)
+- [x] **Phase 4 — NLP & Transformers** (LOAD-BEARING for MI — QK/OV circuits, induction heads, activation patching, logit lens, TransformerLens)
+- [x] **Phase 5 — LLM Engineering** (model instrumentation: hooks, deterministic inference, activation harvesting, circuit datasets)
 - [ ] **Phase 6 — Production AI** (reframed: reproducible research infra)
-- [ ] **Phase 7 — Capstone: train + reverse-engineer**
+- [~] **Phase 7 — Capstone: train + reverse-engineer** (model built, experiments implemented, results for rungs 1-5)
 
 See [[00_meta/03_progress-log]] for the dated journal and [[00_meta/02_skill-tree]] for the complete skill tree.
 

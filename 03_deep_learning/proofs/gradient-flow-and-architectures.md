@@ -52,3 +52,8 @@ Residual connections: `xₖ₊₁ = xₖ + F(xₖ)`
 - Residual connections are the single most impactful architectural innovation since backprop — they make depth free.
 - The RNN bottleneck is why attention exists: fixed-size hidden state can't retain all past info.
 - CNNs solve a different problem (local pattern detection) than transformers (global dependency modeling) — the architectures are complementary, not competing.
+
+## Links
+
+- [[01_foundations/proofs/chain-rule-and-gradient-check]] — foundational chain rule derivation that underpins every gradient flow analysis in this proof.
+- [[04_nlp_and_transformers/notes/qk-ov-circuits]] — the residual connections that solve vanishing gradients are the same pathway through which QK/OV circuits compose across layers.

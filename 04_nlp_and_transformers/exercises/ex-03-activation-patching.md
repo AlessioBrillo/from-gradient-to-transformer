@@ -1,3 +1,7 @@
+---
+tags: [type/exercise, phase/4, state/review]
+---
+
 # Exercise 03 — Activation Patching for Causal Circuit Verification
 
 ## Objective
@@ -99,7 +103,35 @@ assert results[(important_layer, important_pos)] > 0.7
 assert results[(unimportant_layer, unimportant_pos)] < 0.2
 ```
 
+## Solution
+
+Full implementation in `src/experiments/exp4_circuit_patching.py` (530 lines). Approach:
+
+1. **Train**: DecoderOnlyTransformer on repeated-token prediction (same task as Rung 1).
+2. **Detect**: Compute attention patterns → find heads with diagonal+1 mass > 0.3.
+3. **Activation patching**: Patch `resid_mid` from corrupted (shuffled) → clean input via MLP pre-forward hooks. Measure logit-diff recovery = `(patched - clean) / (-clean)`.
+4. **Head ablation**: Zero the target head's slice before W_O via `head_mask` on the Attention module. Measure logit-diff drop.
+
+### Results on the capstone model
+
+| Component | Logit-diff recovery |
+|-----------|--------------------|
+| Layer 1, last position | 0.787 (strong — induction head) |
+| Layer 0, last position | 0.270 (moderate) |
+| Layer 0, mid positions | < 0.20 (weak) |
+
+### Running the experiment
+```bash
+python -m src.experiments.exp4_circuit_patching --quick
+# Quick test: 2 layers, 2 heads, d_model=32, 500 epochs
+```
+
 ## Reference
 - Wang et al., "Interpretability in the Wild: a Circuit for IOI in GPT-2 small," ICLR 2023
 - Nanda's TransformerLens demo: activation patching notebook
 - Zhang & Nanda, "Interchange Interventions," 2023
+
+## Links
+
+- [[04_nlp_and_transformers/notes/activation-patching]] — the theory note on activation patching that this exercise implements in code.
+- [[04_nlp_and_transformers/notes/path-patching]] — path patching extends single-node patching to edge-level interventions; the natural next step after mastering this exercise.

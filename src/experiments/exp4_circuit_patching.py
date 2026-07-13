@@ -211,7 +211,11 @@ def run_head_ablation(
     induction_heads: list[tuple[int, int]],
     batch_size: int = 32,
 ) -> dict:
-    """Zero-ablate individual induction heads and measure effect."""
+    """Zero-ablate individual induction heads and measure effect.
+
+    Uses head_mask on the Attention module to zero a specific head's
+    contribution before the W_O projection — clean, no shape issues.
+    """
     model.eval()
     results = {}
 
@@ -226,29 +230,15 @@ def run_head_ablation(
     clean_diff = logit_diff(clean_logits).mean().item()
 
     for layer, head in tqdm(induction_heads, desc="Ablating heads"):
-        d_head = model.d_model // model.n_heads
-
-        def make_ablation_hook(h_layer: int, h_head: int, d_h: int):
-            def hook(module, input, output):
-                attn_out, kv = output
-                B, S, D = attn_out.shape
-                W_O = module.W_O.weight.view(model.n_heads, d_h, D)
-
-                with torch.no_grad():
-                    head_output = attn_out @ W_O[h_head].T.unsqueeze(0) / model.n_heads
-                    # Zero the head contribution
-                    attn_out = attn_out - head_output
-                return attn_out, kv
-            return hook
-
-        hook_handle = model.blocks[layer].attn.register_forward_hook(
-            make_ablation_hook(layer, head, d_head)
-        )
+        attn_module = model.blocks[layer].attn
+        mask = torch.ones(attn_module.n_heads)
+        mask[head] = 0.0
+        attn_module.head_mask = mask
 
         with torch.no_grad():
             ablated_logits, _ = model(inputs[:batch_size])
 
-        hook_handle.remove()
+        attn_module.head_mask = None
 
         ablated_diff = logit_diff(ablated_logits).mean().item()
         effect = (ablated_diff - clean_diff) / (-clean_diff) if clean_diff != 0 else 0.0

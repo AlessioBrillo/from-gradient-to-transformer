@@ -42,3 +42,8 @@ Scaling laws have direct implications for mechanistic interpretability: as model
 - Kaplan et al., *Scaling Laws for Neural Language Models* (2020)
 - Hoffmann et al., *Training Compute-Optimal Large Language Models* (Chinchilla, 2022)
 - Bricken et al., *Towards Monosemanticity: Decomposing Language Models With Dictionary Learning* (2023)
+
+## Links
+
+- [[03_deep_learning/notes/training-dynamics-and-grokking]]
+- [[00_meta/01_roadmap]]

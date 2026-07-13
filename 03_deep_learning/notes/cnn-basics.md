@@ -50,3 +50,8 @@ class SimpleCNN(nn.Module):
         x = x.view(x.size(0), -1)
         return self.fc(x)
 ```
+
+## Links
+
+- [[03_deep_learning/notes/rnn-from-scratch]] — another core architecture that processes structured data
+- [[04_nlp_and_transformers/notes/qk-ov-circuits]] — attention heads are the content-aware counterpart to convolution's position-invariant kernels

@@ -120,7 +120,8 @@ class Value:
         return out
 
     def sigmoid(self) -> "Value":
-        return (self * (-1.0)).exp() + 1.0
+        one = Value(1.0)
+        return one / ((-self).exp() + one)
 
     def backward(self) -> None:
         topo = []

@@ -97,7 +97,10 @@ def test_division() -> None:
 def test_sigmoid() -> None:
     a = Value(0.0)
     b = a.sigmoid()
-    assert abs(b.data - 2.0) < 1e-10
+    assert abs(b.data - 0.5) < 1e-10
+    # sigmoid(0) = 0.5; gradient via (1 - sigmoid) * sigmoid = 0.25
+    b.backward()
+    assert abs(a.grad - 0.25) < 1e-10
 
 
 def test_neuron_forward() -> None:

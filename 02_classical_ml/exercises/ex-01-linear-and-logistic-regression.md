@@ -1,5 +1,5 @@
 ---
-tags: [type/exercise, phase/2]
+tags: [type/exercise, phase/2, state/review]
 skill: Linear/logistic regression
 created: 2026-07-05
 ---
@@ -94,3 +94,8 @@ This isomorphism is the core insight of Elhage et al.'s QK/OV decomposition: **Q
 ## Linked skill
 - [[00_meta/02_skill-tree]] → Linear/logistic regression
 - [[04_nlp_and_transformers/_MOC|Phase 4 — QK/OV connection]]
+
+## Links
+
+- [[02_classical_ml/proofs/linear-logistic-regression]] — the formal proof that this exercise verifies in code.
+- [[04_nlp_and_transformers/notes/qk-ov-circuits]] — QK/OV decomposition paper; the linear decision boundary geometry from this exercise is identical to the QK separation logic.
