@@ -9,9 +9,9 @@ Central map of the vault. Everything starts here.
 
 ## Headline Result
 
-The primary research contribution: **mechanistic reverse-engineering of a transformer's learned algorithms at micro scale**. See [[portfolio/RESULTS]] for the latest findings and [[portfolio/README]] for all showcase artifacts.
+The target research contribution: **mechanistic reverse-engineering of a transformer's learned algorithms at micro scale**. The strongest *verified* piece today is induction-head detection + causal activation patching; grokking modular addition (the primary flagship) is not yet reproduced — see [[portfolio/RESULTS]] for exact per-rung status and [[portfolio/README]] for all showcase artifacts.
 
-> If you have 30 seconds, read the thesis and headline result. If you have 30 minutes, read the mini-paper.
+> If you have 30 seconds, read the thesis and the Reproducibility Audit in RESULTS.md. There is no mini-paper yet.
 
 ## Meta
 - [[01_roadmap]] — the complete path, phase by phase

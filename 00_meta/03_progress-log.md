@@ -89,3 +89,33 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - **Phase 2 gate: BLOCCO 1-4 COMPLETE** — only Naive Bayes and gradient boosting remain before gate proof
 - **Phase 3 gate: FOUNDATIONS COMPLETE** — backprop, training loop, optimization, grokking dynamics all verified. RNN/LSTM, CNN remaining for breadth.
 - Open question: Run P=113 grokking with the new embedding normalization to verify the fix works. Also integrate TransformerLens hooks for the circuit patching experiment.
+
+## 2026-07-26 — Reproducibility Audit: Real Bug Found, Claims Reconciled to Evidence
+- **Context**: `figures/` did not exist despite RESULTS.md listing ~15 PNGs as delivered and
+  home.md pointing to a "mini-paper" that was never written. Ran every rung's `--quick`/reduced
+  mode on CPU (torch-cpu + numpy + matplotlib + tqdm — the only deps the experiment scripts
+  actually import) to generate real figures and cross-check documented numbers.
+- **Critical bug found and fixed**: `make_modular_addition_data` (exp2_grokking.py) split
+  train/val by **target class** `(a+b) % P` instead of by **equation** `(a, b)`. This left some
+  output classes with zero training signal — not generalization, an unsolvable task. Produced
+  0% val accuracy at P=11 with zero compute constraint, independent of the CPU/GPU bottleneck
+  previously blamed. Fixed to hold out random equations (canonical Power/Nanda setup); replaced
+  `test_split_disjoint` (which encoded the bug as a requirement) with
+  `test_pairs_disjoint` + `test_target_classes_shared_across_splits`.
+- **Open discrepancy flagged, not yet root-caused**: induction-head detection (Rungs 1 & 4)
+  finds 0 heads in `--quick` mode despite diag+1 attention mass ≈1.0, contradicting the
+  documented standard-scale "heads detected" claims.
+- **Rung 3 (superposition)**: completed a 2000-epoch/10k-sample sweep (default 5000×50k too slow
+  for CPU) — no phase transition observed. Feature recovery stayed flat/near-zero (0.00-0.15)
+  across all 9 sparsity levels, with no rise at the sparsest settings as theory predicts. Not
+  root-caused.
+- **Rung 5 (SAE)**: reproduced exactly (97.2% FVE) — genuinely reproducible on synthetic data.
+- **Docs reconciled**: RESULTS.md, portfolio/README.md, 00_home.md no longer claim two different
+  "Primary Flagship" rungs or reference nonexistent artifacts (figures, mini-paper, HF Space,
+  W&B project) as if delivered.
+- **Added**: `notebooks/colab_grokking_full_run.ipynb` — clones the repo, applies the split fix
+  idempotently if not yet pushed, runs the canonical P=113 config on a free Colab GPU, downloads
+  figures + checkpoint.
+- Open question: run the Colab notebook for the real P=113 grokking result; root-cause the
+  induction-head detection discrepancy; root-cause why Rung 3 shows no phase transition at all
+  (metric definition? n_features/n_dimensions ratio? needs more than 2000 epochs?).
