@@ -53,8 +53,10 @@ def make_modular_addition_data(
 ) -> tuple[TensorDataset, TensorDataset]:
     """Generate modular addition task (a + b mod P).
 
-    The data is split such that a fraction of all (a, b) pairs are held out
-    by modulus value, following the canonical grokking setup.
+    The data is split by randomly holding out a fraction of (a, b) pairs,
+    following the canonical grokking setup (Power et al. 2022; Nanda et al.
+    2023): every target class (a+b) mod P is represented in both splits, and
+    the model must generalize to unseen *equations*, not unseen *classes*.
 
     Returns:
         Tuple of (train_dataset, val_dataset). Each sample is an equation
@@ -66,12 +68,15 @@ def make_modular_addition_data(
     all_pairs = [(a, b) for a in range(modulus) for b in range(modulus)]
     rng.shuffle(all_pairs)
 
-    # Split: train on a fraction of modulus values
-    train_mod_values = set(
-        rng.choice(modulus, size=int(modulus * train_fraction), replace=False)
-    )
-    train_pairs = [(a, b) for a, b in all_pairs if (a + b) % modulus in train_mod_values]
-    val_pairs = [(a, b) for a, b in all_pairs if (a + b) % modulus not in train_mod_values]
+    # Split: hold out a fraction of (a, b) equations at random. (Splitting by
+    # target value instead — i.e. by (a+b) % modulus — is a bug: it makes
+    # some output classes never appear in training, so the model is asked to
+    # predict classes its unembedding row was never trained on. That is not
+    # generalization, it is an unsolvable task; it produced 0% val accuracy
+    # even at trivial modulus. See progress-log for the fix rationale.)
+    split_idx = int(len(all_pairs) * train_fraction)
+    train_pairs = all_pairs[:split_idx]
+    val_pairs = all_pairs[split_idx:]
 
     def _to_tensor(pairs: list) -> torch.Tensor:
         a = torch.tensor([p[0] for p in pairs], dtype=torch.long)
