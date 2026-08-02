@@ -71,11 +71,14 @@ class ActivationGenerator:
         self.sparsity = sparsity
         self.rng = rng
 
-    def generate(self, n_samples: int) -> torch.Tensor:
+    def generate(self, n_samples: int) -> tuple[torch.Tensor, torch.Tensor]:
         """Generate n_samples of residual stream activations.
 
         Returns:
-            Tensor of shape (n_samples, d_model).
+            Tuple of (activations, features), each of shape
+            (n_samples, d_model) and (n_samples, n_true_features)
+            respectively. Annotated `-> torch.Tensor` before 2026-08-02,
+            which was wrong -- this always returned a 2-tuple.
         """
         # Sparse feature activations
         mask = self.rng.binomial(1, self.sparsity, size=(n_samples, self.n_true_features))
@@ -94,10 +97,19 @@ class ActivationGenerator:
 # Sparse Autoencoder
 # ---------------------------------------------------------------------------
 class SparseAutoencoder(nn.Module):
-    """Standard ReLU sparse autoencoder.
+    """Bricken et al. ("Towards Monosemanticity") ReLU sparse autoencoder:
 
-    Encodes d_model-dimensional activations into n_features-dimensional
-    sparse latent space, then decodes back to d_model.
+        f     = ReLU(W_enc (x - b_dec) + b_enc)
+        x_hat = W_dec f + b_dec
+
+    The pre-encoder bias subtraction (`x - b_dec`) matters: it centers the
+    input around the decoder's own bias before encoding, letting `b_dec`
+    absorb a shared constant offset in the activations directly, rather
+    than forcing every latent direction to spend sparsity budget
+    reconstructing it. Before 2026-08-02, this SAE had no `b_dec` at all —
+    the decoder was strictly bias-free (`nn.Linear(n_features, d_model,
+    bias=False)`) — so any constant offset in the input had to be
+    reconstructed entirely through the ReLU latent.
     """
 
     def __init__(
@@ -109,10 +121,9 @@ class SparseAutoencoder(nn.Module):
         self.d_model = d_model
         self.n_features = n_features
 
-        # Encoder with bias
         self.encoder = nn.Linear(d_model, n_features, bias=True)
-        # Decoder (no bias, weight tied conceptually)
         self.decoder = nn.Linear(n_features, d_model, bias=False)
+        self.b_dec = nn.Parameter(torch.zeros(d_model))
 
         # Initialize decoder weights to unit norm (SAE convention)
         self._init_weights()
@@ -141,8 +152,8 @@ class SparseAutoencoder(nn.Module):
         Returns:
             Tuple of (reconstruction, latent_features).
         """
-        latent = torch.relu(self.encoder(x))
-        recon = self.decoder(latent)
+        latent = torch.relu(self.encoder(x - self.b_dec))
+        recon = self.decoder(latent) + self.b_dec
         return recon, latent
 
     @torch.no_grad()
@@ -150,7 +161,7 @@ class SparseAutoencoder(nn.Module):
         self, x: torch.Tensor
     ) -> torch.Tensor:
         """Get sparse feature activations without reconstruction."""
-        return torch.relu(self.encoder(x))
+        return torch.relu(self.encoder(x - self.b_dec))
 
 
 # ---------------------------------------------------------------------------
@@ -404,6 +415,86 @@ def plot_feature_histogram(
 
 
 # ---------------------------------------------------------------------------
+# Real activation harvesting (Micro-Phase 8, the Evidence Pass)
+# ---------------------------------------------------------------------------
+def harvest_activations_from_checkpoint(
+    checkpoint_path: Path,
+    vocab_size: int,
+    seq_len: int,
+    d_model: int,
+    n_layers: int,
+    n_heads: int,
+    num_samples: int,
+    seed: int,
+) -> torch.Tensor:
+    """Harvest real residual-stream activations from a trained
+    induction-heads checkpoint (`exp1_induction_heads.py --save-model`
+    output), instead of `ActivationGenerator`'s synthetic baseline.
+
+    Hooks the input to `ln_final` — the final residual stream, exactly what
+    an SAE trained on "the model's residual stream" is supposed to mean —
+    across a batch of real induction-task sequences, then flattens the
+    (batch, position, d_model) activations into (n_samples, d_model). The
+    `vocab_size`/`seq_len`/`d_model`/`n_layers`/`n_heads` arguments must
+    match the architecture the checkpoint was actually trained with; a
+    state-dict-only checkpoint carries no architecture metadata of its own.
+
+    Returns:
+        Tensor of shape (num_samples, d_model) — no ground-truth "true
+        features" exist for real activations, unlike ActivationGenerator's
+        synthetic output.
+    """
+    from src.experiments.exp1_induction_heads import (
+        AttentionOnlyTransformer,
+        make_repeated_token_data,
+    )
+
+    model = AttentionOnlyTransformer(
+        vocab_size=vocab_size,
+        d_model=d_model,
+        n_layers=n_layers,
+        n_heads=n_heads,
+        max_seq_len=seq_len,
+    )
+    state_dict = torch.load(checkpoint_path, map_location=DEVICE)
+    model.load_state_dict(state_dict)
+    model.to(DEVICE)
+    model.eval()
+
+    captured: list[torch.Tensor] = []
+
+    def _hook(
+        module: nn.Module, inp: tuple, out: torch.Tensor
+    ) -> None:
+        captured.append(inp[0].detach().cpu())
+
+    handle = model.ln_final.register_forward_hook(_hook)
+
+    positions_per_seq = seq_len - 1
+    num_sequences = max(32, (num_samples // positions_per_seq) + 1)
+    dataset, _ = make_repeated_token_data(
+        vocab_size=vocab_size,
+        seq_len=seq_len,
+        num_train=num_sequences,
+        num_val=1,
+        seed=seed,
+    )
+    loader = DataLoader(dataset, batch_size=64, shuffle=False)
+
+    with torch.no_grad():
+        for x, _ in loader:
+            x = x.to(DEVICE)
+            model(x, record_attn=False)
+
+    handle.remove()
+
+    activations = torch.cat(captured, dim=0).reshape(-1, d_model)
+    if activations.size(0) > num_samples:
+        activations = activations[:num_samples]
+    return activations
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 def main() -> None:
@@ -457,6 +548,38 @@ def main() -> None:
     parser.add_argument(
         "--quick", action="store_true", help="Quick test with fewer samples and epochs"
     )
+    parser.add_argument(
+        "--activations-from",
+        type=Path,
+        default=None,
+        help=(
+            "Path to a trained induction-heads checkpoint "
+            "(exp1_induction_heads.py --save-model output, typically "
+            "figures/exp1_trained_model.pt). Harvests real residual-stream "
+            "activations instead of the synthetic ActivationGenerator "
+            "baseline; requires --source-* to match how it was trained."
+        ),
+    )
+    parser.add_argument(
+        "--source-vocab-size", type=int, default=2048,
+        help="Checkpoint's vocab-size (must match training config)",
+    )
+    parser.add_argument(
+        "--source-seq-len", type=int, default=24,
+        help="Checkpoint's seq-len (must match training config)",
+    )
+    parser.add_argument(
+        "--source-d-model", type=int, default=32,
+        help="Checkpoint's d-model (must match training config)",
+    )
+    parser.add_argument(
+        "--source-n-layers", type=int, default=2,
+        help="Checkpoint's n-layers (must match training config)",
+    )
+    parser.add_argument(
+        "--source-n-heads", type=int, default=4,
+        help="Checkpoint's n-heads (must match training config)",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -474,22 +597,40 @@ def main() -> None:
 
     set_seed(args.seed)
 
-    # Generate synthetic activations with hidden features
-    generator = ActivationGenerator(
-        d_model=args.d_model,
-        n_true_features=args.n_true_features,
-        sparsity=args.feature_sparsity,
-        seed=args.seed,
-    )
-    activations, true_features = generator.generate(args.num_samples)
+    if args.activations_from is not None:
+        logger.info(f"Harvesting real activations from {args.activations_from}")
+        activations = harvest_activations_from_checkpoint(
+            checkpoint_path=args.activations_from,
+            vocab_size=args.source_vocab_size,
+            seq_len=args.source_seq_len,
+            d_model=args.source_d_model,
+            n_layers=args.source_n_layers,
+            n_heads=args.source_n_heads,
+            num_samples=args.num_samples,
+            seed=args.seed,
+        )
+        args.d_model = activations.size(1)  # match the harvested activations exactly
+        true_features = torch.zeros(activations.size(0), 1)  # no ground truth for real data
+        logger.info(
+            f"Harvested {activations.size(0)} real activation samples "
+            f"(d_model={args.d_model}) from {args.activations_from}"
+        )
+    else:
+        generator = ActivationGenerator(
+            d_model=args.d_model,
+            n_true_features=args.n_true_features,
+            sparsity=args.feature_sparsity,
+            seed=args.seed,
+        )
+        activations, true_features = generator.generate(args.num_samples)
+        logger.info(
+            f"Generated {args.num_samples} SYNTHETIC activation samples with "
+            f"{args.n_true_features} ground-truth features "
+            f"(sparsity={args.feature_sparsity})"
+        )
 
     dataset = TensorDataset(activations, true_features)
     loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
-    logger.info(
-        f"Generated {args.num_samples} activation samples with "
-        f"{args.n_true_features} ground-truth features "
-        f"(sparsity={args.feature_sparsity})"
-    )
 
     # Train SAE
     sae = SparseAutoencoder(
@@ -513,8 +654,11 @@ def main() -> None:
     reconstruction = evaluate_reconstruction(sae, loader)
     feature_analysis = analyze_features(sae, dataset)
 
+    source_label = "REAL" if args.activations_from is not None else "SYNTHETIC"
+    file_suffix = "_real" if args.activations_from is not None else ""
+
     logger.info("=" * 60)
-    logger.info("SAE Evaluation")
+    logger.info(f"SAE Evaluation ({source_label} activations)")
     logger.info("=" * 60)
     logger.info(f"Reconstruction MSE: {reconstruction['mse']:.6f}")
     logger.info(f"Fraction of variance explained: {reconstruction['fve']:.4f}")
@@ -524,15 +668,22 @@ def main() -> None:
         f"{feature_analysis['total_features']} "
         f"({feature_analysis['dead_rate']:.1%})"
     )
+    if args.activations_from is not None:
+        logger.info(
+            "Compare against the synthetic baseline (make reproduce-sae, no "
+            "--activations-from) -- the gap between real and synthetic "
+            "numbers is the honest finding this upgrade exists to produce."
+        )
 
-    # Plot
+    # Plot (real-activation runs get a distinct filename so they don't
+    # silently overwrite the synthetic baseline's figures)
     plot_sparsity_tradeoff(
         feature_analysis["feature_frequency"],
-        save_path=FIGURES_DIR / "exp5_sparsity_tradeoff.png",
+        save_path=FIGURES_DIR / f"exp5_sparsity_tradeoff{file_suffix}.png",
     )
     plot_feature_histogram(
         feature_analysis,
-        save_path=FIGURES_DIR / "exp5_feature_histogram.png",
+        save_path=FIGURES_DIR / f"exp5_feature_histogram{file_suffix}.png",
     )
 
     # Interpret results
