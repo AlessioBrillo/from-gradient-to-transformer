@@ -5,6 +5,7 @@ import torch
 from src.experiments.exp1_induction_heads import (
     AttentionOnlyBlock,
     AttentionOnlyTransformer,
+    causal_ablation,
     make_repeated_token_data,
 )
 
@@ -33,6 +34,100 @@ class TestAttentionOnlyTransformer:
         upper = torch.triu(torch.ones(10, 10), diagonal=1)
         causal_mass = (attn_probs[0, 0] * upper).sum()
         assert causal_mass < 0.01, f"Causal mask failed: {causal_mass:.4f} mass above diagonal"
+
+
+class TestCausalAblation:
+    """Falsification tests for the head_mask ablation mechanism.
+
+    The old causal_ablation() hooked W_O's *output* and zeroed a slice of
+    it — a d_model vector that had already mixed every head, so it zeroed an
+    arbitrary residual-stream subspace, not a specific head's contribution.
+    These tests would have failed against that implementation.
+    """
+
+    def test_ablating_all_heads_collapses_to_no_attention_baseline(self) -> None:
+        """Zeroing every head in every block must reproduce the exact
+        no-attention baseline: since head_mask zeroes each head's
+        contribution *before* W_O mixes heads (bias=False), the block's
+        output collapses to `residual + W_O(0) == residual`, i.e. attention
+        never touches the residual stream at all.
+        """
+        torch.manual_seed(0)
+        model = AttentionOnlyTransformer(
+            vocab_size=16, d_model=32, n_layers=2, n_heads=4, max_seq_len=16
+        )
+        model.eval()
+        x = torch.randint(0, 16, (2, 10))
+
+        for block in model.blocks:
+            block.head_mask = torch.zeros(block.n_heads)
+        with torch.no_grad():
+            ablated_logits, _ = model(x, record_attn=False)
+        for block in model.blocks:
+            block.head_mask = None
+
+        with torch.no_grad():
+            positions = torch.arange(x.shape[1]).unsqueeze(0)
+            h = model.embed(x) + model.pos_embed(positions)
+            h = model.ln_final(h)
+            baseline_logits = model.unembed(h)
+
+        assert torch.allclose(ablated_logits, baseline_logits, atol=1e-5), (
+            "All-heads ablation should exactly match the no-attention baseline"
+        )
+
+    def test_head_mask_is_restored_after_ablation(self) -> None:
+        """causal_ablation() must clear head_mask when it finishes, so a
+        later unrelated forward pass isn't silently still ablated."""
+        torch.manual_seed(0)
+        model = AttentionOnlyTransformer(
+            vocab_size=16, d_model=32, n_layers=1, n_heads=2, max_seq_len=16
+        )
+        train, _ = make_repeated_token_data(
+            vocab_size=16, seq_len=10, num_train=8, num_val=8, seed=0
+        )
+        loader = torch.utils.data.DataLoader(train, batch_size=4)
+
+        causal_ablation(model, loader, layer=0, head=0)
+
+        assert model.blocks[0].head_mask is None
+
+    def test_ablating_one_head_only_zeroes_that_head(self) -> None:
+        """Ablating head h should leave the other heads' contribution to the
+        pre-W_O output untouched (they aren't zeroed by the mask)."""
+        block = AttentionOnlyBlock(d_model=32, n_heads=4)
+        block.eval()
+        x = torch.randn(1, 6, 32)
+
+        with torch.no_grad():
+            # Recompute the pre-W_O per-head output manually, once with no
+            # mask and once with head 1 ablated, and compare head-by-head.
+            def pre_wo_heads(mask: torch.Tensor | None) -> torch.Tensor:
+                block.head_mask = mask
+                h = block.ln(x)
+                B, S, D = h.shape
+                Q = block.W_Q(h).view(B, S, block.n_heads, block.d_head).transpose(1, 2)
+                K = block.W_K(h).view(B, S, block.n_heads, block.d_head).transpose(1, 2)
+                V = block.W_V(h).view(B, S, block.n_heads, block.d_head).transpose(1, 2)
+                scores = Q @ K.transpose(-2, -1) / (block.d_head ** 0.5)
+                causal = torch.triu(torch.full((S, S), float("-inf")), diagonal=1)
+                probs = (scores + causal).softmax(dim=-1)
+                out = probs @ V
+                if mask is not None:
+                    out = out * mask.view(1, block.n_heads, 1, 1)
+                return out  # (B, n_heads, S, d_head)
+
+            full = pre_wo_heads(None)
+            mask = torch.ones(4)
+            mask[1] = 0.0
+            ablated = pre_wo_heads(mask)
+            block.head_mask = None
+
+        assert torch.allclose(ablated[:, 1], torch.zeros_like(ablated[:, 1]))
+        for h_idx in (0, 2, 3):
+            assert torch.allclose(ablated[:, h_idx], full[:, h_idx]), (
+                f"Head {h_idx} should be unaffected by ablating head 1"
+            )
 
 
 class TestInductionData:

@@ -242,7 +242,7 @@ These are not a separate phase — they grow with you. Engage with them at each 
 
 5. **Rung 5 — Sparse autoencoder on residual stream.** Train an SAE on the capstone model's activations; build a feature dashboard; report sparsity/reconstruction tradeoff and dead feature rate.
 
-6. **Rung 6 (stretch) — Automated vs. hand-found circuit comparison.** Run ACDC on the Rung 4 task and compare the recovered subgraph to the manual circuit.
+6. **Rung 6 (stretch) — Automated vs. hand-found circuit comparison.** Run ACDC on the Rung 4 task and compare the recovered subgraph to the manual circuit. *Descoped 2026-08-01: the placeholder implementation simulated results instead of running ACDC; deleted rather than kept as scaffolding.*
 
 **Topics / pipeline**
 - Model: decoder-only transformer (embedding → RoPE → blocks → RMSNorm → unembed).

@@ -11,7 +11,6 @@ from src.experiments import (
     exp3_superposition,
     exp4_circuit_patching,
     exp5_sae_dashboard,
-    exp6_automated_circuit,
 )
 
 __all__ = [
@@ -20,5 +19,4 @@ __all__ = [
     "exp3_superposition",
     "exp4_circuit_patching",
     "exp5_sae_dashboard",
-    "exp6_automated_circuit",
 ]

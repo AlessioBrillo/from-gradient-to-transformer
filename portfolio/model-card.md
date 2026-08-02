@@ -25,7 +25,7 @@ Research and educational demonstration of mechanistic interpretability technique
 | Experiment | Dataset | Description |
 |------------|---------|-------------|
 | Rung 1 — Induction heads | Repeated random tokens | Sequences of random tokens from a small vocabulary, designed to induce prefix-matching behavior |
-| Rung 2 — Grokking ★ | Modular addition pairs | Equation (a + b) mod P = c for all pairs; train/test split by hold-out modulus values |
+| Rung 2 — Grokking ★ | Modular addition pairs | Equation (a + b) mod P = c for all pairs; train/test split holds out random *equations*, with every target class represented in both splits (see `portfolio/RESULTS.md` Honesty Ledger for the earlier, broken by-target-class split) |
 | Rung 3 — Superposition | Synthetic sparse features | Randomly activated features with controlled sparsity; ground-truth features known |
 | Rung 4 — Circuit patching | Synthetic IOI / task-specific templates | Controlled templates (e.g., "When [A] and [B] went to the store, [A] gave a book to") |
 | Rung 5 — SAE | Residual stream activations | Harvested from forward passes of the capstone model on evaluation prompts |

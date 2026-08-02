@@ -43,6 +43,29 @@ class TestToyAutoencoder:
             losses.append(loss.item())
         assert losses[-1] < losses[0], "Loss should decrease over training"
 
+    def test_decoder_is_tied_to_encoder_transpose(self) -> None:
+        """Decoder weights must be the *same parameter* as the encoder's
+        transpose (canonical Elhage et al. setup), not a second
+        independently-learned matrix — untied weights give the model extra
+        degrees of freedom to reconstruct without the encoder rows ever
+        converging to the true generative directions, which breaks the
+        premise of compute_feature_recovery()."""
+        model = ToyAutoencoder(n_dimensions=5, n_features=20)
+        assert not hasattr(model, "decoder"), "No separate decoder parameter should exist"
+
+        x = torch.randn(3, 5)
+        recon, latent = model(x)
+        expected = latent @ model.encoder.weight  # (B, n_features) @ (n_features, n_dim)
+        assert torch.allclose(recon, expected, atol=1e-5)
+
+        # Only one set of weights to train — gradients must flow into the
+        # single encoder parameter from both the encode and decode paths.
+        loss = recon.pow(2).sum()
+        loss.backward()
+        assert model.encoder.weight.grad is not None
+        n_params = sum(1 for _ in model.parameters())
+        assert n_params == 1, "Tied weights means exactly one parameter tensor"
+
 
 class TestSparseFeatureDataset:
     def test_shapes(self) -> None:

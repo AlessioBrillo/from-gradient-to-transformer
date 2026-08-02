@@ -56,17 +56,26 @@ class TestGrokkingData:
         assert train_y.shape == ()
         assert train_y.item() == (train_x[0].item() + train_x[1].item()) % 29
 
-    def test_split_disjoint(self) -> None:
-        """Train and val should have disjoint modulus values."""
+    def test_pairs_disjoint(self) -> None:
+        """Train and val should hold out disjoint (a, b) equations."""
         train, val = make_modular_addition_data(
             modulus=29, train_fraction=0.3, seed=42
         )
-        train_mods = set()
-        for i in range(len(train)):
-            a, b = train[i][0]
-            train_mods.add((a.item() + b.item()) % 29)
-        val_mods = set()
-        for i in range(len(val)):
-            a, b = val[i][0]
-            val_mods.add((a.item() + b.item()) % 29)
-        assert train_mods.isdisjoint(val_mods), "Train/val mod sets should be disjoint"
+        train_pairs = {(int(a), int(b)) for a, b in (train[i][0] for i in range(len(train)))}
+        val_pairs = {(int(a), int(b)) for a, b in (val[i][0] for i in range(len(val)))}
+        assert train_pairs.isdisjoint(val_pairs), "Train/val equations should be disjoint"
+
+    def test_target_classes_shared_across_splits(self) -> None:
+        """Every target class should be reachable from training data.
+
+        Splitting by target value (instead of by equation) is a bug: it
+        leaves some output classes with zero training signal, making
+        generalization to them impossible by construction. Both splits must
+        draw from the full target vocabulary.
+        """
+        train, val = make_modular_addition_data(
+            modulus=29, train_fraction=0.3, seed=42
+        )
+        train_targets = {int(train[i][1]) for i in range(len(train))}
+        val_targets = {int(val[i][1]) for i in range(len(val))}
+        assert train_targets & val_targets, "Train/val should share target classes"

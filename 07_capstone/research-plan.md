@@ -51,11 +51,14 @@ Ordered cheapest/highest-signal → more ambitious. Each is a defensible standal
 - **Compute:** moderate — activation harvesting + SAE training over a few hours to a day on one GPU.
 - **Reference:** Bricken et al., *Towards Monosemanticity*, 2023; Cunningham et al., ICLR 2024.
 
-### Rung 6 (Stretch) — Automated vs. Hand-Found Circuit Comparison
+### Rung 6 (Stretch) — Automated vs. Hand-Found Circuit Comparison — **Descoped 2026-08-01**
 
 - **Scale/task:** run ACDC or attribution patching on the Rung 4 task and compare recovered subgraph to manual circuit.
 - **Metric:** edge-recovery vs. ground truth; runtime comparison; where automation fails.
 - **Reference:** Conmy et al., *Towards Automated Circuit Discovery for Mechanistic Interpretability*, NeurIPS 2023.
+- **Status:** the placeholder implementation simulated results with random draws instead of
+  running ACDC. Deleted rather than kept as scaffolding — a validity pass should not leave
+  fabricated numbers next to real ones. Revisit only with a genuine implementation.
 
 ---
 

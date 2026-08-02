@@ -34,7 +34,6 @@ logger = logging.getLogger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 FIGURES_DIR = Path("figures")
-FIGURES_DIR.mkdir(exist_ok=True)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -229,7 +228,9 @@ def analyze_features(
     """Analyze SAE feature quality.
 
     Metrics:
-    - Dead features: features that activate on < 1/(10 * n_samples) of inputs
+    - Dead features: features that fire on fewer than `dead_threshold` of
+      inputs, evaluated against a fixed, dictionary-size-independent
+      threshold (see below) — not one that scales with n_features.
     - Feature sparsity (L0): average number of active features per input
     - Loss recovered: fraction of MSE explained by SAE
     """
@@ -251,11 +252,22 @@ def analyze_features(
     active_counts = (feature_activations > 1e-6).float().sum(dim=0)
     feature_freq = active_counts / n_samples
 
-    # Dead features: activate on fewer than 1/(10*n_features) of inputs
-    dead_threshold = 1.0 / (10 * model.n_features)
+    # Dead features: a fixed absolute firing-frequency threshold (1e-4, i.e.
+    # "fires on <0.01% of inputs"), independent of dictionary size. The
+    # previous threshold — 1/(10*n_features) — got *looser* as the
+    # dictionary grew (at n_features=512 it accepted anything firing on
+    # >=0.02% of inputs as "alive"), which is backwards: a bigger dictionary
+    # should make it *harder*, not easier, to call a feature alive.  1e-4 is
+    # a defensible, size-independent convention consistent with SAE dead-
+    # feature reporting practice (Bricken et al. 2023; Cunningham et al.
+    # 2024). We also report `never_fires` — the strictest and least
+    # ambiguous reading of "dead" (zero activations in the evaluation set).
+    dead_threshold = 1e-4
     dead_features = (feature_freq < dead_threshold).sum().item()
+    never_fires = (feature_freq == 0).sum().item()
     total_features = model.n_features
     dead_rate = dead_features / total_features
+    never_fires_rate = never_fires / total_features
 
     # L0 sparsity
     l0 = (feature_activations > 1e-6).float().sum(dim=-1).mean().item()
@@ -267,6 +279,9 @@ def analyze_features(
 
     return {
         "dead_features": dead_features,
+        "dead_threshold": dead_threshold,
+        "never_fires": never_fires,
+        "never_fires_rate": never_fires_rate,
         "total_features": total_features,
         "dead_rate": dead_rate,
         "l0_sparsity": l0,
@@ -392,6 +407,7 @@ def plot_feature_histogram(
 # Main
 # ---------------------------------------------------------------------------
 def main() -> None:
+    FIGURES_DIR.mkdir(exist_ok=True)
     parser = argparse.ArgumentParser(
         description="Rung 5: Sparse autoencoder feature dashboard"
     )

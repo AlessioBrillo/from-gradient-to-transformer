@@ -49,8 +49,12 @@ Train an SAE (start with ReLU baseline, then BatchTopK/JumpReLU) on activations 
 - *Compute:* Moderate — activation harvesting + SAE training over hours to a day.
 - *Reference:* Bricken et al., *Towards Monosemanticity*, 2023; Cunningham et al., ICLR 2024.
 
-### Rung 6 (Stretch) — Automated vs. Hand-Found Circuit Comparison
-Run ACDC (automated circuit discovery) on the Rung 4 task and compare the recovered subgraph to your manual circuit. Edge-recovery rate, faithfulness comparison, runtime analysis. Where does automation fail?
+### Rung 6 (Stretch) — Automated vs. Hand-Found Circuit Comparison — **Descoped 2026-08-01**
+Was meant to run ACDC (automated circuit discovery) on the Rung 4 task and compare the
+recovered subgraph to the manual circuit. The placeholder implementation
+(`exp6_automated_circuit.py`) simulated the comparison with `rng.poisson`/`rng.beta`/
+`rng.exponential` draws plotted as if they were results, and was deleted rather than kept
+as scaffolding. Revisit only with a real ACDC or attribution-patching implementation.
 
 - *Reference:* Conmy et al., *ACDC*, NeurIPS 2023 (spotlight).
 
@@ -90,10 +94,10 @@ Each choice is justified in the writeup.
 - [x] RMSNorm, RoPE, causal MHA, autoregressive generation
 - [x] Hook points at every sublayer (27 cache entries per forward pass)
 - [x] Tests: 10 passing (shape, gradient, causal mask, generation, cache)
-- [ ] Pipeline runs end-to-end for at least one experiment
+- [x] Pipeline runs end-to-end for at least one experiment (Rungs 1, 3, 4, 5 — see [[portfolio/RESULTS]])
 - [ ] Grokking reproduction with progress measures and Fourier analysis
-- [ ] At least one circuit verification (activation patching)
-- [ ] Rungs 1–5 completed and results documented in [[portfolio/RESULTS]]
+- [x] At least one circuit verification (activation + path patching, `src/experiments/exp4_circuit_patching.py`, fixed 2026-08-01 — see [[05_llm_engineering/proofs/intervention-validity]])
+- [ ] Rungs 1–5 completed and results documented in [[portfolio/RESULTS]] (Rung 2 still pending)
 - [ ] Mini-paper (LaTeX) written with abstract, method, results, ablations, limitations, references to primary literature
 - [ ] Reproducibility harness: `uv sync && make reproduce` regenerates flagship figures
 - [ ] One interactive artifact: SAE feature dashboard on HF Spaces (Rung 5)

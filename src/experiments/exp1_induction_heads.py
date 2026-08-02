@@ -35,7 +35,6 @@ logger = logging.getLogger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 FIGURES_DIR = Path("figures")
-FIGURES_DIR.mkdir(exist_ok=True)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -122,6 +121,12 @@ class AttentionOnlyBlock(nn.Module):
         self.W_V = nn.Linear(d_model, d_model, bias=False)
         self.W_O = nn.Linear(d_model, d_model, bias=False)
 
+        # Optional per-head ablation mask: shape (n_heads,), 1.0 = keep,
+        # 0.0 = ablate. Applied to each head's output *before* W_O mixes the
+        # heads together, so a zeroed head is actually a zeroed head — not an
+        # arbitrary post-mixing subspace. See causal_ablation().
+        self.head_mask: Optional[torch.Tensor] = None
+
     def forward(
         self, x: torch.Tensor, past_attn: Optional[list] = None
     ) -> torch.Tensor:
@@ -145,6 +150,9 @@ class AttentionOnlyBlock(nn.Module):
             past_attn.append(attn_probs.detach().cpu())
 
         out = attn_probs @ V  # (B, n_heads, S, d_head)
+        if self.head_mask is not None:
+            head_mask = self.head_mask.view(1, self.n_heads, 1, 1).to(out.device, out.dtype)
+            out = out * head_mask
         out = out.transpose(1, 2).contiguous().view(B, S, D)
         out = self.W_O(out)
         return residual + out
@@ -216,7 +224,20 @@ def evaluate(
 def compute_attention_entropy(
     model: nn.Module, loader: DataLoader
 ) -> dict:
-    """Compute per-layer attention entropy and diagonal+1 mass."""
+    """Compute per-layer attention entropy and diagonal+1 mass.
+
+    `diag1_mass` reports, per layer, the **max over heads** of the diagonal+1
+    attention mass — the strength of the single most induction-like head in
+    that layer. This is on the same [0, 1] scale as the per-head 0.3 detection
+    threshold used in `analyze_induction_heads`, so the two are directly
+    comparable (e.g. on the training-curve plot's threshold line).
+
+    Earlier versions summed diag1 mass across heads instead of taking the max,
+    which put this metric on a [0, n_heads] scale. That made the training
+    curve look like induction heads were forming (aggregate approaching 1.0)
+    even when no individual head crossed the 0.3 per-head threshold — the
+    2026-07-26 audit's "diag+1 mass ~1.0 but 0 heads detected" discrepancy.
+    """
     model.eval()
     n_layers = len(model.blocks)
 
@@ -235,7 +256,8 @@ def compute_attention_entropy(
                 ent = -(probs * (probs + 1e-8).log()).sum(-1)
                 total_entropy[l] += ent.mean(dim=(0, 2)).sum().item()
                 diag1 = probs[:, :, 1:, :-1].diagonal(dim1=-2, dim2=-1)
-                total_diag1[l] += diag1.mean(dim=(0, -1)).sum().item()
+                # Per-head mass, then the strongest head wins — not a sum.
+                total_diag1[l] += diag1.mean(dim=(0, -1)).max().item()
             total_batches += 1
             sample_size += 1
             if sample_size >= 4:
@@ -322,7 +344,9 @@ def train_model(
         if (epoch + 1) % 50 == 0:
             attn_metrics = compute_attention_entropy(model, val_loader)
             attn_entropy = sum(attn_metrics["entropy"])
-            diag1_mass = sum(attn_metrics["diag1_mass"])
+            # Max over layers too, so this stays comparable to the single
+            # per-head 0.3 detection threshold plotted alongside it.
+            diag1_mass = max(attn_metrics["diag1_mass"])
         else:
             attn_entropy = history["attn_entropy"][-1] if history["attn_entropy"] else 0.0
             diag1_mass = history["diag1_mass"][-1] if history["diag1_mass"] else 0.0
@@ -412,27 +436,26 @@ def analyze_induction_heads(
 def causal_ablation(
     model: nn.Module, loader: DataLoader, layer: int, head: int
 ) -> float:
-    """Ablate a specific attention head by zeroing its output.
+    """Ablate a specific attention head by zeroing its contribution.
 
     Measures the accuracy drop when a head's contribution is removed,
     which causally confirms its role in the circuit.
+
+    Uses `AttentionOnlyBlock.head_mask`, which zeroes the head's output
+    *before* W_O mixes all heads together (see forward()). The previous
+    version hooked `W_O`'s output and sliced it into `n_heads` chunks — but
+    W_O's output is a d_model vector that has already mixed every head, so
+    that zeroed an arbitrary residual-stream subspace, not a specific head.
+    This mirrors the (correct) approach in exp4_circuit_patching.py.
 
     Returns:
         Accuracy after head ablation.
     """
     model.eval()
-
-    def _zero_head_hook(
-        module: nn.Module, input: torch.Tensor, output: torch.Tensor
-    ) -> torch.Tensor:
-        B, S, D = output.shape
-        d_head = D // model.blocks[layer].n_heads
-        output_view = output.view(B, S, model.blocks[layer].n_heads, d_head)
-        output_view[:, :, head, :] = 0.0
-        return output_view.view(B, S, D)
-
     block = model.blocks[layer]
-    hook = block.W_O.register_forward_hook(_zero_head_hook)
+    mask = torch.ones(block.n_heads)
+    mask[head] = 0.0
+    block.head_mask = mask
 
     correct = 0
     total = 0
@@ -444,7 +467,7 @@ def causal_ablation(
             correct += (preds == y).sum().item()
             total += y.numel()
 
-    hook.remove()
+    block.head_mask = None
     return correct / total
 
 
@@ -518,6 +541,7 @@ def plot_training_curves(
 # Main
 # ---------------------------------------------------------------------------
 def main() -> None:
+    FIGURES_DIR.mkdir(exist_ok=True)
     parser = argparse.ArgumentParser(
         description="Rung 1: Induction heads in a 2-layer attention-only transformer"
     )

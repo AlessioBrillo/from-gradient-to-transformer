@@ -57,9 +57,20 @@ class RotaryEmbedding(nn.Module):
 
     def forward(self, x: torch.Tensor, position_ids: torch.Tensor) -> torch.Tensor:
         B, S = position_ids.shape
-        freqs = (position_ids.float().unsqueeze(-1) * self.inv_freq.unsqueeze(0))
-        cos = freqs.cos().repeat_interleave(2, dim=-1).view(B, 1, S, self.d_head)
-        sin = freqs.sin().repeat_interleave(2, dim=-1).view(B, 1, S, self.d_head)
+        # (B, S, d_head/2)
+        freqs = position_ids.float().unsqueeze(-1) * self.inv_freq.unsqueeze(0)
+        # `_rotate_half` splits the last dim into two *halves* (chunk), not
+        # interleaved pairs — so cos/sin must be built by concatenating the
+        # frequency block with itself, not by repeat_interleave. The two
+        # conventions require different rotation-matrix layouts; mixing them
+        # (as a previous version did) still gives every position an
+        # injective signal, so training doesn't obviously break, but the
+        # relative-position property RoPE exists for — that the attention
+        # score between positions i and j depends only on i - j — does not
+        # hold. See tests/test_decoder_only_transformer.py for the check.
+        emb = torch.cat([freqs, freqs], dim=-1)  # (B, S, d_head)
+        cos = emb.cos().view(B, 1, S, self.d_head)
+        sin = emb.sin().view(B, 1, S, self.d_head)
         x_rotated = x * cos + self._rotate_half(x) * sin
         return x_rotated
 

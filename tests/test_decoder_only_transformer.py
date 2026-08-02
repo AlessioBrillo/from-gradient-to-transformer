@@ -39,6 +39,41 @@ class TestRotaryEmbedding:
         y = rope(x, pos)
         assert y.shape == (2, 4, 10, 32)
 
+    def test_relative_position_invariance(self) -> None:
+        """The defining property of RoPE: <RoPE(q, i), RoPE(k, j)> depends
+        only on i - j, not on i and j individually.
+
+        This is the property that distinguishes correct RoPE from an
+        arbitrary injective position code — and it only holds if the cos/sin
+        construction matches the rotate-half convention actually used to
+        rotate the vectors. Mixing repeat_interleave-built cos/sin with a
+        chunk-based rotate_half (as a previous version did) still gives every
+        position a distinct signal, so it would pass a weaker "position
+        sensitivity" check, but fails this one.
+        """
+        torch.manual_seed(0)
+        d_head = 16
+        rope = RotaryEmbedding(d_head=d_head)
+        q = torch.randn(1, 1, 1, d_head)
+        k = torch.randn(1, 1, 1, d_head)
+
+        def score(i: int, j: int) -> float:
+            q_rot = rope(q, torch.tensor([[i]]))
+            k_rot = rope(k, torch.tensor([[j]]))
+            return (q_rot[0, 0, 0] @ k_rot[0, 0, 0]).item()
+
+        # Same offset (i - j), different absolute positions: scores must match.
+        pairs_offset_3 = [(3, 0), (10, 7), (50, 47)]
+        scores = [score(i, j) for i, j in pairs_offset_3]
+        for s in scores[1:]:
+            assert abs(s - scores[0]) < 1e-3, (
+                f"Scores at the same offset should match, got {scores}"
+            )
+
+        # Different offsets should (generically) give a different score —
+        # otherwise the check above would be vacuous.
+        assert abs(score(5, 0) - score(1, 0)) > 1e-3
+
 
 class TestDecoderOnlyTransformer:
     def test_output_shape(self) -> None:
