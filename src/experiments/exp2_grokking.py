@@ -30,7 +30,9 @@ from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
+from src.experiments.runner import parse_seeds, run_seeds
 from src.reproducibility import set_seed
+from src.results import ResultsManifest, count_parameters
 
 logger = logging.getLogger(__name__)
 
@@ -826,6 +828,61 @@ def plot_ablation_curve(
 
 
 # ---------------------------------------------------------------------------
+# Multi-seed headline run
+# ---------------------------------------------------------------------------
+def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
+    """Train one grokking run end-to-end and return headline metrics for one
+    seed. Mirrors main()'s single-seed data/model/train/Fourier-analysis
+    steps, minus plotting and model-saving — used by `--seeds` to aggregate
+    across seeds via `src.experiments.runner.run_seeds`. Grokking's headline
+    number (generalization epoch) is known to be seed-sensitive (Nanda et
+    al. report this), so a mean alone would misrepresent it; this returns
+    the full per-seed value so the caller can report the spread, not just
+    an average.
+    """
+    set_seed(seed)
+    modulus = args.modulus
+
+    train_dataset, val_dataset = make_modular_addition_data(
+        modulus=modulus, train_fraction=args.train_fraction, seed=seed,
+    )
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
+
+    model = OneLayerTransformer(
+        d_model=args.d_model, d_mlp=args.d_mlp, n_heads=args.n_heads, modulus=modulus,
+    )
+    history = train_model(
+        model=model,
+        train_loader=train_loader,
+        val_loader=val_loader,
+        epochs=args.epochs,
+        lr=args.lr,
+        weight_decay=args.weight_decay,
+        seed=seed,
+        use_wandb=False,
+    )
+
+    fourier_result = fourier_decompose_embeddings(
+        model.embed.weight.data.detach().cpu(), modulus
+    )
+    sparsity = analyze_fourier_sparsity(fourier_result, top_k=20)
+
+    final_val_acc = history["val_acc"][-1]
+    generalization_epoch = next(
+        (i for i, acc in enumerate(history["val_acc"]) if acc > 0.9), -1
+    )
+
+    return {
+        "final_val_acc": float(final_val_acc),
+        "generalization_epoch": float(generalization_epoch),
+        "k_90_percent": float(sparsity["k_90_percent"]),
+        "k_99_percent": float(sparsity["k_99_percent"]),
+        "total_mass_top_k": float(sparsity["total_mass_top_k"]),
+    }
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 def main() -> None:
@@ -864,6 +921,19 @@ def main() -> None:
     parser.add_argument(
         "--save-model", action="store_true", help="Save trained model to figures/ dir"
     )
+    parser.add_argument(
+        "--seeds",
+        type=str,
+        default=None,
+        help=(
+            "Comma-separated seeds (e.g. '0,1,2'). If set, runs the full "
+            "train+Fourier-analysis pipeline once per seed, saves a "
+            "results/exp2_grokking.json manifest with per-seed generalization "
+            "epoch and Fourier sparsity, and skips plotting/model-saving "
+            "(run once without --seeds for figures, separately, at the seed "
+            "you want plotted)."
+        ),
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -892,6 +962,33 @@ def main() -> None:
 
     set_seed(args.seed)
     modulus = args.modulus
+
+    if args.seeds:
+        seeds = parse_seeds(args.seeds)
+        logger.info(
+            f"MULTI-SEED MODE: {len(seeds)} seeds {seeds} at modulus={modulus} "
+            "(skipping plots/model-save)"
+        )
+        result = run_seeds(lambda s: run_single_seed(s, args), seeds)
+        probe_model = OneLayerTransformer(
+            d_model=args.d_model, d_mlp=args.d_mlp, n_heads=args.n_heads, modulus=modulus
+        )
+        manifest = ResultsManifest.from_run(
+            experiment="exp2_grokking",
+            seeds=seeds,
+            args={k: v for k, v in vars(args).items() if k != "seeds"},
+            per_seed_metrics=result.per_seed,
+            aggregate=result.aggregate,
+            wall_clock_seconds=result.wall_clock_seconds,
+            device=str(DEVICE),
+            n_parameters=count_parameters(probe_model),
+        )
+        manifest_path = Path("results") / "exp2_grokking.json"
+        manifest.save(manifest_path)
+        logger.info(f"Saved multi-seed manifest to {manifest_path}")
+        for key in result.aggregate:
+            logger.info(f"  {key}: {result.summary_line(key)}")
+        return
 
     # Data
     train_dataset, val_dataset = make_modular_addition_data(

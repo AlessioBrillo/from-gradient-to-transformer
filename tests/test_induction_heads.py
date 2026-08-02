@@ -1,12 +1,17 @@
 """Smoke tests for the induction heads experiment (Rung 1)."""
 
+import logging
+
 import torch
+from torch.utils.data import DataLoader
 
 from src.experiments.exp1_induction_heads import (
     AttentionOnlyBlock,
     AttentionOnlyTransformer,
     causal_ablation,
     make_repeated_token_data,
+    prefix_duplicate_probability,
+    train_model,
 )
 
 
@@ -165,3 +170,113 @@ class TestInductionData:
             vocab_size=32, seq_len=64, num_train=100, num_val=20, seed=42
         )
         assert torch.equal(t1.tensors[0], t2.tensors[0]), "Deterministic seed check failed"
+
+
+class TestPrefixDuplicateProbability:
+    """Tests for the birthday-problem collision estimate (Micro-Phase 8, the
+    Evidence Pass) — see prefix_duplicate_probability() and
+    06_production_ai/exercises/ex-03-induction-task-design.md."""
+
+    def test_zero_for_trivially_short_prefix(self) -> None:
+        assert prefix_duplicate_probability(vocab_size=100, prefix_len=1) == 0.0
+
+    def test_matches_classic_birthday_problem(self) -> None:
+        # The textbook case: 23 people, 365 days -> ~50.7% collision chance.
+        p = prefix_duplicate_probability(vocab_size=365, prefix_len=23)
+        assert abs(p - 0.507) < 0.01
+
+    def test_increases_with_prefix_length(self) -> None:
+        short = prefix_duplicate_probability(vocab_size=100, prefix_len=5)
+        long = prefix_duplicate_probability(vocab_size=100, prefix_len=50)
+        assert long > short
+
+    def test_pre_2026_08_02_defaults_were_ill_posed(self) -> None:
+        """Documents the bug this exercise found: vocab_size=32,
+        prefix_len=32 (the old --vocab-size default at prefix_ratio=0.5,
+        seq_len=64) had a near-certain repeated token in the prefix."""
+        p = prefix_duplicate_probability(vocab_size=32, prefix_len=32)
+        assert p > 0.99
+
+    def test_current_defaults_are_reasonably_well_posed(self) -> None:
+        """vocab_size=2048, prefix_len=32 (current --vocab-size default)
+        should sit under the warn threshold."""
+        p = prefix_duplicate_probability(vocab_size=2048, prefix_len=32)
+        assert p < 0.3
+
+
+class TestPrefixAmbiguityWarning:
+    def test_warns_when_collision_probability_is_high(
+        self, caplog: "logging.LogCaptureFixture"
+    ) -> None:
+        with caplog.at_level(logging.WARNING):
+            make_repeated_token_data(
+                vocab_size=8, seq_len=16, num_train=4, num_val=2, seed=0
+            )
+        assert any("Prefix ambiguity" in r.message for r in caplog.records)
+
+    def test_no_warning_when_well_posed(
+        self, caplog: "logging.LogCaptureFixture"
+    ) -> None:
+        with caplog.at_level(logging.WARNING):
+            make_repeated_token_data(
+                vocab_size=4096, seq_len=16, num_train=4, num_val=2, seed=0
+            )
+        assert not any("Prefix ambiguity" in r.message for r in caplog.records)
+
+
+class TestFreshBatches:
+    """Tests for train_model's fresh_batches_fn (Micro-Phase 8) — resampling
+    sequences every epoch instead of reshuffling one fixed set, to test
+    whether the fixed dataset let the model memorize specific sequences."""
+
+    def test_fresh_batches_fn_called_once_per_epoch(self) -> None:
+        model = AttentionOnlyTransformer(
+            vocab_size=8, d_model=8, n_layers=1, n_heads=2, max_seq_len=8
+        )
+        dataset, val_dataset = make_repeated_token_data(
+            vocab_size=8, seq_len=8, num_train=8, num_val=8, seed=0
+        )
+        placeholder_loader = DataLoader(dataset, batch_size=4)
+        val_loader = DataLoader(val_dataset, batch_size=4)
+
+        calls: list[int] = []
+
+        def fresh_fn(epoch: int) -> DataLoader:
+            calls.append(epoch)
+            ds, _ = make_repeated_token_data(
+                vocab_size=8, seq_len=8, num_train=8, num_val=1, seed=100 + epoch
+            )
+            return DataLoader(ds, batch_size=4, shuffle=True)
+
+        train_model(
+            model=model,
+            train_loader=placeholder_loader,
+            val_loader=val_loader,
+            epochs=3,
+            lr=1e-3,
+            weight_decay=0.0,
+            seed=0,
+            fresh_batches_fn=fresh_fn,
+        )
+        assert calls == [0, 1, 2]
+
+    def test_without_fresh_batches_training_still_works(self) -> None:
+        model = AttentionOnlyTransformer(
+            vocab_size=8, d_model=8, n_layers=1, n_heads=2, max_seq_len=8
+        )
+        dataset, val_dataset = make_repeated_token_data(
+            vocab_size=8, seq_len=8, num_train=8, num_val=8, seed=0
+        )
+        train_loader = DataLoader(dataset, batch_size=4)
+        val_loader = DataLoader(val_dataset, batch_size=4)
+
+        history = train_model(
+            model=model,
+            train_loader=train_loader,
+            val_loader=val_loader,
+            epochs=2,
+            lr=1e-3,
+            weight_decay=0.0,
+            seed=0,
+        )
+        assert len(history["train_loss"]) == 2

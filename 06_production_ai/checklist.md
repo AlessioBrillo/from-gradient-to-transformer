@@ -12,13 +12,24 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
 - [ ] **Proof passed** → I can move to the capstone.
 
 ## Research Infrastructure
-- [ ] **Reproducibility harness:** global seed control, deterministic flags, pinned env (`uv.lock`)
+- [~] **Reproducibility harness:** global seed control, deterministic flags, pinned env
+  (`uv.lock`) — pre-existing; multi-seed runner + provenance manifests
+  (`src/experiments/runner.py`, `src/results.py`, `make verify-claims`) added 2026-08-02,
+  wired into exp1/exp3/exp4. See
+  [[06_production_ai/notes/results-manifests-and-provenance]],
+  [[06_production_ai/notes/multi-seed-experiment-design]].
 - [ ] **Experiment tracking:** W&B for loss curves, progress measures, hyperparameter sweeps
-- [ ] **`make reproduce` for every experiment** — one command regenerates all figures and tables
-- [ ] **CI for research:** GitHub Actions running fast smoke tests on every push
+- [~] **`make reproduce` for every experiment** — pre-existing target regenerates all
+  figures; `make reproduce-multiseed` (exp1/exp3/exp4) added 2026-08-02, not yet exp2/exp5.
+- [~] **CI for research:** GitHub Actions running fast smoke tests on every push —
+  pre-existing; 2026-08-02 fixed a `python-version` mismatch (3.11 pinned vs. 3.12
+  resolved) and split the mypy step so a genuine crash (exit 2) fails the build instead of
+  being swallowed by `|| true` alongside ordinary reported errors (exit 1).
 - [ ] **Figure generation scripts:** every figure committed with its deterministic generator
 - [ ] **Feature dashboard deployment:** Hugging Face Spaces for SAE feature browser
-- [ ] **Mini-paper workflow:** LaTeX template, `make paper`, citation management
+- [~] **Mini-paper workflow:** LaTeX template, `make paper`, citation management —
+  `portfolio/paper/main.tex` + `references.bib` scaffold added 2026-08-02; structure only,
+  no prose.
 
 ## Light Touch (context)
 - [ ] Data versioning (DVC / lakeFS) — for large activation datasets

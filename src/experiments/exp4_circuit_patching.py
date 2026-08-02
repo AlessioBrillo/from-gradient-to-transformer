@@ -26,8 +26,10 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from src.experiments.exp1_induction_heads import make_repeated_token_data as make_induction_data
+from src.experiments.runner import parse_seeds, run_seeds
 from src.models.decoder_only_transformer import DecoderOnlyTransformer
 from src.reproducibility import set_seed
+from src.results import ResultsManifest, count_parameters
 
 logger = logging.getLogger(__name__)
 
@@ -466,13 +468,124 @@ def plot_head_ablation(
     logger.info(f"Saved head ablation plot to {save_path}")
 
 
+# ---------------------------------------------------------------------------
+# Multi-seed headline run
+# ---------------------------------------------------------------------------
+def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
+    """Train one circuit-patching run end-to-end and return headline metrics
+    for one seed. Mirrors main()'s single-seed data/model/train/analysis
+    steps (detection, activation patching, head ablation, path patching),
+    minus plotting — used by `--seeds` to aggregate across seeds via
+    `src.experiments.runner.run_seeds`. Path patching only runs when at
+    least one induction head is detected for that seed (it needs a real
+    head to patch); its metric is 0.0 for seeds with none, same convention
+    as head ablation.
+    """
+    train_dataset, val_dataset = make_induction_data(
+        vocab_size=args.vocab_size,
+        seq_len=args.seq_len,
+        num_train=args.num_train,
+        seed=seed,
+    )
+    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=256, shuffle=False)
+
+    model = DecoderOnlyTransformer(
+        vocab_size=args.vocab_size,
+        d_model=args.d_model,
+        n_layers=args.n_layers,
+        n_heads=args.n_heads,
+        max_seq_len=args.seq_len,
+    )
+    model.to(DEVICE)
+
+    history = train_model(
+        model=model,
+        train_loader=train_loader,
+        val_loader=val_loader,
+        epochs=args.epochs,
+        lr=args.lr,
+        seed=seed,
+    )
+
+    sample_inputs = next(iter(val_loader))[0][:8]
+    induction_heads = detect_induction_heads(model, sample_inputs)
+
+    val_x, val_y = val_dataset.tensors
+    n_pair = min(32, val_x.size(0) // 2)
+    val_batch, val_batch_answers = val_x[:n_pair], val_y[:n_pair, -1]
+    corrupted, corrupted_answers = val_x[n_pair:2 * n_pair], val_y[n_pair:2 * n_pair, -1]
+
+    layers_to_patch = list(range(args.n_layers))
+    positions_to_patch = list(range(max(2, args.seq_len // 4), args.seq_len, 2))
+    patching_results = run_activation_patching(
+        model=model,
+        clean_inputs=val_batch,
+        clean_answers=val_batch_answers,
+        corrupted_answers=corrupted_answers,
+        corrupted_inputs=corrupted,
+        layers_to_patch=layers_to_patch,
+        positions_to_patch=positions_to_patch,
+        batch_size=min(32, val_batch.size(0)),
+    )
+    mean_activation_recovery = (
+        float(np.mean([v["recovery"] for v in patching_results.values()]))
+        if patching_results
+        else 0.0
+    )
+
+    mean_ablation_effect = 0.0
+    mean_path_patch_effect = 0.0
+    if induction_heads:
+        ablation_results = run_head_ablation(
+            model=model,
+            inputs=val_batch,
+            answers=val_batch_answers,
+            counterfactuals=corrupted_answers,
+            induction_heads=induction_heads,
+        )
+        mean_ablation_effect = float(
+            np.mean([v["effect"] for v in ablation_results.values()])
+        )
+
+        path_results = run_path_patching_to_logits(
+            model=model,
+            clean_inputs=val_batch,
+            clean_answers=val_batch_answers,
+            corrupted_inputs=corrupted,
+            corrupted_answers=corrupted_answers,
+            heads=induction_heads,
+        )
+        mean_path_patch_effect = float(
+            np.mean([v["effect"] for v in path_results.values()])
+        )
+
+    return {
+        "final_val_acc": float(history["val_acc"][-1]),
+        "total_induction_heads": float(len(induction_heads)),
+        "mean_activation_recovery": mean_activation_recovery,
+        "mean_ablation_effect": mean_ablation_effect,
+        "mean_path_patch_effect": mean_path_patch_effect,
+    }
+
+
 def main() -> None:
     FIGURES_DIR.mkdir(exist_ok=True)
     parser = argparse.ArgumentParser(
         description="Rung 4: Circuit verification via activation patching"
     )
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
-    parser.add_argument("--vocab-size", type=int, default=32, help="Vocabulary size")
+    parser.add_argument(
+        "--vocab-size",
+        type=int,
+        default=256,
+        help=(
+            "Vocabulary size. Default raised from 32 (2026-08-02): at "
+            "seq-len=24 (prefix_len=12), vocab_size=32 gave a ~87%% chance "
+            "of a repeated token inside the prefix. See "
+            "src.experiments.exp1_induction_heads.prefix_duplicate_probability."
+        ),
+    )
     parser.add_argument("--seq-len", type=int, default=24, help="Sequence length")
     parser.add_argument("--d-model", type=int, default=64, help="Model dimension")
     parser.add_argument("--n-layers", type=int, default=2, help="Number of layers")
@@ -484,6 +597,16 @@ def main() -> None:
     parser.add_argument(
         "--no-train", action="store_true", help="Skip training (untrained model)"
     )
+    parser.add_argument(
+        "--seeds",
+        type=str,
+        default=None,
+        help=(
+            "Comma-separated seeds (e.g. '0,1,2'). If set, runs the full "
+            "train+detection+patching pipeline once per seed, saves a "
+            "results/exp4_circuit_patching.json manifest, and skips plotting."
+        ),
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -492,7 +615,7 @@ def main() -> None:
     )
 
     if args.quick:
-        args.vocab_size = 16
+        args.vocab_size = 64
         args.seq_len = 12
         args.d_model = 32
         args.n_layers = 2
@@ -505,6 +628,36 @@ def main() -> None:
     logger.info(f"Arguments: {vars(args)}")
 
     set_seed(args.seed)
+
+    if args.seeds:
+        seeds = parse_seeds(args.seeds)
+        logger.info(
+            f"MULTI-SEED MODE: {len(seeds)} seeds {seeds} (skipping plots)"
+        )
+        result = run_seeds(lambda s: run_single_seed(s, args), seeds)
+        probe_model = DecoderOnlyTransformer(
+            vocab_size=args.vocab_size,
+            d_model=args.d_model,
+            n_layers=args.n_layers,
+            n_heads=args.n_heads,
+            max_seq_len=args.seq_len,
+        )
+        manifest = ResultsManifest.from_run(
+            experiment="exp4_circuit_patching",
+            seeds=seeds,
+            args={k: v for k, v in vars(args).items() if k != "seeds"},
+            per_seed_metrics=result.per_seed,
+            aggregate=result.aggregate,
+            wall_clock_seconds=result.wall_clock_seconds,
+            device=str(DEVICE),
+            n_parameters=count_parameters(probe_model),
+        )
+        manifest_path = Path("results") / "exp4_circuit_patching.json"
+        manifest.save(manifest_path)
+        logger.info(f"Saved multi-seed manifest to {manifest_path}")
+        for key in result.aggregate:
+            logger.info(f"  {key}: {result.summary_line(key)}")
+        return
 
     # Data
     train_dataset, val_dataset = make_induction_data(

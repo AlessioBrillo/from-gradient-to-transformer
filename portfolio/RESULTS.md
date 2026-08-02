@@ -13,9 +13,78 @@ smoke tests (`make reproduce-quick`) and a full-scale mode (`make reproduce`).
 
 ## Honesty Ledger
 
-Two audits have now caught real bugs in this repository's causal claims. Both entries stay
-here — the point of this section is to make it easy to see the trend (are correctness
-problems getting caught faster, or accumulating?), not to keep only the latest one.
+Three audits have now caught real bugs in this repository's causal claims and evidence
+base. All entries stay here — the point of this section is to make it easy to see the
+trend (are correctness problems getting caught faster, or accumulating?), not to keep only
+the latest one.
+
+### 2026-08-02 — Micro-Phase 8, the Evidence Pass: correct-but-unmeasured code gets measured
+
+The 2026-08-01 Validity Pass fixed *what the code measures*. It left the repository
+correct and almost entirely **unmeasured**: Rung 2 had never run, Rungs 1 and 4 had no
+post-fix standard-scale numbers, Rung 3 had never reproduced, Rung 5 was real only on
+synthetic data. This pass built a multi-seed provenance harness
+(`src/experiments/runner.py`, `src/results.py`, `make verify-claims` —
+[[06_production_ai/notes/results-manifests-and-provenance]]) and pointed it at every rung
+that fits this machine's CPU budget. What it found:
+
+- **Rung 3's root cause, finally found.** The 2026-07-26 and 2026-08-01 audits both
+  observed flat, near-zero "feature recovery" and could not explain it (the 2026-08-01
+  tied-weights fix was a real correctness fix that changed nothing measurable). The
+  architecture had no actual bottleneck — the dataset pre-compressed features before the
+  model ever saw them, so the model was expanding an already-solved problem, not
+  compressing anything. Rewritten to the canonical Elhage et al. setup (real
+  `n_dimensions < n_features` bottleneck, decoder bias, ground-truth-free metrics); the
+  phase transition now reproduces cleanly and immediately: **10/20 → 20/20 features
+  represented as sparsity drops from 0.5 to 0.01.** See
+  [[05_llm_engineering/proofs/superposition-setup-validity]] for the full reconstruction
+  with the diagnostic numbers that found it, and
+  [[06_production_ai/exercises/ex-01-falsify-your-own-metric]] for why the *old* metric
+  couldn't have told the difference between broken and working even if the architecture
+  had been right.
+- **Rung 1's task design was ill-posed for its entire history.** The repeated-token
+  generator's prefix needs no repeated tokens (else "the previous occurrence of the current
+  token" is ambiguous). The pre-existing `vocab_size=32`/prefix-length-32 default gave a
+  **>99.99%** chance of a repeated token in the prefix — a birthday-problem calculation, not
+  a guess (`prefix_duplicate_probability()`,
+  [[06_production_ai/exercises/ex-03-induction-task-design]]). Fixed (`vocab_size=2048`
+  standard / `256` quick, ~20-23% collision). Fixing it alone did **not** produce induction
+  heads at quick scale (`diag1_mass` peaked at 0.125, still below the 0.3 threshold) — a
+  second, independent question this pass also built the tooling to test.
+- **The fixed-dataset memorization hypothesis: confirmed, and it's large.** A matched
+  800-epoch comparison (identical config, only `--fresh-batches` toggled) found the fixed,
+  reused-every-epoch dataset causes catastrophic overfitting — val accuracy decays to
+  **0.05%** (below random chance) while val loss climbs to 24.3 — versus fresh, resampled
+  batches stabilizing at **52.2%** val accuracy with no train/val gap at all. Neither
+  condition crossed the induction-head detection threshold within this (still sub-standard)
+  budget, but the fresh-batches trajectory was still improving at epoch 800 while the fixed
+  condition was actively regressing. See
+  [[04_nlp_and_transformers/notes/induction-heads]] for the full table.
+- **SAE on real activations, for the first time.** `exp5_sae_dashboard.py --activations-from`
+  now harvests genuine residual-stream activations from a trained induction-heads
+  checkpoint via a forward hook on `ln_final`, instead of only ever training on
+  `ActivationGenerator`'s synthetic baseline. Added the pre-encoder bias (`x - b_dec`,
+  Bricken et al.'s actual architecture — the prior SAE had no `b_dec` at all). First real
+  run: **99.97% FVE, L0 = 136/256 (53% of the dictionary active), 0% dead features** —
+  reconstructs *better* than the synthetic baseline (97.2% FVE) but far less sparsely (53%
+  active vs. 17.4%). Read honestly, not as an unqualified win: this is more consistent with
+  a small, undertrained 32-dimensional residual stream being easy to reconstruct densely
+  than with the SAE finding genuinely sparse, interpretable features — see Rung 5 below.
+- **Also this pass**: fixed a CI/local dev mismatch where `python-version: '3.11'` was
+  pinned in `.github/workflows/python-ci.yml` while `uv.lock` and `[tool.mypy]` both target
+  3.12 — the same class of silent mismatch that hid mypy crashing on numpy's stubs for an
+  unknown period before 2026-08-01. The non-blocking mypy step now distinguishes "reported
+  errors" (exit 1, fine) from "mypy itself crashed" (exit 2, now fails the build) instead of
+  swallowing both with `|| true`. Added a small, honestly-scoped blocking mypy allowlist
+  (`src/results.py`, `src/experiments/runner.py` — the only two candidate modules that
+  turned out to actually be clean; `src/reproducibility.py` and `src/models/` were checked
+  and are not). `portfolio/paper/` LaTeX scaffold added (structure only — no prose; see its
+  own `main.tex` for what's still a `% TODO`).
+- **Not done this pass, tracked as the next blocker**: the P=113 grokking flagship still
+  has not run — `exp2_grokking.py` now has `--seeds` and
+  `notebooks/colab_grokking_full_run.ipynb` is hardened for a 3-seed Colab run, but the run
+  itself needs a GPU this environment doesn't have. This is still the single most important
+  open item in the repository.
 
 ### 2026-08-01 — Validity Pass: three causal claims were measuring the wrong thing
 
@@ -113,32 +182,49 @@ real figures and cross-check the numbers already documented. Findings:
 
 ## Rung 1 — Induction Heads (Fallback Flagship, currently the strongest verified result)
 
+<!-- manifest: results/exp1_induction_heads.json -->
+
 **Question**: Do induction heads emerge in a 2-layer attention-only transformer trained on repeated tokens? Can we detect, verify, and ablate them causally?
 
-**Status**: `--quick` mode re-run 2026-08-01, post-fix. Standard-scale numbers below are
-from before the ablation-site and metric-scale fixes and have **not been re-verified**
-at that scale — the quick-mode row is the only row confirmed against the current code.
+**Status**: task-design bug fixed 2026-08-02 (see Honesty Ledger) — the prefix-ambiguity bug
+made the task ill-posed at nearly every position for the repository's entire history, at
+every scale ever run. Fixing it alone did not produce heads at quick scale. A matched
+fixed-vs-fresh-batches comparison (below) found a second, independently real effect: the
+fixed-dataset training loop was actively harmful, not just insufficient. Standard-scale
+numbers from before 2026-08-01 are **retracted** (ablation-site and metric-scale bugs; see
+the Honesty Ledger's 2026-08-01 entry) — no standard-scale number in this table is
+currently confirmed; the fixed/fresh comparison below is the only trustworthy scale.
 
-| Metric | Standard (unconfirmed post-fix) | Quick (confirmed 2026-08-01) |
-|--------|----------|-------|
-| Layers / Heads | 2 / 4 | 2 / 4 |
-| d_model | 64 | 32 |
-| Epochs | 5000 | 500 |
-| Train samples | 8192 | 1024 |
-| Val accuracy | — | 0.549 (final), 0.553 (peak, ~epoch 100) |
-| Peak diag+1 mass (max over heads/layers, fixed metric) | — | 0.173 (epoch 50) |
-| Induction heads detected (>0.3 threshold) | Yes (claimed, unconfirmed) | **0 / 8** — genuinely below threshold, not a metric artifact |
+| Metric | Tiny multi-seed (3 seeds, confirmed 2026-08-02) |
+|--------|-------|
+| Layers / Heads | 2 / 4 |
+| d_model | 24 |
+| Epochs | 150 |
+| Train samples | 256 (resampled every epoch, `--fresh-batches`) |
+| Val accuracy | 0.0047 ± 0.0012 (n=3) |
+| Peak diag+1 mass | 0.177 ± 0.006 (n=3) |
+| Induction heads detected (>0.3 threshold) | **0 / 8**, all 3 seeds |
 
-At quick scale, induction heads have **not** formed within 500 epochs — `diag1_mass` peaks
-at 0.173 and *decays* over training (down to 0.170 by epoch 500), well under the 0.3
-detection threshold. This is now a trustworthy negative result (the metric that reports it
-is on the correct scale) rather than the contradictory "mass ≈ 1, 0 heads" reading from
-before the fix. Whether heads emerge at standard scale (more epochs, larger model) remains
-to be re-confirmed.
+**Fixed-vs-fresh-batches, matched 800-epoch comparison** (see
+[[04_nlp_and_transformers/notes/induction-heads]] for the full writeup): identical config
+(`vocab_size=2048, seq_len=24, d_model=32, num_train=1024`), only `--fresh-batches` toggled.
 
-**Features**: attention entropy tracking, diagonal+1 induction signal plotted (now on a
-metric scale consistent with the detection threshold), W&B logging (`--wandb`), model
-saving (`--save-model`), loss bump detection, 2×2 training curves plot.
+| | Fixed (reused every epoch) | Fresh (resampled every epoch) |
+|---|---|---|
+| Final val accuracy | **0.05%** (below random chance) | **52.2%** |
+| Final val loss | 24.31 (climbing) | 3.65 (flat, tracks train loss exactly) |
+| Peak diag+1 mass | 0.155 @ epoch 99, then decays | 0.145 @ epoch 649, still rising at 800 |
+
+The fixed dataset produces textbook catastrophic overfitting; fresh batches produce
+substantial, stable generalization without ever crossing the induction-head detection
+threshold in this budget. Whether more epochs at this scale, or fresh-batches at standard
+scale (`d_model=64`, `seq_len=64`), actually crosses the threshold is the next open
+question — not yet run.
+
+**Features**: attention entropy tracking, diagonal+1 induction signal plotted (metric scale
+consistent with the detection threshold), W&B logging (`--wandb`), model saving
+(`--save-model`), loss bump detection, 2×2 training curves plot, `--fresh-batches` (resample
+per epoch) and `--seeds` (multi-seed manifest) added 2026-08-02.
 
 **Reference**: Olsson et al., "In-context Learning and Induction Heads," Transformer Circuits Thread (Anthropic), 2022.
 
@@ -185,33 +271,46 @@ random `(a, b)` pairs.
 
 ## Rung 3 — Toy Models of Superposition
 
+<!-- manifest: results/exp3_superposition.json -->
+
 **Question**: How do features organize in a toy ReLU autoencoder under varying sparsity?
 
-**Status**: [ ] Not reproduced. No phase transition observed in the 2026-07-26 sweep;
-the 2026-08-01 tied-weights fix (see Honesty Ledger) did not change this. Root cause
-still open.
+**Status**: [x] Phase transition reproduced 2026-08-02, after finding the actual root
+cause of the 2026-07-26/2026-08-01 flat-recovery observations: the architecture had no
+real bottleneck (see Honesty Ledger and
+[[05_llm_engineering/proofs/superposition-setup-validity]]). Rewritten to the canonical
+Elhage et al. setup; the transition reproduces on the first run, cleanly, with no tuning.
 
-| Sparsity | Feature recovery | Monosemantic rate | Mean \|corr\| |
-|----------|-------------------|--------------------|--------------|
-| 0.500 | 0.050 | 0.100 | 0.282 |
-| 0.200 | 0.100 | 0.100 | 0.316 |
-| 0.100 | 0.150 | 0.150 | 0.302 |
-| 0.050 | 0.100 | 0.100 | 0.345 |
-| 0.020 | 0.050 | 0.050 | 0.305 |
-| 0.010 (untied, 2026-07-26) | 0.100 | 0.100 | 0.311 |
-| 0.010 (**tied**, 2026-08-01) | **0.100** | **0.100** | **0.299** |
-| 0.005 | 0.050 | 0.050 | 0.305 |
-| 0.002 | 0.000 | 0.000 | 0.324 |
-| 0.001 | 0.000 | 0.000 | 0.341 |
+| Sparsity | Features represented | Mean dimensionality | Mean \|corr\| |
+|----------|----------------------|----------------------|--------------|
+| 0.500 | 10 / 20 | 0.250 | 0.302 |
+| 0.200 | 15 / 20 | 0.250 | 0.316 |
+| 0.100 | 19 / 20 | 0.250 | 0.340 |
+| 0.050 | 20 / 20 | 0.250 | 0.349 |
+| 0.020 | 20 / 20 | 0.250 | 0.348 |
+| 0.010 | 20 / 20 | 0.248 | 0.352 |
+| 0.005 | 20 / 20 | 0.248 | 0.352 |
+| 0.002 | 20 / 20 | 0.249 | 0.350 |
+| 0.001 | 16 / 20 | 0.250 | 0.326 |
 
-Expected (Elhage et al.): recovery should rise toward monosemantic (→1.0) as sparsity
-decreases (features rarely active). Observed: flat/near-zero with no such trend, and the
-one variable I could think of that plausibly explained it (untied encoder/decoder weights
-giving the model extra degrees of freedom to reconstruct without the encoder rows ever
-converging to the ground-truth directions) turned out not to be it — tying the weights to
-the canonical setup left the 0.01-sparsity result essentially unchanged. Candidates still
-open: insufficient epochs even at 2000, the `feature_recovery_rate` metric/threshold
-definition, or the `n_features=20` / `n_dimensions=5` ratio.
+Multi-seed manifest (3 seeds, `single_sparsity=0.01`, otherwise identical config):
+`n_represented` = 19.67 ± 0.47 (one seed of three landed at 19/20 rather than 20/20 — a
+real, small seed-to-seed spread, not noise-free).
+
+Expected (Elhage et al.): as sparsity decreases (features rarely co-active), interference
+pressure drops and the model represents more features. **Observed: exactly this — 10/20 at
+the densest setting rising to 20/20 by sparsity=0.05, holding through 0.002.** (The drop to
+16/20 at the sparsest setting, 0.001, is plausibly under-training — very few active samples
+per feature at that sparsity with a fixed 8000-sample budget — not yet independently
+confirmed.) The old flat/near-zero "recovery" numbers above the fix are struck through in
+spirit, not deleted from this table's history: the root cause was that the model had no
+actual compression to perform (the dataset pre-embedded features before the model saw
+them), not a metric-scale issue, not a training-budget issue, and not the untied-weights
+hypothesis tested 2026-08-01. `mean_dimensionality` sits close to `1/n_dimensions × n_avg`
+across the sweep as expected for features sharing the bottleneck roughly evenly; it has not
+yet been checked against the known small-case (5 features → 2 dimensions should show a
+clean pentagon in the Gram matrix) that would confirm the geometric claims beyond the
+represented-feature count.
 
 **Reference**: Elhage et al., "Toy Models of Superposition," Transformer Circuits Thread (Anthropic), 2022.
 
@@ -221,6 +320,8 @@ definition, or the `n_features=20` / `n_dimensions=5` ratio.
 
 ## Rung 4 — Circuit Verification via Activation and Path Patching
 
+<!-- manifest: results/exp4_circuit_patching.json -->
+
 **Question**: Can I find and causally validate a specific circuit via activation patching, path patching, and head ablation?
 
 **Status**: Patch site and metric fixed 2026-08-01 (see Honesty Ledger — the previous
@@ -228,16 +329,30 @@ implementation patched a tensor that never reached the residual stream, and meas
 confidence rather than correctness). Path patching added; it did not exist in any form
 before this pass. The pre-fix standard-scale recovery numbers (0.787, 0.270, ...) that
 used to live in this section are **retracted** — they measured `top1 − top2` under a patch
-that mostly didn't land, so they don't mean what they claimed to.
+that mostly didn't land, so they don't mean what they claimed to. Vocabulary-ambiguity task
+design bug (see Rung 1) fixed 2026-08-02, since this rung reuses
+`make_repeated_token_data`; `--seeds` added.
 
-Quick mode re-run 2026-08-01 under the fixed code: activation patching ran cleanly across
-10 (layer, position) combinations with no errors (`figures/exp4_attention_patterns.png`,
-`figures/exp4_patching_results.png` regenerated). Consistent with Rung 1's finding at the
-same scale, **0 induction heads were detected**, so head ablation and path patching were
-skipped — meaning path patching's implementation is currently validated only by its unit
-tests (self-patch-is-zero, runs-and-returns-expected-keys), not by an end-to-end run
-against a real head. A standard-scale run, once heads are confirmed to form, is needed
-before any recovery number can be reported here.
+**Quick-mode 3-seed manifest, 2026-08-02** (`vocab_size=64, seq_len=12, d_model=32,
+epochs=500`):
+
+| Metric | Value (mean ± std, n=3) |
+|--------|--------------------------|
+| Final val accuracy | 0.489 ± 0.014 |
+| Mean activation-patching recovery (10 layer/position combos) | 0.197 ± 0.007 |
+| Induction heads detected | **0 / 8**, all 3 seeds — consistent with Rung 1 at comparable scale |
+| Head ablation / path patching | not run (no head to target) |
+
+Activation patching runs cleanly and finds a real, small, consistent recovery signal
+(~0.20, not zero) even without a detected induction head — some circuit sensitivity exists
+at these (layer, position) combinations, just not concentrated enough in one head to cross
+the 0.3 detection threshold. Because **0 induction heads were detected in all 3 seeds**,
+head ablation and path patching were skipped again — meaning path patching's
+implementation is *still* validated only by its unit tests (self-patch-is-zero,
+runs-and-returns-expected-keys), not by an end-to-end run against a real head. This is now
+the second consecutive confirmation (2026-08-01 quick, 2026-08-02 quick multi-seed) that a
+real head is needed before this validation gap can close — the fix has to come from Rung
+1's scale/fresh-batches work (see above), not from anything in this file.
 
 **Method**:
 1. Train `DecoderOnlyTransformer` on repeated-token prediction (same task as Rung 1),
@@ -267,28 +382,38 @@ must move the logit diff somewhere.
 
 ## Rung 5 — Sparse Autoencoder Feature Dashboard
 
-**Question**: Can I train an SAE on synthetic residual stream activations and extract interpretable features?
+**Question**: Can I train an SAE on synthetic residual stream activations and extract interpretable features? Does it work on real activations, not just synthetic ones?
 
-**Status**: [x] Complete on synthetic data — ready to upgrade to real activations. Dead-feature threshold fixed 2026-08-01 (see Honesty Ledger).
+**Status**: [x] Synthetic baseline reproduces exactly. [x] Real-activation upgrade shipped
+2026-08-02: `--activations-from` harvests genuine residual-stream activations from a
+trained induction-heads checkpoint via a forward hook on `ln_final`, and the architecture
+gained the pre-encoder bias (`x - b_dec`) it was missing — Bricken et al.'s actual SAE, not
+an approximation of it. Dead-feature threshold fixed 2026-08-01 (see Honesty Ledger).
 
-| Metric | Value |
-|--------|-------|
-| Dictionary size (d_model=64) | 512 (8×) |
-| L0 sparsity | 88.97 / 512 (17.4%) |
-| Fraction of variance explained (FVE) | 0.9722 (97.2%) |
-| Reconstruction MSE | 0.00113 |
-| Dead features (< 1e-4 firing rate, fixed threshold, re-measured 2026-08-01) | 1 / 512 (0.2%) |
+| Metric | Synthetic (d_model=64, 8× dict) | Real (d_model=32, 8× dict, from a trained checkpoint) |
+|--------|-------|-------|
+| Dictionary size | 512 | 256 |
+| L0 sparsity | 88.97 / 512 (17.4%) | 136.25 / 256 (**53.2%**) |
+| Fraction of variance explained (FVE) | 0.9722 (97.2%) | **0.9997 (99.97%)** |
+| Reconstruction MSE | 0.00113 | 0.1251 |
+| Dead features (fixed 1e-4 threshold) | 1 / 512 (0.2%) | 0 / 256 (0%) |
 
-At `n_features=512`, the old size-scaled threshold (`1/(10·512) ≈ 1.95e-4`) and the new
-fixed `1e-4` happen to land close enough together that the dead-feature count is unchanged
-here — the fix matters more at other dictionary sizes, where the old formula would have
-gotten silently more lenient as the dictionary grew.
-
-**Next**: Upgrade to real activations from the trained induction-heads model.
+**Read honestly, not as an unqualified win.** The real-activation run reconstructs *better*
+but *far less sparsely* than synthetic — 53% of the dictionary fires per input versus 17%
+for synthetic. That is not what a good SAE result looks like; it looks like a wide, dense
+linear autoencoder that happens to reconstruct well because a 32-dimensional residual
+stream from a small, undertrained model (150-300 epochs, no confirmed induction head — see
+Rung 1) may simply not contain many genuinely sparse, disentangled features yet for the SAE
+to find. This is exactly the "what did I add beyond the original?" distinctiveness gate
+(`07_capstone/research-plan.md`) this rung was missing: a real degradation in the metric
+that matters (sparsity, not just reconstruction) is a more informative result than a second
+clean synthetic number would have been. Re-running this once Rung 1 has a checkpoint with a
+confirmed induction head is the natural next step — right now the "real" activations come
+from a model that hasn't yet learned the mechanism this pipeline exists to study.
 
 **Reference**: Bricken et al., "Towards Monosemanticity" (2023); Cunningham et al., "Sparse Autoencoders Find Highly Interpretable Features in Language Models," ICLR 2024.
 
-**Figures**: `figures/exp5_sparsity_tradeoff.png`, `figures/exp5_feature_histogram.png`
+**Figures**: `figures/exp5_sparsity_tradeoff.png`, `figures/exp5_feature_histogram.png` (synthetic); `figures/exp5_sparsity_tradeoff_real.png`, `figures/exp5_feature_histogram_real.png` (real)
 
 ---
 
@@ -301,22 +426,26 @@ gotten silently more lenient as the dictionary grew.
 | 3 — Deep Learning | ✅ Complete | gradient-flow-and-architectures |
 | 4 — NLP & Transformers | ✅ Complete | circuit-analysis-complete |
 | 5 — LLM Engineering | [~] Instrumentation done | — |
-| 6 — Production AI | [ ] Not started | — |
+| 6 — Production AI | [~] Reproducibility harness built (multi-seed + manifests + `verify-claims`), CI/mypy fixed, paper scaffold added — W&B, Hugging Face Spaces, and the mini-paper prose are still open | [[06_production_ai/proofs/reproducible-from-clean-clone]] (not yet green — needs a post-commit clean-clone run) |
 | 7 — Capstone | [~] Research plan written | — |
 
 ## Summary
 
 | Rung | Status | Key Result |
 |------|--------|------------|
-| 1 — Induction Heads (fallback flagship) | ⚠️ Quick-scale confirmed, standard-scale unconfirmed | Quick mode, post-fix: 0 heads detected, genuinely below threshold (diag+1 mass peaks 0.173 < 0.3) |
-| 2 — Grokking (primary flagship) | ⏳ Not yet reproduced | Split bug fixed 2026-07-26; GPU run still pending — the top open item |
-| 3 — Superposition | ⏳ Not reproduced | Flat/near-zero recovery across all sparsity levels; tied-weights fix tested and did not resolve it |
-| 4 — Circuit Patching | ⚠️ Fixed, not yet re-verified | Patch site + metric were wrong pre-2026-08-01; path patching added; clean re-run pending |
-| 5 — SAE Dashboard | ✅ Reproduced | 97.2% FVE, synthetic data; dead-feature threshold fixed, not yet re-measured |
+| 1 — Induction Heads (fallback flagship) | ⚠️ Task design fixed, memorization confirmed, no head yet | Fresh-batches: 52.2% val acc vs. fixed dataset's 0.05% (matched 800-epoch comparison); 0/8 heads either way at this scale |
+| 2 — Grokking (primary flagship) | ⏳ Not yet reproduced | `--seeds` added, Colab notebook hardened; GPU run still pending — the top open item |
+| 3 — Superposition | ✅ Phase transition confirmed | Root cause found (no real bottleneck); rewritten, reproduces cleanly: 10/20 → 20/20 features represented |
+| 4 — Circuit Patching | ⚠️ Fixed 2026-08-01, quick multi-seed re-run 2026-08-02 | See Rung 4 above for the current numbers; path patching still only unit-tested, no real head to validate against yet |
+| 5 — SAE Dashboard | ✅ Synthetic reproduced; ⚠️ real-activation upgrade shipped | Real: 99.97% FVE but 53% L0 (dense, not sparse) — informative gap, not yet a clean win |
 | 6 — ACDC | ❌ Deleted | Was fabricated data; removed 2026-08-01 rather than fixed |
 
-**What to trust right now, in order**: (1) Rung 5's FVE/MSE numbers — reproduced and
-architecturally simple. (2) Rung 1's quick-mode "0 heads, below threshold" finding — the
-metric bug that would have cast doubt on it is fixed. (3) Nothing else in this table yet —
-Rung 2 needs its GPU run, Rung 3's discrepancy is unexplained, and Rung 4's numbers predate
-today's fix and need a clean re-run before they mean anything.
+**What to trust right now, in order**: (1) Rung 3's phase transition — reproduced cleanly,
+root cause understood, multi-seed manifest backs it. (2) Rung 5's synthetic FVE/MSE numbers
+— reproduced and architecturally simple; the real-activation numbers are real but need a
+better checkpoint (one with a confirmed induction head) before the sparsity gap means
+anything conclusive. (3) Rung 1's fixed-vs-fresh comparison — a real, large, matched effect,
+though at a scale still well below standard. (4) Rung 4's quick multi-seed re-run — internal
+consistency confirmed (activation patching runs cleanly, matches Rung 1's "0 heads" finding)
+but path patching remains unvalidated against a real head. (5) Rung 2 — still nothing to
+trust yet; the GPU run is the blocker.

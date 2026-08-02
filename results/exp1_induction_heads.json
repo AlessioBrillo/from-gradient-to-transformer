@@ -1,0 +1,85 @@
+{
+  "experiment": "exp1_induction_heads",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "args": {
+    "seed": 42,
+    "vocab_size": 256,
+    "seq_len": 16,
+    "d_model": 24,
+    "n_layers": 2,
+    "n_heads": 4,
+    "epochs": 150,
+    "lr": 0.001,
+    "weight_decay": 0.1,
+    "batch_size": 32,
+    "num_train": 256,
+    "no_train": false,
+    "quick": false,
+    "wandb": false,
+    "save_model": false,
+    "fresh_batches": true
+  },
+  "per_seed_metrics": [
+    {
+      "final_val_acc": 0.00390625,
+      "total_induction_heads": 0.0,
+      "peak_diag1_mass": 0.1855633370578289,
+      "mean_ablation_drop": 0.0
+    },
+    {
+      "final_val_acc": 0.006315104166666667,
+      "total_induction_heads": 0.0,
+      "peak_diag1_mass": 0.1717129983007908,
+      "mean_ablation_drop": 0.0
+    },
+    {
+      "final_val_acc": 0.0037760416666666667,
+      "total_induction_heads": 0.0,
+      "peak_diag1_mass": 0.1722513549029827,
+      "mean_ablation_drop": 0.0
+    }
+  ],
+  "aggregate": {
+    "final_val_acc": {
+      "mean": 0.004665798611111111,
+      "std": 0.0011674459771104833,
+      "min": 0.0037760416666666667,
+      "max": 0.006315104166666667,
+      "n": 3.0
+    },
+    "peak_diag1_mass": {
+      "mean": 0.1765092300872008,
+      "std": 0.006405991816753187,
+      "min": 0.1717129983007908,
+      "max": 0.1855633370578289,
+      "n": 3.0
+    },
+    "total_induction_heads": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 3.0
+    },
+    "mean_ablation_drop": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 3.0
+    }
+  },
+  "wall_clock_seconds": 80.50390207700184,
+  "git_sha": "6a5a54f",
+  "git_dirty": true,
+  "device": "cpu",
+  "torch_version": "2.12.1+cu130",
+  "numpy_version": "2.5.0",
+  "python_version": "3.12.12",
+  "n_parameters": 17424,
+  "created_at": "2026-08-02T12:36:42+00:00"
+}

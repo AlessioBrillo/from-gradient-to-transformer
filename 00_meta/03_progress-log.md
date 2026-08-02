@@ -171,3 +171,71 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
   still the top blocker for the primary flagship. Rung 3's root cause is still open. Rung 4
   needs a clean re-run at both quick and standard scale now that the patch site and metric
   are fixed — the pre-fix numbers in `portfolio/RESULTS.md` should not be cited.
+
+## 2026-08-02 — Micro-Phase 8: The Evidence Pass
+
+The 2026-08-01 pass fixed *what the code measures*. It left the repository correct and
+almost entirely unmeasured — no rung had a multi-seed manifest, Rung 2 had never run, Rung
+3 had never reproduced. This pass built the missing measurement infrastructure and pointed
+it at every rung that fits this machine's CPU budget.
+
+- **Rung 3's root cause found, not just re-audited.** The flat/near-zero recovery from
+  2026-07-26/2026-08-01 had a structural cause: no real bottleneck. The dataset
+  pre-compressed features via its own `W_gt` before the model ever saw them, so the model
+  was expanding an already-solved problem — MSE could (and did) hit exactly 0.000000
+  regardless of sparsity. Confirmed with a side-by-side diagnostic run before touching the
+  committed code. Rewrote `src/experiments/exp3_superposition.py` to the canonical Elhage
+  et al. setup: real `n_dimensions < n_features` bottleneck (enforced at construction),
+  decoder bias, ground-truth-free metrics (`n_represented`, per-feature
+  `dimensionality`). Phase transition reproduces cleanly, first run: **10/20 → 20/20
+  features represented as sparsity drops 0.5 → 0.01.** 4 falsification tests added, all
+  fail against the pre-rewrite architecture. See
+  [[05_llm_engineering/proofs/superposition-setup-validity]].
+- **Rung 1's task was ill-posed for its entire history.** The repeated-token generator's
+  prefix needs no repeated tokens; the birthday-problem probability of a collision at the
+  pre-existing `vocab_size=32`/prefix-32 default was **>99.99%**
+  (`prefix_duplicate_probability()`,
+  [[06_production_ai/exercises/ex-03-induction-task-design]]). Fixed defaults
+  (`vocab_size=2048`/`256`) bring this to ~20-23%. Fixing it alone did not produce induction
+  heads at quick scale. Built `--fresh-batches` (resample sequences every epoch, per
+  Olsson et al., instead of reshuffling one fixed set) to test the memorization hypothesis
+  directly. Matched 800-epoch comparison, one variable changed: fixed dataset → val
+  accuracy decays to 0.05% (below random chance) while val loss climbs to 24.3; fresh
+  batches → val accuracy stabilizes at 52.2% with zero train/val gap. Neither crosses the
+  induction-head detection threshold within this budget, but the fresh-batches trajectory
+  was still improving at epoch 800 while the fixed condition was actively regressing.
+- **Built the multi-seed + provenance harness** the vault's own checklist had wrongly
+  claimed existed since before 2026-08-01: `src/experiments/runner.py` (`run_seeds`,
+  seed-loop aggregation), `src/results.py` (`ResultsManifest`, git SHA + dirty flag +
+  environment capture, `verify_claims()` / `make verify-claims`). Wired into exp1, exp3,
+  exp4 via `--seeds`; real manifests with genuine seed-to-seed spread now exist in
+  `results/`. `make verify-claims` correctly failed against the pre-reconciliation
+  `RESULTS.md` (no manifest tags at all) before this session added them, and correctly
+  flags every manifest's `git_dirty: true` right now (nothing is committed yet) —
+  confirmed it isn't a no-op.
+- **SAE upgraded to real activations, and the fix was honest, not flattering.** Added
+  `--activations-from` (harvests the residual stream via a hook on `ln_final` from a
+  trained induction-heads checkpoint) and the pre-encoder bias (`x - b_dec`) the SAE was
+  missing — Bricken et al.'s actual architecture. First real run: 99.97% FVE (better than
+  synthetic's 97.2%) but only 53% sparse (vs. synthetic's 17.4%) — a dense reconstruction,
+  not obviously an interpretable one. Read as: the source checkpoint (no confirmed
+  induction head yet) may just not have much sparse structure to find yet, not as "SAEs
+  work better on real data."
+- **Infra**: fixed CI's `python-version: '3.11'` vs. `uv.lock`'s resolved 3.12 (same class
+  of silent mismatch that hid a mypy crash for an unknown period pre-2026-08-01); the
+  non-blocking mypy CI step now fails on a genuine crash (exit 2) instead of swallowing it
+  with the reported-errors case (exit 1) under one `|| true`. Added a small, honestly-scoped
+  blocking mypy allowlist (`src/results.py`, `src/experiments/runner.py` — the only two
+  candidates that turned out to actually be clean on inspection;
+  `src/reproducibility.py`/`src/models/` were checked and are not, so they were correctly
+  left out rather than wrongly promised). `portfolio/paper/` LaTeX scaffold added
+  (structure + seeded `references.bib`, no prose — every section is a `% TODO`).
+- Tests: 110 → 158 passing (Rung 3 falsification tests, harness unit tests, ambiguity-guard
+  tests, fresh-batches tests, Fourier/SAE analysis-function correctness tests, real-checkpoint
+  harvest test).
+- Open question: the P=113 grokking GPU run is still the single most important open item —
+  `--seeds` and the hardened Colab notebook are ready, the run itself needs a GPU this
+  environment doesn't have. Rung 1/4 need a standard-scale (not just quick-scale) fresh-batches
+  run to see whether a real induction head actually forms — the fixed-vs-fresh comparison
+  strongly suggests it's reachable, hasn't been confirmed at standard scale. Rung 5's real-vs-synthetic
+  comparison should be re-run once Rung 1 produces a checkpoint with a confirmed head.

@@ -67,10 +67,18 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
 - [ ] LoRA fine-tuning (light touch)
 
 ## Phase 6 — Production AI (reframed: reproducible research infra)
-- [ ] **Reproducibility harness: seeds, deterministic flags, pinned deps**
+- [~] **Reproducibility harness: seeds, deterministic flags, pinned deps** — multi-seed
+  runner + provenance manifests built 2026-08-02
+  (`src/experiments/runner.py`, `src/results.py`); wired into 3 of 5 experiments (exp1,
+  exp3, exp4). Exercise: [[06_production_ai/exercises/ex-02-results-manifest]]. Proof:
+  [[06_production_ai/proofs/reproducible-from-clean-clone]] (not yet passed — needs a
+  post-commit clean-clone run, see the proof's own Outcome).
 - [ ] **Experiment tracking: W&B for loss curves and progress measures**
-- [ ] **`make reproduce` for every experiment**
-- [ ] **CI smoke tests** (fast per-experiment shape/gradient checks)
+- [~] **`make reproduce` for every experiment** — pre-existing target still works; new
+  `make reproduce-multiseed` covers exp1/exp3/exp4, not yet exp2/exp5.
+- [~] **CI smoke tests** (fast per-experiment shape/gradient checks) — pre-existing pytest
+  step; 2026-08-02 fixed a `python-version` mismatch (3.11 pinned vs. 3.12 resolved) and
+  made the non-blocking mypy step distinguish "reported errors" from "mypy crashed."
 - [ ] **Feature dashboard deployment** (Hugging Face Spaces for SAE browser)
 - [ ] ML system design (minimal — design doc for the capstone pipeline)
 
@@ -78,16 +86,22 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
 - [x] **Induction head reproduction** — attention-pattern analysis, causal verification (ablation site fixed 2026-08-01, see [[05_llm_engineering/proofs/intervention-validity]])
 - [~] **Grokking reproduction + Fourier reverse-engineering** — the primary flagship 🌟, **not yet reproduced**.
   This was wrongly checked `[x]` before 2026-08-01 — the vault's own rule at the top of this file ("A checked box without proof is a lie you tell yourself") applied to this exact line.
-  The full P=113 run is still pending; the data-split bug that made it structurally unreachable was fixed 2026-07-26 (see [[portfolio/RESULTS]]).
-- [~] **Toy Models of Superposition** — feature geometry, phase changes. Code runs and is tested, but the sweep shows no phase transition (flat/near-zero recovery at every sparsity level) and the root cause is still open — see [[portfolio/RESULTS]] Honesty Ledger.
-- [x] **Circuit discovery via activation + path patching** — find + causally validate (patch site and metric fixed 2026-08-01)
-- [~] **Sparse autoencoder training** — feature dashboard, but on synthetic activations only, never the trained induction-heads model
+  The full P=113 run is still pending; the data-split bug that made it structurally unreachable was fixed 2026-07-26 (see [[portfolio/RESULTS]]). `--seeds` added 2026-08-02; Colab notebook hardened for the 3-seed GPU run — still the single most important open item.
+- [x] **Toy Models of Superposition** — feature geometry, phase changes. Root cause of the
+  flat/near-zero recovery found and fixed 2026-08-02 (no real bottleneck in the
+  architecture, not the untied-weights hypothesis tested 2026-08-01): the phase transition
+  now reproduces cleanly (10/20 → 20/20 features represented). See
+  [[05_llm_engineering/proofs/superposition-setup-validity]].
+- [x] **Circuit discovery via activation + path patching** — find + causally validate (patch site and metric fixed 2026-08-01). Quick multi-seed re-run 2026-08-02 confirms internal consistency (0 heads, 3/3 seeds, matching Rung 1) but path patching is still validated only by unit tests — no real head has existed to point it at yet.
+- [~] **Sparse autoencoder training** — feature dashboard; real-activation harvesting shipped 2026-08-02 (`--activations-from`, pre-encoder bias added), but the source checkpoint has no confirmed induction head yet, so the real-vs-synthetic comparison (99.97% FVE, only 53% sparse) is informative rather than conclusive — see [[portfolio/RESULTS]] Rung 5.
 - [ ] **Automated circuit discovery** — ACDC, AtP, attribution patching. Descoped 2026-08-01: the placeholder implementation simulated results with random draws instead of running ACDC; deleted.
-- [ ] Mini-paper writing (LaTeX, citations, ablations, limitations)
+- [~] Mini-paper writing (LaTeX, citations, ablations, limitations) — `portfolio/paper/`
+  scaffold added 2026-08-02 (structure + seeded `references.bib`); no prose yet — every
+  section is a `% TODO` pointing at the manifest/proof it should be written from.
 
 ## Phase 7 — Capstone
 - [x] From-scratch decoder-only transformer (the model to reverse-engineer) — `src/models/decoder_only_transformer.py`
 - [~] Grokking experiment end-to-end (training + analysis + figures) — CPU-bound P=113
 - [x] At least one circuit verification (activation patching on the capstone model) — exp4
-- [~] SAE feature dashboard (browsable artifact) — trained on synthetic, upgrade to real activations
+- [~] SAE feature dashboard (browsable artifact) — real-activation path now exists; needs a checkpoint with a confirmed induction head to be a meaningful upgrade over synthetic
 - [ ] Mini-paper with all ablations and primary-literature citations
