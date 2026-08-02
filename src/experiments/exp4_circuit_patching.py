@@ -32,7 +32,6 @@ from src.reproducibility import set_seed
 logger = logging.getLogger(__name__)
 
 FIGURES_DIR = Path("figures")
-FIGURES_DIR.mkdir(exist_ok=True)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -142,51 +141,81 @@ def train_model(
 def run_activation_patching(
     model: DecoderOnlyTransformer,
     clean_inputs: torch.Tensor,
+    clean_answers: torch.Tensor,
     corrupted_inputs: torch.Tensor,
+    corrupted_answers: torch.Tensor,
     layers_to_patch: list[int],
     positions_to_patch: list[int],
     batch_size: int = 32,
 ) -> dict:
     """Run residual stream activation patching.
 
-    For each (layer, position), patches the resid_mid (attention output)
-    from corrupted → clean and measures logit-diff recovery.
+    For each (layer, position), overrides resid_mid at that position with its
+    value from a corrupted run, then measures how much of the logit
+    difference (clean answer vs. counterfactual answer) is recovered.
+
+    The patch is injected via a forward hook on the block's *attention*
+    module (which returns the already-projected, post-W_O `attn_out` — see
+    Attention.forward). The hook solves for the `attn_out` that makes
+    `resid_pre + attn_out == corrupted_resid_mid` at the target position, so
+    both the MLP branch *and* the residual skip see the patched value. A
+    previous version hooked the MLP's pre-forward input instead: the MLP's
+    input is `ln_mlp(resid_mid)` (normalized), and the residual skip
+    (`x = x + mlp_out`) still referenced the block's own unpatched `x` — so
+    that version silently patched nothing but the MLP's own view of an
+    un-normalized tensor.
+
+    `clean_answers` / `corrupted_answers` are the true next-token labels for
+    each input under the induction task (see make_repeated_token_data) — the
+    token the model should predict at the last position if the induction
+    mechanism is intact. logit_diff = logits[answer] - logits[counterfactual]
+    is the standard answer-vs-counterfactual metric (Wang et al., IOI), not a
+    top1-top2 confidence margin, which conflates "confident about the right
+    answer" with "confident about anything."
 
     Returns:
-        dict mapping (layer, position) -> (clean_logit_diff, patched_logit_diff, recovery)
+        dict mapping (layer, position) -> (clean_diff, patched_diff, recovery)
     """
     model.eval()
-    results = {}
+    results: dict = {}
+    batch_size = min(batch_size, clean_inputs.size(0), corrupted_inputs.size(0))
 
     with torch.no_grad():
         clean_logits, clean_cache = model(clean_inputs[:batch_size], return_cache=True)
         _, corrupted_cache = model(corrupted_inputs[:batch_size], return_cache=True)
 
-    # Logit diff on the LAST token position (from BOS)
+    answer = clean_answers[:batch_size].to(DEVICE)
+    counterfactual = corrupted_answers[:batch_size].to(DEVICE)
+    idx = torch.arange(batch_size, device=DEVICE)
+
     def logit_diff(logits: torch.Tensor) -> torch.Tensor:
         last_logits = logits[:, -1, :]
-        top_two = last_logits.topk(2, dim=-1)
-        return top_two.values[:, 0] - top_two.values[:, 1]
+        return last_logits[idx, answer] - last_logits[idx, counterfactual]
 
     clean_diff = logit_diff(clean_logits).mean().item()
-    logger.info(f"Clean logit diff: {clean_diff:.4f}")
+    logger.info(f"Clean logit diff (answer - counterfactual): {clean_diff:.4f}")
 
     for layer in tqdm(layers_to_patch, desc="Patching layers"):
-        target_module = model.blocks[layer].mlp
-        corrupted_act = corrupted_cache[f"blocks.{layer}.resid_mid"]
+        attn_module = model.blocks[layer].attn
+        resid_pre = clean_cache[f"blocks.{layer}.resid_pre"].to(DEVICE)
+        corrupted_resid_mid = corrupted_cache[f"blocks.{layer}.resid_mid"].to(DEVICE)
 
         for pos in positions_to_patch:
-            patch_act = corrupted_act[:, pos:pos + 1, :].to(DEVICE)
+            target = corrupted_resid_mid[:, pos:pos + 1, :]
+            pre = resid_pre[:, pos:pos + 1, :]
 
-            def make_hook(p_act: torch.Tensor, p_pos: int):
-                def hook(module, input):
-                    x = input[0].clone()
-                    x[:, p_pos:p_pos + 1, :] = p_act
-                    return (x,)
+            def make_hook(
+                p_pos: int, target_resid_mid: torch.Tensor, resid_pre_slice: torch.Tensor
+            ):
+                def hook(module, input, output):
+                    attn_out, kv = output
+                    attn_out = attn_out.clone()
+                    attn_out[:, p_pos:p_pos + 1, :] = target_resid_mid - resid_pre_slice
+                    return (attn_out, kv)
                 return hook
 
-            hook_handle = target_module.register_forward_pre_hook(
-                make_hook(patch_act, pos)
+            hook_handle = attn_module.register_forward_hook(
+                make_hook(pos, target, pre)
             )
 
             with torch.no_grad():
@@ -205,9 +234,98 @@ def run_activation_patching(
     return results
 
 
+def run_path_patching_to_logits(
+    model: DecoderOnlyTransformer,
+    clean_inputs: torch.Tensor,
+    clean_answers: torch.Tensor,
+    corrupted_inputs: torch.Tensor,
+    corrupted_answers: torch.Tensor,
+    heads: list[tuple[int, int]],
+    pos: int = -1,
+    batch_size: int = 32,
+) -> dict:
+    """Path-patch a single head's *direct* contribution to the logits.
+
+    Unlike activation patching (which corrupts resid_mid and lets the
+    corruption propagate through every downstream layer), path patching to
+    the logits isolates one head's direct effect: every other head, every
+    MLP, and this head's own *indirect* effect through later layers stay at
+    their clean values. Only the direct term this head adds to the final
+    residual stream is swapped for its corrupted-run value.
+
+    A head's post-W_O contribution is linearly separable: attn_out at a
+    layer is `W_O(concat_h(head_h_out))`, and W_O applied to a concatenation
+    is the sum of each head's slice through the matching column-block of
+    W_O.weight. So `direct_effect_h = head_h_out @ W_O.weight[:, h_slice].T`.
+
+    `pos` defaults to the last position, matching `clean_answers` /
+    `corrupted_answers` (which are the next-token labels *for the last
+    position* — see make_repeated_token_data). Passing a different `pos`
+    without also supplying labels for that position is not meaningful.
+
+    Returns:
+        dict mapping (layer, head) -> (clean_diff, patched_diff, effect)
+    """
+    model.eval()
+    results: dict = {}
+    batch_size = min(batch_size, clean_inputs.size(0), corrupted_inputs.size(0))
+    n_layers = model.n_layers
+
+    with torch.no_grad():
+        clean_logits, clean_cache = model(clean_inputs[:batch_size], return_cache=True)
+        _, corrupted_cache = model(corrupted_inputs[:batch_size], return_cache=True)
+
+    answer = clean_answers[:batch_size].to(DEVICE)
+    counterfactual = corrupted_answers[:batch_size].to(DEVICE)
+    idx = torch.arange(batch_size, device=DEVICE)
+
+    def logit_diff(logits: torch.Tensor) -> torch.Tensor:
+        # Read at `pos`, not always the last position: since ln_final/unembed
+        # are per-position operations with no further cross-position mixing,
+        # patching resid_final at `pos` only changes logits at that position.
+        pos_logits = logits[:, pos, :]
+        return pos_logits[idx, answer] - pos_logits[idx, counterfactual]
+
+    clean_diff = logit_diff(clean_logits).mean().item()
+    resid_final = clean_cache[f"blocks.{n_layers - 1}.resid_post"].to(DEVICE)
+
+    for layer, head in tqdm(heads, desc="Path patching heads → logits"):
+        attn_module = model.blocks[layer].attn
+        d_head = attn_module.d_head
+        w_o_head = attn_module.W_O.weight[:, head * d_head:(head + 1) * d_head]  # (d_model, d_head)
+
+        probs_clean = clean_cache[f"blocks.{layer}.attn.attn_probs"].to(DEVICE)
+        v_clean = clean_cache[f"blocks.{layer}.attn.V"].to(DEVICE)
+        probs_corrupt = corrupted_cache[f"blocks.{layer}.attn.attn_probs"].to(DEVICE)
+        v_corrupt = corrupted_cache[f"blocks.{layer}.attn.V"].to(DEVICE)
+
+        head_out_clean = (probs_clean[:, head] @ v_clean[:, head])[:, pos, :]
+        head_out_corrupt = (probs_corrupt[:, head] @ v_corrupt[:, head])[:, pos, :]
+
+        direct_delta = (head_out_corrupt - head_out_clean) @ w_o_head.T
+        patched_resid_final = resid_final.clone()
+        patched_resid_final[:, pos, :] = patched_resid_final[:, pos, :] + direct_delta
+
+        with torch.no_grad():
+            h = model.ln_final(patched_resid_final)
+            patched_logits = model.unembed(h)
+
+        patched_diff = logit_diff(patched_logits).mean().item()
+        effect = (clean_diff - patched_diff) / clean_diff if clean_diff != 0 else 0.0
+        results[(layer, head)] = {
+            "clean_diff": clean_diff,
+            "patched_diff": patched_diff,
+            "effect": effect,
+        }
+
+    return results
+
+
 def run_head_ablation(
     model: DecoderOnlyTransformer,
     inputs: torch.Tensor,
+    answers: torch.Tensor,
+    counterfactuals: torch.Tensor,
     induction_heads: list[tuple[int, int]],
     batch_size: int = 32,
 ) -> dict:
@@ -215,17 +333,25 @@ def run_head_ablation(
 
     Uses head_mask on the Attention module to zero a specific head's
     contribution before the W_O projection — clean, no shape issues.
+
+    logit_diff = logits[answer] - logits[counterfactual] (see
+    run_activation_patching's docstring for why this replaces a top1-top2
+    confidence margin).
     """
     model.eval()
-    results = {}
+    results: dict = {}
+    batch_size = min(batch_size, inputs.size(0))
 
     with torch.no_grad():
         clean_logits, _ = model(inputs[:batch_size])
 
-    def logit_diff(logits):
+    answer = answers[:batch_size].to(DEVICE)
+    counterfactual = counterfactuals[:batch_size].to(DEVICE)
+    idx = torch.arange(batch_size, device=DEVICE)
+
+    def logit_diff(logits: torch.Tensor) -> torch.Tensor:
         last_logits = logits[:, -1, :]
-        top_two = last_logits.topk(2, dim=-1)
-        return top_two.values[:, 0] - top_two.values[:, 1]
+        return last_logits[idx, answer] - last_logits[idx, counterfactual]
 
     clean_diff = logit_diff(clean_logits).mean().item()
 
@@ -341,6 +467,7 @@ def plot_head_ablation(
 
 
 def main() -> None:
+    FIGURES_DIR.mkdir(exist_ok=True)
     parser = argparse.ArgumentParser(
         description="Rung 4: Circuit verification via activation patching"
     )
@@ -442,12 +569,16 @@ def main() -> None:
     logger.info("Activation Patching — Causal Circuit Analysis")
     logger.info("=" * 60)
 
-    val_batch = next(iter(val_loader))[0][:32]
-    corrupted = val_batch.clone()
-    # Shuffle each sequence to break the repetition pattern
-    for i in range(corrupted.size(0)):
-        perm = torch.randperm(corrupted.size(1))
-        corrupted[i] = corrupted[i, perm]
+    # Clean and corrupted are two *disjoint* draws from the same induction
+    # task, each with well-defined next-token labels (see
+    # make_repeated_token_data) — not a shuffled/permuted version of the
+    # clean batch, which destroys the repeat structure and leaves no
+    # well-defined "correct answer" for the corrupted run to provide as a
+    # counterfactual.
+    val_x, val_y = val_dataset.tensors
+    n_pair = min(32, val_x.size(0) // 2)
+    val_batch, val_batch_answers = val_x[:n_pair], val_y[:n_pair, -1]
+    corrupted, corrupted_answers = val_x[n_pair:2 * n_pair], val_y[n_pair:2 * n_pair, -1]
 
     layers_to_patch = list(range(args.n_layers))
     positions_to_patch = list(range(max(2, args.seq_len // 4), args.seq_len, 2))
@@ -455,6 +586,8 @@ def main() -> None:
     patching_results = run_activation_patching(
         model=model,
         clean_inputs=val_batch,
+        clean_answers=val_batch_answers,
+        corrupted_answers=corrupted_answers,
         corrupted_inputs=corrupted,
         layers_to_patch=layers_to_patch,
         positions_to_patch=positions_to_patch,
@@ -488,6 +621,8 @@ def main() -> None:
         ablation_results = run_head_ablation(
             model=model,
             inputs=val_batch,
+            answers=val_batch_answers,
+            counterfactuals=corrupted_answers,
             induction_heads=induction_heads,
         )
         plot_head_ablation(
@@ -500,8 +635,28 @@ def main() -> None:
                 f"  Layer {layer}, Head {head}: effect={vals['effect']:.3f} "
                 f"(diff drop: {vals['clean_diff']:.3f} → {vals['ablated_diff']:.3f})"
             )
+
+        # Path patching: isolate each induction head's *direct* effect on
+        # the logits, distinct from activation patching's inclusion of
+        # effects mediated through later layers.
+        logger.info("=" * 60)
+        logger.info("Path Patching — Direct Effect on Logits")
+        logger.info("=" * 60)
+        path_results = run_path_patching_to_logits(
+            model=model,
+            clean_inputs=val_batch,
+            clean_answers=val_batch_answers,
+            corrupted_inputs=corrupted,
+            corrupted_answers=corrupted_answers,
+            heads=induction_heads,
+        )
+        for (layer, head), vals in path_results.items():
+            logger.info(
+                f"  Layer {layer}, Head {head}: direct effect={vals['effect']:.3f} "
+                f"(diff: {vals['clean_diff']:.3f} → {vals['patched_diff']:.3f})"
+            )
     else:
-        logger.info("Skipping head ablation: no induction heads detected.")
+        logger.info("Skipping head ablation and path patching: no induction heads detected.")
 
     # Summary
     logger.info("=" * 60)
@@ -513,6 +668,7 @@ def main() -> None:
     logger.info(f"  Total heads patched: {len(patching_results)}")
     if induction_heads:
         logger.info(f"  Heads ablated: {len(ablation_results)}")
+        logger.info(f"  Heads path-patched: {len(path_results)}")
     logger.info("Done.")
 
 
