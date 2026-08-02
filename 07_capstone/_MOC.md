@@ -14,12 +14,15 @@ Index and links for the capstone phase. Detailed plan: [[07_capstone/README]].
 
 | Rung | Experiment | Status | Code |
 |------|------------|--------|------|
-| 1 | Induction heads | ✅ Complete | `src/experiments/exp1_induction_heads.py` |
-| 2 | Grokking modular addition ★ | ⏳ CPU-bound | `src/experiments/exp2_grokking.py` |
-| 3 | Superposition geometry | ✅ Complete | `src/experiments/exp3_superposition.py` |
-| 4 | Circuit verification (patching) | ✅ Complete | `src/experiments/exp4_circuit_patching.py` |
-| 5 | SAE feature dashboard | ✅ Synthetic | `src/experiments/exp5_sae_dashboard.py` |
+| 1 | Induction heads | ⚠️ Task design fixed, no head detected yet | `src/experiments/exp1_induction_heads.py` |
+| 2 | Grokking modular addition ★ | ⏳ CPU-bound, GPU run pending | `src/experiments/exp2_grokking.py` |
+| 3 | Superposition geometry | ✅ Phase transition confirmed | `src/experiments/exp3_superposition.py` |
+| 4 | Circuit verification (patching) | ⚠️ Fixed, path patching still unvalidated (no real head) | `src/experiments/exp4_circuit_patching.py` |
+| 5 | SAE feature dashboard | ⚠️ Synthetic + real-activation upgrade (informative, not conclusive) | `src/experiments/exp5_sae_dashboard.py` |
 | 6 | Automated vs hand-found circuit | ❌ Descoped | — |
+
+See [[portfolio/RESULTS]] for exact per-rung numbers and the 2026-08-02 Micro-Phase 8
+Honesty Ledger entry — this table is a status summary, not the source of truth.
 
 Rung 6 was removed on 2026-08-01: `exp6_automated_circuit.py` never implemented ACDC —
 it drew numbers from `rng.poisson`/`rng.beta`/`rng.exponential` and plotted them as

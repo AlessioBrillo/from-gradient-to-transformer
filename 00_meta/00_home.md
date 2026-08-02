@@ -9,9 +9,9 @@ Central map of the vault. Everything starts here.
 
 ## Headline Result
 
-The target research contribution: **mechanistic reverse-engineering of a transformer's learned algorithms at micro scale**. The strongest *verified* piece today is induction-head detection + causal activation patching; grokking modular addition (the primary flagship) is not yet reproduced — see [[portfolio/RESULTS]] for exact per-rung status and [[portfolio/README]] for all showcase artifacts.
+The target research contribution: **mechanistic reverse-engineering of a transformer's learned algorithms at micro scale**. The strongest *verified* piece today is Rung 3's superposition phase transition (root-caused and reproduced 2026-08-02 after two prior audits couldn't explain it); grokking modular addition (the primary flagship) is not yet reproduced — see [[portfolio/RESULTS]] for exact per-rung status, [[07_micro-phase-08-evidence-pass]] for the full write-up of the latest evidence pass, and [[portfolio/README]] for all showcase artifacts.
 
-> If you have 30 seconds, read the thesis and the Reproducibility Audit in RESULTS.md. There is no mini-paper yet.
+> If you have 30 seconds, read the thesis and the Reproducibility Audit in RESULTS.md. There is no mini-paper yet, but `portfolio/paper/` has a scaffold.
 
 ## Meta
 - [[01_roadmap]] — the complete path, phase by phase
@@ -20,6 +20,7 @@ The target research contribution: **mechanistic reverse-engineering of a transfo
 - [[04_conventions]] — naming rules, tags, links
 - [[05_glossary]] — term glossary (all linked)
 - [[06_obsidian-setup]] — vault configuration and workflow
+- [[07_micro-phase-08-evidence-pass]] — latest research pass: root causes found, evidence produced
 
 ## Phases
 - [[01_foundations/_MOC|Phase 1 · Foundations]]
