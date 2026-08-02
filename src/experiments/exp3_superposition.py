@@ -1,10 +1,31 @@
 #!/usr/bin/env python3
 """Rung 3 — Toy Models of Superposition.
 
-Reproduces Elhage et al. (Anthropic, 2022): trains a tiny ReLU autoencoder on
-synthetic sparse features and observes the geometric phase transition from
-monosemantic (one feature per neuron) to superposed (many features packed into
-fewer dimensions) as feature sparsity is varied.
+Reproduces Elhage et al. (Anthropic, 2022): trains a tiny linear-encode /
+ReLU-decode autoencoder on synthetic sparse features and observes the
+geometric phase transition from monosemantic (one feature per dimension) to
+superposed (many features packed into fewer dimensions) as feature sparsity
+is varied.
+
+Rewritten 2026-08-02 (Micro-Phase 8, the Evidence Pass) after root-causing
+why the 2026-07-26/2026-08-01 sweeps showed flat, near-zero "recovery" at
+every sparsity level. The answer was architectural, not a parameter bug:
+the previous `SparseFeatureDataset` pre-embedded the sparse features into
+`n_dimensions` space with a random ground-truth matrix *before* the model
+ever saw them, so `ToyAutoencoder` was expanding an already-compressed
+vector back out — not compressing anything. MSE could (and did) reach
+exactly 0.000000 regardless of sparsity, because there was no bottleneck to
+create the interference superposition exists to resolve. See
+05_llm_engineering/proofs/superposition-setup-validity.md for the full
+reconstruction, including the side-by-side run that found this.
+
+This version puts the sparse features directly in the standard basis of
+R^n_features (no invented ground-truth directions to "recover") and forces
+a real bottleneck: encode n_features -> n_dimensions (n_dimensions <
+n_features), decode back with a learned bias. That bias is the second
+missing ingredient — it is what lets the model suppress interference between
+non-orthogonal feature directions by pushing near-zero activations below
+the ReLU floor, which is *how* superposition pays for itself.
 
 Usage:
     python -m src.experiments.exp3_superposition --seed 42
@@ -12,7 +33,7 @@ Usage:
 Output:
     - figures/exp3_feature_geometry.png
     - figures/exp3_phase_change.png
-    - Console: sparsity vs. feature recovery table
+    - Console: sparsity vs. feature-representation table
 """
 
 import argparse
@@ -26,7 +47,9 @@ from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
+from src.experiments.runner import parse_seeds, run_seeds
 from src.reproducibility import set_seed
+from src.results import ResultsManifest, count_parameters
 
 logger = logging.getLogger(__name__)
 
@@ -39,80 +62,85 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 # ---------------------------------------------------------------------------
-# Data: synthetic sparse features
+# Data: synthetic sparse features in the standard basis
 # ---------------------------------------------------------------------------
 class SparseFeatureDataset(TensorDataset):
-    """Generates synthetic sparse features with known ground-truth directions.
+    """Sparse feature vectors directly in R^n_features (Elhage et al. setup).
 
-    Each sample has N_features possible features, of which only a fraction are
-    active (sparsity). Active features have values drawn from a distribution.
-    The features are embedded into D dimensions using a random embedding matrix.
+    Each of `n_features` ground-truth features is active independently with
+    probability `sparsity`; an active feature's magnitude is drawn from
+    Uniform(0, 1). There is no embedding step and no ground-truth direction
+    matrix — the features themselves are the standard basis vectors of
+    R^n_features, and it is the *model's* encoder that must learn a direction
+    for each one under the R^n_dimensions bottleneck. `importance_decay`
+    implements Elhage et al.'s per-feature importance weighting
+    `I_i = decay^i`, used to weight the reconstruction loss so some features
+    matter more than others (decay=1.0 recovers uniform importance).
     """
 
     def __init__(
         self,
         n_features: int,
-        n_dimensions: int,
         sparsity: float,
         num_samples: int,
+        importance_decay: float = 1.0,
         seed: int = 42,
     ) -> None:
         rng = np.random.default_rng(seed)
 
-        # Generate ground-truth feature directions: (n_features, n_dimensions)
-        # Random orthogonal-ish directions
-        W = rng.standard_normal((n_features, n_dimensions))
-        W = W / np.linalg.norm(W, axis=1, keepdims=True)
+        mask = rng.binomial(1, sparsity, size=(num_samples, n_features))
+        magnitude = rng.uniform(0.0, 1.0, size=(num_samples, n_features))
+        features = (mask * magnitude).astype(np.float32)
 
-        # Generate sparse features
-        features = []
-        for _ in range(num_samples):
-            mask = rng.binomial(1, sparsity, size=n_features)
-            vals = mask * rng.exponential(size=n_features)
-            features.append(vals)
-
-        features = np.array(features, dtype=np.float32)
-        W = W.astype(np.float32)
-        embedded = features @ W
-
-        self.W = torch.from_numpy(W)
+        importance = importance_decay ** np.arange(n_features)
+        self.importance = torch.from_numpy(importance.astype(np.float32))
         self.features = torch.from_numpy(features)
-        self.embedded = torch.from_numpy(embedded)
 
-        super().__init__(self.embedded, self.features)
+        # Autoencoder: input and target are the same tensor.
+        super().__init__(self.features, self.features)
 
 
 # ---------------------------------------------------------------------------
-# Model: ReLU autoencoder (toy model)
+# Model: linear-encode, ReLU-decode toy autoencoder (Elhage et al.)
 # ---------------------------------------------------------------------------
 class ToyAutoencoder(nn.Module):
-    """Simple ReLU autoencoder with TIED weights, mirroring Elhage et al.
+    """Canonical Toy Models of Superposition architecture.
 
-    Decoder weights are literally the encoder weights transposed — the same
-    parameter, not a second independently-learned matrix — matching the
-    canonical Toy Models of Superposition setup. A previous version used two
-    separate nn.Linear layers despite a comment claiming they were "tied":
-    with untied weights the model has extra degrees of freedom to minimize
-    reconstruction loss without the encoder rows ever converging to the true
-    generative feature directions, which silently breaks the premise of
-    compute_feature_recovery() (it compares the *encoder's* rows against the
-    ground-truth directions) — a plausible explanation for the flat,
-    near-zero recovery observed across every sparsity level in the
-    2026-07-26 audit. Needs a re-run to confirm.
+        h  = W x                (compress: n_features -> n_dimensions, linear)
+        x' = ReLU(W^T h + b)     (decompress: n_dimensions -> n_features)
+
+    `W` is a single tied parameter (`encoder.weight`, shape
+    `(n_dimensions, n_features)`); the decoder reuses `W^T`, not a second
+    independently-learned matrix. `n_dimensions < n_features` is enforced —
+    without an actual bottleneck there is nothing for superposition to
+    trade off against, which was exactly the defect in the pre-2026-08-02
+    version (see module docstring).
+
+    The decoder bias `b` is what makes packing non-orthogonal feature
+    directions into a shared dimension worthwhile: it lets the model shift
+    small cross-feature interference below zero so ReLU clips it, instead of
+    that interference always corrupting the reconstruction.
     """
 
-    def __init__(self, n_dimensions: int, n_features: int) -> None:
+    def __init__(self, n_features: int, n_dimensions: int) -> None:
         super().__init__()
-        self.encoder = nn.Linear(n_dimensions, n_features, bias=False)
+        if not n_dimensions < n_features:
+            raise ValueError(
+                f"n_dimensions ({n_dimensions}) must be < n_features ({n_features}) "
+                "— without a real bottleneck there is nothing for superposition "
+                "to trade off against."
+            )
+        self.n_features = n_features
+        self.n_dimensions = n_dimensions
+        self.encoder = nn.Linear(n_features, n_dimensions, bias=False)
+        self.decoder_bias = nn.Parameter(torch.zeros(n_features))
 
-    def forward(
-        self, x: torch.Tensor, return_latent: bool = False
-    ) -> tuple[torch.Tensor, torch.Tensor]:
-        latent = torch.relu(self.encoder(x))
-        recon = nn.functional.linear(latent, self.encoder.weight.t())
-        if return_latent:
-            return recon, latent
-        return recon, latent
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        h = self.encoder(x)  # (B, n_dimensions)
+        recon = torch.relu(
+            nn.functional.linear(h, self.encoder.weight.t()) + self.decoder_bias
+        )  # (B, n_features)
+        return recon, h
 
 
 # ---------------------------------------------------------------------------
@@ -121,24 +149,25 @@ class ToyAutoencoder(nn.Module):
 def train_autoencoder(
     model: nn.Module,
     loader: DataLoader,
+    importance: torch.Tensor,
     epochs: int,
     lr: float,
     seed: int,
 ) -> dict:
-    """Train the autoencoder and return reconstruction metrics."""
+    """Train the autoencoder with importance-weighted reconstruction loss."""
     set_seed(seed)
     model = model.to(DEVICE)
+    importance = importance.to(DEVICE)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-    criterion = nn.MSELoss()
 
     history = {"loss": []}
 
-    for epoch in tqdm(range(epochs), desc="Training AE"):
+    for _epoch in tqdm(range(epochs), desc="Training AE"):
         epoch_loss = 0.0
         for x, _ in loader:
             x = x.to(DEVICE)
-            recon, latent = model(x)
-            loss = criterion(recon, x)
+            recon, _latent = model(x)
+            loss = (importance * (recon - x) ** 2).mean()
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -152,75 +181,45 @@ def train_autoencoder(
 # ---------------------------------------------------------------------------
 # Analysis
 # ---------------------------------------------------------------------------
-def compute_feature_recovery(
-    model: nn.Module, dataset: SparseFeatureDataset
-) -> dict:
-    """Measure how well each feature is recovered by the autoencoder.
+def compute_feature_geometry(model: nn.Module, threshold: float = 0.5) -> dict:
+    """Analyze how the model's encoder represents each ground-truth feature.
 
-    For each ground-truth feature, check if there is a corresponding neuron
-    in the autoencoder that selectively activates for it. A feature is
-    "recovered" if the encoder weight direction has cosine similarity > 0.9
-    with the ground-truth feature direction.
+    There is no external ground truth to compare against here — features are
+    the standard basis of R^n_features, so the encoder's own weight columns
+    (one per feature) *are* the learned feature directions. What changes with
+    sparsity is (1) whether a feature gets a nonzero direction at all
+    (`n_represented`, `feature_norms`) and (2) how many dimensions each
+    represented feature effectively gets to itself
+    (`dimensionality`, Elhage et al.'s `D_i = ||W_i||^2 / sum_j (Ŵ_i·W_j)^2`).
 
     Returns:
-        Dict with recovery metrics per feature and overall.
+        Dict with per-feature arrays and summary scalars.
     """
     model.eval()
-    W_gt = dataset.W.numpy()  # (n_features, n_dimensions)
-    W_enc = model.encoder.weight.data.cpu().numpy()  # (n_features, n_dimensions)
+    W = model.encoder.weight.data.cpu().numpy()  # (n_dimensions, n_features)
 
-    # Normalize encoder weights
-    W_enc_norm = W_enc / (np.linalg.norm(W_enc, axis=1, keepdims=True) + 1e-8)
+    feature_norms = np.linalg.norm(W, axis=0)  # (n_features,)
+    n_represented = int((feature_norms > threshold).sum())
 
-    # Cosine similarity matrix: (n_features_gt, n_features_enc)
-    cos_sim = W_gt @ W_enc_norm.T
+    W_hat = W / (feature_norms[np.newaxis, :] + 1e-8)  # unit-norm columns
+    # dots[i, j] = Ŵ_i . W_j  (row i is feature i's normalized direction dotted
+    # against every feature's raw direction, including itself)
+    dots = W_hat.T @ W  # (n_features, n_features)
+    denom = (dots**2).sum(axis=1)
+    dimensionality = (feature_norms**2) / (denom + 1e-8)
 
-    # Best-matching encoder neuron for each ground-truth feature
-    best_match = cos_sim.max(axis=1)
-    recovered = (best_match > 0.9).mean()
-
-    # Monosemanticity: fraction of encoder neurons that match only one feature
-    # (best-matching ground-truth feature per neuron)
-    neuron_best = cos_sim.max(axis=0)
-    n_monosemantic = (neuron_best > 0.9).mean()
-
-    return {
-        "cosine_sim_matrix": cos_sim,
-        "feature_recovery_rate": float(recovered),
-        "monosemantic_neuron_rate": float(n_monosemantic),
-        "mean_cosine_sim": float(best_match.mean()),
-    }
-
-
-def compute_feature_geometry(
-    model: nn.Module, dataset: SparseFeatureDataset
-) -> dict:
-    """Analyze the geometric arrangement of learned features.
-
-    In the superposition regime, features arrange into geometric structures
-    (pentagons, polytopes) in the decoder weight space.
-    """
-    model.eval()
-    # Decoder weights are tied to the encoder (decoder.weight == encoder.weight.T);
-    # see ToyAutoencoder. Read from the encoder directly since there is no
-    # separate decoder parameter.
-    W_dec = model.encoder.weight.data.t().cpu().numpy()  # (n_dimensions, n_features)
-    W_dec_norm = W_dec / (np.linalg.norm(W_dec, axis=0, keepdims=True) + 1e-8)
-
-    # Cosine similarity between decoder feature directions
-    cos_matrix = W_dec_norm.T @ W_dec_norm  # (n_features, n_features)
-    np.fill_diagonal(cos_matrix, 0.0)
-
-    # Average absolute correlation (a measure of superposition)
-    mean_abs_corr = np.abs(cos_matrix).mean()
-
-    # Number of near-orthogonal directions (cosine similarity < 0.1)
-    n_orthogonal = (np.abs(cos_matrix) < 0.1).sum() / cos_matrix.shape[0]
+    gram_normalized = W_hat.T @ W_hat  # (n_features, n_features), cosine similarities
+    off_diagonal = gram_normalized.copy()
+    np.fill_diagonal(off_diagonal, 0.0)
+    mean_abs_correlation = float(np.abs(off_diagonal).mean())
 
     return {
-    "mean_abs_correlation": float(mean_abs_corr),
-        "n_orthogonal_per_feature": float(n_orthogonal),
-        "decoder_cos_matrix": cos_matrix,
+        "feature_norms": feature_norms,
+        "n_represented": n_represented,
+        "dimensionality": dimensionality,
+        "mean_dimensionality": float(dimensionality.mean()),
+        "gram_normalized": gram_normalized,
+        "mean_abs_correlation": mean_abs_correlation,
     }
 
 
@@ -228,13 +227,13 @@ def compute_feature_geometry(
 # Plotting
 # ---------------------------------------------------------------------------
 def plot_feature_geometry(
-    decoder_cos_matrix: np.ndarray,
+    gram_normalized: np.ndarray,
     n_features: int,
     save_path: Path,
 ) -> None:
-    """Heatmap of cosine similarities between decoder feature directions."""
+    """Heatmap of cosine similarities between learned feature directions."""
     fig, ax = plt.subplots(figsize=(8, 7))
-    im = ax.imshow(decoder_cos_matrix, cmap="RdBu_r", vmin=-1, vmax=1)
+    im = ax.imshow(gram_normalized, cmap="RdBu_r", vmin=-1, vmax=1)
     ax.set_title(f"Feature Geometry (n_features={n_features})", fontsize=14)
     ax.set_xlabel("Feature Index")
     ax.set_ylabel("Feature Index")
@@ -248,52 +247,90 @@ def plot_feature_geometry(
 
 def plot_phase_change(
     sparsity_values: list[float],
-    recovery_rates: list[float],
-    monosemantic_rates: list[float],
+    represented_fractions: list[float],
+    mean_dimensionalities: list[float],
     save_path: Path,
 ) -> None:
-    """Plot the phase transition from monosemantic to superposed features."""
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.plot(
+    """Plot the phase transition: fraction of features represented and mean
+    dimensionality per feature, both vs. sparsity."""
+    fig, ax1 = plt.subplots(figsize=(10, 6))
+
+    color1 = "steelblue"
+    ax1.plot(
         sparsity_values,
-        recovery_rates,
+        represented_fractions,
         marker="o",
-        label="Feature Recovery Rate",
         linewidth=2,
-        color="steelblue",
+        color=color1,
+        label="Fraction of Features Represented (‖W_i‖ > τ)",
     )
-    ax.plot(
+    ax1.set_xlabel("Feature Sparsity (probability of activation)")
+    ax1.set_ylabel("Fraction of Features Represented", color=color1)
+    ax1.tick_params(axis="y", labelcolor=color1)
+    ax1.set_xscale("log")
+    ax1.set_ylim(-0.05, 1.05)
+    ax1.grid(True, alpha=0.3)
+
+    color2 = "crimson"
+    ax2 = ax1.twinx()
+    ax2.plot(
         sparsity_values,
-        monosemantic_rates,
+        mean_dimensionalities,
         marker="s",
-        label="Monosemantic Neuron Rate",
         linewidth=2,
-        color="crimson",
+        color=color2,
+        label="Mean Dimensionality per Feature",
     )
-    ax.set_xlabel("Feature Sparsity (probability of activation)")
-    ax.set_ylabel("Rate")
-    ax.set_title("Phase Change: Monosemantic → Superposed Features", fontsize=14)
-    ax.legend()
-    ax.grid(True, alpha=0.3)
-    ax.set_xscale("log")
+    ax2.set_ylabel("Mean Dimensionality (D_i)", color=color2)
+    ax2.tick_params(axis="y", labelcolor=color2)
 
-    # Annotate the phase transition region
-    for i in range(len(sparsity_values) - 1):
-        if recovery_rates[i] > 0.5 and recovery_rates[i + 1] < 0.5:
-            transition_point = (sparsity_values[i] + sparsity_values[i + 1]) / 2
-            ax.axvline(
-                x=transition_point,
-                color="gray",
-                linestyle="--",
-                alpha=0.5,
-                label=f"Transition ~{transition_point:.1e}",
-            )
-            break
+    lines1, labels1 = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines1 + lines2, labels1 + labels2, loc="center left")
 
+    fig.suptitle("Phase Change: Feature Representation vs. Sparsity", fontsize=14)
     fig.tight_layout()
     fig.savefig(save_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     logger.info(f"Saved phase change plot to {save_path}")
+
+
+# ---------------------------------------------------------------------------
+# Multi-seed headline run
+# ---------------------------------------------------------------------------
+def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
+    """Train one autoencoder at a single representative sparsity and return
+    the headline geometry metrics for one seed.
+
+    Used by `--seeds` to aggregate across seeds (see
+    `src.experiments.runner.run_seeds`) instead of running the full,
+    plot-producing sparsity sweep once per seed — the sweep is for the
+    figures; this is for a defensible number with a spread attached to it.
+    """
+    sparsity = args.single_sparsity if args.single_sparsity is not None else 0.01
+    dataset = SparseFeatureDataset(
+        n_features=args.n_features,
+        sparsity=sparsity,
+        num_samples=args.num_samples,
+        importance_decay=args.importance_decay,
+        seed=seed,
+    )
+    loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+    model = ToyAutoencoder(n_features=args.n_features, n_dimensions=args.n_dimensions)
+    train_autoencoder(
+        model=model,
+        loader=loader,
+        importance=dataset.importance,
+        epochs=args.epochs,
+        lr=args.lr,
+        seed=seed,
+    )
+    geometry = compute_feature_geometry(model, threshold=args.threshold)
+    return {
+        "n_represented": float(geometry["n_represented"]),
+        "mean_dimensionality": geometry["mean_dimensionality"],
+        "mean_abs_correlation": geometry["mean_abs_correlation"],
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -309,7 +346,19 @@ def main() -> None:
         "--n-features", type=int, default=20, help="Number of ground-truth features"
     )
     parser.add_argument(
-        "--n-dimensions", type=int, default=5, help="Embedding dimension"
+        "--n-dimensions", type=int, default=5, help="Bottleneck dimension (< n-features)"
+    )
+    parser.add_argument(
+        "--importance-decay",
+        type=float,
+        default=1.0,
+        help="Per-feature importance decay (I_i = decay^i); 1.0 = uniform importance",
+    )
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=0.5,
+        help="Encoder-norm threshold for counting a feature as 'represented'",
     )
     parser.add_argument(
         "--epochs", type=int, default=5000, help="Training epochs per sparsity level"
@@ -328,6 +377,17 @@ def main() -> None:
         help="Run a single sparsity value instead of a sweep",
     )
     parser.add_argument("--quick", action="store_true", help="Quick test (reduced config)")
+    parser.add_argument(
+        "--seeds",
+        type=str,
+        default=None,
+        help=(
+            "Comma-separated seeds (e.g. '0,1,2'). If set, runs the "
+            "headline single-sparsity config across all seeds, saves a "
+            "results/exp3_superposition.json manifest, and skips the "
+            "plot-producing sweep."
+        ),
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -345,6 +405,34 @@ def main() -> None:
 
     set_seed(args.seed)
 
+    if args.seeds:
+        seeds = parse_seeds(args.seeds)
+        sparsity = args.single_sparsity if args.single_sparsity is not None else 0.01
+        logger.info(
+            f"MULTI-SEED MODE: {len(seeds)} seeds {seeds} at sparsity={sparsity} "
+            "(skipping the plot-producing sweep)"
+        )
+        result = run_seeds(lambda s: run_single_seed(s, args), seeds)
+        probe_model = ToyAutoencoder(
+            n_features=args.n_features, n_dimensions=args.n_dimensions
+        )
+        manifest = ResultsManifest.from_run(
+            experiment="exp3_superposition",
+            seeds=seeds,
+            args={k: v for k, v in vars(args).items() if k != "seeds"},
+            per_seed_metrics=result.per_seed,
+            aggregate=result.aggregate,
+            wall_clock_seconds=result.wall_clock_seconds,
+            device=str(DEVICE),
+            n_parameters=count_parameters(probe_model),
+        )
+        manifest_path = Path("results") / "exp3_superposition.json"
+        manifest.save(manifest_path)
+        logger.info(f"Saved multi-seed manifest to {manifest_path}")
+        for key in result.aggregate:
+            logger.info(f"  {key}: {result.summary_line(key)}")
+        return
+
     if args.single_sparsity is not None:
         sparsity_values = [args.single_sparsity]
     else:
@@ -359,9 +447,9 @@ def main() -> None:
 
         dataset = SparseFeatureDataset(
             n_features=args.n_features,
-            n_dimensions=args.n_dimensions,
             sparsity=sparsity,
             num_samples=args.num_samples,
+            importance_decay=args.importance_decay,
             seed=args.seed,
         )
         loader = DataLoader(
@@ -369,83 +457,82 @@ def main() -> None:
         )
 
         model = ToyAutoencoder(
-            n_dimensions=args.n_dimensions,
             n_features=args.n_features,
+            n_dimensions=args.n_dimensions,
         )
 
         train_autoencoder(
             model=model,
             loader=loader,
+            importance=dataset.importance,
             epochs=args.epochs,
             lr=args.lr,
             seed=args.seed,
         )
 
-        recovery = compute_feature_recovery(model, dataset)
-        geometry = compute_feature_geometry(model, dataset)
+        geometry = compute_feature_geometry(model, threshold=args.threshold)
 
         logger.info(
-            f"Feature recovery: {recovery['feature_recovery_rate']:.3f} | "
-            f"Monosemantic rate: {recovery['monosemantic_neuron_rate']:.3f} | "
+            f"Represented: {geometry['n_represented']}/{args.n_features} | "
+            f"Mean dimensionality: {geometry['mean_dimensionality']:.3f} | "
             f"Mean abs corr: {geometry['mean_abs_correlation']:.3f}"
         )
 
         results.append({
             "sparsity": sparsity,
-            **recovery,
+            "n_features": args.n_features,
             **geometry,
         })
 
     # Plot phase change if we did a sweep
     if len(sparsity_values) > 1:
-        recovery_rates = [r["feature_recovery_rate"] for r in results]
-        monosemantic_rates = [r["monosemantic_neuron_rate"] for r in results]
+        represented_fractions = [
+            r["n_represented"] / r["n_features"] for r in results
+        ]
+        mean_dimensionalities = [r["mean_dimensionality"] for r in results]
         plot_phase_change(
             sparsity_values,
-            recovery_rates,
-            monosemantic_rates,
+            represented_fractions,
+            mean_dimensionalities,
             save_path=FIGURES_DIR / "exp3_phase_change.png",
         )
 
     # Plot geometry for the final/default sparsity
     final_result = results[-1]
-    if "decoder_cos_matrix" in final_result:
-        plot_feature_geometry(
-            final_result["decoder_cos_matrix"],
-            n_features=args.n_features,
-            save_path=FIGURES_DIR / "exp3_feature_geometry.png",
-        )
+    plot_feature_geometry(
+        final_result["gram_normalized"],
+        n_features=args.n_features,
+        save_path=FIGURES_DIR / "exp3_feature_geometry.png",
+    )
 
     # Summary table
     logger.info("=" * 60)
     logger.info("SUPERPOSITION EXPERIMENT COMPLETE")
     logger.info("=" * 60)
-    logger.info(f"{'Sparsity':>10} | {'Recovery':>9} | {'Monosemantic':>11} | {'Mean |Corr|':>10}")
-    logger.info("-" * 50)
+    logger.info(
+        f"{'Sparsity':>10} | {'Represented':>11} | {'Mean Dim':>9} | {'Mean |Corr|':>10}"
+    )
+    logger.info("-" * 55)
     for r in results:
         logger.info(
-            f"{r['sparsity']:>10.4f} | {r['feature_recovery_rate']:>9.3f} | "
-            f"{r['monosemantic_neuron_rate']:>11.3f} | "
+            f"{r['sparsity']:>10.4f} | {r['n_represented']:>6d}/{r['n_features']:<4d} | "
+            f"{r['mean_dimensionality']:>9.3f} | "
             f"{r['mean_abs_correlation']:>10.3f}"
         )
 
     # Interpretation
-    high_rec = [r for r in results if r["feature_recovery_rate"] > 0.8]
-    low_rec = [r for r in results if r["feature_recovery_rate"] < 0.2]
-    if high_rec and low_rec:
+    dense = results[0]
+    sparse = results[-1]
+    if dense["n_represented"] < sparse["n_represented"]:
         logger.info(
-            "✓ CONFIRMED phase transition: features transition from "
-            "monosemantic to superposed as sparsity decreases."
-        )
-    elif high_rec:
-        logger.info(
-            "All features are monosemantic at this sparsity range. "
-            "Try lower sparsity values to observe superposition."
+            "✓ CONFIRMED phase transition: more features get represented "
+            "at all as sparsity increases (fewer active at once -> less "
+            "interference pressure -> the bottleneck can host more of them)."
         )
     else:
         logger.info(
-            "Features are in superposition regime. "
-            "Try higher sparsity values to observe monosemantic phase."
+            "No monotonic increase in represented features from dense to "
+            "sparse in this sweep — inspect the full table above."
         )
 
 
