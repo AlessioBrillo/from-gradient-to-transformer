@@ -50,7 +50,12 @@ jobs:
 
       - name: Type check (mypy)
         run: uv run mypy src/ --ignore-missing-imports || true
-        # ponytail: 54 pre-existing errors across experiments — strict mode when codebase cleaned
+        # Non-blocking: 154 strict-mode errors as of 2026-08-01 (mostly
+        # missing generic type args, not caught bugs) — see Makefile's
+        # typecheck target and pyproject.toml [tool.mypy] for the
+        # python_version bug that made this silently report 0 errors for
+        # an unknown period before this date. Tracked as follow-up, not
+        # fixed in this pass.
 
       - name: Test (pytest + coverage)
         run: uv run pytest -v --tb=short --cov=src --cov-report=term-missing

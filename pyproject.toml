@@ -9,17 +9,19 @@ requires-python = ">=3.11"
 dependencies = [
     "torch>=2.2",
     "numpy>=1.26",
-    "transformer-lens>=2.0",
-    "sae-lens>=1.0",
-    "circuitsvis>=1.0",
-    "einops>=0.8",
     "wandb>=0.17",
     "matplotlib>=3.8",
-    "seaborn>=0.13",
     "tqdm>=4.66",
-    "datasets>=2.19",
-    "accelerate>=0.30",
 ]
+
+# Dropped 2026-08-01: transformer-lens, sae-lens, circuitsvis, einops,
+# seaborn, datasets, accelerate were all pinned but never imported anywhere
+# in src/ — every hook, patching routine, and training loop here is
+# hand-rolled by design (see CLAUDE.md thesis). The one prior reference,
+# `transformer_lens.utils.reset_hooks()` in src/reproducibility.py, wasn't
+# even a real TransformerLens function; it silently no-op'd inside an
+# except clause. A dependency manifest should describe what the code uses,
+# not what the project might one day use.
 
 [project.optional-dependencies]
 dev = [
@@ -31,12 +33,6 @@ dev = [
 notebook = [
     "jupyter>=1.0",
     "ipykernel>=6.29",
-]
-paper = [
-    "latexmk",
-]
-sae = [
-    "sae-lens>=1.0",
 ]
 
 [tool.ruff]
@@ -55,7 +51,14 @@ select = ["E", "F", "I", "N", "W"]
 "src/data/*.py" = ["N803", "N806"]  # X is standard ML notation
 
 [tool.mypy]
-python_version = "3.11"
+# Matches the interpreter uv.lock actually resolves to (3.12.12), not the
+# `>=3.11` floor in requires-python above. A `python_version = "3.11"`
+# mismatch here made mypy crash on numpy's stub files (which use 3.12-only
+# PEP 695 `type` statement syntax) before checking a single line of src/ —
+# CI's `mypy ... || true` silently swallowed that crash, so the "54
+# pre-existing errors" comment that lived in the CI workflow was never
+# actually observed; mypy had never gotten far enough to produce it.
+python_version = "3.12"
 strict = true
 ignore_missing_imports = true
 

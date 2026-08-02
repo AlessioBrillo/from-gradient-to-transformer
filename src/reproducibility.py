@@ -1,7 +1,7 @@
 """Global seed control and deterministic execution.
 
-Ensures reproducible experiments across Python random, NumPy, PyTorch,
-and TransformerLens. Every experiment script should call set_seed() at entry.
+Ensures reproducible experiments across Python random, NumPy, and PyTorch.
+Every experiment script should call set_seed() at entry.
 
 Usage:
     from src.reproducibility import set_seed
@@ -10,7 +10,7 @@ Usage:
 
 import os
 import random
-from typing import Optional
+from typing import Any, Callable, Optional
 
 import numpy as np
 
@@ -19,8 +19,7 @@ def set_seed(seed: int = 42, deterministic: bool = True) -> None:
     """Set all random seeds for reproducibility.
 
     Controls Python random, NumPy, PyTorch CPU/CUDA/MPS, and enables PyTorch
-    deterministic algorithms where possible. Also attempts to set seeds for
-    TransformerLens and other libraries if available.
+    deterministic algorithms where possible.
 
     Args:
         seed: Random seed value.
@@ -50,16 +49,8 @@ def set_seed(seed: int = 42, deterministic: bool = True) -> None:
             pass  # older PyTorch version
         os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 
-    # TransformerLens seed (if available)
-    try:
-        import transformer_lens.utils as tl_utils
 
-        tl_utils.reset_hooks()
-    except (ImportError, AttributeError):
-        pass
-
-
-def worker_init_fn(seed: Optional[int] = None) -> callable:
+def worker_init_fn(seed: Optional[int] = None) -> Callable[[int], None]:
     """Returns a worker_init_fn for torch DataLoader reproducibility.
 
     Usage:
@@ -75,9 +66,9 @@ def worker_init_fn(seed: Optional[int] = None) -> callable:
     return _init
 
 
-def seed_info() -> dict:
+def seed_info() -> dict[str, Any]:
     """Report current seed state across frameworks."""
-    info = {
+    info: dict[str, Any] = {
         "python_random": "set" if random.getstate() else "unknown",
         "numpy_seed": int(np.random.get_state()[1][0]),
     }

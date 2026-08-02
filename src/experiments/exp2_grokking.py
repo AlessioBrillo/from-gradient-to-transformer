@@ -38,7 +38,6 @@ logger = logging.getLogger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 FIGURES_DIR = Path("figures")
-FIGURES_DIR.mkdir(exist_ok=True)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -830,6 +829,7 @@ def plot_ablation_curve(
 # Main
 # ---------------------------------------------------------------------------
 def main() -> None:
+    FIGURES_DIR.mkdir(exist_ok=True)
     parser = argparse.ArgumentParser(
         description="Rung 2: Grokking modular addition with Fourier reverse-engineering"
     )
