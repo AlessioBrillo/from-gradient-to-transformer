@@ -3,8 +3,7 @@
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
 <a href="https://github.com/AlessioBrillo/from-gradient-to-transformer/commits/main"><img src="https://badgen.net/github/last-commit/AlessioBrillo/from-gradient-to-transformer" alt="GitHub last commit"></a>
 <a href="https://github.com/AlessioBrillo/from-gradient-to-transformer/actions/workflows/markdown-lint.yml"><img src="https://github.com/AlessioBrillo/from-gradient-to-transformer/actions/workflows/markdown-lint.yml/badge.svg" alt="Markdown Lint"></a>
-<a href="#"><img src="https://badgen.net/badge/tests/passing/green" alt="Tests"></a>
-<a href="#"><img src="https://badgen.net/badge/DOI/10.5281/zenodo.XXXXX/blue" alt="Zenodo DOI"></a>
+<a href="https://github.com/AlessioBrillo/from-gradient-to-transformer/actions/workflows/python-ci.yml"><img src="https://github.com/AlessioBrillo/from-gradient-to-transformer/actions/workflows/python-ci.yml/badge.svg" alt="Python CI"></a>
 
 > **Thesis**: I build a decoder-only transformer from scratch, then reverse-engineer the algorithms it learns. This repository demonstrates end-to-end research capability in mechanistic interpretability — training small models, forming causal hypotheses about their internals, and testing those hypotheses with activation patching, ablations, and sparse dictionary learning.
 
@@ -12,14 +11,25 @@
 
 ## Headline Result
 
-**Grokking on modular addition (a+b mod P) with mechanistic reverse-engineering.** A one-layer transformer learns addition via discrete Fourier transforms and trigonometric identities. I recover this algorithm by decomposing embeddings in Fourier space, define progress measures that reveal training dynamics, and causally confirm the mechanism by ablating individual Fourier frequencies.
+**Induction heads emerging causally in a 2-layer attention-only transformer**, with their
+role verified by activation patching, path patching, and head ablation on
+`src/models/decoder_only_transformer.py`. This is the fallback flagship, and currently the
+strongest result with re-verified code: **grokking on modular addition is the primary
+flagship but is not yet reproduced** — see `portfolio/RESULTS.md` for exactly what is and
+isn't confirmed, and why. A validity pass on 2026-08-01 found and fixed real bugs in three
+of five rungs' causal claims (wrong ablation site, wrong patch site, an internal metric
+that silently disagreed with its own detection threshold); read the Honesty Ledger in
+`portfolio/RESULTS.md` before citing any specific number from this repository.
 
 ```bash
 cd from-gradient-to-transformer
-uv sync && make reproduce  # regenerate all experiment figures and tables
+uv sync && make reproduce-quick  # smoke-test every rung in a few minutes
+uv sync && make reproduce        # full-scale run, hours
 ```
 
-*Primary experiment:* `src/experiments/exp2_grokking.py` · *Mini-paper:* `portfolio/mini-paper/paper.pdf`
+*Primary experiment (unreproduced):* `src/experiments/exp2_grokking.py` · *Strongest
+verified result:* `src/experiments/exp1_induction_heads.py` +
+`src/experiments/exp4_circuit_patching.py`
 
 ---
 
@@ -35,16 +45,24 @@ Every concept is marked as verified only after demonstrating it with an exercise
 
 ## Research Contributions
 
-| Experiment | Question | Status |
-|------------|----------|--------|
-| Rung 1 — Induction heads | Do induction heads emerge in a 2-layer attention-only transformer, and can I verify them causally? | ✅ Complete |
-| Rung 2 — Grokking modular addition **★** | Can I reproduce the grokking phase transition and reverse-engineer the Fourier multiplication algorithm? | ⏳ CPU-bound (P=113 needs GPU) |
-| Rung 3 — Superposition geometry | How do features organize in a toy ReLU autoencoder under varying sparsity? | ✅ Complete |
-| Rung 4 — Circuit patching | Can I find and causally validate a specific circuit via activation/path patching? | ✅ Complete |
-| Rung 5 — Sparse autoencoder | Can I extract interpretable monosemantic features from a small model's residual stream? | ✅ Complete (synthetic activations) |
-| Rung 6 — Automated discovery | How does automated circuit discovery (ACDC) compare against a hand-found circuit? | 🛠 Placeholder (stretch goal) |
+See `portfolio/RESULTS.md` for the authoritative, actively-maintained status table with
+numbers, evidence, and open discrepancies — the table below is a quick pointer, not the
+source of truth, because rung status changes faster than two files can be kept in lockstep
+by hand.
 
-★ — **Primary flagship result.** See `src/experiments/exp2_grokking.py` and [[portfolio/RESULTS]] for the full table.
+| Experiment | Question |
+|------------|----------|
+| Rung 1 — Induction heads | Do induction heads emerge in a 2-layer attention-only transformer, and can I verify them causally? |
+| Rung 2 — Grokking modular addition **★** | Can I reproduce the grokking phase transition and reverse-engineer the Fourier multiplication algorithm? |
+| Rung 3 — Superposition geometry | How do features organize in a toy ReLU autoencoder under varying sparsity? |
+| Rung 4 — Circuit patching | Can I find and causally validate a specific circuit via activation/path patching? |
+| Rung 5 — Sparse autoencoder | Can I extract interpretable monosemantic features from a small model's residual stream? |
+
+Rung 6 (automated circuit discovery vs. hand-found circuit) was descoped on 2026-08-01: its
+placeholder implementation simulated the comparison with random draws instead of running
+ACDC. See `07_capstone/research-plan.md` for the record.
+
+★ — **Primary flagship (not yet reproduced).** See [[portfolio/RESULTS]] for the full table.
 
 ---
 

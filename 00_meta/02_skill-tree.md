@@ -29,7 +29,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
 - [x] Linear/logistic regression (linear feature intuition) — proof: [[02_classical_ml/proofs/linear-logistic-regression]] (exercise: [[02_classical_ml/exercises/ex-01-linear-and-logistic-regression]])
 - [x] Trees / ensembles / boosting — proof: [[02_classical_ml/proofs/trees-ensembles-pca]] (exercise: [[02_classical_ml/exercises/ex-02-decision-trees-and-ensembles]], code: `src/models/tree_model.py`)
 - [x] Support Vector Machines (margin, kernel trick — circuit intuition) — note: [[02_classical_ml/notes/svm-and-margin]]
-- [ ] Naive Bayes
+- [x] Naive Bayes — exercise: [[02_classical_ml/exercises/ex-04-gradient-boosting-and-naive-bayes]]
 - [x] Cross-validation + correct metrics — code: `src/evaluation/metrics.py`
 - [x] Bias/variance diagnosis — note: [[02_classical_ml/notes/bias-variance-and-evaluation]]
 - [x] PCA / dictionary learning — **conceptual ancestor of sparse autoencoders** — proof: [[02_classical_ml/proofs/trees-ensembles-pca]] (exercise: [[02_classical_ml/exercises/ex-03-pca-and-feature-geometry]], code: `src/models/pca.py`)
@@ -40,7 +40,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
 - [x] Optimization (Adam/AdamW, LR schedulers) — note: [[03_deep_learning/notes/training-dynamics-and-grokking]]
 - [x] Regularization (dropout, norm, **weight decay — critical for grokking**) — same note
 - [x] **Grokking dynamics: delayed generalization, phase transitions, progress measures** — same note
-- [ ] RNN/LSTM (vanishing gradient context for why attention matters)
+- [x] RNN/LSTM (vanishing gradient context for why attention matters) — note: [[03_deep_learning/notes/rnn-from-scratch]], exercise: [[03_deep_learning/exercises/ex-02-rnn-and-cnn]]
 
 ## Phase 4 — NLP & Transformers (LOAD-BEARING for MI)
 - [x] BPE tokenizer from scratch — code: `src/models/bpe_tokenizer.py`
@@ -51,7 +51,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
 - [x] **Residual stream as communication channel** — proof: [[04_nlp_and_transformers/proofs/residual-stream-communication-channel]]
 - [x] **Induction heads: prefix-matching + copying mechanism** — proof: [[04_nlp_and_transformers/proofs/circuit-analysis-complete]]
 - [x] **Logit lens: projecting residual stream to vocabulary** — proof: [[04_nlp_and_transformers/proofs/logit-lens]]
-- [x] **Activation patching / path patching / attribution patching** — proof: [[04_nlp_and_transformers/proofs/circuit-analysis-complete]]
+- [x] **Activation patching / path patching** — proof: [[04_nlp_and_transformers/proofs/circuit-analysis-complete]], [[05_llm_engineering/proofs/intervention-validity]]. Both had real bugs (wrong patch site, wrong metric; path patching had no implementation at all) fixed 2026-08-01 — see the intervention-validity proof. Attribution patching (AtP) is a distinct gradient-based approximation and is genuinely not implemented — see the Research Skills section below.
 - [x] **TransformerLens: HookedTransformer, hook points, ActivationCache** — note: [[04_nlp_and_transformers/notes/mi-tooling]]
 - [x] Scaling Laws (Kaplan, Chinchilla) — note: [[04_nlp_and_transformers/notes/scaling-laws]]
 - [ ] Computational optimizations (FlashAttention, KV cache) — breadth
@@ -73,12 +73,12 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
 - [ ] ML system design (minimal — design doc for the capstone pipeline)
 
 ## Research Skills (Mechanistic Interpretability)
-- [x] **Induction head reproduction** — attention-pattern analysis, causal verification
-- [x] **Grokking reproduction + Fourier reverse-engineering** — the primary flagship 🌟 (P=113 needs GPU)
-- [x] **Toy Models of Superposition** — feature geometry, phase changes
-- [x] **Circuit discovery via activation patching** — find + causally validate
-- [x] **Sparse autoencoder training** — SAELens, feature dashboard (synthetic activations)
-- [ ] **Automated circuit discovery** — ACDC, AtP, attribution patching
+- [x] **Induction head reproduction** — attention-pattern analysis, causal verification (ablation site fixed 2026-08-01, see [[05_llm_engineering/proofs/intervention-validity]])
+- [~] **Grokking reproduction + Fourier reverse-engineering** — the primary flagship 🌟, **not yet reproduced**. This was wrongly checked `[x]` before 2026-08-01 — the vault's own rule at the top of this file ("A checked box without proof is a lie you tell yourself") applied to this exact line. The full P=113 run is still pending; the data-split bug that made it structurally unreachable was fixed 2026-07-26 (see [[portfolio/RESULTS]]).
+- [~] **Toy Models of Superposition** — feature geometry, phase changes. Code runs and is tested, but the sweep shows no phase transition (flat/near-zero recovery at every sparsity level) and the root cause is still open — see [[portfolio/RESULTS]] Honesty Ledger.
+- [x] **Circuit discovery via activation + path patching** — find + causally validate (patch site and metric fixed 2026-08-01)
+- [~] **Sparse autoencoder training** — feature dashboard, but on synthetic activations only, never the trained induction-heads model
+- [ ] **Automated circuit discovery** — ACDC, AtP, attribution patching. Descoped 2026-08-01: the placeholder implementation simulated results with random draws instead of running ACDC; deleted.
 - [ ] Mini-paper writing (LaTeX, citations, ablations, limitations)
 
 ## Phase 7 — Capstone

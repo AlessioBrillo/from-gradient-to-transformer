@@ -18,4 +18,4 @@ yet verified** — see [[portfolio/RESULTS]] for exact status per rung.
 | Interactive demo (SAE feature browser) | not built yet (needs real, not synthetic, activations) |
 | Experiment tracking | not set up yet |
 | Code (experiments) | `src/experiments/` |
-| Code (capstone) | `07_capstone/src/` |
+| Code (capstone models) | `src/models/decoder_only_transformer.py` — `07_capstone/src/` is empty; see [[07_capstone/_MOC]] |

@@ -119,3 +119,55 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question: run the Colab notebook for the real P=113 grokking result; root-cause the
   induction-head detection discrepancy; root-cause why Rung 3 shows no phase transition at all
   (metric definition? n_features/n_dimensions ratio? needs more than 2000 epochs?).
+
+## 2026-08-01/02 — Micro-Phase: The Validity Pass
+
+- **Root-caused the 2026-07-26 "diag+1 mass ≈ 1.0 but 0 heads detected" discrepancy**:
+  `compute_attention_entropy` summed per-head induction signal across heads instead of
+  taking the max, putting a `[0, n_heads]`-scale number on a plot with a per-head 0.3
+  threshold line. Not a detection bug — a metric-scale bug. Fixed; re-ran quick mode
+  post-fix and confirmed the honest reading: diag+1 mass peaks at 0.173, genuinely below
+  threshold. No induction heads have formed yet at quick scale within 500 epochs.
+- **Found two more causal-validity bugs by reading, not re-running**: exp1's
+  `causal_ablation` zeroed `W_O`'s output (already mixed across heads) instead of a real
+  head; exp4's activation patching hooked the MLP's normalized input, which never reaches
+  the residual skip, and measured `top1 − top2` (confidence) instead of
+  answer-vs-counterfactual logit diff. Fixed both, with falsification tests that fail
+  against the old code (all-heads-ablation must exactly reproduce the no-attention
+  baseline; self-patching must be an exact no-op).
+- **Added path patching** (`run_path_patching_to_logits`) — had a note and a commit scope
+  but no implementation anywhere in `src/` before this. Isolates a single head's direct
+  effect on the logits via `W_O`'s per-head column-block decomposition.
+- **Fixed RoPE**: `cos`/`sin` were built with `repeat_interleave` (interleaved-pairs
+  convention) but rotated with a `chunk`-based `_rotate_half` (half-split convention) —
+  incompatible layouts. Added a relative-position-invariance test.
+- **Tested the superposition (Rung 3) untied-weights hypothesis and it did not hold.**
+  Tied `decoder.weight` to `encoder.weight.T` (canonical Elhage et al. setup, was two
+  independent matrices despite a comment claiming otherwise) — a real correctness fix, but
+  a re-run at sparsity=0.01 gave 0.100 recovery both before and after. The actual root
+  cause of Rung 3's flat/near-zero recovery is still unexplained.
+- **Deleted Rung 6** (`exp6_automated_circuit.py`) rather than fixing it — it plotted
+  `rng.poisson`/`rng.beta`/`rng.exponential` draws as if they were an ACDC comparison.
+  Labeled a placeholder in logs, but fabricated numbers next to real results are a
+  liability even when labeled.
+- **Re-ran grokking quick mode (P=29) under the fixed split**: still doesn't grok within
+  2000 epochs (val acc 0.0017, Fourier representation 100% dense — no clean algorithmic
+  solution found). The fixed split makes the task solvable in principle; it doesn't by
+  itself produce the phase transition at this scale. The full P=113 GPU run is still the
+  single most important open item in the repository.
+- **Infra**: found and fixed a `mypy` `python_version` mismatch (config said 3.11,
+  `uv.lock` resolves 3.12) that made mypy crash on numpy's stubs before checking a single
+  line of `src/` — the "54 pre-existing errors" comment in CI had never actually been
+  observed. Real strict-mode count: 154 (mostly missing generic type args), left as
+  tracked follow-up. Dropped 7 unused pinned dependencies (`transformer-lens`, `sae-lens`,
+  `circuitsvis`, `einops`, `seaborn`, `datasets`, `accelerate` — none ever imported),
+  removing ~100 transitive packages. Removed a filesystem side effect from `import src`
+  (each experiment module ran `FIGURES_DIR.mkdir()` at module scope).
+- **Corrected several stale `[x]` claims** the vault's own rule calls "a lie you tell
+  yourself": the skill-tree checked "Grokking reproduction" despite Rung 2 never having
+  reproduced, and checked "activation/path/attribution patching" as one bundled line when
+  path patching didn't exist and attribution patching still doesn't.
+- Open question: the P=113 GPU run (via `notebooks/colab_grokking_full_run.ipynb`) is
+  still the top blocker for the primary flagship. Rung 3's root cause is still open. Rung 4
+  needs a clean re-run at both quick and standard scale now that the patch site and metric
+  are fixed — the pre-fix numbers in `portfolio/RESULTS.md` should not be cited.

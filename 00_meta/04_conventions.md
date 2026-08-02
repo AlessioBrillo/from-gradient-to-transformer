@@ -52,9 +52,19 @@ One commit per study session, descriptive message:
 For MI experiments: `feat(grokking): reproduce modular addition with Fourier analysis`.
 
 ## Python code conventions
-- Type hints everywhere (enforced by `mypy --strict` where practical).
+- Type hints everywhere (enforced by `mypy --strict` where practical — as of
+  2026-08-01, strict mode reports 154 errors, mostly missing generic type
+  args; not silently ignored, tracked as follow-up in the Makefile).
 - All experiments accept a `--seed` argument and call `set_seed()` at entry.
-- Every experiment script reports mean ± std over ≥3 seeds.
+- Every experiment script *should* report mean ± std over ≥3 seeds — not yet
+  true of any experiment as of 2026-08-01; there is no seed-loop harness in
+  `src/` yet. Treat single-seed numbers in `portfolio/RESULTS.md` as such
+  until this is built.
 - Import from `src.*` package paths, not relative imports.
-- Experiments use TransformerLens via `HookedTransformer` for hook-based analysis.
+- Experiments are hand-rolled (own `Attention`/hook implementations), not
+  built on TransformerLens — this is deliberate, not a gap: the point of
+  this project is to build and understand the internals directly, not to
+  call a library that already did it. `transformer-lens`, `sae-lens`, and
+  `circuitsvis` were removed from `pyproject.toml` on 2026-08-01 after an
+  audit found none of them were ever imported.
 - Figures are saved to `figures/` AND committed; each figure has a deterministic generating script.
