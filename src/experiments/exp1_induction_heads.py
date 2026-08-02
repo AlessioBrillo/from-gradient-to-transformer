@@ -18,7 +18,7 @@ Output:
 import argparse
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -27,7 +27,9 @@ from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
+from src.experiments.runner import parse_seeds, run_seeds
 from src.reproducibility import set_seed
+from src.results import ResultsManifest, count_parameters
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +39,30 @@ logger = logging.getLogger(__name__)
 FIGURES_DIR = Path("figures")
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# A duplicate token inside the prefix makes "attend to the position after
+# the *first* occurrence of the current token" genuinely ambiguous (several
+# prior occurrences, possibly different correct next tokens) — an ill-posed
+# instance of the task, not a scale limit on the model. Warn above this
+# collision probability; see prefix_duplicate_probability() and
+# 06_production_ai/exercises/ex-03-induction-task-design.md.
+PREFIX_AMBIGUITY_WARN_THRESHOLD = 0.3
+
+
+def prefix_duplicate_probability(vocab_size: int, prefix_len: int) -> float:
+    """Birthday-problem approximation: probability that a length-`prefix_len`
+    prefix drawn uniformly at random from `vocab_size` tokens contains at
+    least one repeated token.
+
+    P(no collision) ~= exp(-k(k-1) / (2n)) for k draws from n items
+    (the standard birthday-paradox approximation), so
+    P(collision) ~= 1 - exp(-k(k-1) / (2n)).
+    """
+    if prefix_len < 2:
+        return 0.0
+    k, n = prefix_len, vocab_size
+    exponent = -(k * (k - 1)) / (2.0 * n)
+    return float(1.0 - np.exp(exponent))
 
 
 # ---------------------------------------------------------------------------
@@ -63,6 +89,16 @@ def make_repeated_token_data(
     solves this by attending from position k to position 0 (matching A_0 with A_0)
     and copying A_1 from position 1.
 
+    This requires the prefix to have no repeated tokens — a duplicate inside
+    the prefix means "the previous occurrence of the current token" is not
+    unique, so there may be several candidate positions to attend to with
+    different correct next tokens. `PREFIX_AMBIGUITY_WARN_THRESHOLD` and
+    `prefix_duplicate_probability()` make this checkable instead of silently
+    assumed; the pre-2026-08-02 defaults (vocab_size=32, prefix_len=32; or
+    vocab_size=16, prefix_len=12 in `--quick`) both landed at ~98-100%
+    collision probability — the task was ill-posed at nearly every position,
+    independent of model scale or training budget.
+
     Args:
         vocab_size: Size of vocabulary.
         seq_len: Total sequence length.
@@ -75,12 +111,24 @@ def make_repeated_token_data(
         Tuple of (train_dataset, val_dataset) where each sample is
         (input_ids, target_ids) shaped (seq_len-1,).
     """
+    prefix_len = max(2, int(seq_len * prefix_ratio))
+    collision_p = prefix_duplicate_probability(vocab_size, prefix_len)
+    if collision_p > PREFIX_AMBIGUITY_WARN_THRESHOLD:
+        logger.warning(
+            f"Prefix ambiguity: a {prefix_len}-token prefix drawn from a "
+            f"{vocab_size}-token vocabulary has a {collision_p:.1%} chance "
+            "of containing a repeated token, making the induction task "
+            "ill-posed at those positions (multiple valid 'previous "
+            "occurrences' with different correct next tokens). Increase "
+            "vocab_size or shorten the prefix to bring this below "
+            f"{PREFIX_AMBIGUITY_WARN_THRESHOLD:.0%}."
+        )
+
     rng = np.random.default_rng(seed)
 
     def _generate(n: int) -> torch.Tensor:
         sequences = []
         for _ in range(n):
-            prefix_len = max(2, int(seq_len * prefix_ratio))
             # Random prefix: the unique tokens
             prefix = rng.integers(0, vocab_size, size=prefix_len).tolist()
             # Repeat the prefix to fill the rest of the sequence
@@ -280,8 +328,19 @@ def train_model(
     weight_decay: float,
     seed: int,
     use_wandb: bool = False,
+    fresh_batches_fn: Optional[Callable[[int], DataLoader]] = None,
 ) -> dict:
-    """Train the model and return training curves."""
+    """Train the model and return training curves.
+
+    `fresh_batches_fn`, if given, is called once per epoch with the epoch
+    index and must return a fresh `DataLoader` sampled from a new set of
+    sequences — used to test whether a fixed, epoch-reused dataset lets the
+    model memorize specific sequences rather than learn the general
+    prefix-matching-and-copying rule (Olsson et al. resample continuously;
+    the pre-2026-08-02 version reused one fixed dataset, reshuffled, for the
+    entire run). When `None`, `train_loader` is reused every epoch as
+    before.
+    """
     set_seed(seed)
     model = model.to(DEVICE)
 
@@ -321,9 +380,11 @@ def train_model(
     }
 
     for epoch in tqdm(range(epochs), desc="Training"):
+        epoch_loader = fresh_batches_fn(epoch) if fresh_batches_fn is not None else train_loader
+
         model.train()
         epoch_loss = 0.0
-        for x, y in train_loader:
+        for x, y in epoch_loader:
             x, y = x.to(DEVICE), y.to(DEVICE)
             optimizer.zero_grad()
             logits, _ = model(x, record_attn=False)
@@ -337,7 +398,7 @@ def train_model(
             epoch_loss += loss.item() * x.size(0)
 
         scheduler.step()
-        train_loss = epoch_loss / len(train_loader.dataset)
+        train_loss = epoch_loss / len(epoch_loader.dataset)
         val_loss, val_acc = evaluate(model, val_loader)
 
         # Attention metrics every 50 epochs
@@ -431,6 +492,26 @@ def analyze_induction_heads(
         induction_heads_by_layer.append(induction_heads)
 
     return induction_heads_by_layer, all_patterns
+
+
+def _make_fresh_batches_fn(
+    args: argparse.Namespace, seed: int
+) -> Callable[[int], DataLoader]:
+    """Build a per-epoch DataLoader factory: a fresh set of sequences every
+    epoch instead of one fixed set reshuffled — see train_model()'s
+    fresh_batches_fn docstring."""
+
+    def fn(epoch: int) -> DataLoader:
+        dataset, _ = make_repeated_token_data(
+            vocab_size=args.vocab_size,
+            seq_len=args.seq_len,
+            num_train=args.num_train,
+            num_val=1,
+            seed=seed * 1_000_003 + epoch + 1,
+        )
+        return DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+
+    return fn
 
 
 def causal_ablation(
@@ -538,6 +619,66 @@ def plot_training_curves(
 
 
 # ---------------------------------------------------------------------------
+# Multi-seed headline run
+# ---------------------------------------------------------------------------
+def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
+    """Train one induction-heads run end-to-end and return headline metrics
+    for one seed. Mirrors main()'s single-seed data/model/train/analysis
+    steps, minus plotting and model-saving — used by `--seeds` to aggregate
+    across seeds via `src.experiments.runner.run_seeds`.
+    """
+    train_dataset, val_dataset = make_repeated_token_data(
+        vocab_size=args.vocab_size,
+        seq_len=args.seq_len,
+        num_train=args.num_train,
+        num_val=1024,
+        seed=seed,
+    )
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
+
+    model = AttentionOnlyTransformer(
+        vocab_size=args.vocab_size,
+        d_model=args.d_model,
+        n_layers=args.n_layers,
+        n_heads=args.n_heads,
+        max_seq_len=args.seq_len,
+    )
+
+    fresh_batches_fn = _make_fresh_batches_fn(args, seed) if args.fresh_batches else None
+
+    history = train_model(
+        model=model,
+        train_loader=train_loader,
+        val_loader=val_loader,
+        epochs=args.epochs,
+        lr=args.lr,
+        weight_decay=args.weight_decay,
+        seed=seed,
+        use_wandb=False,
+        fresh_batches_fn=fresh_batches_fn,
+    )
+
+    induction_heads, _all_patterns = analyze_induction_heads(model, val_loader)
+    total_induction = sum(len(h) for h in induction_heads)
+    peak_diag1 = float(np.max(history["diag1_mass"])) if history["diag1_mass"] else 0.0
+
+    drops = []
+    for layer_idx, heads in enumerate(induction_heads):
+        for head_idx in heads:
+            ablated_acc = causal_ablation(model, val_loader, layer_idx, head_idx)
+            drops.append(history["val_acc"][-1] - ablated_acc)
+    mean_ablation_drop = float(np.mean(drops)) if drops else 0.0
+
+    return {
+        "final_val_acc": float(history["val_acc"][-1]),
+        "total_induction_heads": float(total_induction),
+        "peak_diag1_mass": peak_diag1,
+        "mean_ablation_drop": mean_ablation_drop,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 def main() -> None:
@@ -546,7 +687,18 @@ def main() -> None:
         description="Rung 1: Induction heads in a 2-layer attention-only transformer"
     )
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
-    parser.add_argument("--vocab-size", type=int, default=32, help="Vocabulary size")
+    parser.add_argument(
+        "--vocab-size",
+        type=int,
+        default=2048,
+        help=(
+            "Vocabulary size. Default raised from 32 (2026-08-02): with the "
+            "default seq-len/prefix-ratio (prefix_len=32), vocab_size=32 gave "
+            "a ~100%% chance of a repeated token inside the prefix, making "
+            "the induction task ill-posed at most positions independent of "
+            "model scale. See prefix_duplicate_probability()."
+        ),
+    )
     parser.add_argument("--seq-len", type=int, default=64, help="Sequence length")
     parser.add_argument(
         "--d-model", type=int, default=64, help="Model dimension"
@@ -576,6 +728,28 @@ def main() -> None:
     parser.add_argument(
         "--save-model", action="store_true", help="Save trained model"
     )
+    parser.add_argument(
+        "--fresh-batches",
+        action="store_true",
+        help=(
+            "Resample a fresh set of training sequences every epoch instead "
+            "of reusing one fixed set (reshuffled). Tests whether the fixed "
+            "dataset lets the model memorize specific sequences rather than "
+            "learn prefix-matching-and-copying (Olsson et al. resample "
+            "continuously)."
+        ),
+    )
+    parser.add_argument(
+        "--seeds",
+        type=str,
+        default=None,
+        help=(
+            "Comma-separated seeds (e.g. '0,1,2'). If set, runs the full "
+            "train+analysis pipeline once per seed, saves a "
+            "results/exp1_induction_heads.json manifest, and skips "
+            "plotting/model-saving."
+        ),
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -584,7 +758,7 @@ def main() -> None:
     )
 
     if args.quick:
-        args.vocab_size = 16
+        args.vocab_size = 256
         args.seq_len = 24
         args.d_model = 32
         args.n_layers = 2
@@ -598,6 +772,37 @@ def main() -> None:
     logger.info(f"Arguments: {vars(args)}")
 
     set_seed(args.seed)
+
+    if args.seeds:
+        seeds = parse_seeds(args.seeds)
+        logger.info(
+            f"MULTI-SEED MODE: {len(seeds)} seeds {seeds} "
+            f"(fresh_batches={args.fresh_batches}, skipping plots/model-save)"
+        )
+        result = run_seeds(lambda s: run_single_seed(s, args), seeds)
+        probe_model = AttentionOnlyTransformer(
+            vocab_size=args.vocab_size,
+            d_model=args.d_model,
+            n_layers=args.n_layers,
+            n_heads=args.n_heads,
+            max_seq_len=args.seq_len,
+        )
+        manifest = ResultsManifest.from_run(
+            experiment="exp1_induction_heads",
+            seeds=seeds,
+            args={k: v for k, v in vars(args).items() if k != "seeds"},
+            per_seed_metrics=result.per_seed,
+            aggregate=result.aggregate,
+            wall_clock_seconds=result.wall_clock_seconds,
+            device=str(DEVICE),
+            n_parameters=count_parameters(probe_model),
+        )
+        manifest_path = Path("results") / "exp1_induction_heads.json"
+        manifest.save(manifest_path)
+        logger.info(f"Saved multi-seed manifest to {manifest_path}")
+        for key in result.aggregate:
+            logger.info(f"  {key}: {result.summary_line(key)}")
+        return
 
     # Data
     train_dataset, val_dataset = make_repeated_token_data(
@@ -629,6 +834,10 @@ def main() -> None:
     logger.info(f"Model parameters: {n_params:,}")
 
     if not args.no_train:
+        fresh_batches_fn = (
+            _make_fresh_batches_fn(args, args.seed) if args.fresh_batches else None
+        )
+
         # Train
         history = train_model(
             model=model,
@@ -639,6 +848,7 @@ def main() -> None:
             weight_decay=args.weight_decay,
             seed=args.seed,
             use_wandb=args.wandb,
+            fresh_batches_fn=fresh_batches_fn,
         )
 
         # Plot training curves
