@@ -27,7 +27,15 @@ jobs:
 
       - uses: actions/setup-python@v7
         with:
-          python-version: '3.11'
+          python-version: '3.12'
+        # Matches uv.lock's resolved interpreter (3.12.12) and
+        # pyproject.toml's [tool.mypy] python_version. A prior mismatch here
+        # (3.11 pinned while the lockfile resolved 3.12) made mypy crash on
+        # numpy's PEP-695 stub syntax before checking a single line of
+        # src/ — silently swallowed by `|| true` below, so the "54
+        # pre-existing errors" comment that used to live in this file was
+        # never actually observed. See pyproject.toml's [tool.mypy] comment
+        # and portfolio/RESULTS.md's Honesty Ledger (2026-08-01 entry).
 
       - name: Install uv
         run: pip install uv
@@ -48,14 +56,36 @@ jobs:
       - name: Lint (ruff)
         run: uv run ruff check src/ tests/
 
-      - name: Type check (mypy)
-        run: uv run mypy src/ --ignore-missing-imports || true
-        # Non-blocking: 154 strict-mode errors as of 2026-08-01 (mostly
-        # missing generic type args, not caught bugs) — see Makefile's
-        # typecheck target and pyproject.toml [tool.mypy] for the
-        # python_version bug that made this silently report 0 errors for
-        # an unknown period before this date. Tracked as follow-up, not
-        # fixed in this pass.
+      - name: Type check — blocking (modules built clean from the start)
+        run: uv run mypy src/results.py src/experiments/runner.py --ignore-missing-imports
+        # A small, deliberately-growing allowlist of modules held to
+        # `mypy --strict` with zero tolerance. New/rewritten modules land
+        # here; existing modules move here as their error count is paid
+        # down (see the non-blocking step below) — a ratchet, not a
+        # someday-fix-it-all pass. src/reproducibility.py and src/models/
+        # were checked as candidates and are NOT actually clean (real
+        # pre-existing errors), so they are correctly left out rather than
+        # promised here without being fixed.
+
+      - name: Type check — full tree (non-blocking, tracked follow-up)
+        run: |
+          set +e
+          uv run mypy src/ --ignore-missing-imports
+          code=$?
+          set -e
+          # mypy exit codes: 0 = clean, 1 = type errors reported (the
+          # expected, tracked-as-follow-up case), 2 = mypy itself crashed
+          # (config error, a stub it can't parse, etc.) — that is NOT the
+          # same as "has type errors" and must not be swallowed the way the
+          # old `|| true` here did, which is exactly how a python_version
+          # mismatch crashing mypy on numpy's stubs went unnoticed for an
+          # unknown period (see portfolio/RESULTS.md's Honesty Ledger,
+          # 2026-08-01 entry).
+          if [ "$code" -eq 2 ]; then
+            echo "mypy crashed (exit 2) rather than reporting type errors — failing the build."
+            exit 1
+          fi
+          echo "mypy exited $code; non-blocking (154+ pre-existing errors as of 2026-08-01, mostly missing generic type args — see Makefile's typecheck-strict target)."
 
       - name: Test (pytest + coverage)
         run: uv run pytest -v --tb=short --cov=src --cov-report=term-missing
