@@ -28,7 +28,7 @@ names said:
 | 1 | Ablation zeroed a post-mixing tensor | `exp1_induction_heads.py`, `causal_ablation()` | Hooked `W_O`'s *output* — already mixed across every head — and zeroed an `n_heads`-way slice of it. That zeroes an arbitrary residual-stream subspace, not a head. |
 | 2 | Patch never reached the residual stream | `exp4_circuit_patching.py`, `run_activation_patching()` | Hooked the MLP's *input* (a normalized copy of resid_mid). The residual skip two lines later re-reads the block's own unpatched `x` — the patch changed the MLP branch's output but nothing that survives to the next layer. |
 | 3 | Metric measured confidence, not correctness | same function | `top1 − top2` on the model's own logits. A model confidently wrong scores identically to a model confidently right. |
-| 4 | A plotted metric was on the wrong scale | `exp1_induction_heads.py`, `compute_attention_entropy()` | `diag1_mass` summed per-head induction signal across heads instead of taking the max, putting a `[0, n_heads]`-scale number on a plot with a per-head `0.3` threshold line. This — not a real detection failure — is why the 2026-07-26 audit saw "diag+1 mass ≈ 1.0" next to "0 heads detected": the two numbers were never the same unit. |
+| 4 | A plotted metric was on the wrong scale | `exp1_induction_heads.py`, `compute_attention_entropy()` | `diag1_mass` summed per-head signal across heads instead of taking the max — a `[0, n_heads]`-scale number plotted against a per-head `0.3` threshold. Root cause of the 2026-07-26 "mass ≈ 1.0 but 0 heads detected" discrepancy: never the same unit. |
 
 **Fixes applied**, all with falsification tests that would have failed against the old code
 (see [[05_llm_engineering/proofs/intervention-validity]] for the full reconstruction):
