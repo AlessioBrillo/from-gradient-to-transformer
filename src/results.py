@@ -1,0 +1,238 @@
+"""Results manifests: provenance-carrying JSON records for every experiment
+run, so headline numbers quoted in portfolio/RESULTS.md can be traced back
+to the exact code, config, and seeds that produced them.
+
+Built 2026-08-02 (Micro-Phase 8, the Evidence Pass) — this repository has
+twice shipped documentation ahead of its evidence (see the Honesty Ledger
+in portfolio/RESULTS.md): once with a headline flagship that had never run,
+once with retracted causal-patching numbers left with no replacement. A
+manifest by itself doesn't prevent that; `verify_claims()` / `make
+verify-claims` is the part that actually checks RESULTS.md's claims against
+what's on disk.
+
+Also closes three unchecked lines in checklists/reproducibility-checklist.md
+that are otherwise one field each: parameter count, training time, hardware.
+
+Usage (inside an experiment's main()):
+    from src.results import ResultsManifest
+    from src.experiments.runner import run_seeds
+
+    result = run_seeds(lambda s: run_single_seed(s, args), seeds)
+    manifest = ResultsManifest.from_run(
+        experiment="exp3_superposition", seeds=seeds, args=vars(args),
+        per_seed_metrics=result.per_seed, aggregate=result.aggregate,
+        wall_clock_seconds=result.wall_clock_seconds, device=str(DEVICE),
+    )
+    manifest.save(Path("results/exp3_superposition.json"))
+
+CLI:
+    python -m src.results verify   # checks results/*.json + RESULTS.md tags
+"""
+
+from __future__ import annotations
+
+import json
+import platform
+import re
+import subprocess
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+import torch
+
+MANIFEST_TAG_RE = re.compile(r"<!--\s*manifest:\s*(\S+)\s*-->")
+
+
+def git_provenance() -> tuple[str, bool]:
+    """Return (short SHA, is_dirty). Falls back to ("unknown", True) if git
+    is unavailable — e.g. a tarball export with no .git directory — since an
+    untraceable commit should never be silently treated as clean."""
+    try:
+        sha = subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"], text=True, stderr=subprocess.DEVNULL
+        ).strip()
+        status = subprocess.check_output(
+            ["git", "status", "--porcelain"], text=True, stderr=subprocess.DEVNULL
+        ).strip()
+        return sha, bool(status)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return "unknown", True
+
+
+def count_parameters(model: torch.nn.Module) -> int:
+    """Total trainable parameter count — one of the still-unchecked lines
+    in checklists/reproducibility-checklist.md ("Number of parameters
+    reported per experiment")."""
+    return sum(p.numel() for p in model.parameters())
+
+
+@dataclass
+class ResultsManifest:
+    """Provenance-carrying record of one multi-seed experiment run."""
+
+    experiment: str
+    seeds: list[int]
+    args: dict[str, Any]
+    per_seed_metrics: list[dict[str, float]]
+    aggregate: dict[str, dict[str, float]]
+    wall_clock_seconds: float
+    git_sha: str
+    git_dirty: bool
+    device: str
+    torch_version: str
+    numpy_version: str
+    python_version: str
+    n_parameters: int | None = None
+    created_at: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds")
+    )
+
+    @classmethod
+    def from_run(
+        cls,
+        experiment: str,
+        seeds: list[int],
+        args: dict[str, Any],
+        per_seed_metrics: list[dict[str, float]],
+        aggregate: dict[str, dict[str, float]],
+        wall_clock_seconds: float,
+        device: str,
+        n_parameters: int | None = None,
+    ) -> "ResultsManifest":
+        sha, dirty = git_provenance()
+        # argparse.Namespace values must be JSON-serializable; stringify
+        # anything that isn't (e.g. Path objects) rather than crash on save.
+        clean_args = {k: (v if _is_json_safe(v) else str(v)) for k, v in args.items()}
+        return cls(
+            experiment=experiment,
+            seeds=list(seeds),
+            args=clean_args,
+            per_seed_metrics=per_seed_metrics,
+            aggregate=aggregate,
+            wall_clock_seconds=wall_clock_seconds,
+            git_sha=sha,
+            git_dirty=dirty,
+            device=device,
+            torch_version=torch.__version__,
+            numpy_version=np.__version__,
+            python_version=platform.python_version(),
+            n_parameters=n_parameters,
+        )
+
+    def save(self, path: Path) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(asdict(self), indent=2, default=str))
+
+    @classmethod
+    def load(cls, path: Path) -> "ResultsManifest":
+        data = json.loads(path.read_text())
+        return cls(**data)
+
+
+def _is_json_safe(value: Any) -> bool:
+    return isinstance(value, (str, int, float, bool, type(None), list, dict))
+
+
+# ---------------------------------------------------------------------------
+# Claims verification
+# ---------------------------------------------------------------------------
+def verify_claims(results_dir: Path, claims_file: Path) -> list[str]:
+    """Cross-check results/*.json manifests against portfolio/RESULTS.md.
+
+    Two independent checks:
+    1. Every manifest on disk is internally consistent (well-formed, seed
+       count matches its own aggregate, not recorded against a dirty tree).
+    2. Every `<!-- manifest: path/to/file.json -->` tag in RESULTS.md points
+       at a manifest that actually exists. RESULTS.md is expected to place
+       one such tag next to any headline number it reports — that is the
+       convention this function enforces, not a generic prose parser.
+
+    Returns:
+        A list of problem descriptions; empty means everything checks out.
+    """
+    problems: list[str] = []
+
+    manifest_files = sorted(results_dir.glob("*.json")) if results_dir.exists() else []
+    if not manifest_files:
+        problems.append(
+            f"No manifests found in {results_dir}/ — no headline claim is "
+            "currently traceable to a run."
+        )
+
+    for path in manifest_files:
+        try:
+            m = ResultsManifest.load(path)
+        except Exception as e:  # noqa: BLE001 - report, don't crash the checker
+            problems.append(f"{path}: failed to load as a ResultsManifest ({e})")
+            continue
+
+        if m.git_dirty:
+            problems.append(
+                f"{path}: recorded with a dirty working tree — results may "
+                "not correspond to any committed commit."
+            )
+        if len(m.seeds) != len(m.per_seed_metrics):
+            problems.append(
+                f"{path}: {len(m.seeds)} seeds but "
+                f"{len(m.per_seed_metrics)} per-seed metric records."
+            )
+        for key, stats in m.aggregate.items():
+            if int(stats["n"]) != len(m.seeds):
+                problems.append(
+                    f"{path}: aggregate['{key}']['n']={stats['n']} does not "
+                    f"match {len(m.seeds)} seeds."
+                )
+
+    if claims_file.exists():
+        text = claims_file.read_text()
+        tagged = MANIFEST_TAG_RE.findall(text)
+        if not tagged:
+            problems.append(
+                f"{claims_file}: no <!-- manifest: ... --> tags found — "
+                "none of its numbers are traceable to a manifest."
+            )
+        for rel in tagged:
+            candidate = Path(rel)
+            if not candidate.exists():
+                problems.append(
+                    f"{claims_file}: manifest tag references missing file '{rel}'"
+                )
+    else:
+        problems.append(f"{claims_file}: file not found")
+
+    return problems
+
+
+def _main() -> None:
+    import argparse
+    import sys
+
+    parser = argparse.ArgumentParser(description="Results manifest utilities")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    verify_p = sub.add_parser(
+        "verify", help="Verify results/*.json manifests and RESULTS.md's manifest tags"
+    )
+    verify_p.add_argument("--results-dir", type=Path, default=Path("results"))
+    verify_p.add_argument(
+        "--claims-file", type=Path, default=Path("portfolio/RESULTS.md")
+    )
+
+    args = parser.parse_args()
+
+    if args.command == "verify":
+        problems = verify_claims(args.results_dir, args.claims_file)
+        if problems:
+            print(f"verify-claims: {len(problems)} problem(s) found:")
+            for p in problems:
+                print(f"  - {p}")
+            sys.exit(1)
+        print("verify-claims: all manifests and RESULTS.md tags check out.")
+        sys.exit(0)
+
+
+if __name__ == "__main__":
+    _main()
