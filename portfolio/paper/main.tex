@@ -1,0 +1,103 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage[numbers]{natbib}
+
+\title{From Gradient to Transformer to Circuit: \\
+  \large Reverse-Engineering a Micro-Transformer}
+\author{Alessio Brillo}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+% TODO: write once Rung 2 (grokking) has a real result -- see
+% 00_meta/03_progress-log.md and portfolio/RESULTS.md for current status.
+% This scaffold exists so the paper's structure is decided before the
+% writing starts, not so the writing starts here.
+I build a decoder-only transformer from scratch, then reverse-engineer the
+algorithms it learns: grokking modular addition with Fourier decomposition,
+induction heads, causal circuit verification via activation and path
+patching, and sparse dictionary learning of residual-stream features. This
+document reports what reproduced, what did not, and why -- see the Honesty
+Ledger in \texttt{portfolio/RESULTS.md} for the canonical, continuously
+updated version of this record.
+\end{abstract}
+
+\tableofcontents
+
+\section{Introduction}
+% Thesis, motivation for micro-scale MI, the experiment arc.
+% Source: 07_capstone/research-plan.md, 07_capstone/writeup.md \S1.
+\label{sec:intro}
+
+\section{Related Work}
+% The circuits worldview, grokking literature, circuit discovery, SAEs.
+% Source: 07_capstone/research-plan.md "Canonical Literature Map".
+\label{sec:related}
+
+\section{Grokking Modular Addition}
+% PRIMARY FLAGSHIP. Do not write this section until results/exp2_grokking.json
+% exists -- see 06_production_ai/notes/results-manifests-and-provenance.md.
+\label{sec:grokking}
+
+\subsection{Setup}
+\subsection{The Grokking Curve}
+\subsection{Fourier Reverse-Engineering}
+\subsection{Causal Confirmation via Frequency Ablation}
+
+\section{Induction Heads}
+\label{sec:induction}
+% Source: results/exp1_induction_heads.json once the standard-scale,
+% multi-seed run exists. See
+% 06_production_ai/exercises/ex-03-induction-task-design.md for the
+% task-design fix this rung needed before the number meant anything.
+
+\section{Toy Models of Superposition}
+\label{sec:superposition}
+% Source: results/exp3_superposition.json,
+% 05_llm_engineering/proofs/superposition-setup-validity.md for the
+% architecture-bug reconstruction.
+
+\section{Circuit Verification via Activation and Path Patching}
+\label{sec:patching}
+% Source: results/exp4_circuit_patching.json,
+% 05_llm_engineering/proofs/intervention-validity.md.
+
+\section{Sparse Autoencoder Feature Dashboard}
+\label{sec:sae}
+% Synthetic baseline vs. real activations from the Rung 1 checkpoint --
+% see src/experiments/exp5_sae_dashboard.py --activations-from.
+
+\section{Limitations}
+\label{sec:limitations}
+% Pre-populated from 07_capstone/research-plan.md's "Honest Caveats" --
+% expand with anything specific this pass found, do not just copy verbatim
+% without checking it still holds.
+\begin{itemize}
+  \item Micro-scale models: findings may not transfer to larger (7B+) models.
+  \item Algorithmic tasks (modular addition, repeated tokens) are cleaner
+    than natural language; circuits found here may not be representative
+    of circuits in language models.
+  \item Attribution patching is a linear approximation with known failure
+    modes on large activations (the residual stream); not implemented here
+    -- see the skill tree's Research Skills section.
+  \item Activation patching can mislead via layernorm denominator effects
+    and subspace-projection illusions \citep{makelov2023subspace}.
+  \item SAE interpretability is human-judged and features can be illusory
+    \citep{makelov2023subspace}.
+  \item Single architecture family, single seed distribution (until the
+    multi-seed harness covers every rung) -- no claim of universality.
+\end{itemize}
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}
