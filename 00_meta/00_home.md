@@ -9,7 +9,9 @@ Central map of the vault. Everything starts here.
 
 ## Headline Result
 
-The target research contribution: **mechanistic reverse-engineering of a transformer's learned algorithms at micro scale**. The strongest *verified* piece today is Rung 3's superposition phase transition (root-caused and reproduced 2026-08-02 after two prior audits couldn't explain it); grokking modular addition (the primary flagship) is not yet reproduced — see [[portfolio/RESULTS]] for exact per-rung status, [[07_micro-phase-08-evidence-pass]] for the full write-up of the latest evidence pass, and [[portfolio/README]] for all showcase artifacts.
+The target research contribution: **mechanistic reverse-engineering of a transformer's learned algorithms at micro scale**. The strongest *verified* piece today is Rung 3's superposition phase transition (root-caused and reproduced 2026-08-02 after two prior audits couldn't explain it); grokking modular addition (the primary flagship) is not yet reproduced.
+
+See [[portfolio/RESULTS]] for exact per-rung status, [[07_micro-phase-08-evidence-pass]] for the full write-up of the latest evidence pass, and [[portfolio/README]] for all showcase artifacts.
 
 > If you have 30 seconds, read the thesis and the Reproducibility Audit in RESULTS.md. There is no mini-paper yet, but `portfolio/paper/` has a scaffold.
 
