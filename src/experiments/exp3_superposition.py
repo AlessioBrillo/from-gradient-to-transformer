@@ -34,7 +34,6 @@ logger = logging.getLogger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 FIGURES_DIR = Path("figures")
-FIGURES_DIR.mkdir(exist_ok=True)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -87,20 +86,30 @@ class SparseFeatureDataset(TensorDataset):
 # Model: ReLU autoencoder (toy model)
 # ---------------------------------------------------------------------------
 class ToyAutoencoder(nn.Module):
-    """Simple ReLU autoencoder with tied weights, mirroring Elhage et al."""
+    """Simple ReLU autoencoder with TIED weights, mirroring Elhage et al.
+
+    Decoder weights are literally the encoder weights transposed — the same
+    parameter, not a second independently-learned matrix — matching the
+    canonical Toy Models of Superposition setup. A previous version used two
+    separate nn.Linear layers despite a comment claiming they were "tied":
+    with untied weights the model has extra degrees of freedom to minimize
+    reconstruction loss without the encoder rows ever converging to the true
+    generative feature directions, which silently breaks the premise of
+    compute_feature_recovery() (it compares the *encoder's* rows against the
+    ground-truth directions) — a plausible explanation for the flat,
+    near-zero recovery observed across every sparsity level in the
+    2026-07-26 audit. Needs a re-run to confirm.
+    """
 
     def __init__(self, n_dimensions: int, n_features: int) -> None:
         super().__init__()
         self.encoder = nn.Linear(n_dimensions, n_features, bias=False)
-        # Decoder weights are the encoder weight transpose (tied)
-        # but we learn them separately for flexibility
-        self.decoder = nn.Linear(n_features, n_dimensions, bias=False)
 
     def forward(
         self, x: torch.Tensor, return_latent: bool = False
     ) -> tuple[torch.Tensor, torch.Tensor]:
         latent = torch.relu(self.encoder(x))
-        recon = self.decoder(latent)
+        recon = nn.functional.linear(latent, self.encoder.weight.t())
         if return_latent:
             return recon, latent
         return recon, latent
@@ -192,7 +201,10 @@ def compute_feature_geometry(
     (pentagons, polytopes) in the decoder weight space.
     """
     model.eval()
-    W_dec = model.decoder.weight.data.cpu().numpy()  # (n_dimensions, n_features)
+    # Decoder weights are tied to the encoder (decoder.weight == encoder.weight.T);
+    # see ToyAutoencoder. Read from the encoder directly since there is no
+    # separate decoder parameter.
+    W_dec = model.encoder.weight.data.t().cpu().numpy()  # (n_dimensions, n_features)
     W_dec_norm = W_dec / (np.linalg.norm(W_dec, axis=0, keepdims=True) + 1e-8)
 
     # Cosine similarity between decoder feature directions
@@ -288,6 +300,7 @@ def plot_phase_change(
 # Main
 # ---------------------------------------------------------------------------
 def main() -> None:
+    FIGURES_DIR.mkdir(exist_ok=True)
     parser = argparse.ArgumentParser(
         description="Rung 3: Toy Models of Superposition"
     )
@@ -314,12 +327,19 @@ def main() -> None:
         default=None,
         help="Run a single sparsity value instead of a sweep",
     )
+    parser.add_argument("--quick", action="store_true", help="Quick test (reduced config)")
     args = parser.parse_args()
 
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s | %(levelname)s | %(message)s",
     )
+
+    if args.quick:
+        args.epochs = 2000
+        args.num_samples = 10000
+        logger.info("QUICK MODE: reduced config for fast iteration")
+
     logger.info(f"Device: {DEVICE}")
     logger.info(f"Arguments: {vars(args)}")
 
