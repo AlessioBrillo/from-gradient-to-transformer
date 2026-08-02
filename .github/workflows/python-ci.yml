@@ -57,7 +57,7 @@ jobs:
         run: uv run ruff check src/ tests/
 
       - name: Type check — blocking (modules built clean from the start)
-        run: uv run mypy src/results.py src/experiments/runner.py --ignore-missing-imports
+        run: uv run mypy src/results.py src/experiments/runner.py --ignore-missing-imports --follow-imports=silent
         # A small, deliberately-growing allowlist of modules held to
         # `mypy --strict` with zero tolerance. New/rewritten modules land
         # here; existing modules move here as their error count is paid
@@ -66,6 +66,14 @@ jobs:
         # were checked as candidates and are NOT actually clean (real
         # pre-existing errors), so they are correctly left out rather than
         # promised here without being fixed.
+        # --follow-imports=silent: without it, mypy still type-checks (and
+        # fails the step on errors in) every module these two files
+        # transitively import — e.g. src/experiments/exp1_induction_heads.py
+        # via src/experiments/__init__.py — which made this step block on
+        # the *non-blocking* tier's pre-existing errors instead of only the
+        # two files it actually names. Caught when this exact command
+        # (without the flag) exited 1 in CI despite both target files
+        # individually reporting zero errors.
 
       - name: Type check — full tree (non-blocking, tracked follow-up)
         run: |

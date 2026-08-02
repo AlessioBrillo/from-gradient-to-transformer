@@ -44,8 +44,11 @@ typecheck-strict:
 # and src/models/ were considered for this list and turned out NOT to be
 # clean — real pre-existing errors, not yet fixed — so they stay in the
 # non-blocking full-tree check instead of being wrongly promised here.)
+# --follow-imports=silent: without it, mypy also fails this target on
+# errors in whatever these two files transitively import (caught in CI —
+# see .github/workflows/python-ci.yml's blocking step comment).
 typecheck-new:
-	mypy src/results.py src/experiments/runner.py --ignore-missing-imports
+	mypy src/results.py src/experiments/runner.py --ignore-missing-imports --follow-imports=silent
 
 # --- CI mirror (local replica of .github/workflows/python-ci.yml) ---
 ci-check: lint typecheck-new typecheck test-cov
