@@ -4,22 +4,28 @@
 	reproduce-multiseed verify-claims clean
 
 # --- Environment ---
+# All targets run through `uv run` so they work from any fresh shell after
+# `uv sync`, regardless of whether the project venv is activated or not.
+# Without it, `make reproduce` / `make verify-claims` silently invoked the
+# system interpreter (missing the pinned runtime deps) and `make ci-check`
+# invoked system pytest/ruff/mypy. `uv run` is a no-op passthrough inside an
+# already-activated venv, so this is safe both ways.
 sync:
 	uv sync
 
 # --- Testing ---
 test:
-	pytest -v --tb=short
+	uv run pytest -v --tb=short
 
 test-cov:
-	pytest -v --tb=short --cov=src --cov-report=term-missing
+	uv run pytest -v --tb=short --cov=src --cov-report=term-missing
 
 # --- Linting ---
 lint:
-	ruff check src/ tests/
+	uv run ruff check src/ tests/
 
 lint-fix:
-	ruff check --fix src/ tests/
+	uv run ruff check --fix src/ tests/
 
 # Non-blocking: strict mode currently reports 154+ errors (2026-08-01 count,
 # after fixing a python_version mismatch that previously made mypy crash on
@@ -30,12 +36,12 @@ lint-fix:
 # `|| true`, this still fails on a genuine mypy crash (exit 2) — see
 # .github/workflows/python-ci.yml for why that distinction matters.
 typecheck:
-	@mypy src/ --ignore-missing-imports; code=$$?; \
+	@uv run mypy src/ --ignore-missing-imports; code=$$?; \
 	if [ $$code -eq 2 ]; then echo "mypy crashed (exit 2) — failing."; exit 1; fi; \
 	exit 0
 
 typecheck-strict:
-	mypy src/ --ignore-missing-imports
+	uv run mypy src/ --ignore-missing-imports
 
 # Blocking: a small, deliberately-growing allowlist of modules held to
 # `mypy --strict` with zero tolerance from the day they were written. New
@@ -48,7 +54,7 @@ typecheck-strict:
 # errors in whatever these two files transitively import (caught in CI —
 # see .github/workflows/python-ci.yml's blocking step comment).
 typecheck-new:
-	mypy src/results.py src/experiments/runner.py --ignore-missing-imports --follow-imports=silent
+	uv run mypy src/results.py src/experiments/runner.py --ignore-missing-imports --follow-imports=silent
 
 # --- CI mirror (local replica of .github/workflows/python-ci.yml) ---
 ci-check: lint typecheck-new typecheck test-cov
@@ -59,50 +65,57 @@ ci-check: lint typecheck-new typecheck test-cov
 # reproduce-quick for a fast smoke pass.
 reproduce:
 	@echo "=== Regenerating all experiment figures ==="
-	python -m src.experiments.exp1_induction_heads
-	python -m src.experiments.exp2_grokking
-	python -m src.experiments.exp3_superposition
-	python -m src.experiments.exp4_circuit_patching
-	python -m src.experiments.exp5_sae_dashboard
+	uv run python -m src.experiments.exp1_induction_heads
+	uv run python -m src.experiments.exp2_grokking
+	uv run python -m src.experiments.exp3_superposition
+	uv run python -m src.experiments.exp4_circuit_patching
+	uv run python -m src.experiments.exp5_sae_dashboard
 	@echo "Done. See figures/ and portfolio/RESULTS.md"
 
 reproduce-quick:
 	@echo "=== Smoke-testing all rungs in --quick mode ==="
-	python -m src.experiments.exp1_induction_heads --quick
-	python -m src.experiments.exp2_grokking --quick
-	python -m src.experiments.exp3_superposition --quick
-	python -m src.experiments.exp4_circuit_patching --quick
-	python -m src.experiments.exp5_sae_dashboard --quick
+	uv run python -m src.experiments.exp1_induction_heads --quick
+	uv run python -m src.experiments.exp2_grokking --quick
+	uv run python -m src.experiments.exp3_superposition --quick
+	uv run python -m src.experiments.exp4_circuit_patching --quick
+	uv run python -m src.experiments.exp5_sae_dashboard --quick
 	@echo "Done."
 
 reproduce-grokking:
 	@echo "=== Rung 2: Grokking modular addition (FLAGSHIP) ==="
-	python -m src.experiments.exp2_grokking
+	uv run python -m src.experiments.exp2_grokking
 
 reproduce-induction:
 	@echo "=== Rung 1: Induction heads ==="
-	python -m src.experiments.exp1_induction_heads
+	uv run python -m src.experiments.exp1_induction_heads
 
 reproduce-superposition:
 	@echo "=== Rung 3: Superposition geometry ==="
-	python -m src.experiments.exp3_superposition
+	uv run python -m src.experiments.exp3_superposition
 
 reproduce-patching:
 	@echo "=== Rung 4: Circuit verification via activation/path patching ==="
-	python -m src.experiments.exp4_circuit_patching
+	uv run python -m src.experiments.exp4_circuit_patching
 
 reproduce-sae:
 	@echo "=== Rung 5: SAE feature dashboard ==="
-	python -m src.experiments.exp5_sae_dashboard
+	uv run python -m src.experiments.exp5_sae_dashboard
 
 # --- Multi-seed provenance (Micro-Phase 8, the Evidence Pass) ---
 # `--seeds` support lands per-experiment as each rung is re-verified; Rung 5
 # (exp5_sae_dashboard) doesn't have it yet (see 00_meta/03_progress-log.md).
+# IMPORTANT (fixed 2026-08-05): these must reproduce the exact configs behind
+# the committed manifests / portfolio/RESULTS.md, NOT blanket `--quick`.
+# exp1's Tiny multi-seed table is the 150-epoch fresh-batches config and exp3's
+# is single_sparsity=0.01 at 600 epochs/8000 samples; `--quick` silently
+# swapped both for the reduced config (500/2000 epochs, no single_sparsity),
+# producing numbers that did not match the claims. exp4's quick config is the
+# one its committed manifest actually used, so it stays `--quick`.
 reproduce-multiseed:
 	@echo "=== Multi-seed runs -> results/*.json ==="
-	python -m src.experiments.exp1_induction_heads --quick --seeds 0,1,2
-	python -m src.experiments.exp3_superposition --quick --seeds 0,1,2
-	python -m src.experiments.exp4_circuit_patching --quick --seeds 0,1,2
+	uv run python -m src.experiments.exp1_induction_heads --fresh-batches --vocab-size 256 --seq-len 16 --d-model 24 --n-layers 2 --n-heads 4 --epochs 150 --lr 0.001 --weight-decay 0.1 --batch-size 32 --num-train 256 --seeds 0,1,2
+	uv run python -m src.experiments.exp3_superposition --epochs 600 --num-samples 8000 --batch-size 512 --single-sparsity 0.01 --seeds 0,1,2
+	uv run python -m src.experiments.exp4_circuit_patching --quick --seeds 0,1,2
 	@echo "Done. See results/*.json"
 
 # Fails if a headline number in portfolio/RESULTS.md has no manifest
@@ -110,7 +123,7 @@ reproduce-multiseed:
 # pointing at a manifest that doesn't exist / doesn't match its own seed
 # count). See src/results.py.
 verify-claims:
-	python -m src.results verify
+	uv run python -m src.results verify
 
 # --- Cleanup ---
 clean:
