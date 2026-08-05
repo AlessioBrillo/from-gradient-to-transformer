@@ -44,11 +44,11 @@
     }
   ],
   "aggregate": {
-    "final_val_acc": {
-      "mean": 0.004665798611111111,
-      "std": 0.0011674459771104833,
-      "min": 0.0037760416666666667,
-      "max": 0.006315104166666667,
+    "mean_ablation_drop": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
       "n": 3.0
     },
     "peak_diag1_mass": {
@@ -65,21 +65,21 @@
       "max": 0.0,
       "n": 3.0
     },
-    "mean_ablation_drop": {
-      "mean": 0.0,
-      "std": 0.0,
-      "min": 0.0,
-      "max": 0.0,
+    "final_val_acc": {
+      "mean": 0.004665798611111111,
+      "std": 0.0011674459771104833,
+      "min": 0.0037760416666666667,
+      "max": 0.006315104166666667,
       "n": 3.0
     }
   },
-  "wall_clock_seconds": 80.50390207700184,
-  "git_sha": "6a5a54f",
-  "git_dirty": true,
+  "wall_clock_seconds": 55.45306468899798,
+  "git_sha": "092cb92",
+  "git_dirty": false,
   "device": "cpu",
   "torch_version": "2.12.1+cu130",
   "numpy_version": "2.5.0",
   "python_version": "3.12.12",
   "n_parameters": 17424,
-  "created_at": "2026-08-02T12:36:42+00:00"
+  "created_at": "2026-08-05T21:37:19+00:00"
 }

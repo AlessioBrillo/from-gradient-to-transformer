@@ -13,6 +13,20 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-05
+- Studied: state review of all five rungs ahead of the flagship sprint; confirmed the
+  dependency chain that blocks the paper (Rung 1 domino → Rungs 4/5), the stale-manifest
+  problem, and the environment trap (bare `python`/`pytest` resolve outside `.venv`).
+- Built: [[00_meta/08_micro-phase-09-flagship-sprint]] (full roadmap: 8 steps, deep-dive
+  topics, exercises, gate criteria); wired the home MOC; fixed Makefile targets to run via
+  `uv run` and made `src/`/`src/experiments/` package init lazy (no more importing every
+  experiment's torch/matplotlib stack on `import src`); re-baselined the exp1/3/4
+  multi-seed manifests at HEAD → `make verify-claims` back to green.
+- Verified: local CI mirror green (ruff, blocking mypy, 158 pytest).
+- Open question: does a standard-scale fresh-batches run form a real induction head —
+  the single experiment that decides Rungs 1, 4, and 5 in one step; and does grokking
+  grok at P=113 on the Colab GPU (launch first, analyze while it waits).
+
 ## 2026-06-16
 - Studied: 3Blue1Brown Essence of Linear Algebra (#2 span/basis, #5 3D, #7 column/null space, #8 nonsquare, #9 dot products/duality, #13 change of basis, #15 eigenvalue trick, #16 abstract vector spaces)
 - Built: 7 new notes, 1 new exercise, 1 proof template; updated all cross-links; added norms section to dot-products note; fixed matrix notation formatting for Obsidian compatibility
