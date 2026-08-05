@@ -22,7 +22,8 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[07_micro-phase-08-evidenc
 - [[04_conventions]] — naming rules, tags, links
 - [[05_glossary]] — term glossary (all linked)
 - [[06_obsidian-setup]] — vault configuration and workflow
-- [[07_micro-phase-08-evidence-pass]] — latest research pass: root causes found, evidence produced
+- [[08_micro-phase-09-flagship-sprint]] — next phase: roadmap to unblock the two flagships (grokking P=113 + induction heads at standard scale)
+- [[07_micro-phase-08-evidence-pass]] — previous pass: root causes found, evidence produced
 
 ## Phases
 - [[01_foundations/_MOC|Phase 1 · Foundations]]
