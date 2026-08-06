@@ -238,26 +238,31 @@ per epoch) and `--seeds` (multi-seed manifest) added 2026-08-02.
 
 **Status**: [ ] Not reproduced. The train/val split bug that made this structurally
 unreachable was fixed 2026-07-26. The full P=113 run needing GPU-hours still has not been
-executed — this is the single most important open item in the repository, and the
-2026-08-01 validity pass deliberately did not spend its budget chasing it, since fixing
-the three actively-wrong causal claims in Rungs 1 and 4 was higher priority than a compute
-bottleneck. See `notebooks/colab_grokking_full_run.ipynb` for a ready-to-run Colab notebook.
+executed — this is the single most important open item in the repository. The 2026-08-06
+probe run finished the CPU-side de-risking (below): *the pipeline runs clean and the
+failure to grok is a small-P phenomenon, not a recipe bug that a probe could catch*.
+The P=113 GPU run is ready to go the moment a Colab session is available
+(`notebooks/colab_grokking_full_run.ipynb`).
 
-| Metric | Quick Test (P=29, fixed split, re-run 2026-08-01) | Full Run (P=113) |
-|--------|-------------------|-------------------|
-| Modulus P | 29 | 113 |
-| Train fraction | 30% | 30% |
-| Epochs | 2000 | 5000+ |
-| Final val accuracy | 0.0017 | not yet run |
-| Generalization epoch | none (-1) | not yet run — needs ~5.5h on CPU or minutes on a free Colab GPU |
-| Fourier frequencies used | 29 / 29 (100% — dense, no clean algorithmic solution found) | not yet run |
+| Metric | P=29 (2026-08-01) | P=59 probe (2026-08-06) | Full Run (P=113) |
+|--------|-------------------|-------------------------|-------------------|
+| Modulus P | 29 | 59 | 113 |
+| Train fraction | 30% | 30% | 30% |
+| Epochs | 2000 | 1500 ctx / 3000 drill / wd 0.3 drill | 5000+ |
+| Final val accuracy | 0.0017 | 0.0000–0.0012 (all three drills) | not yet run |
+| Generalization epoch | none (-1) | none (-1), all drills | not yet run — needs ~5.5h CPU or minutes on a Colab GPU |
+| Fourier frequencies used | 29 / 29 dense | 59 / 59 dense (all drills) | not yet run |
 
-The fixed split makes the task well-posed (every class is reachable), but P=29 at 2000
-epochs still does not grok — consistent with the roadmap's own note that small P lacks the
-combinatorial diversity for the Fourier algorithm to emerge, and with the quick-mode
-config generally trading fidelity for speed. This is a genuine negative result, not the
-old bug: the model *can* solve this task in principle now, it just hasn't within this
-budget. The full P=113 run remains the only way to see the actual grokking transition.
+The fixed split makes the task well-posed (every class is reachable), but no small-P
+run groks: P=29 at 2000 epochs, P=59 at 1500 epochs, P=59 at 3000 epochs (val loss
+*rising* into the 9s at the end — active memorization, not slow progress), and P=59
+at weight decay 0.3. Combined with the Fourier ablation (keep 59/59 frequencies →
+0.0000) this is three P-values / two budgets / two weight-decay regimes pointing the
+same way: small P lacks the combinatorial diversity for the Fourier algorithm to
+emerge within a fixed budget. The full P=113 run remains the only way to see the
+actual grokking transition; the probes narrowed the residual risk to P=113 itself
+(the embedding re-normalization and cosine schedule are the named suspects if it
+fails there too).
 
 **Bug fixed 2026-07-26** (see Honesty Ledger above): the split held out by target class,
 not equation, making some output classes structurally unreachable. Fixed to hold out
@@ -265,7 +270,9 @@ random `(a, b)` pairs.
 
 **Reference**: Nanda et al., "Progress Measures for Grokking via Mechanistic Interpretability," ICLR 2023 (oral).
 
-**Figures**: `figures/exp2_grokking_curve.png`, `figures/exp2_fourier_weights.png`, `figures/exp2_frequency_ablation.png`, `figures/exp2_progress_measures.png`
+**Figures**: `figures/exp2_grokking_curve.png`, `figures/exp2_fourier_weights.png`,
+`figures/exp2_frequency_ablation.png`, `figures/exp2_progress_measures.png` — current
+contents are the last probe run (no-grokking sweeps), not a grokking curve.
 
 ---
 
@@ -300,17 +307,21 @@ real, small seed-to-seed spread, not noise-free).
 Expected (Elhage et al.): as sparsity decreases (features rarely co-active), interference
 pressure drops and the model represents more features. **Observed: exactly this — 10/20 at
 the densest setting rising to 20/20 by sparsity=0.05, holding through 0.002.** (The drop to
-16/20 at the sparsest setting, 0.001, is plausibly under-training — very few active samples
-per feature at that sparsity with a fixed 8000-sample budget — not yet independently
-confirmed.) The old flat/near-zero "recovery" numbers above the fix are struck through in
+16/20 at the sparsest setting, 0.001, is a genuine capacity limit — the 2000-vs-600-epoch
+drill (2026-08-06) refuted the under-training hypothesis (see the MP10 honesty
+ledger).) The old flat/near-zero "recovery" numbers above the fix are struck through in
 spirit, not deleted from this table's history: the root cause was that the model had no
 actual compression to perform (the dataset pre-embedded features before the model saw
 them), not a metric-scale issue, not a training-budget issue, and not the untied-weights
 hypothesis tested 2026-08-01. `mean_dimensionality` sits close to `1/n_dimensions × n_avg`
-across the sweep as expected for features sharing the bottleneck roughly evenly; it has not
-yet been checked against the known small-case (5 features → 2 dimensions should show a
-clean pentagon in the Gram matrix) that would confirm the geometric claims beyond the
-represented-feature count.
+across the sweep as expected for features sharing the bottleneck roughly evenly.
+
+**Geometry check (2026-08-06, 5 features → 2 dims)**: the small-case Gram check is now
+done — at and below sparsity 0.1 the 5 directions sit on a regular pentagon (gaps
+70.2–73.8°, std ≤ 1.4° vs ideal 72°; best 71.6–73.0°, std 0.5° at sparsity 0.02);
+the dense regime (0.2–0.5) is 4/5 represented and off-pentagon (std 22°+). The
+equiangular geometry is the sparse-phase attractor, not a dense-phase property.
+Figure: `figures/exp3_pentagon_geometry.png`.
 
 **Reference**: Elhage et al., "Toy Models of Superposition," Transformer Circuits Thread (Anthropic), 2022.
 

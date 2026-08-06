@@ -9,6 +9,8 @@ from src.experiments.exp1_induction_heads import (
     AttentionOnlyBlock,
     AttentionOnlyTransformer,
     causal_ablation,
+    diagnose_induction_formation,
+    k_composition_scores,
     make_repeated_token_data,
     prefix_duplicate_probability,
     train_model,
@@ -222,6 +224,105 @@ class TestPrefixAmbiguityWarning:
                 vocab_size=4096, seq_len=16, num_train=4, num_val=2, seed=0
             )
         assert not any("Prefix ambiguity" in r.message for r in caplog.records)
+
+
+class TestKComposition:
+    """Falsification tests for the K-composition detector (Micro-Phase 11,
+    Nanda & Jacobsen 2023 Step 2). The detector must find a hand-constructed
+    L0 duplicate-token head + L1 K-composition chain, and must return null
+    on random patterns, self-attention, and wrong offsets."""
+
+    @staticmethod
+    def _onehot_attn(keys: list) -> torch.Tensor:
+        """Build a (1, 1, S, S) 1-hot attention stack: query q attends to
+        key keys[q]. Causal (no attending to the future)."""
+        S = len(keys)
+        probs = torch.zeros(1, 1, S, S)
+        for q, k in enumerate(keys):
+            probs[0, 0, q, k] = 1.0
+        return probs
+
+    def test_detects_hand_built_chain(self) -> None:
+        """L0 attends to q-2 (a 'previous occurrence'), L1 attends to
+        prev+1 = q-1: the detector must score this ~1.0."""
+        S = 8
+        p0 = self._onehot_attn([0] + [q - 2 for q in range(1, S)])
+        p1 = self._onehot_attn([0, 0] + [q - 1 for q in range(2, S)])
+        scores = k_composition_scores(p0, p1)
+        assert scores[0, 0] > 0.9, f"Expected ~1.0, got {scores[0, 0]:.3f}"
+
+    def test_rejects_self_attention(self) -> None:
+        """L1 attending to itself would trivially score 1.0 on a prev=q-1
+        pattern; the self-attention guard must exclude it."""
+        S = 8
+        p0 = self._onehot_attn([0] + [q - 1 for q in range(1, S)])
+        p1 = self._onehot_attn([0] + [q for q in range(1, S)])  # self
+        scores = k_composition_scores(p0, p1)
+        assert scores[0, 0] < 0.1, f"Self-attention should score ~0, got {scores[0, 0]:.3f}"
+
+    def test_rejects_wrong_offset(self) -> None:
+        """L1 attending to prev+2 instead of prev+1 must score low."""
+        S = 10
+        p0 = self._onehot_attn([0] + [q - 3 for q in range(1, S)])
+        p1 = self._onehot_attn([0, 0, 0] + [q - 1 for q in range(3, S)])  # prev+2
+        scores = k_composition_scores(p0, p1)
+        assert scores[0, 0] < 0.1, f"Wrong offset should score ~0, got {scores[0, 0]:.3f}"
+
+    def test_rejects_random_patterns(self) -> None:
+        """Uniformly random attention must score at the uniform baseline
+        (1/S per cell), not trigger the detector."""
+        torch.manual_seed(0)
+        S = 16
+        p0 = torch.ones(1, 1, S, S) / S
+        p1 = torch.ones(1, 1, S, S) / S
+        scores = k_composition_scores(p0, p1)
+        assert abs(scores[0, 0] - 1.0 / S) < 0.02, (
+            f"Uniform patterns should score ~1/S, got {scores[0, 0]:.3f}"
+        )
+
+    def test_diagnose_returns_both_steps(self) -> None:
+        """diagnose_induction_formation must report Step 1 and Step 2
+        independently on a hand-built two-layer stack."""
+        S = 8
+        p0 = self._onehot_attn([0] + [q - 2 for q in range(1, S)])
+        p1 = self._onehot_attn([0, 0] + [q - 1 for q in range(2, S)])
+        diag = diagnose_induction_formation([p0, p1])
+        assert diag["best_l0_head"] == 0
+        assert diag["best_l1_head"] == 0
+        assert diag["step2_k_composition"] > 0.9
+        assert diag["l0_peakedness"] > 0.9
+
+    def test_diagnose_on_tiny_trained_model(self) -> None:
+        """End-to-end smoke: the diagnostic runs on a real (tiny) trained
+        model and returns the full report structure."""
+        torch.manual_seed(0)
+        model = AttentionOnlyTransformer(
+            vocab_size=16, d_model=16, n_layers=2, n_heads=2, max_seq_len=16
+        )
+        train, val = make_repeated_token_data(
+            vocab_size=16, seq_len=12, num_train=32, num_val=16, seed=0
+        )
+        train_loader = DataLoader(train, batch_size=8)
+        val_loader = DataLoader(val, batch_size=8)
+        train_model(
+            model=model, train_loader=train_loader, val_loader=val_loader,
+            epochs=2, lr=1e-3, weight_decay=0.0, seed=0,
+        )
+        model.eval()
+        collected: list[list] = [[], []]
+        with torch.no_grad():
+            for x, _ in val_loader:
+                _, attn = model(x, record_attn=True)
+                for layer_idx, pat in enumerate(attn):
+                    collected[layer_idx].append(pat)
+                break
+        all_patterns = [torch.cat(c, dim=0) for c in collected]
+        diag = diagnose_induction_formation(all_patterns)
+        assert set(diag) >= {
+            "step1_l0_duplicate_mass", "l0_peakedness",
+            "step2_k_composition", "best_l0_head", "best_l1_head",
+        }
+        assert len(diag["step1_l0_duplicate_mass"]) == 2
 
 
 class TestFreshBatches:
