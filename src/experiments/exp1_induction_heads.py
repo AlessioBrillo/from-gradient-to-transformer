@@ -723,6 +723,17 @@ def main() -> None:
         "--quick", action="store_true", help="Quick test (reduced config)"
     )
     parser.add_argument(
+        "--standard",
+        action="store_true",
+        help=(
+            "Canonical standard-scale config (Micro-Phase 10 pinning): "
+            "vocab_size=2048, seq_len=64, d_model=64, 2 layers, 4 heads, "
+            "fresh-batches on, epochs=3000, num_train=8192. The single "
+            "config Rungs 1/4/5 must share so the cascade measures one "
+            "model, not three similar ones."
+        ),
+    )
+    parser.add_argument(
         "--wandb", action="store_true", help="Log metrics to Weights & Biases"
     )
     parser.add_argument(
@@ -767,6 +778,21 @@ def main() -> None:
         args.num_train = 1024
         args.batch_size = 32
         logger.info("QUICK MODE: reduced config for fast iteration")
+
+    if args.standard:
+        args.vocab_size = 2048
+        args.seq_len = 64
+        args.d_model = 64
+        args.n_layers = 2
+        args.n_heads = 4
+        args.epochs = 3000
+        args.num_train = 8192
+        args.batch_size = 64
+        args.fresh_batches = True
+        logger.info(
+            "STANDARD MODE: canonical standard-scale config "
+            "(vocab=2048, seq=64, d_model=64, fresh-batches, epochs=3000)"
+        )
 
     logger.info(f"Device: {DEVICE}")
     logger.info(f"Arguments: {vars(args)}")

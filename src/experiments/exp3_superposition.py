@@ -223,6 +223,85 @@ def compute_feature_geometry(model: nn.Module, threshold: float = 0.5) -> dict:
     }
 
 
+def compute_feature_angles(weight: np.ndarray) -> list[float]:
+    """Angles in degrees of each encoder direction in R^2 (n_dimensions=2).
+
+    Elhage et al.'s canonical small case: 5 features into 2 dimensions must
+    land on the vertices of an approximate pentagon — directions evenly
+    spaced around the circle at ~72° apart. This function extracts the
+    unordered set of absolute angles so `angular_gap_metrics()` can check
+    that spacing claim against the learned encoder.
+    """
+    if weight.shape[0] != 2:
+        raise ValueError(
+            f"compute_feature_angles requires n_dimensions=2, got {weight.shape[0]}"
+        )
+    angles = np.degrees(np.arctan2(weight[1], weight[0])) % 360.0
+    return sorted(angles.tolist())
+
+
+def angular_gap_metrics(angles: list[float]) -> dict:
+    """Gaps between consecutive angles (circularly), the pentagon check.
+
+    For n features evenly spaced on a circle the consecutive gaps are all
+    ~360/n. Report the gap list plus min/max/std so the reader can judge
+    "pentagon-like" quantitatively instead of by eye. A clean pentagon
+    (n=5, evenly spaced) gives gaps of 72.0, 72.0, 72.0, 72.0, 72.0.
+    """
+    sorted_angles = sorted(angles)
+    n = len(sorted_angles)
+    gaps = [
+        (sorted_angles[(i + 1) % n] - sorted_angles[i]) % 360.0 for i in range(n)
+    ]
+    return {
+        "n_directions": n,
+        "gap_degrees": gaps,
+        "gap_min": float(min(gaps)),
+        "gap_max": float(max(gaps)),
+        "gap_std": float(np.std(gaps, ddof=0)),
+        "expected_gap": 360.0 / n if n else 0.0,
+    }
+
+
+def is_pentagon_like(gap_metrics: dict, min_gap: float = 45.0) -> bool:
+    """True if the direction spacing is roughly equiangular (the pentagon
+    arrangement). Heuristic: every consecutive gap exceeds `min_gap` and the
+    spread (std) is small relative to the expected gap."""
+    if gap_metrics["n_directions"] < 3:
+        return False
+    expected = gap_metrics["expected_gap"]
+    return gap_metrics["gap_min"] >= min_gap and gap_metrics["gap_std"] < 0.35 * expected
+
+
+def plot_feature_directions(
+    angles: list[float],
+    save_path: Path,
+    sparsity: float,
+    n_features: int,
+) -> None:
+    """Polar plot of the learned feature directions — the pentagon check
+    rendered as geometry instead of numbers."""
+    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw={"projection": "polar"})
+    theta = np.radians(angles)
+    ax.scatter(theta, np.ones(len(theta)), s=120, color="steelblue", zorder=3)
+    for t, angle in zip(theta, angles):
+        ax.annotate(f"{angle:.0f}°", (t, 1.05), ha="center", fontsize=9)
+    expected_gap = 360.0 / n_features
+    ideal = np.radians(np.arange(n_features) * expected_gap)
+    ax.scatter(ideal, np.ones(n_features), marker="x", s=80, color="crimson", zorder=4)
+    ax.set_title(
+        f"Learned Feature Directions (sparsity={sparsity}, {n_features} features, "
+        f"2 dims) — x: ideal {expected_gap:.0f}° spacing",
+        fontsize=10,
+        pad=20,
+    )
+    ax.set_ylim(0, 1.25)
+    fig.tight_layout()
+    fig.savefig(save_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    logger.info(f"Saved feature direction geometry to {save_path}")
+
+
 # ---------------------------------------------------------------------------
 # Plotting
 # ---------------------------------------------------------------------------
@@ -378,6 +457,16 @@ def main() -> None:
     )
     parser.add_argument("--quick", action="store_true", help="Quick test (reduced config)")
     parser.add_argument(
+        "--geometry-check",
+        action="store_true",
+        help=(
+            "Run the known small case — 5 features into 2 dimensions — and "
+            "check that represented features land on an approximate pentagon "
+            "(equiangular ~72 degree spacing in the Gram matrix). Trains at "
+            "several sparsities and reports angular-gap metrics per level."
+        ),
+    )
+    parser.add_argument(
         "--seeds",
         type=str,
         default=None,
@@ -431,6 +520,67 @@ def main() -> None:
         logger.info(f"Saved multi-seed manifest to {manifest_path}")
         for key in result.aggregate:
             logger.info(f"  {key}: {result.summary_line(key)}")
+        return
+
+    if args.geometry_check:
+        logger.info("=" * 60)
+        logger.info("PENTAGON GEOMETRY CHECK (5 features -> 2 dimensions)")
+        logger.info("=" * 60)
+        sparsity_values = [0.5, 0.2, 0.1, 0.05, 0.02, 0.01]
+        logger.info(
+            f"{'Sparsity':>10} | {'Represented':>10} | {'Gap min':>8} | "
+            f"{'Gap max':>8} | {'Gap std':>8} | {'Pentagon-like':>14}"
+        )
+        logger.info("-" * 68)
+        final_gaps = None
+        for sparsity in sparsity_values:
+            dataset = SparseFeatureDataset(
+                n_features=5,
+                sparsity=sparsity,
+                num_samples=args.num_samples,
+                importance_decay=args.importance_decay,
+                seed=args.seed,
+            )
+            loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+            model = ToyAutoencoder(n_features=5, n_dimensions=2)
+            train_autoencoder(
+                model=model,
+                loader=loader,
+                importance=dataset.importance,
+                epochs=args.epochs,
+                lr=args.lr,
+                seed=args.seed,
+            )
+            geometry = compute_feature_geometry(model, threshold=args.threshold)
+            W = model.encoder.weight.data.cpu().numpy()
+            angles = compute_feature_angles(W)
+            gaps = angular_gap_metrics(angles)
+            pentagon = is_pentagon_like(gaps)
+            logger.info(
+                f"{sparsity:>10.4f} | {geometry['n_represented']:>6d}/5 | "
+                f"{gaps['gap_min']:>8.1f} | {gaps['gap_max']:>8.1f} | "
+                f"{gaps['gap_std']:>8.1f} | {str(pentagon):>14}"
+            )
+            final_gaps = (gaps, sparsity, angles)
+        if final_gaps is not None:
+            gaps, sparsity, angles = final_gaps
+            plot_feature_directions(
+                angles,
+                save_path=FIGURES_DIR / "exp3_pentagon_geometry.png",
+                sparsity=sparsity,
+                n_features=5,
+            )
+            if is_pentagon_like(gaps):
+                logger.info(
+                    "✓ CONFIRMED: learned directions are approximately "
+                    f"equiangular (gaps {gaps['gap_min']:.1f}-{gaps['gap_max']:.1f}°, "
+                    f"std {gaps['gap_std']:.1f}° vs ideal {gaps['expected_gap']:.1f}°)"
+                )
+            else:
+                logger.warning(
+                    "Directions are not pentagon-like at the sparsest level — "
+                    "the geometric claim needs a closer look (see figure)."
+                )
         return
 
     if args.single_sparsity is not None:

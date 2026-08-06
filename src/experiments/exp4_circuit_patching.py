@@ -595,6 +595,16 @@ def main() -> None:
     parser.add_argument("--num-train", type=int, default=8192, help="Training samples")
     parser.add_argument("--quick", action="store_true", help="Quick test mode")
     parser.add_argument(
+        "--standard",
+        action="store_true",
+        help=(
+            "Canonical standard-scale config (Micro-Phase 10 pinning), "
+            "identical to exp1's --standard so the cascade's three rungs "
+            "measure one shared model: vocab_size=2048, seq_len=64, "
+            "d_model=64, 2 layers, 4 heads, epochs=3000, num_train=8192."
+        ),
+    )
+    parser.add_argument(
         "--no-train", action="store_true", help="Skip training (untrained model)"
     )
     parser.add_argument(
@@ -623,6 +633,19 @@ def main() -> None:
         args.epochs = 500
         args.num_train = 1024
         logger.info("QUICK MODE: reduced config for fast iteration")
+
+    if args.standard:
+        args.vocab_size = 2048
+        args.seq_len = 64
+        args.d_model = 64
+        args.n_layers = 2
+        args.n_heads = 4
+        args.epochs = 3000
+        args.num_train = 8192
+        logger.info(
+            "STANDARD MODE: canonical standard-scale config matching exp1 "
+            "--standard (vocab=2048, seq=64, d_model=64, epochs=3000)"
+        )
 
     logger.info(f"Device: {DEVICE}")
     logger.info(f"Arguments: {vars(args)}")

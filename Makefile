@@ -1,7 +1,9 @@
 .PHONY: sync test test-cov lint lint-fix typecheck typecheck-strict typecheck-new \
 	ci-check reproduce reproduce-quick reproduce-grokking reproduce-induction \
 	reproduce-superposition reproduce-patching reproduce-sae \
-	reproduce-multiseed verify-claims clean
+	reproduce-multiseed verify-claims clean \
+	reproduce-grokking-probe reproduce-induction-standard reproduce-induction-1layer \
+	reproduce-exp3-geometry
 
 # --- Environment ---
 # All targets run through `uv run` so they work from any fresh shell after
@@ -85,6 +87,27 @@ reproduce-grokking:
 	@echo "=== Rung 2: Grokking modular addition (FLAGSHIP) ==="
 	uv run python -m src.experiments.exp2_grokking
 
+# Micro-Phase 10 (the Evidence Run) pinned canonical configs. The names
+# below are the single source of truth for what "standard scale" means —
+# Rungs 1/4/5 must use the exp1 --standard config so the cascade measures
+# one shared model. The grokking probe is the CPU de-risk step that runs
+# BEFORE any GPU hours are spent on P=113.
+reproduce-grokking-probe:
+	@echo "=== Rung 2: P=59 CPU de-risk probe (canonical hyperparams) ==="
+	uv run python -m src.experiments.exp2_grokking --probe
+
+reproduce-induction-standard:
+	@echo "=== Rung 1: standard-scale fresh-batches (the domino) ==="
+	uv run python -m src.experiments.exp1_induction_heads --standard
+
+reproduce-induction-1layer:
+	@echo "=== Rung 1: 1-layer headless lower bound (matched config) ==="
+	uv run python -m src.experiments.exp1_induction_heads --standard --n-layers 1
+
+reproduce-exp3-geometry:
+	@echo "=== Rung 3: pentagon geometry check (5 features -> 2 dims) ==="
+	uv run python -m src.experiments.exp3_superposition --geometry-check
+
 reproduce-induction:
 	@echo "=== Rung 1: Induction heads ==="
 	uv run python -m src.experiments.exp1_induction_heads
@@ -102,8 +125,12 @@ reproduce-sae:
 	uv run python -m src.experiments.exp5_sae_dashboard
 
 # --- Multi-seed provenance (Micro-Phase 8, the Evidence Pass) ---
-# `--seeds` support lands per-experiment as each rung is re-verified; Rung 5
-# (exp5_sae_dashboard) doesn't have it yet (see 00_meta/03_progress-log.md).
+# `--seeds` support lands per-experiment as each rung is re-verified. exp2
+# (grokking) has it but its standard-scale manifest comes from the Colab run
+# via scripts/pin_colab_run.py — running P=113 x3 seeds here would burn CPU
+# hours. exp5 (SAE) gained --seeds in Micro-Phase 10 but is left out of this
+# target to keep the clean-clone gate fast; its manifest is produced by the
+# explicit `--seeds` invocation when the real-activation re-test runs.
 # IMPORTANT (fixed 2026-08-05): these must reproduce the exact configs behind
 # the committed manifests / portfolio/RESULTS.md, NOT blanket `--quick`.
 # exp1's Tiny multi-seed table is the 150-epoch fresh-batches config and exp3's
