@@ -253,3 +253,44 @@ it at every rung that fits this machine's CPU budget.
   run to see whether a real induction head actually forms — the fixed-vs-fresh comparison
   strongly suggests it's reachable, hasn't been confirmed at standard scale. Rung 5's real-vs-synthetic
   comparison should be re-run once Rung 1 produces a checkpoint with a confirmed head.
+
+## 2026-08-06 — Micro-Phase 10: The Evidence Run
+
+Micro-Phase 9 left three blockers: grokking never reproduced, no induction head ever
+formed, Rung 4/5 blocked on a head checkpoint. This pass built the instruments that
+unblock them — every measure that a GPU run needs exists *before* the run, so GPU
+hours are spent once, correctly. See [[09_micro-phase-10-evidence-run]].
+
+- **Grokking progress measures committed** (`fourier_sparsity_progress`,
+  `weight_norm_progress`, `--progress-interval`): the phase transition is defined as
+  val-accuracy crossing with the Fourier sparsity as the algorithmic-solution witness
+  and weight norm as the weight-decay signature — checkpoints can't record a crossover
+  without the witnesses anymore.
+- **CPU de-risk path for the flagship**: `--probe` (P=59, 1500 epochs, high weight
+  decay) validates the canonical recipe on this machine before any GPU hour is spent;
+  the canonical P=113 config (`d_model=128`, 4 heads, `d_mlp=512`) is pinned in CLI
+  defaults.
+- **Canonical R1/R4 configs pinned in code**: `--standard` on exp1 and exp4
+  (`vocab_size=2048, seq_len=64, d_model=64, n_layers=2, n_heads=4, epochs=3000,
+  num_train=8192, batch_size=64`, fresh batches on) — one committed config per rung.
+- **SAE joined the multi-seed harness** (`exp5 --seeds`); `ResultsManifest.notes`
+  added so Colab runs can carry provenance; `scripts/pin_colab_run.py` refuses to
+  record results against a mismatched commit SHA; `scripts/clean_clone_check.sh`
+  gates the fresh-clone → sync → CI → multi-seed → verify-claims sequence.
+- **Rung 3 geometry instrumented**: `--geometry-check` measures the feature-direction
+  angles against a regular pentagon (`compute_feature_angles`, `angular_gap_metrics`,
+  `is_pentagon_like`). Sweep across 6 sparsities: represented features sit on a
+  regular pentagon at every level (gaps 70.6–72.8°, std 0.8° vs ideal 72°); the phase
+  transition is dropout *within* the geometry, and a pure-cosine reconstruction
+  correctly measures non-pentagon (0.83). Figure:
+  `figures/exp3_pentagon_geometry.png`.
+- **Honesty ledger: under-training at sparsity 0.001 refuted.** 2000 vs 600 epochs,
+  one variable changed: 15/20 represented (vs 16/20) with dimensionality 0.246 —
+  a genuine capacity limit at extreme sparsity, not a compute shortfall. The 16/20
+  count was run-to-run noise; the honest claim is 14–16/20 capacity-limited.
+- **Infra**: Makefile targets `reproduce-grokking-probe`, `reproduce-induction-standard`,
+  `reproduce-induction-1layer`, `reproduce-exp3-geometry`; tests 161 → 168.
+- Open question: the P=113 GPU run (next step, via
+  `notebooks/colab_grokking_full_run.ipynb`) and the standard-scale Rung 1 run are
+  both fully instrumented and unpulled. The Rung 3 capacity-limit claim at sparsity
+  0.001 could be sharpened with a wider AE (more hidden units) if it matters later.

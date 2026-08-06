@@ -106,6 +106,7 @@ class ResultsManifest:
     created_at: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds")
     )
+    notes: str | None = None
 
     @classmethod
     def from_run(
@@ -118,6 +119,7 @@ class ResultsManifest:
         wall_clock_seconds: float,
         device: str,
         n_parameters: int | None = None,
+        notes: str | None = None,
     ) -> "ResultsManifest":
         sha, dirty = git_provenance()
         # argparse.Namespace values must be JSON-serializable; stringify
@@ -137,6 +139,7 @@ class ResultsManifest:
             numpy_version=np.__version__,
             python_version=platform.python_version(),
             n_parameters=n_parameters,
+            notes=notes,
         )
 
     def save(self, path: Path) -> None:
