@@ -494,6 +494,143 @@ def analyze_induction_heads(
     return induction_heads_by_layer, all_patterns
 
 
+def k_composition_scores(p0: torch.Tensor, p1: torch.Tensor) -> np.ndarray:
+    """K-composition scores between a layer-0 head set and a layer-1 head set.
+
+    Nanda & Jacobsen (2023), "Attention as a Step Towards the Emergence of
+    the Induction Head", Step 2: in K-composition, the layer-1 head attends
+    from query position q to `prev(q) + 1`, where `prev(q)` is the position
+    the layer-0 duplicate-token head attended to at q (the previous
+    occurrence of the current token) and +1 is the position holding the
+    token to copy. The induction head is the composition of Step 1 (L0
+    duplicate head) and Step 2 (L1 K-composition).
+
+    Returns a (n_heads_0, n_heads_1) matrix: row h0's `prev` combined with
+    column h1's attention.
+
+    Self-attention guard: queries where `prev(q) + 1 == q` are excluded —
+    a head attending to itself would trivially score 1.0 on a shift-by-one
+    prev pattern without being an induction head at all. This makes the
+    detector falsifiable (see TestKComposition).
+    """
+    B, H0, S, _ = p0.shape
+    H1 = p1.shape[1]
+    if B == 0 or S == 0:
+        return np.zeros((H0, H1))
+
+    prev = p0.argmax(dim=-1)  # (B, H0, S): position L0 head h0 attended to at q
+    target = prev + 1  # (B, H0, S): position one token after it
+    qs = torch.arange(S, device=p0.device)
+    # Gate: in-bounds, and the L0 head must actually point at a *different*
+    # position than q — a head attending to itself is not a previous-
+    # occurrence signal, and a head attending to q-1 (prev+1 == q) is plain
+    # self-attention, not induction.
+    valid = (target < S) & (prev != qs) & (target != qs)
+
+    scores = np.zeros((H0, H1))
+    for h0 in range(H0):
+        idx = target[:, h0].clamp(max=S - 1)  # (B, S); OOB entries masked below
+        idx_gather = idx.unsqueeze(1).unsqueeze(-1).expand(B, H1, S, S)
+        vals = torch.gather(p1, -1, idx_gather)  # (B, H1, S, S)
+        diag = vals.diagonal(dim1=-2, dim2=-1)  # (B, H1, S): vals[b, h1, q, q]
+        mask = valid[:, h0]  # (B, S)
+        n_valid = int(mask.sum())
+        if n_valid:
+            masked = diag * mask[:, None, :].to(diag.dtype)  # (B, H1, S)
+            scores[h0] = masked.sum(dim=(0, 2)).numpy() / max(n_valid, 1)
+    return scores
+
+
+def diagnose_induction_formation(all_patterns: list) -> dict:
+    """The "how far did the model get" instrument for the two-step path
+    (Nanda & Jacobsen 2023). Given collected per-layer attention patterns
+    (list of (B, n_heads, S, S) tensors, one per layer), reports:
+
+    - Step 1: per-head diag+1 mass in layer 0 (duplicate-token head);
+    - Step 2: the K-composition matrix between layer-0 and layer-1 heads
+      and its best (h0, h1) pair;
+    - peakedness of the L0 argmax: whether `prev` is a real, focused choice
+      (a diffuse L0 head would make any K-composition number uninterpretable).
+
+    A confirmed induction head needs both steps high; a high Step 2 with a
+    low Step 1 is not "almost an induction head", it is a misread.
+    """
+    if len(all_patterns) < 2:
+        return {
+            "step1_l0_duplicate_mass": [],
+            "l0_peakedness": 0.0,
+            "step2_k_composition": 0.0,
+            "best_l0_head": -1,
+            "best_l1_head": -1,
+        }
+    p0 = all_patterns[0]
+    p1 = all_patterns[1]
+
+    diag0 = p0[:, :, 1:, :-1].diagonal(dim1=-2, dim2=-1).mean(dim=(0, -1))
+    peakedness = p0.max(dim=-1).values.mean(dim=(0, 2))
+
+    comp = k_composition_scores(p0, p1)
+    if comp.size == 0:
+        best = 0.0
+        best_pair = (-1, -1)
+    else:
+        flat_idx = int(np.argmax(comp))
+        best = float(comp.flat[flat_idx])
+        best_pair = (flat_idx // comp.shape[1], flat_idx % comp.shape[1])
+
+    return {
+        "step1_l0_duplicate_mass": diag0.tolist(),
+        "l0_peakedness": float(peakedness.max()),
+        "step2_k_composition": best,
+        "best_l0_head": best_pair[0],
+        "best_l1_head": best_pair[1],
+    }
+
+
+def plot_composition_diagnostic(
+    all_patterns: list, diagnosis: dict, save_path: Path
+) -> None:
+    """Two-panel figure: the best L0 duplicate head's attention (Step 1) and
+    the best L1 head's attention with the K-composition `prev(q)+1` curve
+    overlaid (Step 2) — the visual "how far" answer."""
+    if len(all_patterns) < 2 or diagnosis["best_l0_head"] < 0:
+        return
+    h0, h1 = diagnosis["best_l0_head"], diagnosis["best_l1_head"]
+    p0 = all_patterns[0][0, h0].numpy()
+    p1 = all_patterns[1][0, h1].numpy()
+    S = p0.shape[-1]
+    prev_curve = np.argmax(p0, axis=-1) + 1
+    prev_curve[prev_curve >= S] = S - 1
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 7))
+    for ax, pat, title in (
+        (axes[0], p0, f"L0 head {h0} — duplicate-token head (Step 1)"),
+        (axes[1], p1, f"L1 head {h1} — attention vs prev+1 curve (Step 2)"),
+    ):
+        im = ax.imshow(pat, cmap="Blues", aspect="equal")
+        ax.set_title(title, fontsize=12)
+        ax.set_xlabel("Key Position")
+        ax.set_ylabel("Query Position")
+        fig.colorbar(im, ax=ax, shrink=0.8)
+    axes[1].plot(prev_curve, np.arange(S), color="red", ls="--", lw=1.2,
+                 label="prev(q) + 1 (K-composition target)")
+    axes[1].legend(fontsize=9)
+    axes[0].set_title(
+        f"L0 head {h0} — duplicate-token head (Step 1)\n"
+        f"diag+1 mass: {diagnosis['step1_l0_duplicate_mass'][h0]:.3f}",
+        fontsize=12,
+    )
+    axes[1].set_title(
+        f"L1 head {h1} — K-composition (Step 2)\n"
+        f"score: {diagnosis['step2_k_composition']:.3f}",
+        fontsize=12,
+    )
+    fig.tight_layout()
+    fig.savefig(save_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    logger.info(f"Saved composition diagnostic to {save_path}")
+
+
 def _make_fresh_batches_fn(
     args: argparse.Namespace, seed: int
 ) -> Callable[[int], DataLoader]:
@@ -659,9 +796,10 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         fresh_batches_fn=fresh_batches_fn,
     )
 
-    induction_heads, _all_patterns = analyze_induction_heads(model, val_loader)
+    induction_heads, all_patterns = analyze_induction_heads(model, val_loader)
     total_induction = sum(len(h) for h in induction_heads)
     peak_diag1 = float(np.max(history["diag1_mass"])) if history["diag1_mass"] else 0.0
+    diagnosis = diagnose_induction_formation(all_patterns)
 
     drops = []
     for layer_idx, heads in enumerate(induction_heads):
@@ -675,6 +813,10 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         "total_induction_heads": float(total_induction),
         "peak_diag1_mass": peak_diag1,
         "mean_ablation_drop": mean_ablation_drop,
+        "k_composition_score": float(diagnosis["step2_k_composition"]),
+        "l0_duplicate_head_mass": float(
+            max(diagnosis["step1_l0_duplicate_mass"] or [0.0])
+        ),
     }
 
 
@@ -910,6 +1052,27 @@ def main() -> None:
 
     # Analyze induction heads
     induction_heads, all_patterns = analyze_induction_heads(model, val_loader)
+
+    # K-composition diagnostic (Nanda & Jacobsen): the "how far did the model
+    # get" instrument — Step 1 (L0 duplicate-token head) and Step 2
+    # (K-composition) are reported independently so a missing induction head
+    # is measured, not just counted.
+    diagnosis = diagnose_induction_formation(all_patterns)
+    if diagnosis["best_l0_head"] >= 0:
+        step1 = max(diagnosis["step1_l0_duplicate_mass"])
+        logger.info("-" * 60)
+        logger.info("How far did the model get? (Nanda & Jacobsen two-step path)")
+        logger.info(
+            f"Step 1 — L0 duplicate-token head: max diag+1 mass {step1:.3f} "
+            f"(peakedness {diagnosis['l0_peakedness']:.3f})"
+        )
+        logger.info(
+            f"Step 2 — K-composition: best score {diagnosis['step2_k_composition']:.3f} "
+            f"(L0 head {diagnosis['best_l0_head']}, L1 head {diagnosis['best_l1_head']})"
+        )
+        plot_composition_diagnostic(
+            all_patterns, diagnosis, FIGURES_DIR / "exp1_k_composition.png"
+        )
 
     logger.info("=" * 60)
     logger.info("Induction Head Analysis")

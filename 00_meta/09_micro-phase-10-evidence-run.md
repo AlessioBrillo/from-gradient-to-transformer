@@ -59,21 +59,35 @@ hypotheses recorded as loudly as the confirmed ones.
 
 ## Pentagon geometry results (Rung 3)
 
-Full `--geometry-check` sweep, 6 sparsities, 600 epochs / 8000 samples each, figure
-`figures/exp3_pentagon_geometry.png`:
+Two separate measurements belong to two separate runs; the original writeup
+conflated them and claimed the pentagon holds "at every level". Corrected table:
 
-| Sparsity | Features represented | Mean gap (°) | Gap std (°) | Pentagon-like |
-|----------|----------------------|--------------|-------------|---------------|
-| 0.5      | 20/20                | ~71          | < 1         | yes |
-| 0.1      | 20/20                | ~71          | < 1         | yes |
-| 0.05     | 20/20                | ~71          | < 1         | yes |
-| 0.01     | 20/20                | ~71          | < 1         | yes |
-| 0.001    | 16/20                | 70.6–72.8    | 0.8         | yes (on represented) |
+*20-feature capacity sweep* (`--single-sparsity` off, default 20 features, 2000
+epochs / 16000 samples, figures `exp3_phase_change.png` + `exp3_feature_geometry.png`):
 
-The phase transition (feature dropout at sparsity → 0.5) happens *within* pentagon
-geometry — when a feature is represented, it sits on a regular pentagon. A pure cosine
-reconstruction (two spectral components, no symmetry) correctly measures 0.83 — the
-check is not trivially always-pass.
+| Sparsity | Features represented |
+|----------|----------------------|
+| 0.5 … 0.01 | 20/20 |
+| 0.001 | 14–16/20 (capacity-limited; the 2000-vs-600-epoch drill refuted under-training) |
+
+*5→2 pentagon check* (re-run 2026-08-06, 600 epochs / 8000 samples each, figure
+`figures/exp3_pentagon_geometry.png`):
+
+| Sparsity | Features represented | Gap range (°) | Gap std (°) | Pentagon-like |
+|----------|----------------------|---------------|-------------|---------------|
+| 0.5      | 4/5                  | 38.1–90.6     | 22.4        | no |
+| 0.2      | 4/5                  | 23.3–90.2     | 26.0        | no |
+| 0.1      | 5/5                  | 70.3–73.8     | 1.4         | yes |
+| 0.05     | 5/5                  | 70.2–72.9     | 1.0         | yes |
+| 0.02     | 5/5                  | 71.6–73.0     | 0.5         | yes |
+| 0.01     | 5/5                  | 70.6–72.8     | 0.8         | yes |
+
+The honest claim is the interesting one: the regular pentagon is the **sparse-phase
+attractor**, not a dense-phase property — in the dense regime (sparsity ≥ 0.2) the
+bottleneck hosts 4/5 features with off-equiangular angles; once sparsity ≤ 0.1 the
+directions sit on a regular pentagon (ideal 72°). A pure cosine reconstruction (two
+spectral components, no symmetry) correctly measures 0.83 — the check is not
+trivially always-pass.
 
 ## Honesty ledger (2026-08-06)
 
@@ -89,14 +103,17 @@ check is not trivially always-pass.
 ## State
 
 Local CI mirror green at this commit: 168 pytest passed (161 baseline + 7 new
-instrument tests), ruff clean, blocking mypy allowlist clean. Pending: push `dev`,
-GitHub CI, merge `dev → main`.
+instrument tests), ruff clean, blocking mypy allowlist clean. Pushed and merged to
+`main` (PR #34, 2026-08-06) — this "pending" line is superseded by
+[[10_micro-phase-11-flagship-run]].
 
 ## Next
 
 1. P=59 probe on CPU (de-risks the flagship recipe before any GPU spend).
 2. Launch P=113 ×3 seeds on Colab, pin results via `scripts/pin_colab_run.py`.
 3. Standard-scale fresh-batches run (Rung 1) — the domino for Rung 4/5.
+
+All three are executed in [[10_micro-phase-11-flagship-run]].
 
 ## Links
 

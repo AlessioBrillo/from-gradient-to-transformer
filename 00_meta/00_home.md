@@ -11,7 +11,7 @@ Central map of the vault. Everything starts here.
 
 The target research contribution: **mechanistic reverse-engineering of a transformer's learned algorithms at micro scale**. The strongest *verified* piece today is Rung 3's superposition phase transition (root-caused and reproduced 2026-08-02 after two prior audits couldn't explain it); grokking modular addition (the primary flagship) is not yet reproduced.
 
-See [[portfolio/RESULTS]] for exact per-rung status, [[07_micro-phase-08-evidence-pass]] for the full write-up of the latest evidence pass, and [[portfolio/README]] for all showcase artifacts.
+See [[portfolio/RESULTS]] for exact per-rung status, [[10_micro-phase-11-flagship-run]] for the flagship-run record, and [[portfolio/README]] for all showcase artifacts.
 
 > If you have 30 seconds, read the thesis and the Reproducibility Audit in RESULTS.md. There is no mini-paper yet, but `portfolio/paper/` has a scaffold.
 
@@ -22,8 +22,9 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[07_micro-phase-08-evidenc
 - [[04_conventions]] — naming rules, tags, links
 - [[05_glossary]] — term glossary (all linked)
 - [[06_obsidian-setup]] — vault configuration and workflow
-- [[08_micro-phase-09-flagship-sprint]] — next phase: roadmap to unblock the two flagships (grokking P=113 + induction heads at standard scale)
-- [[07_micro-phase-08-evidence-pass]] — previous pass: root causes found, evidence produced
+- [[10_micro-phase-11-flagship-run]] — next phase: pull the flagships (probe verdict recorded, K-composition detector built, standard-scale domino run, P=113 GPU pending)
+- [[08_micro-phase-09-flagship-sprint]] — the parent roadmap this phase executes
+- [[09_micro-phase-10-evidence-run]] — previous pass: the instruments were built
 
 ## Phases
 - [[01_foundations/_MOC|Phase 1 · Foundations]]
