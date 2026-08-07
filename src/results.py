@@ -32,6 +32,7 @@ CLI:
 from __future__ import annotations
 
 import json
+import os
 import platform
 import re
 import subprocess
@@ -137,7 +138,7 @@ class ResultsManifest:
         sha, dirty = git_provenance()
         # argparse.Namespace values must be JSON-serializable; stringify
         # anything that isn't (e.g. Path objects) rather than crash on save.
-        clean_args = {k: (v if _is_json_safe(v) else str(v)) for k, v in args.items()}
+        clean_args = {k: _json_safe(v) for k, v in args.items()}
         return cls(
             experiment=experiment,
             seeds=list(seeds),
@@ -167,6 +168,21 @@ class ResultsManifest:
 
 def _is_json_safe(value: Any) -> bool:
     return isinstance(value, (str, int, float, bool, type(None), list, dict))
+
+
+def _json_safe(value: Any) -> Any:
+    """Coerce a value to a JSON-serializable form.
+
+    Path objects are the common non-JSON-safe arg (checkpoint directories,
+    manifest paths); render them with `os.fspath` so the saved form uses the
+    host's native path separators. Everything else that isn't already
+    JSON-safe falls back to `str`.
+    """
+    if isinstance(value, os.PathLike):
+        return os.fspath(value)
+    if _is_json_safe(value):
+        return value
+    return str(value)
 
 
 # ---------------------------------------------------------------------------
