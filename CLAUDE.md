@@ -46,3 +46,13 @@ make reproduce-sae          # Rung 5: SAE feature dashboard
 ## Skills
 - `study-session` — full study workflow (research, create note/exercise/proof, update skill-tree, commit)
 - `phase-release` — complete a phase (verify checklist, update progress log, PR, wait for CI, tag, release)
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues (AlessioBrillo/from-gradient-to-transformer), via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context — `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.

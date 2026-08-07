@@ -81,6 +81,14 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
   made the non-blocking mypy step distinguish "reported errors" from "mypy crashed."
 - [ ] **Feature dashboard deployment** (Hugging Face Spaces for SAE browser)
 - [ ] ML system design (minimal — design doc for the capstone pipeline)
+- [x] **Reproducible job durability: checkpoint/resume survives a real process kill** — atomic
+  checkpoint write + RNG-state capture in `save_training_checkpoint`/
+  `load_training_checkpoint` (`src/experiments/exp1_induction_heads.py`), drilled 2026-08-07
+  with a real `Stop-Process -Force` (not `Ctrl+C`) mid-run: resumed history and final model
+  weights bit-identical to an uninterrupted reference. Exercise:
+  [[06_production_ai/exercises/ex-04-kill-drill]]. Proof:
+  [[06_production_ai/proofs/kill-drill-checkpoint-resume]] (30-epoch drill, not yet the full
+  ~17-20h `--standard` scale — see the proof's own limitations).
 
 ## Research Skills (Mechanistic Interpretability)
 - [x] **Induction head reproduction** — attention-pattern analysis, causal verification (ablation site fixed 2026-08-01, see [[05_llm_engineering/proofs/intervention-validity]])

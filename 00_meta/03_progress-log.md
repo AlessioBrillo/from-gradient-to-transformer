@@ -13,6 +13,77 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-07 (second session) — Micro-Phase 12, Step 1: the evidence gate
+
+Executed Step 1 of the roadmap `cd384b0` rewrote this morning — the figure-provenance gap,
+not just documented as a copy step but enforced mechanically. See
+[[00_meta/11_micro-phase-12-resilient-flagship-run]]'s execution record for the full
+transcript.
+
+- **Studied**: process supervision and job durability groundwork ahead of the kill drill
+  (Step 2, launched this session, still running); artifact provenance tradeoffs (committed
+  curated set vs. `git-lfs` vs. DVC) — the curated-set answer was already right for this
+  repo's scale, confirmed rather than assumed.
+- **Built**: extended `verify_claims()` (`src/results.py`) with figure-existence +
+  git-tracking and per-section manifest-tag checks; ran it against the real, unpatched
+  repository first and got **17 problems** — worse than my own ≥6 estimate. Found two
+  prerequisite bugs neither visible from reading the code: `.gitignore`'s unanchored
+  `figures/` rule also silently matched `portfolio/figures/` (the exact directory this step
+  needed to populate), and `claims_file.read_text()` crashed on Windows for lack of an
+  explicit encoding. Fixed both, curated `portfolio/figures/` (11 existing figures + one
+  freshly regenerated pentagon-geometry figure), struck three citations that can't be
+  honestly backed yet instead of leaving them dangling or faking a source, and rewrote the
+  `04_conventions.md` line that `.gitignore` had been silently contradicting. 8 new tests,
+  including a falsification test that reconstructs today's real failure as a permanent
+  fixture (177 → 185 collected, confirmed via `pytest --collect-only`, not estimated).
+- **Verified**: `make verify-claims` 17 → 14 problems — the remaining 14 are exactly the
+  honest residue (12 curated figures not yet `git add`ed; Rung 2 and Rung 5 genuinely have no
+  manifest behind them yet, which the gate is *supposed* to keep flagging). Full suite:
+  184 passed, 1 pre-existing failure confirmed unrelated (`test_non_json_safe_args_are_stringified`
+  asserts POSIX-style path rendering; fails only on this Windows machine because
+  `Path("/some/path")` stringifies with backslashes here — CI runs `ubuntu-latest`, where
+  this was already passing and stays passing).
+## 2026-08-07 (third session) — Micro-Phase 12, Step 2: the kill drill
+
+- **Studied**: `_make_fresh_batches_fn`'s design before drilling it — each epoch's data
+  comes from `seed * 1_000_003 + epoch + 1`, a pure function of `(seed, epoch)`, not of
+  carried RNG state. That's what let me predict the real risk was cross-process BLAS
+  nondeterminism, not RNG desync, before running anything.
+- **Built**: a real kill drill — standard-scale hyperparameters, seed 0, 30 epochs (not the
+  full ~17-20h 3000), `--checkpoint-every 5`. Launched via `Start-Process -PassThru` for a
+  real OS PID, let 2 checkpoints land, `Stop-Process -Force` mid-epoch (an actual hard kill,
+  not `Ctrl+C`), resumed with `--resume`, diffed every history metric and every final model
+  tensor against an uninterrupted reference run.
+- **Verified**: **bit-identical** — `max_abs_diff = 0.000e+00` across all 5 tracked metrics
+  (30 epochs each) and every parameter tensor. Not approximately equal; exactly equal, at
+  float32 precision, across a real process boundary, on the first drill. Checked
+  "Reproducible job durability" in [[00_meta/02_skill-tree]] — exercise
+  [[06_production_ai/exercises/ex-04-kill-drill]], proof
+  [[06_production_ai/proofs/kill-drill-checkpoint-resume]], writeup
+  [[06_production_ai/notes/checkpoint-resume-durability]].
+- A smaller, real illustration of the exact failure class this phase exists to fix happened
+  mid-session: the Rung 3 pentagon-geometry regeneration (full-scale `--geometry-check`, the
+  Makefile's own canonical invocation) **died silently twice**, each after 50+ minutes of
+  confirmed real CPU work (checked via `Get-Process`, not assumed), with zero output either
+  time — Python fully buffers stdout when it isn't a TTY, so nothing was visible even while it
+  ran. Neither death left a crash trace; the first attempt's own notification could only say
+  it "may have been stopped via the UI, Monitor timeout, or agent teardown." Rather than
+  attempt a third multi-hour unattended run, relaunched with `--quick` (~10x less compute),
+  which completed cleanly in ~2.5 minutes and reproduced the pentagon geometry claim at
+  reduced budget (70.7-73.6° gaps, std 0.9° vs ideal 72° — close to the full-scale
+  70.2-73.8°/std<=1.4° already on record). Named honestly in the execution record as a known
+  simplification, not the canonical run.
+- **Step 1 closed**: `make verify-claims` now reports zero "does not exist on disk"
+  problems — every figure `RESULTS.md` cites is present in `portfolio/figures/`. The 14
+  remaining problems are exactly the honest residue (12 pending `git add`, 2 sections with
+  genuinely no manifest yet). Nothing committed this session.
+- Open question: Step 2 covered the mechanism, not the full multi-hour run. No other process
+  was contending for CPU at the moment of this kill, so the cross-process-nondeterminism
+  hypothesis I expected to fail on never got tested under load. Step 3 (P=113 on Colab GPU,
+  Rung 1 `--standard` supervised) is next — neither leg can run from inside this session;
+  launch commands prepared, execution needs a supervised session with Colab access and
+  ~17-20h of uninterrupted local CPU time respectively.
+
 ## 2026-08-05
 - Studied: state review of all five rungs ahead of the flagship sprint; confirmed the
   dependency chain that blocks the paper (Rung 1 domino → Rungs 4/5), the stale-manifest

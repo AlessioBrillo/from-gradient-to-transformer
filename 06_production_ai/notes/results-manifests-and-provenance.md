@@ -69,6 +69,7 @@ manifests found" and "no manifest tags found" — before any reconciliation pass
 
 ## Links
 - [[06_production_ai/notes/multi-seed-experiment-design]]
+- [[06_production_ai/notes/figure-provenance-and-evidence-gates]]
 - [[06_production_ai/exercises/ex-02-results-manifest]]
 - [[checklists/reproducibility-checklist]]
 - [[portfolio/RESULTS]]

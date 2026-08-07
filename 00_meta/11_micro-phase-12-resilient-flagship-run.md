@@ -320,8 +320,9 @@ deviations from this plan noted explicitly.
 6. If a head formed: Rung 4 E2E and Rung 5 re-test manifests exist.
 7. Clean-clone gate run end to end at least once, proof written from the transcript.
 8. Paper: Methods + Rung 3 written, every paragraph tied to a manifest or figure.
-9. Tests ≥177 passing, local CI mirror green, GitHub CI green on `dev`, `dev → main`
-   merged.
+9. Tests ≥185 passing (was 177 at phase start; already met by Step 1's figure-gate tests —
+   restated so this stays a real gate, not one satisfied by adding nothing), local CI mirror
+   green, GitHub CI green on `dev`, `dev → main` merged.
 
 ## Links
 
@@ -342,3 +343,122 @@ deviations from this plan noted explicitly.
 ---
 
 ## Execution record (appended as results land)
+
+### 2026-08-07 — Step 1: the evidence gate
+
+Overrode the step's own "no new automation target yet; a documented copy step is
+proportionate" call. A documented copy step is a fourth instance of the control that already
+failed three times (2026-07-26, 2026-08-01, and this session's own discovery); the fix was
+~25 lines inside `verify_claims()`, which already runs in `make verify-claims` and already
+had a test file.
+
+**RED, captured before any fix** (`python -m src.results verify` against the real
+repository, unpatched):
+
+```
+verify-claims: 17 problem(s) found:
+  - 11 figures cited that exist on disk but aren't tracked by git (figures/ is gitignored)
+  - 4 figures cited that don't exist on disk at all:
+      exp3_pentagon_geometry.png, exp4_head_ablation.png,
+      exp5_sparsity_tradeoff_real.png, exp5_feature_histogram_real.png
+  - 2 sections (Rung 2, Rung 5) cite figures/outputs with no manifest tag of their own
+```
+
+More than the plan's own ≥6 estimate. Two prerequisite bugs surfaced just from trying to run
+the tool for real, neither visible from reading the code: `.gitignore`'s unanchored
+`figures/` rule also matched the destination directory (`portfolio/figures/`) this step
+exists to populate; `claims_file.read_text()` had no explicit encoding and crashed on
+Windows against `RESULTS.md`'s non-ASCII characters. Both fixed.
+
+**What changed**: `src/results.py::verify_claims` gained figure-existence + git-tracking and
+per-section manifest-tag checks (`_git_tracked`, `FIGURE_CITATION_RE`); 8 new tests in
+`tests/test_results.py`, including a falsification test reconstructing this exact state as a
+permanent fixture (177 -> 185 tests collected — confirmed via `pytest --collect-only`, not
+estimated). `.gitignore` anchored to `/figures/`. `portfolio/figures/` created and populated with the 11 pre-existing figures that
+back a real claim, plus a freshly regenerated `exp3_pentagon_geometry.png`. `RESULTS.md`
+repointed to `portfolio/figures/`; the three citations that can't be honestly backed yet
+(`exp4_head_ablation.png`, both `_real` SAE figures) were struck with an explanation, not
+left dangling or faked. `04_conventions.md`'s figures line rewritten to match what's
+actually enforced.
+
+**GREEN-minus-commit**: 17 -> 14 problems, and — after the pentagon-geometry figure landed
+(see below) — **zero** "does not exist on disk" problems remain. The 14 that's left is
+exactly the honest residue: all 12 "not tracked by git" (curated figures exist locally,
+pending `git add`) plus the 2 untagged sections, which stay flagged **correctly** — no
+`results/exp2_grokking.json` or `results/exp5_sae_dashboard.json` has ever been produced, so
+there is genuinely nothing to tag yet. See
+[[06_production_ai/exercises/ex-05-falsify-the-figure-gate]] for the full transcript,
+[[06_production_ai/notes/figure-provenance-and-evidence-gates]] for the writeup.
+
+**The pentagon-geometry regeneration died silently, twice, at full scale** — a small,
+ironic, real instance of the exact failure class this whole phase exists to fix. Full-scale
+`--geometry-check` (the Makefile's canonical `reproduce-exp3-geometry` invocation: 6
+sparsity levels x 5000 epochs x 50,000 samples) was launched as a tracked background job
+twice. Both times it ran for 50+ minutes, genuinely accumulating CPU time (confirmed via
+`Get-Process`, not just assumed), then was terminated by something outside this session's
+control — no crash trace, no partial output (Python fully buffers stdout when not a TTY, so
+nothing was visible even while it ran), no error. The first death's own task notification
+said as much: "may have been stopped via the UI, Monitor timeout, or agent teardown... these
+leave no transcript marker." After the second death, rather than attempt a third
+multi-hour unattended run, relaunched with `--quick` (2000 epochs, 10,000 samples —
+~10x less compute), which completed cleanly in ~2.5 minutes:
+
+```
+0.0100 | 5/5 | 70.7 | 73.6 | 0.9 | True
+CONFIRMED: learned directions are approximately equiangular (gaps 70.7-73.6°, std 0.9° vs ideal 72.0°)
+```
+
+Closely matches the previously-documented full-scale numbers (70.2-73.8°, std <=1.4° across
+the sweep; 71.6-73.0°, std 0.5° at the tightest point) — the qualitative claim (pentagon
+geometry emerges in the sparse regime) reproduces at reduced budget too. Named honestly as a
+known simplification, not silently passed off as the canonical run: `portfolio/RESULTS.md`'s
+Rung 3 section should eventually cite a full-scale regeneration once unattended long runs on
+this machine are trusted again (a second entry in the same durability question Step 2 opened,
+just for figure-generation jobs instead of training checkpoints).
+
+Not committed in this session (commits happen only when explicitly requested) — the fully
+green state (0 "untracked" problems) requires `git add portfolio/figures/ .gitignore
+src/results.py tests/test_results.py 00_meta/04_conventions.md portfolio/RESULTS.md` and a
+commit before a fresh clone would actually see any of it.
+
+### 2026-08-07 — Step 2: the kill drill — PASSED
+
+First real test of checkpoint/resume against an actual process death, not the in-process
+8-epoch toy config `TestCheckpointResume` already covers. Full transcript in
+[[06_production_ai/exercises/ex-04-kill-drill]]; the writeup in
+[[06_production_ai/notes/checkpoint-resume-durability]]; the reconstructed-from-memory
+proof in [[06_production_ai/proofs/kill-drill-checkpoint-resume]].
+
+Standard-scale hyperparameters (`vocab_size=2048, seq_len=64, d_model=64, fresh-batches`),
+seed 0, `--checkpoint-every 5`, scaled to 30 epochs (not the full ~17-20h 3000-epoch run —
+de-risking the mechanism before committing that much wall-clock time to it). Launched via a
+real OS process (`Start-Process -PassThru`), let 2 checkpoints land plus 12 more seconds so
+the kill would hit mid-epoch, then `Stop-Process -Force` — an actual hard kill, not `Ctrl+C`.
+Resumed with `--resume`, ran to completion, diffed every `history` array and every final
+model tensor against an uninterrupted reference run of the same config and seed:
+
+```
+train_loss / val_loss / val_acc / attn_entropy / diag1_mass: max_abs_diff = 0.000e+00 (all, n=30)
+max abs param diff across all tensors: 0.000e+00
+=== VERDICT: BIT-IDENTICAL (pass) ===
+```
+
+Bit-identical, not approximately equal, on the first drill. The design choice that made this
+a clean pass rather than a coin flip: `_make_fresh_batches_fn` derives each epoch's data from
+`(seed, epoch)` directly, not from carried RNG state — a resumed run recomputes the same
+deterministic function instead of needing to reconstruct an RNG stream's history. The only
+state that genuinely needed to survive the kill was the model/optimizer/scheduler weights and
+the shuffling RNG, both captured by `save_training_checkpoint` and restored intact.
+
+**What this drill does not cover** (tracked as open, not glossed over): the full 3000-epoch
+duration (disk pressure, reboots, thermal throttling over hours are untested); no other
+process was contending for CPU/BLAS threads at the moment of the kill, so the
+cross-process-nondeterminism hypothesis I actually expected to fail on never got exercised
+under load. Checked "Reproducible job durability" in [[00_meta/02_skill-tree]] on the
+strength of what was actually demonstrated, with those limitations stated in the proof itself
+rather than folded into an unqualified "passed."
+
+**Next**: Step 3 (P=113 on Colab GPU, Rung 1 `--standard` supervised) is now unblocked on the
+mechanism side. Neither leg can run from inside this environment — P=113 needs a Colab
+session, and `--standard` is ~17-20h of CPU time not suited to an unattended background
+launch from this session. Launch commands prepared, execution left to a supervised session.
