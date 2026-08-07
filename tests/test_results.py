@@ -7,7 +7,13 @@ from pathlib import Path
 import torch
 from torch import nn
 
-from src.results import ResultsManifest, count_parameters, git_provenance, verify_claims
+from src.results import (
+    ResultsManifest,
+    _tree_dirty_outside_results,
+    count_parameters,
+    git_provenance,
+    verify_claims,
+)
 
 
 class TestGitProvenance:
@@ -16,6 +22,16 @@ class TestGitProvenance:
         assert isinstance(sha, str)
         assert len(sha) > 0
         assert isinstance(dirty, bool)
+
+    def test_untracked_code_file_is_dirty(self) -> None:
+        assert _tree_dirty_outside_results(["?? src/new_module.py"]) is True
+
+    def test_modified_results_manifest_is_not_dirty(self) -> None:
+        assert _tree_dirty_outside_results([" M results/exp1_induction_heads.json"]) is False
+        assert _tree_dirty_outside_results(["?? results/exp9_brand_new.json"]) is False
+
+    def test_empty_status_is_clean(self) -> None:
+        assert _tree_dirty_outside_results([]) is False
 
 
 class TestCountParameters:

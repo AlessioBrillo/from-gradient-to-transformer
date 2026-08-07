@@ -26,7 +26,9 @@ from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
+from src.experiments.runner import parse_seeds, run_seeds
 from src.reproducibility import set_seed
+from src.results import ResultsManifest, count_parameters
 
 logger = logging.getLogger(__name__)
 
@@ -495,6 +497,66 @@ def harvest_activations_from_checkpoint(
 
 
 # ---------------------------------------------------------------------------
+# Multi-seed headline run
+# ---------------------------------------------------------------------------
+def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
+    """Train one SAE end-to-end and return headline metrics for one seed.
+
+    Mirrors main()'s single-seed generate-or-harvest/train/evaluate steps,
+    minus plotting — used by `--seeds` to aggregate across seeds via
+    `src.experiments.runner.run_seeds`. Works for both the synthetic
+    baseline (data generated per-seed) and real-activation harvesting
+    (checkpoint fixed, activations harvested with the per-seed rng).
+    """
+    set_seed(seed)
+    if args.activations_from is not None:
+        activations = harvest_activations_from_checkpoint(
+            checkpoint_path=args.activations_from,
+            vocab_size=args.source_vocab_size,
+            seq_len=args.source_seq_len,
+            d_model=args.source_d_model,
+            n_layers=args.source_n_layers,
+            n_heads=args.source_n_heads,
+            num_samples=args.num_samples,
+            seed=seed,
+        )
+        d_model = activations.size(1)
+        true_features = torch.zeros(activations.size(0), 1)
+    else:
+        generator = ActivationGenerator(
+            d_model=args.d_model,
+            n_true_features=args.n_true_features,
+            sparsity=args.feature_sparsity,
+            seed=seed,
+        )
+        activations, true_features = generator.generate(args.num_samples)
+        d_model = args.d_model
+
+    dataset = TensorDataset(activations, true_features)
+    loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+
+    sae = SparseAutoencoder(d_model=d_model, n_features=args.n_features)
+    train_sae(
+        model=sae,
+        loader=loader,
+        epochs=args.epochs,
+        lr=args.lr,
+        l1_coeff=args.l1_coeff,
+        seed=seed,
+    )
+    reconstruction = evaluate_reconstruction(sae, loader)
+    feature_analysis = analyze_features(sae, dataset)
+
+    return {
+        "reconstruction_mse": reconstruction["mse"],
+        "fve": reconstruction["fve"],
+        "l0_sparsity": feature_analysis["l0_sparsity"],
+        "dead_rate": feature_analysis["dead_rate"],
+        "never_fires_rate": feature_analysis["never_fires_rate"],
+    }
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 def main() -> None:
@@ -549,6 +611,16 @@ def main() -> None:
         "--quick", action="store_true", help="Quick test with fewer samples and epochs"
     )
     parser.add_argument(
+        "--seeds",
+        type=str,
+        default=None,
+        help=(
+            "Comma-separated seeds (e.g. '0,1,2'). If set, runs the full "
+            "train+evaluate pipeline once per seed, saves a "
+            "results/exp5_sae_dashboard.json manifest, and skips plotting."
+        ),
+    )
+    parser.add_argument(
         "--activations-from",
         type=Path,
         default=None,
@@ -596,6 +668,33 @@ def main() -> None:
     logger.info(f"Arguments: {vars(args)}")
 
     set_seed(args.seed)
+
+    if args.seeds:
+        seeds = parse_seeds(args.seeds)
+        logger.info(
+            f"MULTI-SEED MODE: {len(seeds)} seeds {seeds} "
+            f"(activations_from={args.activations_from}, skipping plots)"
+        )
+        result = run_seeds(lambda s: run_single_seed(s, args), seeds)
+        probe_model = SparseAutoencoder(
+            d_model=args.d_model, n_features=args.n_features
+        )
+        manifest = ResultsManifest.from_run(
+            experiment="exp5_sae_dashboard",
+            seeds=seeds,
+            args={k: v for k, v in vars(args).items() if k != "seeds"},
+            per_seed_metrics=result.per_seed,
+            aggregate=result.aggregate,
+            wall_clock_seconds=result.wall_clock_seconds,
+            device=str(DEVICE),
+            n_parameters=count_parameters(probe_model),
+        )
+        manifest_path = Path("results") / "exp5_sae_dashboard.json"
+        manifest.save(manifest_path)
+        logger.info(f"Saved multi-seed manifest to {manifest_path}")
+        for key in result.aggregate:
+            logger.info(f"  {key}: {result.summary_line(key)}")
+        return
 
     if args.activations_from is not None:
         logger.info(f"Harvesting real activations from {args.activations_from}")

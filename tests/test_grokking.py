@@ -8,7 +8,9 @@ from src.experiments.exp2_grokking import (
     analyze_fourier_sparsity,
     compute_progress_measures,
     fourier_decompose_embeddings,
+    fourier_sparsity_progress,
     make_modular_addition_data,
+    weight_norm_progress,
 )
 
 
@@ -179,3 +181,59 @@ class TestComputeProgressMeasures:
         assert 0 <= phases["phase1_end"] <= phases["phase2_end"] < len(val_acc)
         assert phases["memorization_epochs"] + phases["circuit_formation_epochs"] >= 0
         assert phases["cleanup_epochs"] >= 0
+
+
+class TestProgressMeasures:
+    """Fourier-sparsity and weight-norm progress measures (Micro-Phase 10):
+    the instrument that must exist before the GPU run, so the run is
+    analysis-ready the moment it finishes."""
+
+    def test_sparse_fourier_embedding_scores_higher_than_dense(self) -> None:
+        """A single-frequency embedding must read as maximally sparse
+        (-> 1.0), a uniform/random one as near-zero."""
+        modulus = 59
+        n = torch.arange(modulus).float()
+        sparse = torch.cos(2 * torch.pi * 7 * n / modulus).unsqueeze(1).repeat(1, 8)
+        dense = torch.randn(modulus, 8)
+
+        sparse_score = fourier_sparsity_progress(sparse, modulus)
+        dense_score = fourier_sparsity_progress(dense, modulus)
+        # A real cosine has a two-sided spectrum (k and P-k), so the
+        # maximally-sparse real signal uses 2 of P frequencies, not 1:
+        # 1 - log(2)/log(59) ≈ 0.83. That is still unambiguously sparse.
+        assert sparse_score > 0.7, f"Expected ~0.83 for a pure cosine, got {sparse_score:.3f}"
+        assert dense_score < 0.2, f"Expected ~0 for a dense spectrum, got {dense_score:.3f}"
+        assert sparse_score > dense_score
+
+    def test_weight_norm_progress_is_positive_and_finite(self) -> None:
+        model = OneLayerTransformer(d_model=32, d_mlp=64, n_heads=2, modulus=29)
+        norm = weight_norm_progress(model)
+        assert norm > 0.0
+        assert norm == norm  # not NaN
+
+    def test_progress_measures_tracked_during_training(self) -> None:
+        """train_model must populate the fourier_sparsity/weight_norm history
+        keys (carried forward between samples) so the progress-measure plot
+        has data without a separate analysis pass."""
+        from torch.utils.data import DataLoader
+
+        from src.experiments.exp2_grokking import train_model
+
+        model = OneLayerTransformer(d_model=32, d_mlp=64, n_heads=2, modulus=11)
+        train_x = torch.randint(0, 11, (64, 2))
+        train_y = (train_x[:, 0] + train_x[:, 1]) % 11
+        loader = DataLoader(list(zip(train_x, train_y)), batch_size=32, shuffle=True)
+        history = train_model(
+            model=model,
+            train_loader=loader,
+            val_loader=loader,
+            epochs=5,
+            lr=1e-3,
+            weight_decay=0.1,
+            seed=0,
+            progress_interval=2,
+        )
+        assert len(history["fourier_sparsity"]) == 5
+        assert len(history["weight_norm"]) == 5
+        assert all(0.0 <= s <= 1.0 for s in history["fourier_sparsity"])
+        assert history["weight_norm"][-1] > 0.0

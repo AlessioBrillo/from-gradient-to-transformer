@@ -17,6 +17,7 @@ Output:
 
 import argparse
 import logging
+import time
 from pathlib import Path
 from typing import Callable, Optional
 
@@ -269,6 +270,56 @@ def evaluate(
     return total_loss / len(loader.dataset), total_correct / total_tokens
 
 
+# ---------------------------------------------------------------------------
+# Checkpoint / resume (Micro-Phase 12)
+# ---------------------------------------------------------------------------
+def checkpoint_path_for_seed(checkpoint_dir: str, seed: int) -> Path:
+    """Rolling resume checkpoint path for one seed — a single file holds the
+    latest state, so `--resume` just points at this and keeps the newest
+    state without an ever-growing set of artifacts."""
+    return Path(checkpoint_dir) / f"exp1_checkpoint_seed{seed}.pt"
+
+
+def save_training_checkpoint(
+    path: Path,
+    epoch: int,
+    model: nn.Module,
+    optimizer: torch.optim.Optimizer,
+    scheduler: nn.Module,
+    history: dict,
+    rng_state,
+) -> None:
+    """Atomically write a resume checkpoint. The saved RNG state is captured
+    *after* the training loop of `epoch` has finished and *before* any state
+    of epoch `epoch + 1` has been drawn, which is exactly the continuity
+    point a seamless resume needs (see train_model()'s docstring)."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
+    torch.save(
+        {
+            "epoch": epoch,
+            "model": model.state_dict(),
+            "optimizer": optimizer.state_dict(),
+            "scheduler": scheduler.state_dict(),
+            "rng_state": rng_state,
+            "history": history,
+        },
+        tmp,
+    )
+    # Atomic rename: a kill mid-save leaves the *old* valid checkpoint, not
+    # a truncated one.
+    tmp.replace(path)
+
+
+def load_training_checkpoint(path: Path) -> Optional[dict]:
+    """Load a checkpoint written by save_training_checkpoint. Returns None
+    if the file does not exist, so `--resume` on a machine with nothing to
+    resume degrades to a fresh, logged start rather than a crash."""
+    if not path.exists():
+        return None
+    return torch.load(path, map_location=DEVICE)
+
+
 def compute_attention_entropy(
     model: nn.Module, loader: DataLoader
 ) -> dict:
@@ -329,6 +380,10 @@ def train_model(
     seed: int,
     use_wandb: bool = False,
     fresh_batches_fn: Optional[Callable[[int], DataLoader]] = None,
+    checkpoint_dir: Optional[str] = None,
+    checkpoint_every: int = 0,
+    resume_from: Optional[str] = None,
+    schedule_epochs: Optional[int] = None,
 ) -> dict:
     """Train the model and return training curves.
 
@@ -338,9 +393,27 @@ def train_model(
     model memorize specific sequences rather than learn the general
     prefix-matching-and-copying rule (Olsson et al. resample continuously;
     the pre-2026-08-02 version reused one fixed dataset, reshuffled, for the
-    entire run). When `None`, `train_loader` is reused every epoch as
-    before.
-    """
+    entire run). When `None`, `train_loader` is reused every epoch as before.
+
+    Checkpoint/resume (Micro-Phase 12): when `checkpoint_dir` and
+    `checkpoint_every > 0` are given, a resume checkpoint is written every
+    `checkpoint_every` epochs. The checkpoint captures the model, optimizer,
+    and scheduler state *plus the PyTorch RNG state at the exact continuity
+    point* — after one epoch's data draws and before the next epoch's. Data
+    sampling is driven by that RNG, so a resumed run draws exactly the same
+    batches it would have drawn had it never stopped. A killed long run is
+    therefore a *pause*, not a loss: relaunch with `resume_from` (or the
+    `--resume` CLI flag) and continue.
+
+    The LR schedule (CosineAnnealing, `T_max=schedule_epochs` defaulting to
+    `epochs`) spans the *full run horizon*, not the epochs of this call. A
+    partial call that will be resumed must pass the same horizon the final
+    run will use — e.g. the tests interrupt a run at epoch 3 while planning
+    9, so the partial call passes `schedule_epochs=<full horizon>`; treating
+    the partial call's own `epochs` as T_max anneals LR to the wrong peak and
+    makes no resumed run equal to an uninterrupted one. Falsified by
+    TestCheckpointResume (resume must reproduce an uninterrupted run
+    bit-for-bit)."""
     set_seed(seed)
     model = model.to(DEVICE)
 
@@ -369,8 +442,9 @@ def train_model(
     optimizer = torch.optim.AdamW(
         model.parameters(), lr=lr, weight_decay=weight_decay
     )
+    T_max = schedule_epochs if schedule_epochs is not None else epochs
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=epochs
+        optimizer, T_max=T_max
     )
     criterion = nn.CrossEntropyLoss()
 
@@ -379,7 +453,35 @@ def train_model(
         "attn_entropy": [], "diag1_mass": [],
     }
 
-    for epoch in tqdm(range(epochs), desc="Training"):
+    start_epoch = 0
+    resume_ckpt = (
+        load_training_checkpoint(Path(resume_from)) if resume_from else None
+    )
+    if resume_ckpt is not None:
+        model.load_state_dict(resume_ckpt["model"])
+        optimizer.load_state_dict(resume_ckpt["optimizer"])
+        scheduler.load_state_dict(resume_ckpt["scheduler"])
+        # The stored T_max came from the plan that saved the checkpoint; the
+        # continuation's own horizon (`schedule_epochs`/`epochs`) is the same
+        # plan, so keep it authoritative for the LR curve.
+        scheduler.T_max = T_max
+        torch.random.set_rng_state(resume_ckpt["rng_state"])
+        history = resume_ckpt["history"]
+        start_epoch = resume_ckpt["epoch"] + 1
+        logger.info(
+            f"RESUME: loaded {resume_from} (saved after epoch "
+            f"{resume_ckpt['epoch']}) — continuing from epoch {start_epoch}"
+        )
+    elif resume_from:
+        logger.warning(
+            f"RESUME: checkpoint {resume_from} not found — starting fresh"
+        )
+
+    ckpt_path: Optional[Path] = None
+    if checkpoint_dir and checkpoint_every > 0:
+        ckpt_path = checkpoint_path_for_seed(checkpoint_dir, seed)
+
+    for epoch in tqdm(range(start_epoch, epochs), desc="Training"):
         epoch_loader = fresh_batches_fn(epoch) if fresh_batches_fn is not None else train_loader
 
         model.train()
@@ -434,6 +536,18 @@ def train_model(
                 f"val loss: {val_loss:.4f} | val acc: {val_acc:.4f} | "
                 f"attn entropy: {attn_entropy:.2f} | diag+1: {diag1_mass:.3f}"
             )
+
+        if ckpt_path is not None and (epoch + 1) % checkpoint_every == 0:
+            save_training_checkpoint(
+                ckpt_path,
+                epoch,
+                model,
+                optimizer,
+                scheduler,
+                history,
+                torch.random.get_rng_state(),
+            )
+            logger.info(f"Checkpoint saved: {ckpt_path} (epoch {epoch + 1})")
 
     if _wandb is not None:
         _wandb.finish()
@@ -492,6 +606,143 @@ def analyze_induction_heads(
         induction_heads_by_layer.append(induction_heads)
 
     return induction_heads_by_layer, all_patterns
+
+
+def k_composition_scores(p0: torch.Tensor, p1: torch.Tensor) -> np.ndarray:
+    """K-composition scores between a layer-0 head set and a layer-1 head set.
+
+    Nanda & Jacobsen (2023), "Attention as a Step Towards the Emergence of
+    the Induction Head", Step 2: in K-composition, the layer-1 head attends
+    from query position q to `prev(q) + 1`, where `prev(q)` is the position
+    the layer-0 duplicate-token head attended to at q (the previous
+    occurrence of the current token) and +1 is the position holding the
+    token to copy. The induction head is the composition of Step 1 (L0
+    duplicate head) and Step 2 (L1 K-composition).
+
+    Returns a (n_heads_0, n_heads_1) matrix: row h0's `prev` combined with
+    column h1's attention.
+
+    Self-attention guard: queries where `prev(q) + 1 == q` are excluded —
+    a head attending to itself would trivially score 1.0 on a shift-by-one
+    prev pattern without being an induction head at all. This makes the
+    detector falsifiable (see TestKComposition).
+    """
+    B, H0, S, _ = p0.shape
+    H1 = p1.shape[1]
+    if B == 0 or S == 0:
+        return np.zeros((H0, H1))
+
+    prev = p0.argmax(dim=-1)  # (B, H0, S): position L0 head h0 attended to at q
+    target = prev + 1  # (B, H0, S): position one token after it
+    qs = torch.arange(S, device=p0.device)
+    # Gate: in-bounds, and the L0 head must actually point at a *different*
+    # position than q — a head attending to itself is not a previous-
+    # occurrence signal, and a head attending to q-1 (prev+1 == q) is plain
+    # self-attention, not induction.
+    valid = (target < S) & (prev != qs) & (target != qs)
+
+    scores = np.zeros((H0, H1))
+    for h0 in range(H0):
+        idx = target[:, h0].clamp(max=S - 1)  # (B, S); OOB entries masked below
+        idx_gather = idx.unsqueeze(1).unsqueeze(-1).expand(B, H1, S, S)
+        vals = torch.gather(p1, -1, idx_gather)  # (B, H1, S, S)
+        diag = vals.diagonal(dim1=-2, dim2=-1)  # (B, H1, S): vals[b, h1, q, q]
+        mask = valid[:, h0]  # (B, S)
+        n_valid = int(mask.sum())
+        if n_valid:
+            masked = diag * mask[:, None, :].to(diag.dtype)  # (B, H1, S)
+            scores[h0] = masked.sum(dim=(0, 2)).numpy() / max(n_valid, 1)
+    return scores
+
+
+def diagnose_induction_formation(all_patterns: list) -> dict:
+    """The "how far did the model get" instrument for the two-step path
+    (Nanda & Jacobsen 2023). Given collected per-layer attention patterns
+    (list of (B, n_heads, S, S) tensors, one per layer), reports:
+
+    - Step 1: per-head diag+1 mass in layer 0 (duplicate-token head);
+    - Step 2: the K-composition matrix between layer-0 and layer-1 heads
+      and its best (h0, h1) pair;
+    - peakedness of the L0 argmax: whether `prev` is a real, focused choice
+      (a diffuse L0 head would make any K-composition number uninterpretable).
+
+    A confirmed induction head needs both steps high; a high Step 2 with a
+    low Step 1 is not "almost an induction head", it is a misread.
+    """
+    if len(all_patterns) < 2:
+        return {
+            "step1_l0_duplicate_mass": [],
+            "l0_peakedness": 0.0,
+            "step2_k_composition": 0.0,
+            "best_l0_head": -1,
+            "best_l1_head": -1,
+        }
+    p0 = all_patterns[0]
+    p1 = all_patterns[1]
+
+    diag0 = p0[:, :, 1:, :-1].diagonal(dim1=-2, dim2=-1).mean(dim=(0, -1))
+    peakedness = p0.max(dim=-1).values.mean(dim=(0, 2))
+
+    comp = k_composition_scores(p0, p1)
+    if comp.size == 0:
+        best = 0.0
+        best_pair = (-1, -1)
+    else:
+        flat_idx = int(np.argmax(comp))
+        best = float(comp.flat[flat_idx])
+        best_pair = (flat_idx // comp.shape[1], flat_idx % comp.shape[1])
+
+    return {
+        "step1_l0_duplicate_mass": diag0.tolist(),
+        "l0_peakedness": float(peakedness.max()),
+        "step2_k_composition": best,
+        "best_l0_head": best_pair[0],
+        "best_l1_head": best_pair[1],
+    }
+
+
+def plot_composition_diagnostic(
+    all_patterns: list, diagnosis: dict, save_path: Path
+) -> None:
+    """Two-panel figure: the best L0 duplicate head's attention (Step 1) and
+    the best L1 head's attention with the K-composition `prev(q)+1` curve
+    overlaid (Step 2) — the visual "how far" answer."""
+    if len(all_patterns) < 2 or diagnosis["best_l0_head"] < 0:
+        return
+    h0, h1 = diagnosis["best_l0_head"], diagnosis["best_l1_head"]
+    p0 = all_patterns[0][0, h0].numpy()
+    p1 = all_patterns[1][0, h1].numpy()
+    S = p0.shape[-1]
+    prev_curve = np.argmax(p0, axis=-1) + 1
+    prev_curve[prev_curve >= S] = S - 1
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 7))
+    for ax, pat, title in (
+        (axes[0], p0, f"L0 head {h0} — duplicate-token head (Step 1)"),
+        (axes[1], p1, f"L1 head {h1} — attention vs prev+1 curve (Step 2)"),
+    ):
+        im = ax.imshow(pat, cmap="Blues", aspect="equal")
+        ax.set_title(title, fontsize=12)
+        ax.set_xlabel("Key Position")
+        ax.set_ylabel("Query Position")
+        fig.colorbar(im, ax=ax, shrink=0.8)
+    axes[1].plot(prev_curve, np.arange(S), color="red", ls="--", lw=1.2,
+                 label="prev(q) + 1 (K-composition target)")
+    axes[1].legend(fontsize=9)
+    axes[0].set_title(
+        f"L0 head {h0} — duplicate-token head (Step 1)\n"
+        f"diag+1 mass: {diagnosis['step1_l0_duplicate_mass'][h0]:.3f}",
+        fontsize=12,
+    )
+    axes[1].set_title(
+        f"L1 head {h1} — K-composition (Step 2)\n"
+        f"score: {diagnosis['step2_k_composition']:.3f}",
+        fontsize=12,
+    )
+    fig.tight_layout()
+    fig.savefig(save_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    logger.info(f"Saved composition diagnostic to {save_path}")
 
 
 def _make_fresh_batches_fn(
@@ -621,6 +872,65 @@ def plot_training_curves(
 # ---------------------------------------------------------------------------
 # Multi-seed headline run
 # ---------------------------------------------------------------------------
+def _headline_metrics(
+    history: dict,
+    induction_heads: list,
+    diagnosis: dict,
+) -> dict[str, float]:
+    """The six headline numbers both the multi-seed manifest and the
+    single-seed `--standard` manifest report, derived from one analysis pass
+    — shared so the two reporting paths cannot drift apart. Ablation drops
+    are filled in by the caller (they need the model)."""
+    total_induction = sum(len(h) for h in induction_heads)
+    peak_diag1 = float(np.max(history["diag1_mass"])) if history["diag1_mass"] else 0.0
+    return {
+        "final_val_acc": float(history["val_acc"][-1]),
+        "total_induction_heads": float(total_induction),
+        "peak_diag1_mass": peak_diag1,
+        "k_composition_score": float(diagnosis["step2_k_composition"]),
+        "l0_duplicate_head_mass": float(
+            max(diagnosis["step1_l0_duplicate_mass"] or [0.0])
+        ),
+        "mean_ablation_drop": 0.0,
+    }
+
+
+def _write_single_manifest(
+    args: argparse.Namespace,
+    metrics: dict[str, float],
+    wall_clock_seconds: float,
+) -> None:
+    """Provenance for a single-seed run: `--standard` (and `--save-manifest`)
+    write a results/exp1_induction_heads.json manifest so the headline is
+    traceable to a commit + config even when only one seed has run (the
+    multi-seed manifest is the same file, written by `--seeds`)."""
+    manifest = ResultsManifest.from_run(
+        experiment="exp1_induction_heads",
+        seeds=[args.seed],
+        args={k: v for k, v in vars(args).items() if k != "seeds"},
+        per_seed_metrics=[metrics],
+        aggregate={
+            k: {"mean": v, "std": 0.0, "min": v, "max": v, "n": 1.0}
+            for k, v in metrics.items()
+        },
+        wall_clock_seconds=wall_clock_seconds,
+        device=str(DEVICE),
+        n_parameters=count_parameters(
+            AttentionOnlyTransformer(
+                vocab_size=args.vocab_size,
+                d_model=args.d_model,
+                n_layers=args.n_layers,
+                n_heads=args.n_heads,
+                max_seq_len=args.seq_len,
+            )
+        ),
+        notes="Single-seed standard-scale run (Micro-Phase 12 'landed domino').",
+    )
+    manifest_path = Path("results") / "exp1_induction_heads.json"
+    manifest.save(manifest_path)
+    logger.info(f"Saved single-seed manifest to {manifest_path}")
+
+
 def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
     """Train one induction-heads run end-to-end and return headline metrics
     for one seed. Mirrors main()'s single-seed data/model/train/analysis
@@ -647,6 +957,12 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
 
     fresh_batches_fn = _make_fresh_batches_fn(args, seed) if args.fresh_batches else None
 
+    resume_from = None
+    if args.resume and args.checkpoint_every > 0:
+        resume_from = str(checkpoint_path_for_seed(args.checkpoint_dir, seed))
+    elif getattr(args, "resume_from", None):
+        resume_from = args.resume_from
+
     history = train_model(
         model=model,
         train_loader=train_loader,
@@ -657,25 +973,24 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         seed=seed,
         use_wandb=False,
         fresh_batches_fn=fresh_batches_fn,
+        checkpoint_dir=args.checkpoint_dir if args.checkpoint_every > 0 else None,
+        checkpoint_every=args.checkpoint_every,
+        resume_from=resume_from,
     )
 
-    induction_heads, _all_patterns = analyze_induction_heads(model, val_loader)
-    total_induction = sum(len(h) for h in induction_heads)
-    peak_diag1 = float(np.max(history["diag1_mass"])) if history["diag1_mass"] else 0.0
+    induction_heads, all_patterns = analyze_induction_heads(model, val_loader)
+    diagnosis = diagnose_induction_formation(all_patterns)
 
-    drops = []
+    metrics = _headline_metrics(history, induction_heads, diagnosis)
+    drop_sum = 0.0
+    n_drops = 0
     for layer_idx, heads in enumerate(induction_heads):
         for head_idx in heads:
             ablated_acc = causal_ablation(model, val_loader, layer_idx, head_idx)
-            drops.append(history["val_acc"][-1] - ablated_acc)
-    mean_ablation_drop = float(np.mean(drops)) if drops else 0.0
-
-    return {
-        "final_val_acc": float(history["val_acc"][-1]),
-        "total_induction_heads": float(total_induction),
-        "peak_diag1_mass": peak_diag1,
-        "mean_ablation_drop": mean_ablation_drop,
-    }
+            drop_sum += history["val_acc"][-1] - ablated_acc
+            n_drops += 1
+    metrics["mean_ablation_drop"] = float(drop_sum / n_drops) if n_drops else 0.0
+    return metrics
 
 
 # ---------------------------------------------------------------------------
@@ -723,6 +1038,17 @@ def main() -> None:
         "--quick", action="store_true", help="Quick test (reduced config)"
     )
     parser.add_argument(
+        "--standard",
+        action="store_true",
+        help=(
+            "Canonical standard-scale config (Micro-Phase 10 pinning): "
+            "vocab_size=2048, seq_len=64, d_model=64, 2 layers, 4 heads, "
+            "fresh-batches on, epochs=3000, num_train=8192. The single "
+            "config Rungs 1/4/5 must share so the cascade measures one "
+            "model, not three similar ones."
+        ),
+    )
+    parser.add_argument(
         "--wandb", action="store_true", help="Log metrics to Weights & Biases"
     )
     parser.add_argument(
@@ -750,6 +1076,40 @@ def main() -> None:
             "plotting/model-saving."
         ),
     )
+    parser.add_argument(
+        "--checkpoint-dir",
+        type=str,
+        default="checkpoints",
+        help="Directory for rolling resume checkpoints (Micro-Phase 12 stateful runs).",
+    )
+    parser.add_argument(
+        "--checkpoint-every",
+        type=int,
+        default=0,
+        help="Write a resume checkpoint every N epochs (0 = off).",
+    )
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help=(
+            "Resume the seed's latest checkpoint in --checkpoint-dir if "
+            "present — a killed run is a pause, not a loss."
+        ),
+    )
+    parser.add_argument(
+        "--resume-from",
+        type=str,
+        default=None,
+        help="Explicit checkpoint file to resume from (overrides --resume).",
+    )
+    parser.add_argument(
+        "--save-manifest",
+        action="store_true",
+        help=(
+            "Write a single-seed results/exp1_induction_heads.json manifest "
+            "after the run (implied by --standard)."
+        ),
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -767,6 +1127,30 @@ def main() -> None:
         args.num_train = 1024
         args.batch_size = 32
         logger.info("QUICK MODE: reduced config for fast iteration")
+
+    if args.standard:
+        args.vocab_size = 2048
+        args.seq_len = 64
+        args.d_model = 64
+        args.n_layers = 2
+        args.n_heads = 4
+        args.epochs = 3000
+        args.num_train = 8192
+        args.batch_size = 64
+        args.fresh_batches = True
+        # Micro-Phase 12: standard-scale runs are stateful by default — a
+        # 3000-epoch run is ~17h on this CPU and must never again vanish
+        # without on-disk state (checkpoint, model, manifest).
+        if args.checkpoint_every == 0:
+            args.checkpoint_every = 250
+        args.save_model = True
+        args.save_manifest = True
+        logger.info(
+            "STANDARD MODE: canonical standard-scale config "
+            "(vocab=2048, seq=64, d_model=64, fresh-batches, epochs=3000) "
+            f"// stateful: checkpointing every {args.checkpoint_every} epochs, "
+            "model + manifest saved"
+        )
 
     logger.info(f"Device: {DEVICE}")
     logger.info(f"Arguments: {vars(args)}")
@@ -838,6 +1222,15 @@ def main() -> None:
             _make_fresh_batches_fn(args, args.seed) if args.fresh_batches else None
         )
 
+        run_resume_from = None
+        if args.resume and args.checkpoint_every > 0:
+            run_resume_from = str(
+                checkpoint_path_for_seed(args.checkpoint_dir, args.seed)
+            )
+        elif args.resume_from:
+            run_resume_from = args.resume_from
+        t_run_start = time.monotonic()
+
         # Train
         history = train_model(
             model=model,
@@ -849,6 +1242,9 @@ def main() -> None:
             seed=args.seed,
             use_wandb=args.wandb,
             fresh_batches_fn=fresh_batches_fn,
+            checkpoint_dir=args.checkpoint_dir if args.checkpoint_every > 0 else None,
+            checkpoint_every=args.checkpoint_every,
+            resume_from=run_resume_from,
         )
 
         # Plot training curves
@@ -884,6 +1280,27 @@ def main() -> None:
 
     # Analyze induction heads
     induction_heads, all_patterns = analyze_induction_heads(model, val_loader)
+
+    # K-composition diagnostic (Nanda & Jacobsen): the "how far did the model
+    # get" instrument — Step 1 (L0 duplicate-token head) and Step 2
+    # (K-composition) are reported independently so a missing induction head
+    # is measured, not just counted.
+    diagnosis = diagnose_induction_formation(all_patterns)
+    if diagnosis["best_l0_head"] >= 0:
+        step1 = max(diagnosis["step1_l0_duplicate_mass"])
+        logger.info("-" * 60)
+        logger.info("How far did the model get? (Nanda & Jacobsen two-step path)")
+        logger.info(
+            f"Step 1 — L0 duplicate-token head: max diag+1 mass {step1:.3f} "
+            f"(peakedness {diagnosis['l0_peakedness']:.3f})"
+        )
+        logger.info(
+            f"Step 2 — K-composition: best score {diagnosis['step2_k_composition']:.3f} "
+            f"(L0 head {diagnosis['best_l0_head']}, L1 head {diagnosis['best_l1_head']})"
+        )
+        plot_composition_diagnostic(
+            all_patterns, diagnosis, FIGURES_DIR / "exp1_k_composition.png"
+        )
 
     logger.info("=" * 60)
     logger.info("Induction Head Analysis")
@@ -931,6 +1348,21 @@ def main() -> None:
                     f"accuracy {full_acc:.4f} → {ablated_acc:.4f} "
                     f"(drop: {full_acc - ablated_acc:+.4f})"
                 )
+
+    # Micro-Phase 12: provenance for the single-seed standard run — the
+    # headline manifest, same file `--seeds` writes, so RESULTS.md's tag
+    # always points at the newest honest run.
+    if not args.no_train and args.save_manifest:
+        metrics = _headline_metrics(history, induction_heads, diagnosis)
+        drop_sum = 0.0
+        n_drops = 0
+        for layer_idx, heads in enumerate(induction_heads):
+            for head_idx in heads:
+                ablated_acc = causal_ablation(model, val_loader, layer_idx, head_idx)
+                drop_sum += history["val_acc"][-1] - ablated_acc
+                n_drops += 1
+        metrics["mean_ablation_drop"] = float(drop_sum / n_drops) if n_drops else 0.0
+        _write_single_manifest(args, metrics, time.monotonic() - t_run_start)
 
 
 if __name__ == "__main__":

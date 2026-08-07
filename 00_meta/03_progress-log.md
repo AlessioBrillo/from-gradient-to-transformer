@@ -13,6 +13,20 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-05
+- Studied: state review of all five rungs ahead of the flagship sprint; confirmed the
+  dependency chain that blocks the paper (Rung 1 domino → Rungs 4/5), the stale-manifest
+  problem, and the environment trap (bare `python`/`pytest` resolve outside `.venv`).
+- Built: [[00_meta/08_micro-phase-09-flagship-sprint]] (full roadmap: 8 steps, deep-dive
+  topics, exercises, gate criteria); wired the home MOC; fixed Makefile targets to run via
+  `uv run` and made `src/`/`src/experiments/` package init lazy (no more importing every
+  experiment's torch/matplotlib stack on `import src`); re-baselined the exp1/3/4
+  multi-seed manifests at HEAD → `make verify-claims` back to green.
+- Verified: local CI mirror green (ruff, blocking mypy, 158 pytest).
+- Open question: does a standard-scale fresh-batches run form a real induction head —
+  the single experiment that decides Rungs 1, 4, and 5 in one step; and does grokking
+  grok at P=113 on the Colab GPU (launch first, analyze while it waits).
+
 ## 2026-06-16
 - Studied: 3Blue1Brown Essence of Linear Algebra (#2 span/basis, #5 3D, #7 column/null space, #8 nonsquare, #9 dot products/duality, #13 change of basis, #15 eigenvalue trick, #16 abstract vector spaces)
 - Built: 7 new notes, 1 new exercise, 1 proof template; updated all cross-links; added norms section to dot-products note; fixed matrix notation formatting for Obsidian compatibility
@@ -239,3 +253,117 @@ it at every rung that fits this machine's CPU budget.
   run to see whether a real induction head actually forms — the fixed-vs-fresh comparison
   strongly suggests it's reachable, hasn't been confirmed at standard scale. Rung 5's real-vs-synthetic
   comparison should be re-run once Rung 1 produces a checkpoint with a confirmed head.
+
+## 2026-08-06 — Micro-Phase 10: The Evidence Run
+
+Micro-Phase 9 left three blockers: grokking never reproduced, no induction head ever
+formed, Rung 4/5 blocked on a head checkpoint. This pass built the instruments that
+unblock them — every measure that a GPU run needs exists *before* the run, so GPU
+hours are spent once, correctly. See [[09_micro-phase-10-evidence-run]].
+
+- **Grokking progress measures committed** (`fourier_sparsity_progress`,
+  `weight_norm_progress`, `--progress-interval`): the phase transition is defined as
+  val-accuracy crossing with the Fourier sparsity as the algorithmic-solution witness
+  and weight norm as the weight-decay signature — checkpoints can't record a crossover
+  without the witnesses anymore.
+- **CPU de-risk path for the flagship**: `--probe` (P=59, 1500 epochs, high weight
+  decay) validates the canonical recipe on this machine before any GPU hour is spent;
+  the canonical P=113 config (`d_model=128`, 4 heads, `d_mlp=512`) is pinned in CLI
+  defaults.
+- **Canonical R1/R4 configs pinned in code**: `--standard` on exp1 and exp4
+  (`vocab_size=2048, seq_len=64, d_model=64, n_layers=2, n_heads=4, epochs=3000,
+  num_train=8192, batch_size=64`, fresh batches on) — one committed config per rung.
+- **SAE joined the multi-seed harness** (`exp5 --seeds`); `ResultsManifest.notes`
+  added so Colab runs can carry provenance; `scripts/pin_colab_run.py` refuses to
+  record results against a mismatched commit SHA; `scripts/clean_clone_check.sh`
+  gates the fresh-clone → sync → CI → multi-seed → verify-claims sequence.
+- **Rung 3 geometry instrumented**: `--geometry-check` measures the feature-direction
+  angles against a regular pentagon (`compute_feature_angles`, `angular_gap_metrics`,
+  `is_pentagon_like`). Sweep across 6 sparsities: the regular pentagon (gaps
+  70.2–73.8°, std ≤1.4° vs ideal 72°) is the sparse-phase attractor — attained at
+  sparsity ≤ 0.1, while the dense regime (≥ 0.2) sits off the pentagon with 4/5
+  features (corrected from the original "every level" claim after the 2026-08-06
+  re-run; see [[10_micro-phase-11-flagship-run]]); the phase
+  transition is dropout *within* the geometry, and a pure-cosine reconstruction
+  correctly measures non-pentagon (0.83). Figure:
+  `figures/exp3_pentagon_geometry.png`.
+- **Honesty ledger: under-training at sparsity 0.001 refuted.** 2000 vs 600 epochs,
+  one variable changed: 15/20 represented (vs 16/20) with dimensionality 0.246 —
+  a genuine capacity limit at extreme sparsity, not a compute shortfall. The 16/20
+  count was run-to-run noise; the honest claim is 14–16/20 capacity-limited.
+- **Infra**: Makefile targets `reproduce-grokking-probe`, `reproduce-induction-standard`,
+  `reproduce-induction-1layer`, `reproduce-exp3-geometry`; tests 161 → 168.
+- Open question: the P=113 GPU run (next step, via
+  `notebooks/colab_grokking_full_run.ipynb`) and the standard-scale Rung 1 run are
+  both fully instrumented and unpulled. The Rung 3 capacity-limit claim at sparsity
+  0.001 could be sharpened with a wider AE (more hidden units) if it matters later.
+
+## 2026-08-07 — Micro-Phase 12: Roadmap Correction and Fork Resolution
+
+- **Caught a wrong state review before it was committed.** Drafted an MP12 roadmap
+  opening with a crisis narrative (24 files "at risk," checkpoint/resume code
+  "uncommitted," `main` "37 commits behind") reasoned from memory of the MP11 session
+  instead of from the repository. `git diff origin/dev --name-only` showed the working
+  tree byte-identical to `origin/dev` except one file; the checkpoint/resume system was
+  already committed and pushed via PRs #33–#36; `origin/main == origin/dev`. Corrected
+  the document before it entered history rather than committing the wrong version and
+  retracting it later — recorded here anyway, because a self-caught misdiagnosis gets
+  the same honest treatment as a wrong hypothesis.
+- **The real issue was a documentation fork, not lost work.** `00_meta/00_home.md`'s
+  merge conflict was two non-overlapping roadmap lines (local MP9/MP10 pre-registration
+  drafts vs. remote MP9/MP10 executed-record drafts) whose *filenames* never collided —
+  only the wiki-links naming them did, because a new roadmap pass started locally
+  before the previous pass's remote commits were pulled in. Resolved as a deliberate
+  union: both lines stay linked, each labeled honestly as pre-registration vs. executed
+  record, rather than one being deleted to win the merge.
+- **Found a real, previously unnamed gap: `figures/` is gitignored.** Every figure
+  `RESULTS.md` and the paper scaffold cite is invisible to anyone cloning the repo, and
+  the MP10/MP11-era figures (pentagon geometry, K-composition diagnostic, real-SAE
+  plots) don't exist on this disk at all — only stale 2026-07-26 PNGs remain, including
+  one from Rung 6, which was deleted 2026-08-01 for containing fabricated data. Added as
+  Step 1 of the new roadmap: a small curated `portfolio/figures/` set, committed and
+  bound to the manifest that backs each figure.
+- **Rewrote** [[00_meta/11_micro-phase-12-resilient-flagship-run]] with the corrected
+  state review and the figure-provenance step promoted to first-class. The genuinely
+  open items — Rung 1 standard-scale verdict, P=113 GPU run, paper prose, clean-clone
+  gate — are unchanged by the correction; they were never about git hygiene.
+- Open question: the kill drill (Step 2) is next — the checkpoint/resume code is
+  still only proven bit-identical in-process on an 8-epoch toy config, never against a
+  real hard-killed process on the actual `--standard` run.
+
+## 2026-08-06 — Micro-Phase 11: Flagship Run, part 1
+
+First pass of the flagship run: the probe verdicts are in, the K-composition
+detector is built, and the Rung 1 domino is running. See
+[[10_micro-phase-11-flagship-run]].
+
+- **K-composition detector (Step 0)**: `k_composition_scores`,
+  `diagnose_induction_formation`, `plot_composition_diagnostic` in
+  `exp1_induction_heads.py` — the Nanda & Jacobsen two-step path (L0 duplicate-token
+  head, L1 attending to `prev(q)+1`), with two falsifiability guards (queries where
+  L0 self-attends, and where `prev(q)+1 == q`, are excluded). 6 falsification tests
+  (`TestKComposition`); the diagnostic is wired into `run_single_seed` manifest
+  metrics (`k_composition_score`, `l0_duplicate_head_mass`) and `main()` figure
+  output. 168 → 174 tests.
+- **Probe verdicts (Step 1)**: P=59 with the canonical recipe never groks in this
+  implementation — 1500 epochs AND 3000 epochs AND weight-decay 0.3: val accuracy
+  0.0000–0.0012, Fourier representation dense 59/59, val loss *rising* into the
+  thousands. The drills didn't falsify the recipe; they falsified small-P grokking
+  in a fixed budget (consistent with the 2026-08-01 P=29 result and the
+  combinatorial-diversity argument). The P=113 GPU run remains THE test; residual
+  risk is narrowed to P=113 itself with the embedding-normalization and
+  cosine-schedule deviations as named suspects if it fails.
+- **Rung 1 domino (Step 2)**: `--standard` (vocab 2048, seq 64, d_model 64, 2L/4H,
+  3000 epochs, fresh batches) running detached on this CPU — honest reality is
+  ~20 s/epoch (~17 h wall), verdict expected in the night: head confirmed and
+  causally verified, or the K-composition "how far" reading. Rung 4/5 stay blocked
+  until it lands.
+- **Rung 3 re-check**: the 5→2 pentagon is the sparse-phase attractor (sparsity
+  ≤ 0.1: gaps 70.2–73.8°, std ≤1.4°; best 71.6–73.0°, std 0.5° at 0.02), not a
+  dense-phase property (0.2–0.5: 4/5, off-pentagon). MP10's "every level" claim
+  corrected here and in the MP10 writeup.
+- **CI**: local mirror green at this commit — ruff clean, blocking mypy clean
+  (`src/results.py`, `src/experiments/runner.py`), 174 pytest passed.
+- Open question: the Rung 1 verdict (in flight) and the P=113 ×3-seed GPU run (still
+  needs a Colab session — everything is instrumented and the drills have finished
+  the CPU-side de-risking; the next GPU session spends hours once, correctly).

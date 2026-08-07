@@ -21,7 +21,10 @@ from torch.utils.data import DataLoader
 from src.experiments.exp3_superposition import (
     SparseFeatureDataset,
     ToyAutoencoder,
+    angular_gap_metrics,
+    compute_feature_angles,
     compute_feature_geometry,
+    is_pentagon_like,
     train_autoencoder,
 )
 
@@ -184,3 +187,36 @@ class TestFeatureGeometryFalsification:
         assert geometry["n_represented"] == 5
         monosemantic_dims = geometry["dimensionality"][:5]
         assert np.allclose(monosemantic_dims, 1.0, atol=1e-3)
+
+
+class TestPentagonGeometry:
+    """The known small case (5 features -> 2 dimensions) must show a clean
+    pentagon in the Gram matrix — the geometric claim behind the phase
+    transition, verified as an instrument, not by eye (Micro-Phase 10)."""
+
+    def test_pentagon_directions_are_pentagon_like(self) -> None:
+        """Five directions evenly spaced at 72 degrees must read as a
+        pentagon: every consecutive gap ~72, tight spread."""
+        angles = sorted(
+            (np.degrees(np.arctan2(np.sin(k * 2 * np.pi / 5), np.cos(k * 2 * np.pi / 5))) % 360)
+            for k in range(5)
+        )
+        gaps = angular_gap_metrics(angles)
+        assert is_pentagon_like(gaps)
+        assert max(abs(g - 72.0) for g in gaps["gap_degrees"]) < 1e-6
+
+    def test_collinear_directions_are_not_pentagon_like(self) -> None:
+        """All directions along one line have a 0 gap and must fail the
+        equiangular check — the degenerate case the metric must reject."""
+        gaps = angular_gap_metrics([0.0, 0.0, 0.0, 0.0, 0.0])
+        assert not is_pentagon_like(gaps)
+
+    def test_clustered_directions_are_not_pentagon_like(self) -> None:
+        """Five directions bunched into a half-circle (gaps 10..100) must
+        fail: the spacing is not equiangular even though all gaps are > 0."""
+        gaps = angular_gap_metrics([0.0, 10.0, 40.0, 90.0, 180.0])
+        assert not is_pentagon_like(gaps)
+
+    def test_compute_feature_angles_requires_2d(self) -> None:
+        with pytest.raises(ValueError):
+            compute_feature_angles(np.zeros((3, 5)))

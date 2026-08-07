@@ -42,27 +42,6 @@
     }
   ],
   "aggregate": {
-    "final_val_acc": {
-      "mean": 0.48902107007575757,
-      "std": 0.013806176482085895,
-      "min": 0.474609375,
-      "max": 0.5076349431818182,
-      "n": 3.0
-    },
-    "mean_ablation_effect": {
-      "mean": 0.0,
-      "std": 0.0,
-      "min": 0.0,
-      "max": 0.0,
-      "n": 3.0
-    },
-    "mean_path_patch_effect": {
-      "mean": 0.0,
-      "std": 0.0,
-      "min": 0.0,
-      "max": 0.0,
-      "n": 3.0
-    },
     "mean_activation_recovery": {
       "mean": 0.19679234184619118,
       "std": 0.007436753833481524,
@@ -76,15 +55,36 @@
       "min": 0.0,
       "max": 0.0,
       "n": 3.0
+    },
+    "mean_path_patch_effect": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 3.0
+    },
+    "mean_ablation_effect": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 3.0
+    },
+    "final_val_acc": {
+      "mean": 0.48902107007575757,
+      "std": 0.013806176482085895,
+      "min": 0.474609375,
+      "max": 0.5076349431818182,
+      "n": 3.0
     }
   },
-  "wall_clock_seconds": 365.48413565399824,
-  "git_sha": "6a5a54f",
-  "git_dirty": true,
+  "wall_clock_seconds": 357.3503320739983,
+  "git_sha": "092cb92",
+  "git_dirty": false,
   "device": "cpu",
   "torch_version": "2.12.1+cu130",
   "numpy_version": "2.5.0",
   "python_version": "3.12.12",
   "n_parameters": 28832,
-  "created_at": "2026-08-02T12:40:44+00:00"
+  "created_at": "2026-08-05T21:45:08+00:00"
 }

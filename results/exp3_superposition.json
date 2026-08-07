@@ -36,6 +36,13 @@
     }
   ],
   "aggregate": {
+    "n_represented": {
+      "mean": 19.666666666666668,
+      "std": 0.4714045207910317,
+      "min": 19.0,
+      "max": 20.0,
+      "n": 3.0
+    },
     "mean_abs_correlation": {
       "mean": 0.3508272369702657,
       "std": 0.0007101501745776911,
@@ -49,22 +56,15 @@
       "min": 0.24816462397575378,
       "max": 0.24939897656440735,
       "n": 3.0
-    },
-    "n_represented": {
-      "mean": 19.666666666666668,
-      "std": 0.4714045207910317,
-      "min": 19.0,
-      "max": 20.0,
-      "n": 3.0
     }
   },
-  "wall_clock_seconds": 121.15158560800046,
-  "git_sha": "6a5a54f",
-  "git_dirty": true,
+  "wall_clock_seconds": 103.7294336949999,
+  "git_sha": "092cb92",
+  "git_dirty": false,
   "device": "cpu",
   "torch_version": "2.12.1+cu130",
   "numpy_version": "2.5.0",
   "python_version": "3.12.12",
   "n_parameters": 120,
-  "created_at": "2026-08-02T07:39:38+00:00"
+  "created_at": "2026-08-05T21:39:07+00:00"
 }

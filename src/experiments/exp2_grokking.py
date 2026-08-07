@@ -20,6 +20,7 @@ Output:
 
 import argparse
 import logging
+import math
 from pathlib import Path
 from typing import Optional
 
@@ -238,6 +239,7 @@ def train_model(
     weight_decay: float,
     seed: int,
     use_wandb: bool = False,
+    progress_interval: int = 10,
 ) -> dict:
     """Train and return history with progress measures.
 
@@ -295,7 +297,11 @@ def train_model(
         "unembed_norm": [],
         "attn_entropy": [],
         "weight_decay_norm": [],
+        "fourier_sparsity": [],
+        "weight_norm": [],
     }
+    last_fourier_sparsity = 0.0
+    last_weight_norm = 0.0
 
     for epoch in tqdm(range(epochs), desc="Training"):
         model.train()
@@ -354,6 +360,18 @@ def train_model(
         history["unembed_norm"].append(unembed_norm_mean)
         history["attn_entropy"].append(entropy)
         history["weight_decay_norm"].append(wd_norm)
+
+        # Progress measures (Nanda et al., ICLR 2023): Fourier sparsity and
+        # weight norm, sampled every `progress_interval` epochs and carried
+        # forward between samples so the curve stays aligned with the epochs
+        # axis. Cheap on this model.
+        if (epoch + 1) % progress_interval == 0:
+            last_fourier_sparsity = fourier_sparsity_progress(
+                model.embed.weight.data.detach().cpu(), model.modulus
+            )
+            last_weight_norm = weight_norm_progress(model)
+        history["fourier_sparsity"].append(last_fourier_sparsity)
+        history["weight_norm"].append(last_weight_norm)
 
         if _wandb is not None:
             _wandb.log({
@@ -458,6 +476,46 @@ def analyze_fourier_sparsity(fourier_result: dict, top_k: int = 10) -> dict:
         "top_frequencies": top_freqs.tolist(),
         "total_mass_top_k": cumulative[top_k - 1] if top_k <= len(cumulative) else 1.0,
     }
+
+
+def fourier_sparsity_progress(
+    embed_weight: torch.Tensor, modulus: int, eps: float = 1e-12
+) -> float:
+    """Normalized-entropy Fourier sparsity of the embedding, in [0, 1].
+
+    The frequency-magnitude distribution p_k = m_k / sum(m) over the DFT of
+    the embedding rows is dense (flat) during memorization and collapses onto
+    O(sqrt(P)) frequencies when the Fourier algorithm forms. Measuring the
+    entropy of that distribution per epoch is the standard *progress measure*
+    for grokking (Nanda et al., ICLR 2023): sparsity = 1 - H(p) / log(P),
+    so 0 = maximally dense, 1 = maximally sparse (a single frequency).
+
+    Cheap enough to compute every epoch on this model (a P x P DFT of the
+    P x d_model embedding is negligible against the training step).
+    """
+    k = torch.arange(modulus, device=embed_weight.device).float()
+    n = torch.arange(modulus, device=embed_weight.device).float()
+    basis = torch.exp(-2j * np.pi * k[:, None] * n[None, :] / modulus)
+    basis = basis / (modulus ** 0.5)
+
+    embed = embed_weight.to(basis.dtype)
+    coeffs = basis.conj().T @ embed  # (P, d_model)
+    magnitudes = coeffs.abs().sum(dim=1) + eps  # (P,)
+    p = magnitudes / magnitudes.sum()
+    entropy = -(p * p.log()).sum()
+    entropy_max = math.log(modulus)
+    return float(1.0 - entropy / entropy_max)
+
+
+def weight_norm_progress(model: nn.Module) -> float:
+    """Global L2 norm of all trainable parameters — Nanda et al.'s weight-norm
+    progress measure. Rises during circuit formation and falls during the
+    cleanup phase (unnecessary weights decay toward zero)."""
+    total = 0.0
+    with torch.no_grad():
+        for p in model.parameters():
+            total += (p.detach() ** 2).sum().item()
+    return float(total ** 0.5)
 
 
 # ---------------------------------------------------------------------------
@@ -636,36 +694,62 @@ def plot_progress_measures(
     history: dict,
     save_path: Path,
 ) -> None:
-    """Plot embedding/unembed norms and attention entropy over training."""
-    fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+    """Plot embedding/unembed norms, attention entropy, and the Fourier-
+    sparsity + weight-norm progress measures over training."""
+    fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 
     epochs = range(1, len(history["embed_norm"]) + 1)
 
-    ax = axes[0]
+    ax = axes[0, 0]
     ax.plot(epochs, history["embed_norm"], label="Embed norm (mean)", linewidth=1)
     ax.plot(epochs, history["embed_norm_max"], label="Embed norm (max)", linewidth=0.8, alpha=0.5)
     ax.plot(epochs, history["embed_norm_min"], label="Embed norm (min)", linewidth=0.8, alpha=0.5)
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Row-wise L2 norm")
-    ax.set_title("Embedding Row Norms (should converge to 1.0)", fontsize=12)
+    ax.set_title("Embedding Row Norms (should converge to 1.0)", fontsize=11)
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
     ax.axhline(y=1.0, color="gray", linestyle="--", alpha=0.3)
 
-    ax = axes[1]
+    ax = axes[0, 1]
     ax.plot(epochs, history["unembed_norm"], label="Unembed norm (mean)", color="orange", lw=1)
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Row-wise L2 norm")
-    ax.set_title("Unembedding Row Norms", fontsize=12)
+    ax.set_title("Unembedding Row Norms", fontsize=11)
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
     ax.axhline(y=1.0, color="gray", linestyle="--", alpha=0.3)
 
-    ax = axes[2]
+    ax = axes[1, 0]
     ax.plot(epochs, history["attn_entropy"], label="Attention entropy", color="green", linewidth=1)
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Entropy (nats)")
-    ax.set_title("Attention Entropy (lower = more focused)", fontsize=12)
+    ax.set_title("Attention Entropy (lower = more focused)", fontsize=11)
+    ax.legend(fontsize=8)
+    ax.grid(True, alpha=0.3)
+
+    ax = axes[1, 1]
+    ax.plot(
+        epochs,
+        history["fourier_sparsity"],
+        label="Fourier sparsity (1 - H/log P)",
+        color="steelblue",
+        linewidth=1.5,
+    )
+    ax.plot(
+        epochs,
+        history["weight_norm"],
+        label="Weight norm",
+        color="crimson",
+        linewidth=1,
+        alpha=0.7,
+    )
+    ax.set_xlabel("Epoch")
+    ax.set_ylabel("Progress measure")
+    ax.set_title(
+        "Progress Measures (grokking: sparsity rises, then norm falls)",
+        fontsize=11,
+    )
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
 
@@ -861,6 +945,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         weight_decay=args.weight_decay,
         seed=seed,
         use_wandb=False,
+        progress_interval=args.progress_interval,
     )
 
     fourier_result = fourier_decompose_embeddings(
@@ -876,6 +961,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
     return {
         "final_val_acc": float(final_val_acc),
         "generalization_epoch": float(generalization_epoch),
+        "final_fourier_sparsity": float(history["fourier_sparsity"][-1]),
         "k_90_percent": float(sparsity["k_90_percent"]),
         "k_99_percent": float(sparsity["k_99_percent"]),
         "total_mass_top_k": float(sparsity["total_mass_top_k"]),
@@ -910,7 +996,24 @@ def main() -> None:
         "--quick", action="store_true", help="Quick test with smaller modulus and fewer epochs"
     )
     parser.add_argument(
+        "--probe",
+        action="store_true",
+        help=(
+            "CPU de-risk probe (Micro-Phase 10): canonical grokking "
+            "hyperparameters (d_model=128, d_mlp=512, n_heads=4, wd=1.0, "
+            "train=30%) at a cheaper modulus P=59 with a reduced budget. "
+            "Used to check the architecture groks at all before spending "
+            "GPU hours on the P=113 flagship."
+        ),
+    )
+    parser.add_argument(
         "--micro", action="store_true", help="Micro test: tiny modulus, fast CPU iteration"
+    )
+    parser.add_argument(
+        "--progress-interval",
+        type=int,
+        default=10,
+        help="Epochs between Fourier-sparsity/weight-norm progress-measure samples",
     )
     parser.add_argument(
         "--wandb", action="store_true", help="Log metrics to Weights & Biases"
@@ -956,6 +1059,16 @@ def main() -> None:
         args.modulus = 29
         args.epochs = 2000
         logger.info("QUICK MODE: modulus=29, epochs=2000")
+
+    if args.probe:
+        args.modulus = 59
+        args.epochs = 1500
+        args.weight_decay = 1.0
+        args.train_fraction = 0.3
+        logger.info(
+            "PROBE MODE: modulus=59, canonical hyperparameters (d_model=128, "
+            "d_mlp=512, n_heads=4, wd=1.0, train=30%), epochs=1500"
+        )
 
     logger.info(f"Device: {DEVICE}")
     logger.info(f"Arguments: {vars(args)}")

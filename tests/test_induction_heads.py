@@ -9,6 +9,9 @@ from src.experiments.exp1_induction_heads import (
     AttentionOnlyBlock,
     AttentionOnlyTransformer,
     causal_ablation,
+    checkpoint_path_for_seed,
+    diagnose_induction_formation,
+    k_composition_scores,
     make_repeated_token_data,
     prefix_duplicate_probability,
     train_model,
@@ -224,6 +227,105 @@ class TestPrefixAmbiguityWarning:
         assert not any("Prefix ambiguity" in r.message for r in caplog.records)
 
 
+class TestKComposition:
+    """Falsification tests for the K-composition detector (Micro-Phase 11,
+    Nanda & Jacobsen 2023 Step 2). The detector must find a hand-constructed
+    L0 duplicate-token head + L1 K-composition chain, and must return null
+    on random patterns, self-attention, and wrong offsets."""
+
+    @staticmethod
+    def _onehot_attn(keys: list) -> torch.Tensor:
+        """Build a (1, 1, S, S) 1-hot attention stack: query q attends to
+        key keys[q]. Causal (no attending to the future)."""
+        S = len(keys)
+        probs = torch.zeros(1, 1, S, S)
+        for q, k in enumerate(keys):
+            probs[0, 0, q, k] = 1.0
+        return probs
+
+    def test_detects_hand_built_chain(self) -> None:
+        """L0 attends to q-2 (a 'previous occurrence'), L1 attends to
+        prev+1 = q-1: the detector must score this ~1.0."""
+        S = 8
+        p0 = self._onehot_attn([0] + [q - 2 for q in range(1, S)])
+        p1 = self._onehot_attn([0, 0] + [q - 1 for q in range(2, S)])
+        scores = k_composition_scores(p0, p1)
+        assert scores[0, 0] > 0.9, f"Expected ~1.0, got {scores[0, 0]:.3f}"
+
+    def test_rejects_self_attention(self) -> None:
+        """L1 attending to itself would trivially score 1.0 on a prev=q-1
+        pattern; the self-attention guard must exclude it."""
+        S = 8
+        p0 = self._onehot_attn([0] + [q - 1 for q in range(1, S)])
+        p1 = self._onehot_attn([0] + [q for q in range(1, S)])  # self
+        scores = k_composition_scores(p0, p1)
+        assert scores[0, 0] < 0.1, f"Self-attention should score ~0, got {scores[0, 0]:.3f}"
+
+    def test_rejects_wrong_offset(self) -> None:
+        """L1 attending to prev+2 instead of prev+1 must score low."""
+        S = 10
+        p0 = self._onehot_attn([0] + [q - 3 for q in range(1, S)])
+        p1 = self._onehot_attn([0, 0, 0] + [q - 1 for q in range(3, S)])  # prev+2
+        scores = k_composition_scores(p0, p1)
+        assert scores[0, 0] < 0.1, f"Wrong offset should score ~0, got {scores[0, 0]:.3f}"
+
+    def test_rejects_random_patterns(self) -> None:
+        """Uniformly random attention must score at the uniform baseline
+        (1/S per cell), not trigger the detector."""
+        torch.manual_seed(0)
+        S = 16
+        p0 = torch.ones(1, 1, S, S) / S
+        p1 = torch.ones(1, 1, S, S) / S
+        scores = k_composition_scores(p0, p1)
+        assert abs(scores[0, 0] - 1.0 / S) < 0.02, (
+            f"Uniform patterns should score ~1/S, got {scores[0, 0]:.3f}"
+        )
+
+    def test_diagnose_returns_both_steps(self) -> None:
+        """diagnose_induction_formation must report Step 1 and Step 2
+        independently on a hand-built two-layer stack."""
+        S = 8
+        p0 = self._onehot_attn([0] + [q - 2 for q in range(1, S)])
+        p1 = self._onehot_attn([0, 0] + [q - 1 for q in range(2, S)])
+        diag = diagnose_induction_formation([p0, p1])
+        assert diag["best_l0_head"] == 0
+        assert diag["best_l1_head"] == 0
+        assert diag["step2_k_composition"] > 0.9
+        assert diag["l0_peakedness"] > 0.9
+
+    def test_diagnose_on_tiny_trained_model(self) -> None:
+        """End-to-end smoke: the diagnostic runs on a real (tiny) trained
+        model and returns the full report structure."""
+        torch.manual_seed(0)
+        model = AttentionOnlyTransformer(
+            vocab_size=16, d_model=16, n_layers=2, n_heads=2, max_seq_len=16
+        )
+        train, val = make_repeated_token_data(
+            vocab_size=16, seq_len=12, num_train=32, num_val=16, seed=0
+        )
+        train_loader = DataLoader(train, batch_size=8)
+        val_loader = DataLoader(val, batch_size=8)
+        train_model(
+            model=model, train_loader=train_loader, val_loader=val_loader,
+            epochs=2, lr=1e-3, weight_decay=0.0, seed=0,
+        )
+        model.eval()
+        collected: list[list] = [[], []]
+        with torch.no_grad():
+            for x, _ in val_loader:
+                _, attn = model(x, record_attn=True)
+                for layer_idx, pat in enumerate(attn):
+                    collected[layer_idx].append(pat)
+                break
+        all_patterns = [torch.cat(c, dim=0) for c in collected]
+        diag = diagnose_induction_formation(all_patterns)
+        assert set(diag) >= {
+            "step1_l0_duplicate_mass", "l0_peakedness",
+            "step2_k_composition", "best_l0_head", "best_l1_head",
+        }
+        assert len(diag["step1_l0_duplicate_mass"]) == 2
+
+
 class TestFreshBatches:
     """Tests for train_model's fresh_batches_fn (Micro-Phase 8) — resampling
     sequences every epoch instead of reshuffling one fixed set, to test
@@ -280,3 +382,160 @@ class TestFreshBatches:
             seed=0,
         )
         assert len(history["train_loss"]) == 2
+
+
+class TestCheckpointResume:
+    """Falsification tests for Micro-Phase 12's checkpoint/resume: a resumed
+    run must be *indistinguishable* from one that never stopped (same model,
+    same history, same RNG-drawn batches). The 2026-08-06 audit found the
+    Rung 1 `--standard` domino had died with no process, no log, and no
+    checkpoint — 17 hours of compute lost invisibly; these tests pin the
+    behaviour that makes a killed run a pause instead of a loss."""
+
+    ARGS_DEFAULTS = dict(
+        vocab_size=256,
+        seq_len=16,
+        d_model=24,
+        n_layers=2,
+        n_heads=4,
+        num_train=256,
+        batch_size=32,
+    )
+
+    @staticmethod
+    def _args(**overrides):
+        from types import SimpleNamespace
+
+        defaults = dict(TestCheckpointResume.ARGS_DEFAULTS)
+        defaults.update(overrides)
+        return SimpleNamespace(**defaults)
+
+    @staticmethod
+    def _fresh_batches(args, seed=0):
+        from src.experiments.exp1_induction_heads import _make_fresh_batches_fn
+        return _make_fresh_batches_fn(args, seed)
+
+    @staticmethod
+    def _model(args):
+        return AttentionOnlyTransformer(
+            vocab_size=args.vocab_size,
+            d_model=args.d_model,
+            n_layers=args.n_layers,
+            n_heads=args.n_heads,
+            max_seq_len=args.seq_len,
+        )
+
+    @staticmethod
+    def _initial_state(args):
+        """Snapshot the initial weights of a freshly constructed model. Both
+        sides of a resume comparison must start from *identical* weights —
+        constructing two models independently gives them different random
+        inits, which would make even an uninterrupted comparison diverge."""
+        import copy
+
+        return copy.deepcopy(TestCheckpointResume._model(args).state_dict())
+
+    @staticmethod
+    def _model_from(state):
+        args = TestCheckpointResume._args()
+        model = TestCheckpointResume._model(args)
+        model.load_state_dict(state)
+        return model
+
+    @staticmethod
+    def _loaders(args):
+        train, val = make_repeated_token_data(
+            vocab_size=args.vocab_size,
+            seq_len=args.seq_len,
+            num_train=args.num_train,
+            num_val=8,
+            seed=0,
+        )
+        return (
+            DataLoader(train, batch_size=args.batch_size, shuffle=True),
+            DataLoader(val, batch_size=args.batch_size, shuffle=False),
+        )
+
+    def test_resume_matches_uninterrupted(self, tmp_path) -> None:
+        """Interrupt at epoch 3, resume to end: every history curve must equal
+        the uninterrupted run's exactly (the RNG snapshot guarantees it draws
+        the identical fresh batches in the identical order)."""
+        import numpy as np
+
+        args = self._args()
+        tl, vl = self._loaders(args)
+        state = self._initial_state(args)
+
+        full_hist = train_model(
+            self._model_from(state), tl, vl, epochs=8,
+            lr=1e-3, weight_decay=0.1, seed=0,
+            fresh_batches_fn=self._fresh_batches(args),
+        )
+
+        broken_model = self._model_from(state)
+        train_model(
+            broken_model, tl, vl, epochs=3,
+            lr=1e-3, weight_decay=0.1, seed=0,
+            fresh_batches_fn=self._fresh_batches(args),
+            checkpoint_dir=str(tmp_path), checkpoint_every=1,
+            schedule_epochs=8,  # partial run: anneal LR over the full 8-epoch horizon
+        )
+        resumed_hist = train_model(
+            broken_model, tl, vl, epochs=8,
+            lr=1e-3, weight_decay=0.1, seed=0,
+            fresh_batches_fn=self._fresh_batches(args),
+            resume_from=str(checkpoint_path_for_seed(str(tmp_path), 0)),
+        )
+
+        assert len(resumed_hist["train_loss"]) == 8
+        for key in full_hist:
+            np.testing.assert_allclose(
+                resumed_hist[key], full_hist[key], err_msg=f"history[{key}] diverged"
+            )
+
+    def test_resume_twice_matches_uninterrupted(self, tmp_path) -> None:
+        """Two consecutive interruptions (checkpoints at epoch 1 and 3) must
+        still converge to exactly the uninterrupted run."""
+        import numpy as np
+
+        args = self._args()
+        tl, vl = self._loaders(args)
+        state = self._initial_state(args)
+
+        full_hist = train_model(
+            self._model_from(state), tl, vl, epochs=8,
+            lr=1e-3, weight_decay=0.1, seed=0,
+            fresh_batches_fn=self._fresh_batches(args),
+        )
+
+        broken = self._model_from(state)
+        train_model(
+            broken, tl, vl, epochs=4,
+            lr=1e-3, weight_decay=0.1, seed=0,
+            fresh_batches_fn=self._fresh_batches(args),
+            checkpoint_dir=str(tmp_path), checkpoint_every=2,
+            schedule_epochs=8,
+        )
+        resumed_hist = train_model(
+            broken, tl, vl, epochs=8,
+            lr=1e-3, weight_decay=0.1, seed=0,
+            fresh_batches_fn=self._fresh_batches(args),
+            resume_from=str(checkpoint_path_for_seed(str(tmp_path), 0)),
+        )
+        for key in full_hist:
+            np.testing.assert_allclose(
+                resumed_hist[key], full_hist[key], err_msg=f"history[{key}] diverged"
+            )
+
+    def test_resume_missing_checkpoint_starts_fresh(self, tmp_path) -> None:
+        """An explicit resume path that does not exist must not crash or part
+        train — it falls back to a fresh full run, with the full history."""
+        args = self._args()
+        tl, vl = self._loaders(args)
+        hist = train_model(
+            self._model_from(self._initial_state(args)), tl, vl, epochs=2,
+            lr=1e-3, weight_decay=0.1, seed=0,
+            fresh_batches_fn=self._fresh_batches(args),
+            resume_from=str(tmp_path / "does_not_exist.pt"),
+        )
+        assert len(hist["val_acc"]) == 2
