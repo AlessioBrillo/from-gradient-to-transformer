@@ -13,6 +13,27 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-07 (fourth session) — Micro-Phase 13, Step 0: the roadmap, and the one red test
+
+- **Studied**: the MP-12 executed record against the repository (`git diff origin/dev`,
+  clean; `origin/main == origin/dev`); the figure-provenance gate's residual state (12
+  curated figures present but untracked; Rung 2/Rung 5 still manifestless); the lone red
+  test's true root cause — `test_non_json_safe_args_are_stringified` hard-codes a POSIX
+  path literal, so `str(Path("/some/path"))` fails on this Windows disk (renders
+  `\some\path`) and passes only on CI. Not a logic bug — a genuinely platform-dependent
+  assertion that has been carried as "pre-existing and unrelated" when it is exactly the
+  kind of cross-platform status that should never have stayed red.
+- **Built**: [[00_meta/12_micro-phase-13-flagships-landed]] — the full roadmap for the
+  phase that lands both flagships (R1 `--standard` supervised + P=113 ×3 Colab async),
+  includes the R3 full-scale regeneration under a watchdog, the conditional R4/R5 cascade,
+  the clean-clone gate, paper prose in evidence order, exercises, and gate criteria. Wired
+  into [[00_meta/00_home]] as the current phase.
+- **Verified**: tree clean vs `origin/dev` before writing anything; the roadmap's Step 0
+  includes the concrete test fix (below).
+- **Open question**: whether the supervised `--standard` run fully closes the
+  under-CPU-contention gap the kill drill honestly logged (cross-process BLAS
+  nondeterminism) — Step 1 of the new roadmap is designed to answer it.
+
 ## 2026-08-07 (second session) — Micro-Phase 12, Step 1: the evidence gate
 
 Executed Step 1 of the roadmap `cd384b0` rewrote this morning — the figure-provenance gap,

@@ -2,6 +2,7 @@
 (src/results.py)."""
 
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -84,10 +85,11 @@ class TestResultsManifest:
         assert loaded.aggregate["acc"]["mean"] == 0.9
 
     def test_non_json_safe_args_are_stringified(self, tmp_path: Path) -> None:
+        path_arg = Path("some/relative/path")
         manifest = ResultsManifest.from_run(
             experiment="test_exp",
             seeds=[0],
-            args={"path_arg": Path("/some/path")},
+            args={"path_arg": path_arg},
             per_seed_metrics=[{"acc": 1.0}],
             aggregate={"acc": {"mean": 1.0, "std": 0.0, "min": 1.0, "max": 1.0, "n": 1}},
             wall_clock_seconds=0.1,
@@ -97,7 +99,9 @@ class TestResultsManifest:
         path = tmp_path / "manifest.json"
         manifest.save(path)
         data = json.loads(path.read_text())
-        assert data["args"]["path_arg"] == "/some/path"
+        # os.fspath renders with the host's native separators, so this
+        # assertion holds on both POSIX and Windows (no hard-coded "/" ).
+        assert data["args"]["path_arg"] == os.fspath(path_arg)
 
 
 class TestVerifyClaims:
