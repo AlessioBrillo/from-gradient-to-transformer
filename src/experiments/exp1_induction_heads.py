@@ -17,6 +17,7 @@ Output:
 
 import argparse
 import logging
+import time
 from pathlib import Path
 from typing import Callable, Optional
 
@@ -269,6 +270,56 @@ def evaluate(
     return total_loss / len(loader.dataset), total_correct / total_tokens
 
 
+# ---------------------------------------------------------------------------
+# Checkpoint / resume (Micro-Phase 12)
+# ---------------------------------------------------------------------------
+def checkpoint_path_for_seed(checkpoint_dir: str, seed: int) -> Path:
+    """Rolling resume checkpoint path for one seed — a single file holds the
+    latest state, so `--resume` just points at this and keeps the newest
+    state without an ever-growing set of artifacts."""
+    return Path(checkpoint_dir) / f"exp1_checkpoint_seed{seed}.pt"
+
+
+def save_training_checkpoint(
+    path: Path,
+    epoch: int,
+    model: nn.Module,
+    optimizer: torch.optim.Optimizer,
+    scheduler: nn.Module,
+    history: dict,
+    rng_state,
+) -> None:
+    """Atomically write a resume checkpoint. The saved RNG state is captured
+    *after* the training loop of `epoch` has finished and *before* any state
+    of epoch `epoch + 1` has been drawn, which is exactly the continuity
+    point a seamless resume needs (see train_model()'s docstring)."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
+    torch.save(
+        {
+            "epoch": epoch,
+            "model": model.state_dict(),
+            "optimizer": optimizer.state_dict(),
+            "scheduler": scheduler.state_dict(),
+            "rng_state": rng_state,
+            "history": history,
+        },
+        tmp,
+    )
+    # Atomic rename: a kill mid-save leaves the *old* valid checkpoint, not
+    # a truncated one.
+    tmp.replace(path)
+
+
+def load_training_checkpoint(path: Path) -> Optional[dict]:
+    """Load a checkpoint written by save_training_checkpoint. Returns None
+    if the file does not exist, so `--resume` on a machine with nothing to
+    resume degrades to a fresh, logged start rather than a crash."""
+    if not path.exists():
+        return None
+    return torch.load(path, map_location=DEVICE)
+
+
 def compute_attention_entropy(
     model: nn.Module, loader: DataLoader
 ) -> dict:
@@ -329,6 +380,10 @@ def train_model(
     seed: int,
     use_wandb: bool = False,
     fresh_batches_fn: Optional[Callable[[int], DataLoader]] = None,
+    checkpoint_dir: Optional[str] = None,
+    checkpoint_every: int = 0,
+    resume_from: Optional[str] = None,
+    schedule_epochs: Optional[int] = None,
 ) -> dict:
     """Train the model and return training curves.
 
@@ -338,9 +393,27 @@ def train_model(
     model memorize specific sequences rather than learn the general
     prefix-matching-and-copying rule (Olsson et al. resample continuously;
     the pre-2026-08-02 version reused one fixed dataset, reshuffled, for the
-    entire run). When `None`, `train_loader` is reused every epoch as
-    before.
-    """
+    entire run). When `None`, `train_loader` is reused every epoch as before.
+
+    Checkpoint/resume (Micro-Phase 12): when `checkpoint_dir` and
+    `checkpoint_every > 0` are given, a resume checkpoint is written every
+    `checkpoint_every` epochs. The checkpoint captures the model, optimizer,
+    and scheduler state *plus the PyTorch RNG state at the exact continuity
+    point* — after one epoch's data draws and before the next epoch's. Data
+    sampling is driven by that RNG, so a resumed run draws exactly the same
+    batches it would have drawn had it never stopped. A killed long run is
+    therefore a *pause*, not a loss: relaunch with `resume_from` (or the
+    `--resume` CLI flag) and continue.
+
+    The LR schedule (CosineAnnealing, `T_max=schedule_epochs` defaulting to
+    `epochs`) spans the *full run horizon*, not the epochs of this call. A
+    partial call that will be resumed must pass the same horizon the final
+    run will use — e.g. the tests interrupt a run at epoch 3 while planning
+    9, so the partial call passes `schedule_epochs=<full horizon>`; treating
+    the partial call's own `epochs` as T_max anneals LR to the wrong peak and
+    makes no resumed run equal to an uninterrupted one. Falsified by
+    TestCheckpointResume (resume must reproduce an uninterrupted run
+    bit-for-bit)."""
     set_seed(seed)
     model = model.to(DEVICE)
 
@@ -369,8 +442,9 @@ def train_model(
     optimizer = torch.optim.AdamW(
         model.parameters(), lr=lr, weight_decay=weight_decay
     )
+    T_max = schedule_epochs if schedule_epochs is not None else epochs
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=epochs
+        optimizer, T_max=T_max
     )
     criterion = nn.CrossEntropyLoss()
 
@@ -379,7 +453,35 @@ def train_model(
         "attn_entropy": [], "diag1_mass": [],
     }
 
-    for epoch in tqdm(range(epochs), desc="Training"):
+    start_epoch = 0
+    resume_ckpt = (
+        load_training_checkpoint(Path(resume_from)) if resume_from else None
+    )
+    if resume_ckpt is not None:
+        model.load_state_dict(resume_ckpt["model"])
+        optimizer.load_state_dict(resume_ckpt["optimizer"])
+        scheduler.load_state_dict(resume_ckpt["scheduler"])
+        # The stored T_max came from the plan that saved the checkpoint; the
+        # continuation's own horizon (`schedule_epochs`/`epochs`) is the same
+        # plan, so keep it authoritative for the LR curve.
+        scheduler.T_max = T_max
+        torch.random.set_rng_state(resume_ckpt["rng_state"])
+        history = resume_ckpt["history"]
+        start_epoch = resume_ckpt["epoch"] + 1
+        logger.info(
+            f"RESUME: loaded {resume_from} (saved after epoch "
+            f"{resume_ckpt['epoch']}) — continuing from epoch {start_epoch}"
+        )
+    elif resume_from:
+        logger.warning(
+            f"RESUME: checkpoint {resume_from} not found — starting fresh"
+        )
+
+    ckpt_path: Optional[Path] = None
+    if checkpoint_dir and checkpoint_every > 0:
+        ckpt_path = checkpoint_path_for_seed(checkpoint_dir, seed)
+
+    for epoch in tqdm(range(start_epoch, epochs), desc="Training"):
         epoch_loader = fresh_batches_fn(epoch) if fresh_batches_fn is not None else train_loader
 
         model.train()
@@ -434,6 +536,18 @@ def train_model(
                 f"val loss: {val_loss:.4f} | val acc: {val_acc:.4f} | "
                 f"attn entropy: {attn_entropy:.2f} | diag+1: {diag1_mass:.3f}"
             )
+
+        if ckpt_path is not None and (epoch + 1) % checkpoint_every == 0:
+            save_training_checkpoint(
+                ckpt_path,
+                epoch,
+                model,
+                optimizer,
+                scheduler,
+                history,
+                torch.random.get_rng_state(),
+            )
+            logger.info(f"Checkpoint saved: {ckpt_path} (epoch {epoch + 1})")
 
     if _wandb is not None:
         _wandb.finish()
@@ -758,6 +872,65 @@ def plot_training_curves(
 # ---------------------------------------------------------------------------
 # Multi-seed headline run
 # ---------------------------------------------------------------------------
+def _headline_metrics(
+    history: dict,
+    induction_heads: list,
+    diagnosis: dict,
+) -> dict[str, float]:
+    """The six headline numbers both the multi-seed manifest and the
+    single-seed `--standard` manifest report, derived from one analysis pass
+    — shared so the two reporting paths cannot drift apart. Ablation drops
+    are filled in by the caller (they need the model)."""
+    total_induction = sum(len(h) for h in induction_heads)
+    peak_diag1 = float(np.max(history["diag1_mass"])) if history["diag1_mass"] else 0.0
+    return {
+        "final_val_acc": float(history["val_acc"][-1]),
+        "total_induction_heads": float(total_induction),
+        "peak_diag1_mass": peak_diag1,
+        "k_composition_score": float(diagnosis["step2_k_composition"]),
+        "l0_duplicate_head_mass": float(
+            max(diagnosis["step1_l0_duplicate_mass"] or [0.0])
+        ),
+        "mean_ablation_drop": 0.0,
+    }
+
+
+def _write_single_manifest(
+    args: argparse.Namespace,
+    metrics: dict[str, float],
+    wall_clock_seconds: float,
+) -> None:
+    """Provenance for a single-seed run: `--standard` (and `--save-manifest`)
+    write a results/exp1_induction_heads.json manifest so the headline is
+    traceable to a commit + config even when only one seed has run (the
+    multi-seed manifest is the same file, written by `--seeds`)."""
+    manifest = ResultsManifest.from_run(
+        experiment="exp1_induction_heads",
+        seeds=[args.seed],
+        args={k: v for k, v in vars(args).items() if k != "seeds"},
+        per_seed_metrics=[metrics],
+        aggregate={
+            k: {"mean": v, "std": 0.0, "min": v, "max": v, "n": 1.0}
+            for k, v in metrics.items()
+        },
+        wall_clock_seconds=wall_clock_seconds,
+        device=str(DEVICE),
+        n_parameters=count_parameters(
+            AttentionOnlyTransformer(
+                vocab_size=args.vocab_size,
+                d_model=args.d_model,
+                n_layers=args.n_layers,
+                n_heads=args.n_heads,
+                max_seq_len=args.seq_len,
+            )
+        ),
+        notes="Single-seed standard-scale run (Micro-Phase 12 'landed domino').",
+    )
+    manifest_path = Path("results") / "exp1_induction_heads.json"
+    manifest.save(manifest_path)
+    logger.info(f"Saved single-seed manifest to {manifest_path}")
+
+
 def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
     """Train one induction-heads run end-to-end and return headline metrics
     for one seed. Mirrors main()'s single-seed data/model/train/analysis
@@ -784,6 +957,12 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
 
     fresh_batches_fn = _make_fresh_batches_fn(args, seed) if args.fresh_batches else None
 
+    resume_from = None
+    if args.resume and args.checkpoint_every > 0:
+        resume_from = str(checkpoint_path_for_seed(args.checkpoint_dir, seed))
+    elif getattr(args, "resume_from", None):
+        resume_from = args.resume_from
+
     history = train_model(
         model=model,
         train_loader=train_loader,
@@ -794,30 +973,24 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         seed=seed,
         use_wandb=False,
         fresh_batches_fn=fresh_batches_fn,
+        checkpoint_dir=args.checkpoint_dir if args.checkpoint_every > 0 else None,
+        checkpoint_every=args.checkpoint_every,
+        resume_from=resume_from,
     )
 
     induction_heads, all_patterns = analyze_induction_heads(model, val_loader)
-    total_induction = sum(len(h) for h in induction_heads)
-    peak_diag1 = float(np.max(history["diag1_mass"])) if history["diag1_mass"] else 0.0
     diagnosis = diagnose_induction_formation(all_patterns)
 
-    drops = []
+    metrics = _headline_metrics(history, induction_heads, diagnosis)
+    drop_sum = 0.0
+    n_drops = 0
     for layer_idx, heads in enumerate(induction_heads):
         for head_idx in heads:
             ablated_acc = causal_ablation(model, val_loader, layer_idx, head_idx)
-            drops.append(history["val_acc"][-1] - ablated_acc)
-    mean_ablation_drop = float(np.mean(drops)) if drops else 0.0
-
-    return {
-        "final_val_acc": float(history["val_acc"][-1]),
-        "total_induction_heads": float(total_induction),
-        "peak_diag1_mass": peak_diag1,
-        "mean_ablation_drop": mean_ablation_drop,
-        "k_composition_score": float(diagnosis["step2_k_composition"]),
-        "l0_duplicate_head_mass": float(
-            max(diagnosis["step1_l0_duplicate_mass"] or [0.0])
-        ),
-    }
+            drop_sum += history["val_acc"][-1] - ablated_acc
+            n_drops += 1
+    metrics["mean_ablation_drop"] = float(drop_sum / n_drops) if n_drops else 0.0
+    return metrics
 
 
 # ---------------------------------------------------------------------------
@@ -903,6 +1076,40 @@ def main() -> None:
             "plotting/model-saving."
         ),
     )
+    parser.add_argument(
+        "--checkpoint-dir",
+        type=str,
+        default="checkpoints",
+        help="Directory for rolling resume checkpoints (Micro-Phase 12 stateful runs).",
+    )
+    parser.add_argument(
+        "--checkpoint-every",
+        type=int,
+        default=0,
+        help="Write a resume checkpoint every N epochs (0 = off).",
+    )
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help=(
+            "Resume the seed's latest checkpoint in --checkpoint-dir if "
+            "present — a killed run is a pause, not a loss."
+        ),
+    )
+    parser.add_argument(
+        "--resume-from",
+        type=str,
+        default=None,
+        help="Explicit checkpoint file to resume from (overrides --resume).",
+    )
+    parser.add_argument(
+        "--save-manifest",
+        action="store_true",
+        help=(
+            "Write a single-seed results/exp1_induction_heads.json manifest "
+            "after the run (implied by --standard)."
+        ),
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -931,9 +1138,18 @@ def main() -> None:
         args.num_train = 8192
         args.batch_size = 64
         args.fresh_batches = True
+        # Micro-Phase 12: standard-scale runs are stateful by default — a
+        # 3000-epoch run is ~17h on this CPU and must never again vanish
+        # without on-disk state (checkpoint, model, manifest).
+        if args.checkpoint_every == 0:
+            args.checkpoint_every = 250
+        args.save_model = True
+        args.save_manifest = True
         logger.info(
             "STANDARD MODE: canonical standard-scale config "
-            "(vocab=2048, seq=64, d_model=64, fresh-batches, epochs=3000)"
+            "(vocab=2048, seq=64, d_model=64, fresh-batches, epochs=3000) "
+            f"// stateful: checkpointing every {args.checkpoint_every} epochs, "
+            "model + manifest saved"
         )
 
     logger.info(f"Device: {DEVICE}")
@@ -1006,6 +1222,15 @@ def main() -> None:
             _make_fresh_batches_fn(args, args.seed) if args.fresh_batches else None
         )
 
+        run_resume_from = None
+        if args.resume and args.checkpoint_every > 0:
+            run_resume_from = str(
+                checkpoint_path_for_seed(args.checkpoint_dir, args.seed)
+            )
+        elif args.resume_from:
+            run_resume_from = args.resume_from
+        t_run_start = time.monotonic()
+
         # Train
         history = train_model(
             model=model,
@@ -1017,6 +1242,9 @@ def main() -> None:
             seed=args.seed,
             use_wandb=args.wandb,
             fresh_batches_fn=fresh_batches_fn,
+            checkpoint_dir=args.checkpoint_dir if args.checkpoint_every > 0 else None,
+            checkpoint_every=args.checkpoint_every,
+            resume_from=run_resume_from,
         )
 
         # Plot training curves
@@ -1120,6 +1348,21 @@ def main() -> None:
                     f"accuracy {full_acc:.4f} → {ablated_acc:.4f} "
                     f"(drop: {full_acc - ablated_acc:+.4f})"
                 )
+
+    # Micro-Phase 12: provenance for the single-seed standard run — the
+    # headline manifest, same file `--seeds` writes, so RESULTS.md's tag
+    # always points at the newest honest run.
+    if not args.no_train and args.save_manifest:
+        metrics = _headline_metrics(history, induction_heads, diagnosis)
+        drop_sum = 0.0
+        n_drops = 0
+        for layer_idx, heads in enumerate(induction_heads):
+            for head_idx in heads:
+                ablated_acc = causal_ablation(model, val_loader, layer_idx, head_idx)
+                drop_sum += history["val_acc"][-1] - ablated_acc
+                n_drops += 1
+        metrics["mean_ablation_drop"] = float(drop_sum / n_drops) if n_drops else 0.0
+        _write_single_manifest(args, metrics, time.monotonic() - t_run_start)
 
 
 if __name__ == "__main__":

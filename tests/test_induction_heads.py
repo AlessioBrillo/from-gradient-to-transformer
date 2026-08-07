@@ -9,6 +9,7 @@ from src.experiments.exp1_induction_heads import (
     AttentionOnlyBlock,
     AttentionOnlyTransformer,
     causal_ablation,
+    checkpoint_path_for_seed,
     diagnose_induction_formation,
     k_composition_scores,
     make_repeated_token_data,
@@ -381,3 +382,160 @@ class TestFreshBatches:
             seed=0,
         )
         assert len(history["train_loss"]) == 2
+
+
+class TestCheckpointResume:
+    """Falsification tests for Micro-Phase 12's checkpoint/resume: a resumed
+    run must be *indistinguishable* from one that never stopped (same model,
+    same history, same RNG-drawn batches). The 2026-08-06 audit found the
+    Rung 1 `--standard` domino had died with no process, no log, and no
+    checkpoint — 17 hours of compute lost invisibly; these tests pin the
+    behaviour that makes a killed run a pause instead of a loss."""
+
+    ARGS_DEFAULTS = dict(
+        vocab_size=256,
+        seq_len=16,
+        d_model=24,
+        n_layers=2,
+        n_heads=4,
+        num_train=256,
+        batch_size=32,
+    )
+
+    @staticmethod
+    def _args(**overrides):
+        from types import SimpleNamespace
+
+        defaults = dict(TestCheckpointResume.ARGS_DEFAULTS)
+        defaults.update(overrides)
+        return SimpleNamespace(**defaults)
+
+    @staticmethod
+    def _fresh_batches(args, seed=0):
+        from src.experiments.exp1_induction_heads import _make_fresh_batches_fn
+        return _make_fresh_batches_fn(args, seed)
+
+    @staticmethod
+    def _model(args):
+        return AttentionOnlyTransformer(
+            vocab_size=args.vocab_size,
+            d_model=args.d_model,
+            n_layers=args.n_layers,
+            n_heads=args.n_heads,
+            max_seq_len=args.seq_len,
+        )
+
+    @staticmethod
+    def _initial_state(args):
+        """Snapshot the initial weights of a freshly constructed model. Both
+        sides of a resume comparison must start from *identical* weights —
+        constructing two models independently gives them different random
+        inits, which would make even an uninterrupted comparison diverge."""
+        import copy
+
+        return copy.deepcopy(TestCheckpointResume._model(args).state_dict())
+
+    @staticmethod
+    def _model_from(state):
+        args = TestCheckpointResume._args()
+        model = TestCheckpointResume._model(args)
+        model.load_state_dict(state)
+        return model
+
+    @staticmethod
+    def _loaders(args):
+        train, val = make_repeated_token_data(
+            vocab_size=args.vocab_size,
+            seq_len=args.seq_len,
+            num_train=args.num_train,
+            num_val=8,
+            seed=0,
+        )
+        return (
+            DataLoader(train, batch_size=args.batch_size, shuffle=True),
+            DataLoader(val, batch_size=args.batch_size, shuffle=False),
+        )
+
+    def test_resume_matches_uninterrupted(self, tmp_path) -> None:
+        """Interrupt at epoch 3, resume to end: every history curve must equal
+        the uninterrupted run's exactly (the RNG snapshot guarantees it draws
+        the identical fresh batches in the identical order)."""
+        import numpy as np
+
+        args = self._args()
+        tl, vl = self._loaders(args)
+        state = self._initial_state(args)
+
+        full_hist = train_model(
+            self._model_from(state), tl, vl, epochs=8,
+            lr=1e-3, weight_decay=0.1, seed=0,
+            fresh_batches_fn=self._fresh_batches(args),
+        )
+
+        broken_model = self._model_from(state)
+        train_model(
+            broken_model, tl, vl, epochs=3,
+            lr=1e-3, weight_decay=0.1, seed=0,
+            fresh_batches_fn=self._fresh_batches(args),
+            checkpoint_dir=str(tmp_path), checkpoint_every=1,
+            schedule_epochs=8,  # partial run: anneal LR over the full 8-epoch horizon
+        )
+        resumed_hist = train_model(
+            broken_model, tl, vl, epochs=8,
+            lr=1e-3, weight_decay=0.1, seed=0,
+            fresh_batches_fn=self._fresh_batches(args),
+            resume_from=str(checkpoint_path_for_seed(str(tmp_path), 0)),
+        )
+
+        assert len(resumed_hist["train_loss"]) == 8
+        for key in full_hist:
+            np.testing.assert_allclose(
+                resumed_hist[key], full_hist[key], err_msg=f"history[{key}] diverged"
+            )
+
+    def test_resume_twice_matches_uninterrupted(self, tmp_path) -> None:
+        """Two consecutive interruptions (checkpoints at epoch 1 and 3) must
+        still converge to exactly the uninterrupted run."""
+        import numpy as np
+
+        args = self._args()
+        tl, vl = self._loaders(args)
+        state = self._initial_state(args)
+
+        full_hist = train_model(
+            self._model_from(state), tl, vl, epochs=8,
+            lr=1e-3, weight_decay=0.1, seed=0,
+            fresh_batches_fn=self._fresh_batches(args),
+        )
+
+        broken = self._model_from(state)
+        train_model(
+            broken, tl, vl, epochs=4,
+            lr=1e-3, weight_decay=0.1, seed=0,
+            fresh_batches_fn=self._fresh_batches(args),
+            checkpoint_dir=str(tmp_path), checkpoint_every=2,
+            schedule_epochs=8,
+        )
+        resumed_hist = train_model(
+            broken, tl, vl, epochs=8,
+            lr=1e-3, weight_decay=0.1, seed=0,
+            fresh_batches_fn=self._fresh_batches(args),
+            resume_from=str(checkpoint_path_for_seed(str(tmp_path), 0)),
+        )
+        for key in full_hist:
+            np.testing.assert_allclose(
+                resumed_hist[key], full_hist[key], err_msg=f"history[{key}] diverged"
+            )
+
+    def test_resume_missing_checkpoint_starts_fresh(self, tmp_path) -> None:
+        """An explicit resume path that does not exist must not crash or part
+        train — it falls back to a fresh full run, with the full history."""
+        args = self._args()
+        tl, vl = self._loaders(args)
+        hist = train_model(
+            self._model_from(self._initial_state(args)), tl, vl, epochs=2,
+            lr=1e-3, weight_decay=0.1, seed=0,
+            fresh_batches_fn=self._fresh_batches(args),
+            resume_from=str(tmp_path / "does_not_exist.pt"),
+        )
+        assert len(hist["val_acc"]) == 2
