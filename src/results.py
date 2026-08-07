@@ -44,6 +44,8 @@ import numpy as np
 import torch
 
 MANIFEST_TAG_RE = re.compile(r"<!--\s*manifest:\s*(\S+)\s*-->")
+FIGURE_CITATION_RE = re.compile(r"`([^`]*figures/[^`]*\.png)`")
+SECTION_HEADING_RE = re.compile(r"^##\s+(.*)$", re.MULTILINE)
 
 
 def git_provenance() -> tuple[str, bool]:
@@ -77,6 +79,17 @@ def _tree_dirty_outside_results(status: list[str]) -> bool:
         if not path.startswith("results/"):
             return True
     return False
+
+
+def _git_tracked(path: Path) -> bool:
+    """True if `path` is tracked in the git index. A figure can exist on
+    disk and still be invisible to anyone who clones the repo instead of
+    copying the working tree — this is the check that catches that."""
+    result = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", str(path)],
+        capture_output=True,
+    )
+    return result.returncode == 0
 
 
 def count_parameters(model: torch.nn.Module) -> int:
@@ -148,7 +161,7 @@ class ResultsManifest:
 
     @classmethod
     def load(cls, path: Path) -> "ResultsManifest":
-        data = json.loads(path.read_text())
+        data = json.loads(path.read_text(encoding="utf-8"))
         return cls(**data)
 
 
@@ -162,13 +175,20 @@ def _is_json_safe(value: Any) -> bool:
 def verify_claims(results_dir: Path, claims_file: Path) -> list[str]:
     """Cross-check results/*.json manifests against portfolio/RESULTS.md.
 
-    Two independent checks:
+    Four independent checks:
     1. Every manifest on disk is internally consistent (well-formed, seed
        count matches its own aggregate, not recorded against a dirty tree).
     2. Every `<!-- manifest: path/to/file.json -->` tag in RESULTS.md points
        at a manifest that actually exists. RESULTS.md is expected to place
        one such tag next to any headline number it reports — that is the
        convention this function enforces, not a generic prose parser.
+    3. Every `figures/...png` / `portfolio/figures/...png` citation in
+       RESULTS.md exists on disk AND is tracked by git — a figure that only
+       exists in the local working tree is invisible to a fresh clone.
+    4. Every `## ` section carrying a `**Figures**:` or `**Outputs**:` line
+       carries its own `<!-- manifest: ... -->` tag — catches a section that
+       cites results with no manifest backing them, even when some other
+       section elsewhere in the file happens to have a tag.
 
     Returns:
         A list of problem descriptions; empty means everything checks out.
@@ -207,7 +227,7 @@ def verify_claims(results_dir: Path, claims_file: Path) -> list[str]:
                 )
 
     if claims_file.exists():
-        text = claims_file.read_text()
+        text = claims_file.read_text(encoding="utf-8")
         tagged = MANIFEST_TAG_RE.findall(text)
         if not tagged:
             problems.append(
@@ -220,6 +240,40 @@ def verify_claims(results_dir: Path, claims_file: Path) -> list[str]:
                 problems.append(
                     f"{claims_file}: manifest tag references missing file '{rel}'"
                 )
+
+        # Every figure RESULTS.md cites must exist on disk AND be tracked by
+        # git — "the file is on my machine" is not evidence a reviewer can
+        # see from a clone. figures/ is regenerable scratch (gitignored);
+        # portfolio/figures/ is the committed curated set a citation must
+        # point at.
+        for rel in sorted(set(FIGURE_CITATION_RE.findall(text))):
+            fig_path = Path(rel)
+            if not fig_path.exists():
+                problems.append(
+                    f"{claims_file}: cites figure '{rel}' which does not exist on disk."
+                )
+            elif not _git_tracked(fig_path):
+                problems.append(
+                    f"{claims_file}: cites figure '{rel}' which exists on disk but "
+                    "is not tracked by git — invisible to anyone who clones the repo."
+                )
+
+        # A section that shows figures/outputs but carries no manifest tag is
+        # exactly the gap that let exp2 and exp5 report numbers with nothing
+        # backing them while the whole-file "no tags at all" check above
+        # stayed silent (both sections have *some* tag file-wide, just not
+        # their own).
+        for section in re.split(r"(?=^##\s)", text, flags=re.MULTILINE):
+            if not re.search(r"\*\*(?:Figures|Outputs)\*\*:", section):
+                continue
+            if MANIFEST_TAG_RE.search(section):
+                continue
+            heading_match = SECTION_HEADING_RE.match(section)
+            heading = heading_match.group(1) if heading_match else "(untitled section)"
+            problems.append(
+                f"{claims_file}: section '{heading}' cites figures/outputs but has "
+                "no <!-- manifest: ... --> tag of its own."
+            )
     else:
         problems.append(f"{claims_file}: file not found")
 

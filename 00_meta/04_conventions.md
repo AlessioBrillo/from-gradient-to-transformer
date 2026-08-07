@@ -67,4 +67,10 @@ For MI experiments: `feat(grokking): reproduce modular addition with Fourier ana
   call a library that already did it. `transformer-lens`, `sae-lens`, and
   `circuitsvis` were removed from `pyproject.toml` on 2026-08-01 after an
   audit found none of them were ever imported.
-- Figures are saved to `figures/` AND committed; each figure has a deterministic generating script.
+- Two-tier figure contract (Micro-Phase 12, 2026-08-07 — replaces the earlier "saved to
+  `figures/` AND committed" line, which `.gitignore` silently contradicted): `figures/` is
+  regenerable scratch, gitignored, rebuilt by `make reproduce`. `portfolio/figures/` is the
+  small, committed, curated set — a figure backing a claim in `portfolio/RESULTS.md` lives
+  here or the claim doesn't cite one. Enforced mechanically by `make verify-claims`
+  (`src.results.verify_claims`), which fails if a cited figure is missing from disk or exists
+  but isn't tracked by git. Each figure still has a deterministic generating script.

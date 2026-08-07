@@ -228,7 +228,7 @@ per epoch) and `--seeds` (multi-seed manifest) added 2026-08-02.
 
 **Reference**: Olsson et al., "In-context Learning and Induction Heads," Transformer Circuits Thread (Anthropic), 2022.
 
-**Figures**: `figures/exp1_training_bump.png`
+**Figures**: `portfolio/figures/exp1_training_bump.png`
 
 ---
 
@@ -270,9 +270,15 @@ random `(a, b)` pairs.
 
 **Reference**: Nanda et al., "Progress Measures for Grokking via Mechanistic Interpretability," ICLR 2023 (oral).
 
-**Figures**: `figures/exp2_grokking_curve.png`, `figures/exp2_fourier_weights.png`,
-`figures/exp2_frequency_ablation.png`, `figures/exp2_progress_measures.png` — current
-contents are the last probe run (no-grokking sweeps), not a grokking curve.
+**Figures**: `portfolio/figures/exp2_grokking_curve.png`,
+`portfolio/figures/exp2_fourier_weights.png`,
+`portfolio/figures/exp2_frequency_ablation.png`,
+`portfolio/figures/exp2_progress_measures.png` — current contents are the last probe run
+(no-grokking sweeps), not a grokking curve. **No manifest tag**: `exp2_grokking.py` has
+`--seeds` support (see Honesty Ledger, 2026-08-02) but no `results/exp2_grokking.json` has
+ever been produced — the P=113 run that would generate one is still pending a GPU session
+(Step 3a below). Until then this section's numbers are traceable only to the prose above,
+not to a manifest.
 
 ---
 
@@ -321,11 +327,11 @@ done — at and below sparsity 0.1 the 5 directions sit on a regular pentagon (g
 70.2–73.8°, std ≤ 1.4° vs ideal 72°; best 71.6–73.0°, std 0.5° at sparsity 0.02);
 the dense regime (0.2–0.5) is 4/5 represented and off-pentagon (std 22°+). The
 equiangular geometry is the sparse-phase attractor, not a dense-phase property.
-Figure: `figures/exp3_pentagon_geometry.png`.
+Figure: `portfolio/figures/exp3_pentagon_geometry.png`.
 
 **Reference**: Elhage et al., "Toy Models of Superposition," Transformer Circuits Thread (Anthropic), 2022.
 
-**Figures**: `figures/exp3_feature_geometry.png`, `figures/exp3_phase_change.png`
+**Figures**: `portfolio/figures/exp3_feature_geometry.png`, `portfolio/figures/exp3_phase_change.png`
 
 ---
 
@@ -385,7 +391,11 @@ be an exact no-op for both activation and path patching
 (`tests/test_exp4_circuit_patching.py`), and patching against a genuinely different run
 must move the logit diff somewhere.
 
-**Outputs**: `figures/exp4_attention_patterns.png`, `figures/exp4_patching_results.png`, `figures/exp4_head_ablation.png`
+**Outputs**: `portfolio/figures/exp4_attention_patterns.png`,
+`portfolio/figures/exp4_patching_results.png`. Head-ablation figure not yet generated — head
+ablation itself is skipped whenever 0 induction heads are detected (see above), so there is
+no ablation result to plot yet; the citation that used to point at a non-existent
+`exp4_head_ablation.png` is struck rather than left dangling.
 
 **Reference**: Wang et al., "Interpretability in the Wild: a Circuit for Indirect Object Identification in GPT-2 small," ICLR 2023. Zhang & Nanda, "Towards Best Practices of Activation Patching," ICLR 2024 — the corrective paper for exactly the site/metric mistakes found here.
 
@@ -424,7 +434,12 @@ from a model that hasn't yet learned the mechanism this pipeline exists to study
 
 **Reference**: Bricken et al., "Towards Monosemanticity" (2023); Cunningham et al., "Sparse Autoencoders Find Highly Interpretable Features in Language Models," ICLR 2024.
 
-**Figures**: `figures/exp5_sparsity_tradeoff.png`, `figures/exp5_feature_histogram.png` (synthetic); `figures/exp5_sparsity_tradeoff_real.png`, `figures/exp5_feature_histogram_real.png` (real)
+**Figures**: `portfolio/figures/exp5_sparsity_tradeoff.png`,
+`portfolio/figures/exp5_feature_histogram.png` (synthetic). Real-activation figures
+(`exp5_sparsity_tradeoff_real.png`, `exp5_feature_histogram_real.png`) are not yet
+generated — the numbers above came from a run whose plots were never saved; struck rather
+than left dangling. **No manifest tag**: no `results/exp5_sae_dashboard.json` has ever been
+produced, for the synthetic or the real-activation numbers — same gap as Rung 2 above.
 
 ---
 

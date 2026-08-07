@@ -5,8 +5,10 @@ __pycache__/
 venv/
 .ipynb_checkpoints/
 
-# Generated figures (regenerated with make reproduce)
-figures/
+# Generated figures (regenerated with make reproduce). Anchored to root only —
+# an unanchored `figures/` also matched portfolio/figures/, which silently
+# swallowed the committed curated set (verified 2026-08-07, Micro-Phase 12 Step 1).
+/figures/
 
 # Models and heavy data (do not version large binaries)
 *.pt
