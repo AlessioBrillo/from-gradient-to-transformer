@@ -11,9 +11,9 @@ Central map of the vault. Everything starts here.
 
 The target research contribution: **mechanistic reverse-engineering of a transformer's learned algorithms at micro scale**. The strongest *verified* piece today is Rung 3's superposition phase transition (root-caused and reproduced 2026-08-02 after two prior audits couldn't explain it); grokking modular addition (the primary flagship) is not yet reproduced.
 
-See [[portfolio/RESULTS]] for exact per-rung status, [[13_micro-phase-14-the-verdicts]] for
-the in-flight verdicts phase, [[14_micro-phase-15-from-verdicts-to-showcase]] for the
-synthesis layer running in parallel, and [[portfolio/README]] for all showcase artifacts.
+See [[portfolio/RESULTS]] for exact per-rung status, [[16_micro-phase-17-closure-and-release]]
+for the current roadmap (the closure phase — verdicts land or close, then release), and
+[[portfolio/README]] for all showcase artifacts.
 
 > If you have 30 seconds, read the thesis and the Reproducibility Audit in RESULTS.md. There is no mini-paper yet, but `portfolio/paper/` has a scaffold.
 
@@ -34,7 +34,8 @@ synthesis layer running in parallel, and [[portfolio/README]] for all showcase a
 - [[12_micro-phase-13-flagships-landed]] — MP13: evidence base shipped (Step 0 landed), flagships instrumented
 - [[13_micro-phase-14-the-verdicts]] — verdicts phase (in flight): the two flagship runs execute for real, under supervision
 - [[14_micro-phase-15-from-verdicts-to-showcase]] — the synthesis roadmap: from verdicts to showcase, no idle verdict time
-- [[15_micro-phase-16-the-execution]] — current roadmap: the execution phase — launch decisions, watchdog, clean-clone dry run, mypy de-drift, paper spine, verdict lanes, release
+- [[15_micro-phase-16-the-execution]] — MP16: the execution phase (Step 0 shipped, PR #41)
+- [[16_micro-phase-17-closure-and-release]] — current roadmap: the closure phase — verdicts land or close with a dated reason, paper spine, watchdog, clean-clone, mypy de-drift, release & showcase
 
 ## Phases
 - [[01_foundations/_MOC|Phase 1 · Foundations]]
