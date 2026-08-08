@@ -13,6 +13,41 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-08 (seventh session) — Micro-Phase 20, Step 0: the execution-arc roadmap, pre-registered
+
+- **Studied**: the MP-19 baseline against the repository (main already shipped; all ten
+  ledger rows still UNDECIDED) — and finished the diagnosis six roadmaps kept repeating:
+  the ledger got dates but never a *terminator*. A deferral with a date is a decision; a
+  deferral without a kill-condition is instinct. Re-verified the CI floor myself before
+  writing: 185 tests passing (76 s), ruff clean on `src/ tests/`, blocking mypy clean,
+  full-tree mypy at its tracked 171, `make verify-claims` at exactly its designed 2
+  problems (Rung 2 / Rung 5 manifestless by design). Also read the CI machinery cold:
+  commitlint's `body-max-line-length` (200) is PR-scoped, markdown-lint triggers on this
+  push, and the two pardon entries stay exact-message-scoped — this commit must conform
+  from the first push (the MP-18 lesson, now applied at write time).
+- **Built**: [[00_meta/19_micro-phase-20-execution-arc]] — the execution phase with the
+  two terms the ledger was missing: a **terminal date** (the release = 14 calendar days
+  after Step 0, scheduling backwards) and a **kill-date per ledger row** (a row's window
+  names the condition that ends it; a row that outlives its kill-date is auto-CLOSED with
+  that date as its reason). Sessions S0–S9 keep MP-19's calendar; the P=113 row (the
+  five-year open loop) gains the Day-4 tie-break: named GPU date, or the Budgeted CPU
+  lane (progress-measures witnesses at four checkpoints — a deliverable even without the
+  crossover), or a one-reason closure; the lane has no silent state and no state survives
+  the terminal date. New exercise #1 is the 20-minute launch rehearsal (the launch
+  becomes boring before it is real); new #8 is the adversarial-reader pass (the paper's
+  strongest attack sentences are written before the verdicts land). Wired into
+  [[00_meta/00_home]] (MP-18/MP-19 relabelled, no longer "current"); the ledger ADR
+  [[docs/adr/0001-verdict-closure-ledger]] remains the single gate artifact.
+- **Verified**: tree clean vs `origin/dev`; the roadmap was written against
+  machine-checkable facts — every flag, manifest count, gate number and G-file path
+  cross-checked against the Makefile, `src/results.py` and the workflows on disk; the
+  whole-changed markdownlint and the note set are clean.
+- **Open question**: the closure sitting (S1) is the decisive session of the phase — the
+  signing of the kill-dates for R1 `--standard` (supervised window with heartbeat) and
+  P=113 (GPU date / CPU budget / one-reason closure) is a human-windowed event this
+  roadmap deliberately does not take pre-emptively; the pre-registered tie-breaks are the
+  phone, the stamping is the sitting.
+
 ## 2026-08-08 (sixth session) — Micro-Phase 19, Step 0: the verdicts-to-publication roadmap, pre-registered
 
 - **Studied**: the MP-18 baseline against the repository (main is already shipped;
