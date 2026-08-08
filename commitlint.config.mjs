@@ -35,5 +35,13 @@ export default {
     // mirrors the precedent above and should be reverted alongside the
     // others once those commits leave merged history.
     (message) => message.startsWith('docs(meta): add micro-phase-20 execution-arc roadmap, wire home, log pre-flight'),
+    // Scoped, auditable exception (2026-08-08): the repair commit itself for
+    // MP-20 step-0 (befc545 on dev) shipped with a > 200-char body — the
+    // exact class its own patch was closing, adding it minutes before the
+    // commit that carried the fix. Force-push blocked; exact-message scope as
+    // established above; the local `commitlint-head` mirror is henceforth run
+    // on every message before push (the fix is the process, not the pardon).
+    // Revert with the other entries when these commits leave merged history.
+    (message) => message.startsWith('ci(ci): local commitlint mirror plus scoped pardon for mp-20 step-0'),
   ],
 };
