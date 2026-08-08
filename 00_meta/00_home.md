@@ -33,7 +33,8 @@ synthesis layer running in parallel, and [[portfolio/README]] for all showcase a
 - [[11_micro-phase-12-resilient-flagship-run]] — MP12: correct the state, publish the evidence, land the flagships
 - [[12_micro-phase-13-flagships-landed]] — MP13: evidence base shipped (Step 0 landed), flagships instrumented
 - [[13_micro-phase-14-the-verdicts]] — verdicts phase (in flight): the two flagship runs execute for real, under supervision
-- [[14_micro-phase-15-from-verdicts-to-showcase]] — current roadmap: the synthesis layer, from verdicts to showcase, no idle verdict time
+- [[14_micro-phase-15-from-verdicts-to-showcase]] — the synthesis roadmap: from verdicts to showcase, no idle verdict time
+- [[15_micro-phase-16-the-execution]] — current roadmap: the execution phase — launch decisions, watchdog, clean-clone dry run, mypy de-drift, paper spine, verdict lanes, release
 
 ## Phases
 - [[01_foundations/_MOC|Phase 1 · Foundations]]
