@@ -13,6 +13,33 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-08 (fifth session) — Micro-Phase 18, Step 0: the verdict window, pre-registered
+
+- **Studied**: the MP-17 baseline against the repository (Step 0 shipped via PR #41;
+  Steps 1–7 unexecuted) — and the one thing every roadmap since MP-13 lacked: a
+  calendar. Five consecutive phases pre-registered the same two flagship verdicts;
+  the bottleneck is launch discipline, and the treatment has to be mechanical, not
+  rhetorical. MP-17's own design (closure over continuation, lane 6d) is right; what
+  was missing is *session shaping* — steps without clocks get re-planned.
+- **Built**: [[00_meta/17_micro-phase-18-verdict-window]] — the execution vehicle that
+  binds MP-17's Steps 1–7 to eight clocked sessions (S0 pre-flight through S7 release)
+  with wall-clock budgets and exit criteria, inherits MP-17's study topics bound to
+  sessions, and adds the Phase's own new exercises (the closure sitting, the 60-second
+  clock check, the release rehearsal). Created the mechanical spine first:
+  [[docs/adr/0001-verdict-closure-ledger]] — the Verdict Closure Ledger ADR with ten
+  materially empty rows, the artifact Session 1 fills (launched with date + window +
+  heartbeat, or closed with one named reason; zero undated rows gates the session).
+  Wired into [[00_meta/00_home]] as the current roadmap, superseding MP-17 in the
+  headline line (MP-17 stays linked as the roadmap this phase executes).
+- **Verified**: tree clean vs `origin/dev` before writing anything; the
+  `test_non_json_safe_args_are_stringified` path-encoding fix from MP-13 confirmed
+  present on HEAD (`os.fspath` — no Windows-local red while awaiting GitHub).
+- **Open question**: the closure itself (S1) — R1 `--standard` has its default lane
+  (supervised launch tonight on this machine, heartbeat, checkpoint-every 500); P=113
+  wants a Colab session or a budgeted CPU alternative or a one-reason closure. The
+  roadmap's Session 1 is the same night the ledger must fill; the dates and the
+  signatures are what the next sitting decides.
+
 ## 2026-08-08 (fourth session) — Micro-Phase 17, Step 0: the closure roadmap, pre-registered
 
 - **Studied**: the MP-16 baseline against the repository (Step 0 shipped via PR #41;
