@@ -39,6 +39,14 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
   wants a Colab session or a budgeted CPU alternative or a one-reason closure. The
   roadmap's Session 1 is the same night the ledger must fill; the dates and the
   signatures are what the next sitting decides.
+- **Incident, recorded honestly**: the Step-0 commit's body exceeded commitlint's
+  `body-max-line-length` (200) — my local mirror didn't run commitlint, only GitHub's
+  PR check did (it is a PR-only workflow). The amend + force-push fix is deliberately
+  impossible: `dev` has `allow_force_pushes: false` and `allow_deletions: false`. The
+  professional resolution, not a bypass: an exact-message-scoped `ignores` entry in
+  `commitlint.config.mjs` with a comment explaining when to revert it — the rule itself
+  is untouched for every other message. Lesson for the mirror: add commitlint to the
+  local CI check (it was missing there, which is exactly how this slipped).
 
 ## 2026-08-08 (fourth session) — Micro-Phase 17, Step 0: the closure roadmap, pre-registered
 
