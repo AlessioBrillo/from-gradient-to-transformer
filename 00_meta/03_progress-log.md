@@ -13,6 +13,36 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-08 (fourth session) — Micro-Phase 17, Step 0: the closure roadmap, pre-registered
+
+- **Studied**: the MP-16 baseline against the repository (Step 0 shipped via PR #41;
+  Steps 1–7 unexecuted) — and the uncomfortable pattern it completes: MP-13, 14, 15,
+  and 16 each pre-registered the same two flagship verdicts and none of them launched
+  anything. `checkpoints/` still holds only `kill_drill`; `results/` still holds exactly
+  three manifests; the paper is still ~100% `% TODO`; full-tree mypy still 171. The
+  bottleneck was never instrumentation — MP-10/11 finished that — it is launch
+  discipline, so this phase's Step 1 makes the closure decision an explicit gate with
+  a *mechanical* artifact: the Verdict Closure Ledger, zero un-decided rows, or the
+  session isn't over.
+- **Built**: [[00_meta/16_micro-phase-17-closure-and-release]] — the closure roadmap
+  with the design principle "closure over continuation": every open item from
+  MP-14/15/16 either lands under a date or is closed with one named reason; the paper
+  spine (Related Work, Methods, Superposition, refined Limitations) proceeds in
+  parallel, verdict-independent; the verdict lanes 6a/6b/6c gain the new closure lane
+  6d (closed-not-verified), so nothing a verdict can do — including never running —
+  is allowed to block the showcase; the release pass is rehearsed before the verdicts
+  (Challenge 11) so Step 7 is a formality. Wired into [[00_meta/00_home]] as the
+  current roadmap.
+- **Verified** (CI mirror to follow): tree clean vs `origin/dev` before writing
+  anything.
+- **Open question**: the closure decision itself (Step 1) — R1 `--standard` has a
+  default path (supervised launch on this machine, heartbeat, same-night window) and
+  the P=113 lane has a default (Colab session when available, or a budgeted CPU
+  alternative, or a written closure). Both defaults are pre-recorded in the roadmap;
+  the dates and the signatures are what the phase's Step 1 session must fill in —
+  and this is the fifth phase where "fill them in" is the honest summary of the
+  critical path.
+
 ## 2026-08-08 (third session) — Micro-Phase 16, Step 0: the execution roadmap + doc drift fixed
 
 - **Studied**: the MP-15 baseline against the repository (Step 0 shipped via PR #40; Steps
