@@ -11,7 +11,7 @@ Central map of the vault. Everything starts here.
 
 The target research contribution: **mechanistic reverse-engineering of a transformer's learned algorithms at micro scale**. The strongest *verified* piece today is Rung 3's superposition phase transition (root-caused and reproduced 2026-08-02 after two prior audits couldn't explain it); grokking modular addition (the primary flagship) is not yet reproduced.
 
-See [[portfolio/RESULTS]] for exact per-rung status, [[12_micro-phase-13-flagships-landed]] for the current phase, and [[portfolio/README]] for all showcase artifacts.
+See [[portfolio/RESULTS]] for exact per-rung status, [[13_micro-phase-14-the-verdicts]] for the current phase, and [[portfolio/README]] for all showcase artifacts.
 
 > If you have 30 seconds, read the thesis and the Reproducibility Audit in RESULTS.md. There is no mini-paper yet, but `portfolio/paper/` has a scaffold.
 
@@ -29,7 +29,8 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[12_micro-phase-13-flagshi
 - [[09_micro-phase-10-evidence-run]] — MP10 as executed (2026-08-06): the instruments were built
 - [[10_micro-phase-11-flagship-run]] — MP11: probe verdicts, K-composition detector
 - [[11_micro-phase-12-resilient-flagship-run]] — MP12: correct the state, publish the evidence, land the flagships
-- [[12_micro-phase-13-flagships-landed]] — current phase: the two flagship runs land for real, under supervision
+- [[12_micro-phase-13-flagships-landed]] — MP13: evidence base shipped (Step 0 landed), flagships instrumented
+- [[13_micro-phase-14-the-verdicts]] — current phase: the two flagship runs execute for real, under supervision
 
 ## Phases
 - [[01_foundations/_MOC|Phase 1 · Foundations]]

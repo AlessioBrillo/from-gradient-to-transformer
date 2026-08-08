@@ -13,6 +13,40 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-08 (first session) — Micro-Phase 14, Step 0: the pre-flight, executed
+
+- **Studied**: the MP-13 state review against the repository — its Step 0 has actually
+  shipped (`c171b86` → `500c2b0`, merged to `main` via PR #38; tree clean, `dev == main`);
+  its Steps 1–7 remain entirely unexecuted: no R1 `--standard` run, no P=113 run
+  (Rung 2 still has no manifest ever produced), no R3 full-scale geometry re-run, no
+  clean-clone gate transcript, no paper prose. That verified baseline became
+  [[00_meta/13_micro-phase-14-the-verdicts]].
+- **Built**: [[00_meta/13_micro-phase-14-the-verdicts]] — the pre-registration roadmap
+  for the verdicts phase (both flagships in one wall-clock window, the cascade, the
+  watchdog R3 regeneration, clean-clone gate, paper prose in evidence order, gate
+  criteria); wired into [[00_meta/00_home]] as the current phase.
+- **CI pre-flight, mirroring GitHub CI exactly**:
+  - The `uv` binary had vanished from this machine's PATH — reinstalled (`pip install
+    uv`), then `uv sync --frozen --all-extras` rebuilt `.venv` (torch 2.12.1+cpu, numpy
+    2.5.0, pytest 9.1.1 — the lockfile's exact set).
+  - **Real local issue found and fixed**: mypy's incremental cache (`.mypy_cache`) was
+    corrupted (`sqlite3.DatabaseError: database disk image is malformed`), which made
+    blocking mypy exit 2 — the "mypy crashed" class CI treats as a build failure.
+    Cleared the cache; mypy then passed clean ("no issues found in 2 source files").
+    A cache artifact, not a code defect — but precisely the class of silent
+    environment rot this vault has learned to distrust.
+  - ruff: clean on `src/ tests/`. Full suite: **185 passed** in 56 s.
+  - Full-tree mypy: exit 1 with 171 tracked pre-existing errors (mostly missing generic
+    type args; 154 as of 2026-08-01 — the ratchet, not a crash; non-blocking per the
+    repo's own CI policy).
+  - `make verify-claims`: exactly 2 problems — Rung 2 and Rung 5 have no manifests yet,
+    which is the gate working as designed until their runs land.
+  - markdownlint-cli2: 0 violations on the changed notes (MD013 at 400 keeps the vault's
+    prose in code-clean territory).
+- **Open question**: the two flagships still need their supervised launches (R1
+  `--standard` CPU ~17–20 h; P=113 ×3 seeds on a Colab GPU via the pinned notebook);
+  everything else in the phase now has a green CI floor under it.
+
 ## 2026-08-07 (fourth session) — Micro-Phase 13, Step 0: the roadmap, and the one red test
 
 - **Studied**: the MP-12 executed record against the repository (`git diff origin/dev`,
