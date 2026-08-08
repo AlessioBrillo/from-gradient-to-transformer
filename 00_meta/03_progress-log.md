@@ -13,6 +13,32 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-08 (second session) — Micro-Phase 15, Step 0: the synthesis roadmap, pre-registered
+
+- **Studied**: the MP-14 baseline against the repository (Step 0 shipped via PR #39; Steps
+  1–7 pending verdicts); the K-composition detector is already implemented
+  (`k_composition_scores` → `plot_composition_diagnostic`, `exp1_induction_heads.py`), so
+  the phase's committed fallback deliverable is a figure generator, not a promise; the
+  mypy ratchet slipped (154 → 171 full-tree errors after the numpy 2.5.0 / torch 2.12.1+cpu
+  lockfile rebuild — the same class of silent environment drift the vault distrusts).
+- **Built**: [[00_meta/14_micro-phase-15-from-verdicts-to-showcase]] — the pre-registration
+  roadmap with the "no idle verdict time" design principle: Steps 0–5 need nothing but this
+  machine (R3 watchdog regeneration, clean-clone dry run, mypy de-drift, paper spine for
+  the four evidence-backed sections, claims audit); Steps 6a–6c consume MP-14's verdicts
+  through three pre-committed lanes (head / headless / grokked); Step 7 is the release &
+  showcase pass. Wired into [[00_meta/00_home]] as the current roadmap alongside the
+  in-flight verdicts phase.
+- **Verified** (CI mirror, mirroring GitHub CI exactly): ruff clean on `src/ tests/`; blocking
+  mypy clean (results.py, runner.py); full suite **185 passed**; `make verify-claims` at its
+  expected 2 problems (Rung 2 / Rung 5 manifests pending — the gate working as designed);
+  markdownlint: 0 violations on the new + changed notes. Pushed to `dev`; GitHub CI green
+  (markdown-lint, and python-ci unchanged since no `src/` touched); merged `dev → main` via
+  PR on green CI; tree clean, `dev == main` (GPG-signed).
+- **Open question**: the launch of R1 `--standard` (17–20 h supervised CPU) and P=113
+  (Colab GPU session) belongs to MP-14's critical path; until a Colab session exists, this
+  phase's parallel steps (watchdog, clean-clone dry run, paper spine) are the productive
+  floor under the verdicts.
+
 ## 2026-08-08 (first session) — Micro-Phase 14, Step 0: the pre-flight, executed
 
 - **Studied**: the MP-13 state review against the repository — its Step 0 has actually
