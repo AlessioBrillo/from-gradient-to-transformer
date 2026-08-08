@@ -50,7 +50,11 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
   fix the MP-18 lesson demanded but never landed: `make commitlint-head`, added to the
   local `ci-check` mirror, so the class is caught at the first local push. Verified both
   directions: the mirror fails a > 200-char body (exit 1) and passes the pardoned
-  message (exit 0).
+  message (exit 0). Second offense, recorded before it could repeat the first: the
+  repair commit's own body tripped the same gate on the PR rerun — pardoned by the
+  same exact-message scope, and irrefutable evidence the fix is only complete when
+  the mirror sits BEFORE the first local push. The sanctioned commits below were all
+  linted through `commitlint-head`, as a range, before leaving the machine.
 - **Open question**: the closure sitting (S1) — the kill-date signatures for R1
   `--standard` (supervised window + heartbeat) and P=113 (GPU date / CPU budget /
   closure) are a human-windowed event the roadmap deliberately does not pre-empt; the
