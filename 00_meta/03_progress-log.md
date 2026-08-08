@@ -47,6 +47,12 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
   MP-18 Step-0 message) and reports `subject-empty`. The PR check lints only PR
   commits, so the failure is a mirror-range artifact, not a message defect; the new
   commit is linted through the mirror before leaving the machine.
+- **Incident, recorded honestly**: GitHub never dispatched the `pull_request`-event
+  workflows (Python CI, commitlint, markdown lint) for the Step-0 PR — the head SHA was
+  pushed before the PR opened, so the push-check suite was reused and the PR-event
+  checks never created a run. Close/reopen and recreate (PR #47 → PR #48) did not
+  dispatch either. Fix: a new head SHA via this record commit, forcing the PR
+  `synchronize` event; the outcome is logged here after verification.
 - **Open question**: the publication itself — MP-21's release decides whether the
   essay's Rung 2 sentence is a result or an honest negative, and the Space row decides
   whether the CPU Explorer ships or closes with one reason; both are pre-registered
