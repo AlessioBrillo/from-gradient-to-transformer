@@ -451,8 +451,8 @@ produced, for the synthetic or the real-activation numbers — same gap as Rung 
 | 2 — Classical ML | ✅ Complete | complete-ml-pipeline |
 | 3 — Deep Learning | ✅ Complete | gradient-flow-and-architectures |
 | 4 — NLP & Transformers | ✅ Complete | circuit-analysis-complete |
-| 5 — LLM Engineering | [~] Instrumentation done | — |
-| 6 — Production AI | [~] Reproducibility harness built (multi-seed + manifests + `verify-claims`), CI/mypy fixed, paper scaffold added — W&B, Hugging Face Spaces, and the mini-paper prose are still open | [[06_production_ai/proofs/reproducible-from-clean-clone]] (not yet green — needs a post-commit clean-clone run) |
+| 5 — LLM Engineering | [~] Instrumentation done (hooks, determinism, harvesting, circuit datasets proven; nnsight pending) | — |
+| 6 — Production AI | [~] Reproducibility harness built (multi-seed + manifests + `verify-claims` + figure-provenance gate 2026-08-07, kill drill + bit-identical checkpoint/resume, CI/mypy fixed, paper scaffold + `make paper` added) — W&B, Hugging Face Spaces, and the mini-paper prose are still open | [[06_production_ai/proofs/reproducible-from-clean-clone]] (not yet green — needs a post-commit clean-clone run) |
 | 7 — Capstone | [~] Research plan written | — |
 
 ## Summary

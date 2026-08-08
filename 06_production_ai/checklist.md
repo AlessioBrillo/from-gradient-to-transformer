@@ -26,18 +26,17 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
   resolved) and split the mypy step so a genuine crash (exit 2) fails the build instead of
   being swallowed by `|| true` alongside ordinary reported errors (exit 1).
 - [~] **Figure generation scripts:** every figure has a deterministic generating script;
-  `portfolio/figures/` established as the committed curated set, enforced mechanically by
-  `make verify-claims` (existence + git-tracking check added 2026-08-07, Micro-Phase 12 Step
-  1, falsified against the real pre-fix state — see
-  [[06_production_ai/notes/figure-provenance-and-evidence-gates]],
-  [[06_production_ai/exercises/ex-05-falsify-the-figure-gate]]). Not yet flipped to `[x]`:
-  the curated figures aren't committed yet (`make verify-claims` still reports them
-  untracked), and two sections (Rung 2, Rung 5) have no manifest to tag at all — a real gap,
-  not a bug in the check.
+  `portfolio/figures/` established as the committed curated set (12 figures tracked since
+  Micro-Phase 13, PR #38), enforced mechanically by `make verify-claims` (existence +
+  git-tracking check added 2026-08-07, Micro-Phase 12 Step 1, falsified against the real
+  pre-fix state — see [[06_production_ai/notes/figure-provenance-and-evidence-gates]],
+  [[06_production_ai/exercises/ex-05-falsify-the-figure-gate]]). Not flipped to `[x]` yet:
+  two sections (Rung 2 grokking, Rung 5 SAE) have no manifest to tag at all — a real gap,
+  not a bug in the check (the gate keeps flagging them until those runs land).
 - [ ] **Feature dashboard deployment:** Hugging Face Spaces for SAE feature browser
-- [~] **Mini-paper workflow:** LaTeX template, `make paper`, citation management —
-  `portfolio/paper/main.tex` + `references.bib` scaffold added 2026-08-02; structure only,
-  no prose.
+- [~] **Mini-paper workflow:** LaTeX template, `make paper` (added 2026-08-08), citation
+  management — `portfolio/paper/main.tex` + `references.bib` scaffold added 2026-08-02;
+  structure only, no prose yet.
 
 ## Light Touch (context)
 - [ ] Data versioning (DVC / lakeFS) — for large activation datasets
