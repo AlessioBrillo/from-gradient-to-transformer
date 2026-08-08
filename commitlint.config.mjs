@@ -25,5 +25,23 @@ export default {
     // constraint, same exact-message scope. Revert when it leaves merged
     // history.
     (message) => message.startsWith('ci(ci): pardon superseded micro-phase-19 step-0 body line'),
+    // Scoped, auditable exception (2026-08-08): the micro-phase-20 step-0
+    // roadmap commit (b4588a5 on dev) was pushed with a body line > 200 chars
+    // (body-max-line-length) — the same class as the three exceptions above,
+    // and proof that the local mirror was still missing: with no local
+    // commitlint, the class slips in again every time the workflow gap
+    // closes. The pardon does not fix the process — the Makefile `commitlint`
+    // target, added to ci-check the same day, is the repair. This entry
+    // mirrors the precedent above and should be reverted alongside the
+    // others once those commits leave merged history.
+    (message) => message.startsWith('docs(meta): add micro-phase-20 execution-arc roadmap, wire home, log pre-flight'),
+    // Scoped, auditable exception (2026-08-08): the repair commit itself for
+    // MP-20 step-0 (befc545 on dev) shipped with a > 200-char body — the
+    // exact class its own patch was closing, adding it minutes before the
+    // commit that carried the fix. Force-push blocked; exact-message scope as
+    // established above; the local `commitlint-head` mirror is henceforth run
+    // on every message before push (the fix is the process, not the pardon).
+    // Revert with the other entries when these commits leave merged history.
+    (message) => message.startsWith('ci(ci): local commitlint mirror plus scoped pardon for mp-20 step-0'),
   ],
 };

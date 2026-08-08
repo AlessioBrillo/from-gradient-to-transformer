@@ -11,7 +11,7 @@ Central map of the vault. Everything starts here.
 
 The target research contribution: **mechanistic reverse-engineering of a transformer's learned algorithms at micro scale**. The strongest *verified* piece today is Rung 3's superposition phase transition (root-caused and reproduced 2026-08-02 after two prior audits couldn't explain it); grokking modular addition (the primary flagship) is not yet reproduced.
 
-See [[portfolio/RESULTS]] for exact per-rung status, [[18_micro-phase-19-verdicts-to-publication]] for the current roadmap (verdicts → publication; MP-18's clocked sessions are the execution vehicle), and
+See [[portfolio/RESULTS]] for exact per-rung status, [[19_micro-phase-20-execution-arc]] for the current roadmap (the execution arc: verdicts dated, instruments fire, paper draft; MP-19's sessions are what it executes), and
 [[portfolio/README]] for all showcase artifacts.
 
 > If you have 30 seconds, read the thesis and the Reproducibility Audit in RESULTS.md. There is no mini-paper yet, but `portfolio/paper/` has a scaffold.
@@ -35,8 +35,9 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[18_micro-phase-19-verdict
 - [[14_micro-phase-15-from-verdicts-to-showcase]] — the synthesis roadmap: from verdicts to showcase, no idle verdict time
 - [[15_micro-phase-16-the-execution]] — MP16: the execution phase (Step 0 shipped, PR #41)
 - [[16_micro-phase-17-closure-and-release]] — MP17: the closure phase — verdicts land or close with a dated reason, paper spine, watchdog, clean-clone, mypy de-drift, release & showcase
-- [[17_micro-phase-18-verdict-window|MP-18 · The Verdict Window (current)]] — the execution vehicle: MP-17's steps become clocked sessions, the Verdict Closure Ledger (ADR-0001) with zero undated rows is the gate
-- [[18_micro-phase-19-verdicts-to-publication|MP-19 · Verdicts to Publication (current)]] — MP-18's verdicts consumed by clocked sessions; paper draft, reconciled release, honest ACDC, two missing instruments
+- [[17_micro-phase-18-verdict-window|MP-18 · The Verdict Window]] — the clocked sessions and the Verdict Closure Ledger (ADR-0001) setup that MP-20 executes
+- [[18_micro-phase-19-verdicts-to-publication|MP-19 · Verdicts to Publication]] — the four verdict-agnostic deliverables this phase's sessions execute
+- [[19_micro-phase-20-execution-arc|MP-20 · The Execution Arc (current)]] — verdicts dated under kill-conditions, the two instruments become real, Rung 6 honest, the paper's first draft; release fixed 14 days from Step 0
 
 ## Phases
 - [[01_foundations/_MOC|Phase 1 · Foundations]]

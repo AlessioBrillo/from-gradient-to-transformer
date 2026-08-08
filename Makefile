@@ -3,7 +3,7 @@
 	reproduce-superposition reproduce-patching reproduce-sae \
 	reproduce-multiseed verify-claims clean paper \
 	reproduce-grokking-probe reproduce-induction-standard reproduce-induction-1layer \
-	reproduce-exp3-geometry
+	reproduce-exp3-geometry commitlint-head
 
 # --- Environment ---
 # All targets run through `uv run` so they work from any fresh shell after
@@ -59,7 +59,18 @@ typecheck-new:
 	uv run mypy src/results.py src/experiments/runner.py --ignore-missing-imports --follow-imports=silent
 
 # --- CI mirror (local replica of .github/workflows/python-ci.yml) ---
-ci-check: lint typecheck-new typecheck test-cov
+# commitlint-head is part of the mirror since 2026-08-08: the PR-only
+# Conventional Commits workflow never runs on a local push, and that gap let
+# the micro-phase-20 step-0 commit ship with a >200-char body line (caught by
+# GitHub's PR check, exactly like micro-18/19). The mirror lints the HEAD
+# commit against the same config:
+#   npx --yes commitlint --from HEAD~1 --to HEAD --config commitlint.config.mjs
+ci-check: lint typecheck-new typecheck test-cov commitlint-head
+
+commitlint-head:
+	@echo "=== commitlint (HEAD commit vs parent, mirror of the PR-only check) ==="
+	@npx --yes commitlint --from HEAD~1 --to HEAD --config commitlint.config.mjs
+	@echo "commitlint: HEAD commit message conforms."
 
 # --- Reproducibility ---
 # Full-scale run of every surviving rung (Rung 6 was descoped — see
