@@ -13,6 +13,37 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-08 (sixth session) — Micro-Phase 19, Step 0: the verdicts-to-publication roadmap, pre-registered
+
+- **Studied**: the MP-18 baseline against the repository (main is already shipped;
+  all ten ledger rows still UNDECIDED) and the pattern the ledger now has a mechanism
+  for: five phases pre-registered the same two launches, so this phase consumes, not
+  re-plans. Re-verified the CI floor myself before writing a claim: 185 tests passing,
+  ruff clean on `src/ tests/`, blocking mypy clean (results.py, runner.py), full-tree
+  mypy still at its tracked 171, `make verify-claims` at its designed 2 problems
+  (Rungs 2 and 5 manifestless by design). Confirmed the notes that absorb the next
+  instruments already exist (`activation-patching.md`, `path-patching.md`,
+  `induction-heads.md` in Phase 4).
+- **Built**: [[00_meta/18_micro-phase-19-verdicts-to-publication]] — the phase that
+  turns MP-18's clocked verdict window into delivered artifacts, verdict-agnostic by
+  design: the paper draft v0.1 (all four writable sections in prose with per-file
+  citations), the reconciled release (verify-claims zero, real clean-clone transcript,
+  rehearsal), Rung 6 done honestly (real ACDC, successor to the deleted placeholder),
+  and the two long-named-but-never-built instruments (attribution patching
+  test-first with falsifications; SAE sanity against a known circuit). Session 0
+  re-check: ledger zero undated rows gates the phase's start. Wired into
+  [[00_meta/00_home]]; the ledger ADR
+  [[docs/adr/0001-verdict-closure-ledger]] remains the single gate artifact.
+- **Verified**: tree clean vs `origin/dev` before writing anything; the roadmap's
+  session calendar, gate criteria and every claim cross-checked against the
+  Makefile/source on disk (`make verify-claims`, `make paper`, `--geometry-check`,
+  `clean_clone_check.sh` all exist).
+- **Open question**: the closure sitting (S1) — all ten rows still UNDECIDED; the
+  roadmap's Step 1 is the date the ledger fills, exactly as MP-18 designed. Also
+  pending: the Step-0 commit message must respect commitlint's
+  `body-max-line-length` (200) from the start — it only runs on GitHub's PR workflow,
+  the MP-18 incident lesson.
+
 ## 2026-08-08 (fifth session) — Micro-Phase 18, Step 0: the verdict window, pre-registered
 
 - **Studied**: the MP-17 baseline against the repository (Step 0 shipped via PR #41;
