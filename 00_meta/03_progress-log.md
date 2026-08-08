@@ -13,6 +13,42 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-08 (eighth session) — Micro-Phase 21, Step 0: the record-assembly roadmap, pre-registered
+
+- **Studied**: the MP-20 baseline against the repository (MP-20's Step 0 squash-merged
+  via PR #45 — `dev` and `main` are tree-identical, the six repair commits on `dev` are
+  history-only; all ten ledger rows still UNDECIDED; the paper still a `% TODO`
+  scaffold; `checkpoints/` still holds only the kill-drill artifacts) — and the lesson
+  of the six-roadmap arc, now consumable: the release state is the starting artifact,
+  so this phase's Step 1 is a *truthing* (the actual-state sheet: every promise ends
+  SHIPPED / RE-SCOPED / STRUCK), not a seventh re-plan. Re-verified the CI floor myself
+  before writing a claim: 185 tests passing (78.8 s), ruff clean on `src/ tests/`,
+  blocking mypy clean, full-tree mypy at its tracked 171, `make verify-claims` at its
+  designed 2 problems (Rungs 2 and 5 manifestless by design), markdownlint 0 issues on
+  178 files. Read the paper scaffold and the ledger row-by-row before the roadmap
+  claimed anything about them.
+- **Built**: [[00_meta/20_micro-phase-21-the-record-assembly]] — the record-assembly
+  roadmap: consumes MP-20's release whatever its lanes decided; the actual-state sheet
+  as the phase's Step 1; the paper's argument skeleton (claims → evidence → warrants)
+  before prose; the five gate rows (nnsight, W&B, HF Spaces, clean-clone proof,
+  graduation) each ending LAUNCHED or CLOSED in one sitting; the graduation proof scoped
+  to the actual record. Terminus stamped: release = this merge + 14 days. Wired into
+  [[00_meta/00_home]] as current (MP-20 relabelled); the ledger ADR
+  [[docs/adr/0001-verdict-closure-ledger]] remains the single gate artifact.
+- **Verified**: tree clean vs origin before writing; every number, command and gate in
+  the roadmap cross-checked against the Makefile, `src/results.py` and the workflows on
+  disk; markdownlint 0 issues on the changed notes; CI mirror green (lint, blocking
+  mypy, full suite, commitlint-head).
+- **Incident, recorded honestly**: `make` was entirely missing from this machine (the
+  same class of silent environment rot as MP-14's vanishing `uv`) — `make ci-check`,
+  the documented local gate, could not run at all. Professional fix, not a workaround:
+  restored GNU Make 4.4.1 (winget, ezwinports, user-scope, no admin); `make` works from
+  any shell with Git's `bin/` on PATH (the Makefile's POSIX-shell recipes need it). The
+  CI mirror was then run through the restored interface, exactly as CI does.
+- **Open question**: the release state itself — MP-20's Session 1 decides whether the
+  flagship rows carry verdicts or closures; this phase's Step 1 (the truthing) is the
+  date the sheet fills, exactly as MP-20's kill-dates designed.
+
 ## 2026-08-08 (seventh session) — Micro-Phase 20, Step 0: the execution-arc roadmap, pre-registered
 
 - **Studied**: the MP-19 baseline against the repository (main IS the shipped MP-19 Step
