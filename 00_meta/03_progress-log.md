@@ -13,6 +13,30 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-08 (third session) — Micro-Phase 16, Step 0: the execution roadmap + doc drift fixed
+
+- **Studied**: the MP-15 baseline against the repository (Step 0 shipped via PR #40; Steps
+  1–7 pending); the verdicts remain the critical path and both flagships are still
+  unlaunched after two pre-registration phases — this roadmap's Step 1 makes the launch
+  decision an explicit gate; the K-composition detector and Rung 3's manifest-backed
+  pentagon result are the two artifacts that make the phase robust to either verdict; the
+  full-tree mypy ratchet stands at 171 (drift from 154 after the lockfile rebuild).
+- **Built**: [[00_meta/15_micro-phase-16-the-execution]] — the roadmap that executes
+  MP-15's steps (watchdog + full-scale R3 regeneration, clean-clone dry run, mypy de-drift
+  to ≤160 with one module moved to the blocking allowlist, paper spine for the four
+  evidencable sections) with the pre-registered verdict lanes (6a/6b/6c) and the release
+  pass. Wired into [[00_meta/00_home]] as the current roadmap.
+- **Fixed the documentation drift the state review found**: added the missing `make paper`
+  target (compile `portfolio/paper/main.tex` with a graceful no-toolchain message);
+  corrected `portfolio/README.md`'s stale `portfolio/mini-paper/` path and its headline
+  claim (Rung 3 superposition is the verified headline, not induction heads);
+  refreshed the figure-tracking and paper rows in `06_production_ai/checklist.md` and the
+  Phase-5/6/7 gate rows in `portfolio/RESULTS.md`.
+- **Verified** (CI mirror to follow): tree clean vs `origin/dev` before writing anything.
+- **Open question**: the two flagships still need their supervised launches (R1
+  `--standard` CPU ~17–20 h; P=113 × 3 seeds on a Colab GPU via the pinned notebook);
+  the phase's parallel steps now have a green CI floor under them.
+
 ## 2026-08-08 (second session) — Micro-Phase 15, Step 0: the synthesis roadmap, pre-registered
 
 - **Studied**: the MP-14 baseline against the repository (Step 0 shipped via PR #39; Steps

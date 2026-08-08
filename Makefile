@@ -1,7 +1,7 @@
 .PHONY: sync test test-cov lint lint-fix typecheck typecheck-strict typecheck-new \
 	ci-check reproduce reproduce-quick reproduce-grokking reproduce-induction \
 	reproduce-superposition reproduce-patching reproduce-sae \
-	reproduce-multiseed verify-claims clean \
+	reproduce-multiseed verify-claims clean paper \
 	reproduce-grokking-probe reproduce-induction-standard reproduce-induction-1layer \
 	reproduce-exp3-geometry
 
@@ -151,6 +151,20 @@ reproduce-multiseed:
 # count). See src/results.py.
 verify-claims:
 	uv run python -m src.results verify
+
+# --- Paper (Micro-Phase 16: the drift fix) ---
+# Compiles portfolio/paper/main.tex. Graceful when no LaTeX toolchain is
+# installed (common on CI/dev machines): the source is the artifact, the PDF
+# is a build product, so a missing toolchain is a message, not a failure.
+paper:
+	@echo "=== Compiling portfolio/paper/main.tex ==="
+	@if command -v latexmk >/dev/null 2>&1; then \
+		cd portfolio/paper && latexmk -pdf main.tex; \
+	elif command -v pdflatex >/dev/null 2>&1; then \
+		cd portfolio/paper && pdflatex -interaction=nonstopmode main.tex && pdflatex -interaction=nonstopmode main.tex; \
+	else \
+		echo "No LaTeX toolchain found (latexmk/pdflatex). The paper source is portfolio/paper/main.tex; install TeX Live/MiKTeX or compile on Overleaf."; \
+	fi
 
 # --- Cleanup ---
 clean:
