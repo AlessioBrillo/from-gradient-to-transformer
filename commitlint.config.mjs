@@ -20,5 +20,10 @@ export default {
     // exact-message-scoped, not rule-relaxing. Revert when that commit
     // leaves the merged history.
     (message) => message.startsWith('docs(meta): add micro-phase-19 roadmap, wire home, log pre-flight'),
+    // Scoped, auditable exception (2026-08-08): the pardon commit 3574fc7
+    // itself repeated the same body-line mistake; same force-push
+    // constraint, same exact-message scope. Revert when it leaves merged
+    // history.
+    (message) => message.startsWith('ci(ci): pardon superseded micro-phase-19 step-0 body line'),
   ],
 };
