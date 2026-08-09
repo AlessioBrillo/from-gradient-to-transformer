@@ -11,8 +11,7 @@ Central map of the vault. Everything starts here.
 
 The target research contribution: **mechanistic reverse-engineering of a transformer's learned algorithms at micro scale**. The strongest *verified* piece today is Rung 3's superposition phase transition (root-caused and reproduced 2026-08-02 after two prior audits couldn't explain it); grokking modular addition (the primary flagship) is not yet reproduced.
 
-See [[portfolio/RESULTS]] for exact per-rung status, [[20_micro-phase-21-the-record-assembly]] for the current roadmap (the record assembly: consume the release, publish the gates, graduate), and
-[[portfolio/README]] for all showcase artifacts.
+See [[portfolio/RESULTS]] for exact per-rung status, [[21_micro-phase-22-the-public-arc]] for the current roadmap (the public arc: the essay, the thread, the site, the Space, the walkthrough — publish the verified record), and [[portfolio/README]] for all showcase artifacts.
 
 > If you have 30 seconds, read the thesis and the Reproducibility Audit in RESULTS.md. There is no mini-paper yet, but `portfolio/paper/` has a scaffold.
 
@@ -38,7 +37,8 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[20_micro-phase-21-the-rec
 - [[17_micro-phase-18-verdict-window|MP-18 · The Verdict Window]] — the clocked sessions and the Verdict Closure Ledger (ADR-0001) setup that MP-20 executes
 - [[18_micro-phase-19-verdicts-to-publication|MP-19 · Verdicts to Publication]] — the four verdict-agnostic deliverables this phase's sessions execute
 - [[19_micro-phase-20-execution-arc|MP-20 · The Execution Arc]] — verdicts dated under kill-conditions, the two instruments become real, Rung 6 honest, the paper's first draft; release fixed 14 days from its Step 0
-- [[20_micro-phase-21-the-record-assembly|MP-21 · The Record Assembly (current)]] — consume the release into the publication: the actual-state sheet, the paper compiles, the five gate rows stamped, the graduation proof answered honestly
+- [[20_micro-phase-21-the-record-assembly|MP-21 · The Record Assembly (in flight)]] — consume the release into the publication: the actual-state sheet, the paper compiles, the five gate rows stamped, the graduation proof answered honestly. Step 0 merged (PR #46)
+- [[21_micro-phase-22-the-public-arc|MP-22 · The Public Arc (current)]] — the record goes public: the essay, the thread, the site, the Space, the walkthrough — every channel ends LAUNCHED-with-a-date or CLOSED-with-one-reason
 
 ## Phases
 - [[01_foundations/_MOC|Phase 1 · Foundations]]

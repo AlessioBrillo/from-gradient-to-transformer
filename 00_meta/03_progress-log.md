@@ -13,6 +13,51 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-09 (ninth session) — Micro-Phase 22, Step 0: the public-arc roadmap, pre-registered
+
+- **Studied**: the MP-21 baseline against the repository (MP-21's Step 0 merged via PR
+  #46; `dev` and `main` tree-identical; the reconciling merge after the MP-20 squash is
+  history-only) — and the publication gap it leaves open: the record has manifests,
+  figures, a compiling paper and a verified superposition transition, but no *address*.
+  Six phases pre-registered verdicts; none ever published a word of prose to a public
+  surface. This phase is the public arc: the essay, the thread, the site, the Space,
+  the walkthrough — each a dated row, each ending LAUNCHED-with-a-date or
+  CLOSED-with-one-reason. Re-verified the CI floor myself before writing a claim:
+  185 tests passing, ruff clean on `src/ tests/`, blocking mypy clean (results.py,
+  runner.py), full-tree mypy at its tracked 171, `make verify-claims` at its designed 2
+  problems (Rungs 2 and 5 manifestless by design), markdownlint 0 issues on the changed
+  notes. Re-read the ADR-0001 closure ledger and the paper %-prose state before the
+  roadmap claimed anything about them.
+- **Built**: [[00_meta/21_micro-phase-22-the-public-arc]] — the public-arc roadmap:
+  the essay as the flagship public artifact (every number file-cited, re-derived from
+  manifest + code in the claims audit); the HF Spaces row reopened as a NEW row scoped
+  to CPU (the Superposition Explorer — a Gradio demo with a live engine check); Quartz
+  v4 + GitHub Pages with the `publish: true/false` frontmatter policy as the single
+  vault-to-web gate; the public-arc ledger (ADR-0002) as the phase's gate artifact;
+  the terminus stamped: release = this merge + 14 days. Wired into [[00_meta/00_home]]
+  as current (MP-21 relabelled in flight).
+- **Verified**: tree clean vs origin before writing; every number, command and gate in
+  the roadmap cross-checked against the Makefile, `src/results.py` and the workflows on
+  disk; markdownlint 0 issues on the changed notes; CI mirror green (lint, blocking
+  mypy, full suite); `make verify-claims` at its designed 2 problems.
+- **Incident, recorded honestly**: the mirror's `commitlint-head` step failed on this
+  tree — but not on a commit of this phase. After the dev↔main reconcile merge
+  (92c9ba5), the range `HEAD~1..HEAD` spans the merge's second parent, so commitlint
+  lints legacy pre-rule commits from before Conventional Commits existed (e.g. the
+  MP-18 Step-0 message) and reports `subject-empty`. The PR check lints only PR
+  commits, so the failure is a mirror-range artifact, not a message defect; the new
+  commit is linted through the mirror before leaving the machine.
+- **Incident, recorded honestly**: GitHub never dispatched the `pull_request`-event
+  workflows (Python CI, commitlint, markdown lint) for the Step-0 PR — the head SHA was
+  pushed before the PR opened, so the push-check suite was reused and the PR-event
+  checks never created a run. Close/reopen and recreate (PR #47 → PR #48) did not
+  dispatch either. Fix: a new head SHA via this record commit, forcing the PR
+  `synchronize` event; the outcome is logged here after verification.
+- **Open question**: the publication itself — MP-21's release decides whether the
+  essay's Rung 2 sentence is a result or an honest negative, and the Space row decides
+  whether the CPU Explorer ships or closes with one reason; both are pre-registered
+  lanes with dates, exactly as the verdict ledger designed.
+
 ## 2026-08-08 (eighth session) — Micro-Phase 21, Step 0: the record-assembly roadmap, pre-registered
 
 - **Studied**: the MP-20 baseline against the repository (MP-20's Step 0 squash-merged
