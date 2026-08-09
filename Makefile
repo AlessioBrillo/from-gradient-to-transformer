@@ -5,6 +5,19 @@
 	reproduce-grokking-probe reproduce-induction-standard reproduce-induction-1layer \
 	reproduce-exp3-geometry commitlint-head
 
+# --- Shell ---
+# The recipes are POSIX verbatim (the CI mirror); Windows GNU Make defaults
+# to cmd.exe, which cannot run `code=$$?; if [ ... ]` recipes and misruns the
+# `typecheck` target ("unrecognized arguments" passed to mypy). Git ships
+# sh.exe at C:\Program Files\Git\bin; resolved at runtime so the documented
+# prerequisite ("Git's bin/ on PATH", see the MP-21 incident in the progress
+# log) is all that is needed. Linux/macOS keep the platform default.
+ifneq ($(OS),Windows_NT)
+SHELL := /bin/sh
+else
+SHELL := $(subst \,/,$(firstword $(shell where sh.exe 2>NUL)))
+endif
+
 # --- Environment ---
 # All targets run through `uv run` so they work from any fresh shell after
 # `uv sync`, regardless of whether the project venv is activated or not.
