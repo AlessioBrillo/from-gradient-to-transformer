@@ -40,6 +40,7 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[22_micro-phase-23-the-res
 - [[20_micro-phase-21-the-record-assembly|MP-21 · The Record Assembly (in flight)]] — consume the release into the publication: the actual-state sheet, the paper compiles, the five gate rows stamped, the graduation proof answered honestly. Step 0 merged (PR #46)
 - [[21_micro-phase-22-the-public-arc|MP-22 · The Public Arc (in flight)]] — the record goes public: the essay, the thread, the site, the Space, the walkthrough — every channel ends LAUNCHED-with-a-date or CLOSED-with-one-reason
 - [[22_micro-phase-23-the-research-return|MP-23 · The Research Return (current)]] — the two flagship lanes execute under dated verdicts: P=113 grokking ×3 seeds on Colab, R1 standard-scale fresh-batches, the R4/R5 chain off the real head, `verify-claims` 2 → 0, the essay annex, the graduation proof
+- [[23_micro-phase-24-the-synthesis|MP-24 · The Synthesis (pre-registered)]] — consumes MP-23's release whatever its rows decided: the paper in prose (sections open only for manifests that exist), `make paper` in the CI mirror, the horizon ledger (ADR-0004), the stranger review, the 10-minute talk, RESULTS v-final
 
 ## Phases
 - [[01_foundations/_MOC|Phase 1 · Foundations]]

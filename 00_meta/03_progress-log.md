@@ -13,6 +13,60 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-09 (eleventh session) — Micro-Phase 24, Step 0: the synthesis roadmap, pre-registered
+
+- **Studied**: the MP-23 baseline against the repository (pre-registered
+  this same day; its Step-0 squash is in via PR #49, its ADR-0003 rows are
+  all UNDECIDED, none of its sessions has started) — and what the phase
+  after a dated ledger must be: the paper is no longer postponed by a
+  missing verdict, because by MP-24's Step 0 every verdict is dated one
+  way or the other. This phase's only honest failure mode left is
+  writer's evasion — a sentence whose number has no manifest — so the
+  successor roadmap pre-registers its treatment: paper sections open only
+  for manifests on disk, `make paper` enters the CI mirror, and the
+  horizon after the capstone is decided as dated ledger rows (ADR-0004),
+  not as a mood. Re-verified the CI floor myself before writing a claim:
+  ruff clean on `src/ tests/`; blocking mypy clean (results.py, runner.py);
+  full-tree mypy at its tracked 171; the full suite green in the session
+  mirror (the tracked 185); `make verify-claims` at its designed 2
+  problems (Rungs 2 and 5 manifestless by design); markdownlint 0 on the
+  changed notes.
+- **Built**: [[00_meta/23_micro-phase-24-the-synthesis]] — the synthesis
+  roadmap with its hard break against the record's one remaining temper:
+  a section opens only when its manifest exists, whatever MP-23's rows
+  decided. Eight sessions in a 14-day window; Step 0 is the truthing of
+  MP-23's release (the intake table rows → sections) plus the paper's
+  compile gate; the stranger review and the 10-minute talk are scheduled
+  rows with kill-dates, not hopes; the horizon opens as
+  [[docs/adr/0004-horizon-ledger]] (five rows: real-ACDC pilot, stranger
+  review, scaled-up R1, the talk, stop-and-publish — each with
+  pre-registered criteria and a falsification column); RESULTS v-final
+  and the model card close the record. Wired into [[00_meta/00_home]] as
+  MP-24 pre-registered (MP-23 stays current); terminus stamped: release =
+  this merge + 14 days.
+- **Incident, fixed, recorded honestly**: `make ci-check`, the documented
+  local gate, could not run from PowerShell — Windows GNU Make defaults
+  to cmd.exe, which misruns the POSIX `typecheck` recipe ("unrecognized
+  arguments" passed to mypy), and Git's `bin/` (sh.exe) was not on PATH
+  (only `cmd/` was). Professional fix, two layers: appended
+  `C:\Program Files\Git\bin` to the user PATH (user-scope, no admin), and
+  added an OS-guarded `SHELL` resolution block to the Makefile
+  (`where sh.exe` at runtime, `subst`-normalised to forward slashes) so
+  the mirror works from any shell once the documented prerequisite is
+  met. The mirror then ran fully through `sh`; ruff, blocking mypy and
+  the suite all green, and the checkpointed ratchet tolerated as designed.
+- **Incident, recorded honestly**: the mirror's `commitlint-head` step
+  flags `bcd0d52` (MP-23's pre-squash step-0 commit, body line > 200
+  chars) through the reconcile merge's second-parent span — the recorded
+  artifact class from MP-21/22, this time naming a real legacy body line
+  on a pre-squash commit; the PR checks lint only PR commits, and the
+  phase's own commit is linted on a clean range before leaving the machine.
+- **Open question**: MP-23's Session 1 — the date the ADR-0003 rows flip
+  from UNDECIDED to LAUNCHED: the P=113 stampede on Colab and the
+  supervised standard-scale R1. MP-24's Step 0 consumes whatever that
+  report says; this roadmap is written verdict-agnostic so that nothing
+  about it waits for the data.
+
 ## 2026-08-09 (tenth session) — Micro-Phase 23, Step 0: the research-return roadmap, pre-registered
 
 - **Studied**: the MP-22 baseline against the repository (pre-registered earlier
