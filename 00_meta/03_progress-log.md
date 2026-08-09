@@ -13,6 +13,51 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-09 (tenth session) — Micro-Phase 23, Step 0: the research-return roadmap, pre-registered
+
+- **Studied**: the MP-22 baseline against the repository (pre-registered earlier
+  this same day; its Step-0 squash is in, its rows are untouched) — and the
+  pattern the progress log itself has been naming since MP-18: nine roadmaps
+  (MP-14 through MP-22) pre-registered the same two flagship lanes and none of
+  them launched them. The scientific state of those two lanes, verified not
+  assumed: `results/exp2_grokking.json` has never existed (Rung 2 never ran at
+  P=113; the P=29/P=59 probes all closed negative), no standard-scale
+  fresh-batches R1 run has ever executed (the 52.2%-vs-0.05% matched comparison
+  is the last trustworthy number), path patching is validated only by unit
+  tests because no real head has ever existed to target, and the real-activation
+  SAE result sat on a no-head checkpoint. MP-22's essay will publish exactly
+  those negatives; this phase exists to give the annex a chance to amend them.
+- **Built**: [[00_meta/22_micro-phase-23-the-research-return]] — the
+  research-return roadmap with the decisive break from the previous nine: the
+  launches are the phase's Session-1 exit gate, not a promise for later. The
+  P=113 ×3-seeds lane and the R1 `--standard` fresh-batches lane reopen as NEW
+  ledger rows (ADR-0003) with launch windows, heartbeats and kill-dates; the
+  Colab handshake (a minutes-scale canary of the exact pinned notebook on the
+  exact free-tier runtime) precedes every long launch, and the kill-drill's
+  bit-identical checkpoint/resume is the disconnect path; the fallback for a
+  failed P=113 is the one-change microscope (≤3 single-variable trials, each
+  with a negative control — the two named suspects are the embedding
+  re-normalization and the cosine schedule); R4/R5 chain off the real head with
+  the scheduled negative as a first-class result; the essay is never rewritten,
+  it is amended via the dated annex. Also built the phase's gate artifact:
+  [[docs/adr/0003-research-return-ledger]] — seven rows, verdict criteria
+  pre-registered in the row cells with the "what would falsify it" column
+  written before any launch (Gelman & Loken applied at the source). Wired into
+  [[00_meta/00_home]] as current (MP-22 relabelled in flight); terminus
+  stamped: release = this merge + 14 days.
+- **Verified**: tree clean vs origin before writing; the live CI mirror run
+  myself this session: ruff clean on `src/ tests/`; blocking mypy clean
+  (results.py, runner.py); full-tree mypy at its tracked 171 (exit 1, the
+  non-blocking ratchet); full suite **185 passed** (70.7 s); `make
+  verify-claims` at exactly its designed 2 problems (Rung 2 and Rung 5
+  manifestless by design); markdownlint 0 issues on the changed notes.
+- **Open question**: the two lane entries themselves — Session 1 of this phase
+  is the date the ADR-0003 rows flip from UNDECIDED to LAUNCHED: the P=113
+  stampede on a Colab session and the supervised standard-scale R1. The
+  handshakes, the heartbeats and the kill-dates are pre-registered; the
+  launching itself is the sitting, exactly as every roadmap since MP-18
+  demanded and none delivered.
+
 ## 2026-08-09 (ninth session) — Micro-Phase 22, Step 0: the public-arc roadmap, pre-registered
 
 - **Studied**: the MP-21 baseline against the repository (MP-21's Step 0 merged via PR

@@ -11,7 +11,7 @@ Central map of the vault. Everything starts here.
 
 The target research contribution: **mechanistic reverse-engineering of a transformer's learned algorithms at micro scale**. The strongest *verified* piece today is Rung 3's superposition phase transition (root-caused and reproduced 2026-08-02 after two prior audits couldn't explain it); grokking modular addition (the primary flagship) is not yet reproduced.
 
-See [[portfolio/RESULTS]] for exact per-rung status, [[21_micro-phase-22-the-public-arc]] for the current roadmap (the public arc: the essay, the thread, the site, the Space, the walkthrough — publish the verified record), and [[portfolio/README]] for all showcase artifacts.
+See [[portfolio/RESULTS]] for exact per-rung status, [[22_micro-phase-23-the-research-return|MP-23 · The Research Return]] for the current roadmap (the two flagship lanes — P=113 grokking and standard-scale induction heads — stop being pre-registered and run under dated verdicts inside a 14-day window), and [[portfolio/README]] for all showcase artifacts.
 
 > If you have 30 seconds, read the thesis and the Reproducibility Audit in RESULTS.md. There is no mini-paper yet, but `portfolio/paper/` has a scaffold.
 
@@ -38,7 +38,8 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[21_micro-phase-22-the-pub
 - [[18_micro-phase-19-verdicts-to-publication|MP-19 · Verdicts to Publication]] — the four verdict-agnostic deliverables this phase's sessions execute
 - [[19_micro-phase-20-execution-arc|MP-20 · The Execution Arc]] — verdicts dated under kill-conditions, the two instruments become real, Rung 6 honest, the paper's first draft; release fixed 14 days from its Step 0
 - [[20_micro-phase-21-the-record-assembly|MP-21 · The Record Assembly (in flight)]] — consume the release into the publication: the actual-state sheet, the paper compiles, the five gate rows stamped, the graduation proof answered honestly. Step 0 merged (PR #46)
-- [[21_micro-phase-22-the-public-arc|MP-22 · The Public Arc (current)]] — the record goes public: the essay, the thread, the site, the Space, the walkthrough — every channel ends LAUNCHED-with-a-date or CLOSED-with-one-reason
+- [[21_micro-phase-22-the-public-arc|MP-22 · The Public Arc (in flight)]] — the record goes public: the essay, the thread, the site, the Space, the walkthrough — every channel ends LAUNCHED-with-a-date or CLOSED-with-one-reason
+- [[22_micro-phase-23-the-research-return|MP-23 · The Research Return (current)]] — the two flagship lanes execute under dated verdicts: P=113 grokking ×3 seeds on Colab, R1 standard-scale fresh-batches, the R4/R5 chain off the real head, `verify-claims` 2 → 0, the essay annex, the graduation proof
 
 ## Phases
 - [[01_foundations/_MOC|Phase 1 · Foundations]]
