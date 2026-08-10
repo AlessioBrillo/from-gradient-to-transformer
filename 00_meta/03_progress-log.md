@@ -13,6 +13,53 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-10 (twelfth session) — Micro-Phase 25, Step 0: the premiere roadmap, pre-registered
+
+- **Studied**: the MP-24 baseline against the repository (pre-registered
+  2026-08-09; its Step 0 merged via PR #49; ADR-0003's seven rows and
+  ADR-0004's five rows all UNDECIDED; no session of MP-23 or MP-24 has
+  started) — and the gap between the record and its audience: ADR-0002's
+  five public-arc rows are all UNDECIDED, so the finished capstone has no
+  address anywhere. `portfolio/` holds RESULTS.md, the model card and the
+  paper scaffold; `portfolio/projects/` is an empty `.gitkeep`; no essay,
+  no thread, no site, no Space, no walkthrough exists on disk or the web.
+  The pattern the log has been naming since MP-18 now has a second front:
+  promises can be re-planned forever not only in the science (nine phases,
+  two launches) but in the publication (one phase, five surfaces). The
+  successor roadmap's treatment is the same mechanical law, applied to
+  URLs: rows reopen as NEW rows under new dates, and launch = artifact
+  merged + address stamped, in the same sitting. Re-verified the CI floor
+  from the record before writing a claim: the tracked 185 green, ruff
+  clean, blocking mypy clean, full-tree mypy at its tracked 171,
+  `verify-claims` at its designed 2 problems (Rungs 2 and 5 manifestless
+  by design), markdownlint 0 on the changed notes.
+- **Built**: [[00_meta/24_micro-phase-25-the-premiere]] — the premiere
+  roadmap with its hard break against the record's second temper: a fourth
+  unexecuted pre-registration is drift in the ledger's own terms, so
+  Session 0 is gated on MP-24's release (no paper PDF on disk, no phase).
+  The public arc reopens as NEW rows under this phase's dates — a surface
+  opens only where its artifact exists, and the URL is the receipt; the
+  web inherits the manifest law (`verify-claims` in the site build); the
+  stranger is a pipeline (review → revision → re-read rows, kill-dates on
+  both ends); the horizon rows execute or close exactly as ADR-0004
+  decided; toolchains (Quartz v4, Gradio CPU Space) are pinned in Step 0,
+  never discovered at Session 7. Eight sessions in a 14-day window; the
+  terminus is release = this merge + 14 days. Also built the phase's gate
+  artifact: [[docs/adr/0005-premiere-ledger]] — eight rows (five public
+  surfaces, the revision cycle, the ACDC pilot execution, the scaled-up R1
+  execution) under the two-state rule, verdict criteria and falsification
+  columns written before any launch, the same-sitting rule inscribed in
+  the ADR itself. Wired into [[00_meta/00_home]] as MP-25 pre-registered
+  (MP-23 stays current, MP-24 stays pre-registered); nothing re-plans a
+  single verdict of either.
+- **Open question**: the intake itself — MP-23's Session 1 decides the
+  ADR-0003 rows (the P=113 stampede and the supervised standard-scale R1),
+  MP-24 consumes that report into the paper, and MP-25's Session 0
+  consumes the PDF. This roadmap is written verdict-agnostic so that
+  nothing about it waits for the data; the premiere's only precondition is
+  the hard gate on MP-24's release, which this session stamped into the
+  roadmap before the roadmap claimed to know anything else.
+
 ## 2026-08-09 (eleventh session) — Micro-Phase 24, Step 0: the synthesis roadmap, pre-registered
 
 - **Studied**: the MP-23 baseline against the repository (pre-registered
