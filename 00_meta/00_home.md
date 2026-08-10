@@ -42,6 +42,12 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[22_micro-phase-23-the-res
 - [[22_micro-phase-23-the-research-return|MP-23 · The Research Return (current)]] — the two flagship lanes execute under dated verdicts: P=113 grokking ×3 seeds on Colab, R1 standard-scale fresh-batches, the R4/R5 chain off the real head, `verify-claims` 2 → 0, the essay annex, the graduation proof
 - [[23_micro-phase-24-the-synthesis|MP-24 · The Synthesis (pre-registered)]] — consumes MP-23's release whatever its rows decided: the paper in prose (sections open only for manifests that exist), `make paper` in the CI mirror, the horizon ledger (ADR-0004), the stranger review, the 10-minute talk, RESULTS v-final
 - [[24_micro-phase-25-the-premiere|MP-25 · The Premiere (pre-registered)]] — the first post-capstone phase, gated hard on MP-24's release (no PDF, no phase): the public arc reopens as NEW rows (essay, thread, site, Space, walkthrough — the premiere ledger ADR-0005); the revision cycle, the ACDC pilot and the scaled-up R1 execute or close as decided; the record finally gets an address
+- [[25_micro-phase-26-the-continuation|MP-26 · The Continuation (pre-registered)]] — the
+  first phase past the premiere, gated hard on MP-25's release (zero UNDECIDED rows, the
+  site live): the executed horizon verdicts become artifacts (Rung-6 section or trial
+  table, scaled-R1 paragraph or no-head negative), the standing gate debt closes with
+  dates, and exactly one new research question opens as the continuum ledger's row
+  (ADR-0006) — one question per phase, the rest closed with one reason each
 
 ## Phases
 - [[01_foundations/_MOC|Phase 1 · Foundations]]

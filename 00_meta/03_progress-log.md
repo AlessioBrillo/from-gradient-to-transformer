@@ -13,6 +13,53 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-10 (thirteenth session) — Micro-Phase 26, Step 0: the continuation roadmap, pre-registered
+
+- **Studied**: the MP-25 baseline against the repository (pre-registered
+  2026-08-10; its Step 0 merged via PR #52; ADR-0003's seven rows, ADR-0004's
+  five rows and ADR-0005's eight rows all UNDECIDED; no session of MP-23,
+  MP-24 or MP-25 has started) — and the shape of the first phase past the
+  premiere: the record has manifest machinery, a verdict discipline and a
+  public-arc ledger, but nothing that says what the program becomes after the
+  capstone has an address. The successor roadmap's treatment is the same
+  mechanical law, applied to the continuum: the executed horizon lanes return
+  as verdicts to be consumed into artifacts, the standing gate debt closes
+  with dates, and exactly one new research question opens per phase under its
+  own ledger — three open questions is drift by another name. Re-verified the
+  CI floor from the record before writing a claim: the tracked 185 green, ruff
+  clean, blocking mypy clean, full-tree mypy at its tracked 171,
+  `verify-claims` at its designed 2 problems, markdownlint 0. Also verified a
+  gap at the source level, not just from the record: `exp2_grokking.py`
+  exposes only `--save-model`, while the stateful checkpoint/resume system
+  (atomic save, RNG capture, `--resume`) exists only in
+  `exp1_induction_heads.py` — so the P=113 lane's "checkpoint-every-500 +
+  resume" disconnect promise is not mechanically real until the machinery is
+  ported to exp2 (a decision for MP-23's Session 0, now recorded here either
+  way).
+- **Built**: [[00_meta/25_micro-phase-26-the-continuation]] — the
+  continuation roadmap with its hard break against the record's own rule: a
+  fourth unexecuted pre-registration is drift in the ledger's terms, so
+  Session 0 is gated on MP-25's release (premiere ledger zero UNDECIDED, the
+  site live — no release, no phase). The executed horizon lanes are consumed
+  into artifacts (Rung-6 section or trial table; scaled-R1 paragraph or
+  no-head negative), never re-opened; the negatives are drafted first; the
+  shelf is maintained as dated rows with heartbeats, never as mood. Also
+  built the phase's gate artifact: [[docs/adr/0006-continuum-ledger]] —
+  eight rows (consumed artifacts, the first new research question with its
+  pre-registered candidate set C1–C4, essay annex v2, paper v2 diff, shelf
+  maintenance, stranger round 2, standing gate debt) under the two-state
+  rule, the continuum law (one question per phase) inscribed in the ADR
+  itself. Wired into [[00_meta/00_home]] as MP-26 pre-registered (MP-23 stays
+  current, MP-24/MP-25 stay pre-registered); nothing re-plans a single
+  verdict of any of them.
+- **Open question**: the intake itself — MP-23's Session 1 decides the
+  ADR-0003 rows (the P=113 stampede and the supervised standard-scale R1),
+  MP-25's Session 0 consumes the paper PDF, and MP-26's Session 0 consumes
+  the premiere ledger. This roadmap is written verdict-agnostic so that
+  nothing about it waits for the data; the continuation's only precondition
+  is the hard gate on MP-25's release, stamped into the roadmap before the
+  roadmap claimed to know anything else.
+
 ## 2026-08-10 (twelfth session) — Micro-Phase 25, Step 0: the premiere roadmap, pre-registered
 
 - **Studied**: the MP-24 baseline against the repository (pre-registered
