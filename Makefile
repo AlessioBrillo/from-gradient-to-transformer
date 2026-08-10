@@ -15,7 +15,7 @@
 ifneq ($(OS),Windows_NT)
 SHELL := /bin/sh
 else
-SHELL := $(subst \,/,$(firstword $(shell where sh.exe 2>NUL)))
+SHELL := $(subst \,/,$(firstword $(shell where sh.exe 2>/dev/null)))
 endif
 
 # --- Environment ---
