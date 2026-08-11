@@ -237,3 +237,155 @@ class TestProgressMeasures:
         assert len(history["weight_norm"]) == 5
         assert all(0.0 <= s <= 1.0 for s in history["fourier_sparsity"])
         assert history["weight_norm"][-1] > 0.0
+
+
+class TestGrokkingCheckpointResume:
+    """Falsification tests for Micro-Phase 28's checkpoint/resume port into
+    exp2 (the P=113 flagship). Mirrors TestCheckpointResume from
+    test_induction_heads.py: a resumed run must be *indistinguishable* from
+    one that never stopped (same model, same history, same RNG-drawn batch
+    order). The port exists because ADR-0003 row 1's
+    "checkpoint-every-500 + resume" promise was not mechanically real in
+    exp2: a ~5.5 h P=113 run cannot be launched without a resume path."""
+
+    ARGS_DEFAULTS = dict(
+        modulus=11,
+        d_model=32,
+        d_mlp=64,
+        n_heads=2,
+        batch_size=32,
+    )
+
+    @staticmethod
+    def _args(**overrides):
+        from types import SimpleNamespace
+
+        defaults = dict(TestGrokkingCheckpointResume.ARGS_DEFAULTS)
+        defaults.update(overrides)
+        return SimpleNamespace(**defaults)
+
+    @staticmethod
+    def _model(args):
+        return OneLayerTransformer(
+            d_model=args.d_model,
+            d_mlp=args.d_mlp,
+            n_heads=args.n_heads,
+            modulus=args.modulus,
+        )
+
+    @staticmethod
+    def _initial_state(args):
+        """Snapshot the initial weights of a freshly constructed model. Both
+        sides of a resume comparison must start from *identical* weights —
+        constructing two models independently gives them different random
+        inits, which would make even an uninterrupted comparison diverge."""
+        import copy
+
+        return copy.deepcopy(TestGrokkingCheckpointResume._model(args).state_dict())
+
+    @staticmethod
+    def _model_from(state):
+        args = TestGrokkingCheckpointResume._args()
+        model = TestGrokkingCheckpointResume._model(args)
+        model.load_state_dict(state)
+        return model
+
+    @staticmethod
+    def _loaders(args):
+        from torch.utils.data import DataLoader
+
+        train, val = make_modular_addition_data(
+            modulus=args.modulus, train_fraction=0.5, seed=0
+        )
+        return (
+            DataLoader(train, batch_size=args.batch_size, shuffle=True),
+            DataLoader(val, batch_size=args.batch_size, shuffle=False),
+        )
+
+    @staticmethod
+    def _train(**kwargs):
+        from src.experiments.exp2_grokking import train_model
+
+        return train_model(**kwargs)
+
+    def test_resume_matches_uninterrupted(self, tmp_path) -> None:
+        """Interrupt at epoch 3, resume to end: every history curve must
+        equal the uninterrupted run's exactly (the RNG snapshot guarantees
+        the resumed run draws the identical shuffled batches)."""
+        import numpy as np
+
+        from src.experiments.exp2_grokking import checkpoint_path_for_seed
+
+        args = self._args()
+        tl, vl = self._loaders(args)
+        state = self._initial_state(args)
+
+        full_hist = self._train(
+            model=self._model_from(state), train_loader=tl, val_loader=vl,
+            epochs=8, lr=1e-3, weight_decay=0.1, seed=0,
+        )
+
+        broken_model = self._model_from(state)
+        self._train(
+            model=broken_model, train_loader=tl, val_loader=vl,
+            epochs=3, lr=1e-3, weight_decay=0.1, seed=0,
+            checkpoint_dir=str(tmp_path), checkpoint_every=1,
+            schedule_epochs=8,  # partial run: anneal LR over the full 8-epoch horizon
+        )
+        resumed_hist = self._train(
+            model=broken_model, train_loader=tl, val_loader=vl,
+            epochs=8, lr=1e-3, weight_decay=0.1, seed=0,
+            resume_from=str(checkpoint_path_for_seed(str(tmp_path), 0)),
+        )
+
+        assert len(resumed_hist["train_loss"]) == 8
+        for key in full_hist:
+            np.testing.assert_allclose(
+                resumed_hist[key], full_hist[key], err_msg=f"history[{key}] diverged"
+            )
+
+    def test_resume_twice_matches_uninterrupted(self, tmp_path) -> None:
+        """Two consecutive interruptions (checkpoints at epochs 1 and 3) must
+        still converge to exactly the uninterrupted run."""
+        import numpy as np
+
+        from src.experiments.exp2_grokking import checkpoint_path_for_seed
+
+        args = self._args()
+        tl, vl = self._loaders(args)
+        state = self._initial_state(args)
+
+        full_hist = self._train(
+            model=self._model_from(state), train_loader=tl, val_loader=vl,
+            epochs=8, lr=1e-3, weight_decay=0.1, seed=0,
+        )
+
+        broken = self._model_from(state)
+        self._train(
+            model=broken, train_loader=tl, val_loader=vl,
+            epochs=4, lr=1e-3, weight_decay=0.1, seed=0,
+            checkpoint_dir=str(tmp_path), checkpoint_every=2,
+            schedule_epochs=8,
+        )
+        resumed_hist = self._train(
+            model=broken, train_loader=tl, val_loader=vl,
+            epochs=8, lr=1e-3, weight_decay=0.1, seed=0,
+            resume_from=str(checkpoint_path_for_seed(str(tmp_path), 0)),
+        )
+        for key in full_hist:
+            np.testing.assert_allclose(
+                resumed_hist[key], full_hist[key], err_msg=f"history[{key}] diverged"
+            )
+
+    def test_resume_missing_checkpoint_starts_fresh(self, tmp_path) -> None:
+        """An explicit resume path that does not exist must not crash or part
+        train — it falls back to a fresh full run, with the full history."""
+        args = self._args()
+        tl, vl = self._loaders(args)
+        hist = self._train(
+            model=self._model_from(self._initial_state(args)),
+            train_loader=tl, val_loader=vl,
+            epochs=2, lr=1e-3, weight_decay=0.1, seed=0,
+            resume_from=str(tmp_path / "does_not_exist.pt"),
+        )
+        assert len(hist["val_acc"]) == 2

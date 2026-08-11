@@ -207,6 +207,56 @@ class OneLayerTransformer(nn.Module):
 
 
 # ---------------------------------------------------------------------------
+# Checkpoint / resume (Micro-Phase 28: ported from exp1)
+# ---------------------------------------------------------------------------
+def checkpoint_path_for_seed(checkpoint_dir: str, seed: int) -> Path:
+    """Rolling resume checkpoint path for one seed — a single file holds the
+    latest state, so `--resume` just points at this and keeps the newest
+    state without an ever-growing set of artifacts."""
+    return Path(checkpoint_dir) / f"exp2_checkpoint_seed{seed}.pt"
+
+
+def save_training_checkpoint(
+    path: Path,
+    epoch: int,
+    model: nn.Module,
+    optimizer: torch.optim.Optimizer,
+    scheduler: nn.Module,
+    history: dict,
+    rng_state,
+) -> None:
+    """Atomically write a resume checkpoint. The saved RNG state is captured
+    *after* the training loop of `epoch` has finished and *before* any state
+    of epoch `epoch + 1` has been drawn, which is exactly the continuity
+    point a seamless resume needs (see train_model()'s docstring)."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
+    torch.save(
+        {
+            "epoch": epoch,
+            "model": model.state_dict(),
+            "optimizer": optimizer.state_dict(),
+            "scheduler": scheduler.state_dict(),
+            "rng_state": rng_state,
+            "history": history,
+        },
+        tmp,
+    )
+    # Atomic rename: a kill mid-save leaves the *old* valid checkpoint, not
+    # a truncated one.
+    tmp.replace(path)
+
+
+def load_training_checkpoint(path: Path) -> Optional[dict]:
+    """Load a checkpoint written by save_training_checkpoint. Returns None
+    if the file does not exist, so `--resume` on a machine with nothing to
+    resume degrades to a fresh, logged start rather than a crash."""
+    if not path.exists():
+        return None
+    return torch.load(path, map_location=DEVICE)
+
+
+# ---------------------------------------------------------------------------
 # Training
 # ---------------------------------------------------------------------------
 @torch.no_grad()
@@ -240,12 +290,35 @@ def train_model(
     seed: int,
     use_wandb: bool = False,
     progress_interval: int = 10,
+    checkpoint_dir: Optional[str] = None,
+    checkpoint_every: int = 0,
+    resume_from: Optional[str] = None,
+    schedule_epochs: Optional[int] = None,
 ) -> dict:
     """Train and return history with progress measures.
 
     If use_wandb is True, logs metrics to Weights & Biases.
     Falls back gracefully if wandb is not installed or not logged in.
-    """
+
+    Checkpoint/resume (Micro-Phase 28, ported from exp1): when
+    `checkpoint_dir` and `checkpoint_every > 0` are given, a resume
+    checkpoint is written every `checkpoint_every` epochs. The checkpoint
+    captures the model, optimizer, and scheduler state *plus the PyTorch RNG
+    state at the exact continuity point* — after one epoch's data draws
+    (including the attention-entropy sample) and before the next epoch's.
+    Batch ordering is driven by that RNG, so a resumed run draws exactly the
+    same batches it would have drawn had it never stopped. A killed long run
+    is therefore a *pause*, not a loss: relaunch with `resume_from` (or the
+    `--resume` CLI flag) and continue. Falsified by
+    TestGrokkingCheckpointResume (resume must reproduce an uninterrupted run
+    bit-for-bit).
+
+    The LR schedule (CosineAnnealing, `T_max=schedule_epochs` defaulting to
+    `epochs`) spans the *full run horizon*, not the epochs of this call. A
+    partial call that will be resumed must pass the same horizon the final
+    run will use — treating the partial call's own `epochs` as T_max anneals
+    LR to the wrong peak and makes no resumed run equal to an uninterrupted
+    one."""
     set_seed(seed)
     model = model.to(DEVICE)
 
@@ -283,7 +356,9 @@ def train_model(
         ],
         lr=lr,
     )
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        optimizer, T_max=schedule_epochs if schedule_epochs is not None else epochs
+    )
     criterion = nn.CrossEntropyLoss()
 
     history = {
@@ -300,10 +375,43 @@ def train_model(
         "fourier_sparsity": [],
         "weight_norm": [],
     }
-    last_fourier_sparsity = 0.0
-    last_weight_norm = 0.0
 
-    for epoch in tqdm(range(epochs), desc="Training"):
+    start_epoch = 0
+    resume_ckpt = (
+        load_training_checkpoint(Path(resume_from)) if resume_from else None
+    )
+    if resume_ckpt is not None:
+        model.load_state_dict(resume_ckpt["model"])
+        optimizer.load_state_dict(resume_ckpt["optimizer"])
+        scheduler.load_state_dict(resume_ckpt["scheduler"])
+        # The stored T_max came from the plan that saved the checkpoint; the
+        # continuation's own horizon (`schedule_epochs`/`epochs`) is the same
+        # plan, so keep it authoritative for the LR curve.
+        scheduler.T_max = schedule_epochs if schedule_epochs is not None else epochs
+        torch.random.set_rng_state(resume_ckpt["rng_state"])
+        history = resume_ckpt["history"]
+        start_epoch = resume_ckpt["epoch"] + 1
+        logger.info(
+            f"RESUME: loaded {resume_from} (saved after epoch "
+            f"{resume_ckpt['epoch']}) — continuing from epoch {start_epoch}"
+        )
+    elif resume_from:
+        logger.warning(
+            f"RESUME: checkpoint {resume_from} not found — starting fresh"
+        )
+
+    ckpt_path: Optional[Path] = None
+    if checkpoint_dir and checkpoint_every > 0:
+        ckpt_path = checkpoint_path_for_seed(checkpoint_dir, seed)
+
+    last_fourier_sparsity = (
+        history["fourier_sparsity"][-1] if history["fourier_sparsity"] else 0.0
+    )
+    last_weight_norm = (
+        history["weight_norm"][-1] if history["weight_norm"] else 0.0
+    )
+
+    for epoch in tqdm(range(start_epoch, epochs), desc="Training"):
         model.train()
         epoch_loss = 0.0
         epoch_correct = 0
@@ -397,6 +505,18 @@ def train_model(
                 f"unembed norm: {unembed_norm_mean:.2f} | "
                 f"lr: {current_lr:.2e}"
             )
+
+        if ckpt_path is not None and (epoch + 1) % checkpoint_every == 0:
+            save_training_checkpoint(
+                ckpt_path,
+                epoch,
+                model,
+                optimizer,
+                scheduler,
+                history,
+                torch.random.get_rng_state(),
+            )
+            logger.info(f"Checkpoint saved: {ckpt_path} (epoch {epoch + 1})")
 
     if _wandb is not None:
         _wandb.finish()
@@ -936,6 +1056,13 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
     model = OneLayerTransformer(
         d_model=args.d_model, d_mlp=args.d_mlp, n_heads=args.n_heads, modulus=modulus,
     )
+
+    run_resume_from = None
+    if getattr(args, "resume", False) and getattr(args, "checkpoint_every", 0) > 0:
+        run_resume_from = str(checkpoint_path_for_seed(args.checkpoint_dir, seed))
+    elif getattr(args, "resume_from", None):
+        run_resume_from = args.resume_from
+
     history = train_model(
         model=model,
         train_loader=train_loader,
@@ -946,6 +1073,9 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         seed=seed,
         use_wandb=False,
         progress_interval=args.progress_interval,
+        checkpoint_dir=args.checkpoint_dir if args.checkpoint_every > 0 else None,
+        checkpoint_every=args.checkpoint_every,
+        resume_from=run_resume_from,
     )
 
     fourier_result = fourier_decompose_embeddings(
@@ -1001,7 +1131,7 @@ def main() -> None:
         help=(
             "CPU de-risk probe (Micro-Phase 10): canonical grokking "
             "hyperparameters (d_model=128, d_mlp=512, n_heads=4, wd=1.0, "
-            "train=30%) at a cheaper modulus P=59 with a reduced budget. "
+            "train=30%%) at a cheaper modulus P=59 with a reduced budget. "
             "Used to check the architecture groks at all before spending "
             "GPU hours on the P=113 flagship."
         ),
@@ -1010,10 +1140,45 @@ def main() -> None:
         "--micro", action="store_true", help="Micro test: tiny modulus, fast CPU iteration"
     )
     parser.add_argument(
+        "--no-normalize-embeddings",
+        action="store_true",
+        help=(
+            "Disable the per-step embedding/unembedding row re-normalization "
+            "(microscope trial 1: unit-sphere constraint vs the dense Fourier "
+            "circuit). Default behavior (normalize) is unchanged."
+        ),
+    )
+    parser.add_argument(
         "--progress-interval",
         type=int,
         default=10,
         help="Epochs between Fourier-sparsity/weight-norm progress-measure samples",
+    )
+    parser.add_argument(
+        "--checkpoint-dir",
+        type=str,
+        default="checkpoints",
+        help="Directory for rolling resume checkpoints (Micro-Phase 28 stateful runs).",
+    )
+    parser.add_argument(
+        "--checkpoint-every",
+        type=int,
+        default=0,
+        help="Write a resume checkpoint every N epochs (0 = off).",
+    )
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help=(
+            "Resume the seed's latest checkpoint in --checkpoint-dir if "
+            "one exists (requires --checkpoint-every > 0)."
+        ),
+    )
+    parser.add_argument(
+        "--resume-from",
+        type=str,
+        default=None,
+        help="Explicit checkpoint file to resume from (overrides --resume).",
     )
     parser.add_argument(
         "--wandb", action="store_true", help="Log metrics to Weights & Biases"
@@ -1126,11 +1291,19 @@ def main() -> None:
         d_mlp=args.d_mlp,
         n_heads=args.n_heads,
         modulus=modulus,
+        normalize_embed=not args.no_normalize_embeddings,
     )
     n_params = sum(p.numel() for p in model.parameters())
     logger.info(f"Model parameters: {n_params:,}")
 
     # Train
+    run_resume_from = None
+    if args.resume and args.checkpoint_every > 0:
+        run_resume_from = str(
+            checkpoint_path_for_seed(args.checkpoint_dir, args.seed)
+        )
+    elif args.resume_from:
+        run_resume_from = args.resume_from
     history = train_model(
         model=model,
         train_loader=train_loader,
@@ -1140,6 +1313,9 @@ def main() -> None:
         weight_decay=args.weight_decay,
         seed=args.seed,
         use_wandb=args.wandb,
+        checkpoint_dir=args.checkpoint_dir if args.checkpoint_every > 0 else None,
+        checkpoint_every=args.checkpoint_every,
+        resume_from=run_resume_from,
     )
 
     # Fourier analysis

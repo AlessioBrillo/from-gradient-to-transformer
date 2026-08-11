@@ -1,0 +1,108 @@
+{
+  "experiment": "exp2_grokking",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "args": {
+    "seed": 0,
+    "modulus": 113,
+    "train_fraction": 0.3,
+    "d_model": 128,
+    "d_mlp": 512,
+    "n_heads": 4,
+    "epochs": 5000,
+    "lr": 0.001,
+    "weight_decay": 1.0,
+    "batch_size": 512,
+    "progress_interval": 10,
+    "checkpoint_every": 500,
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "checkpoint_dir": "checkpoints"
+  },
+  "per_seed_metrics": [
+    {
+      "final_val_acc": 1.0,
+      "generalization_epoch": 1250.0,
+      "final_fourier_sparsity": 0.08455139398574829,
+      "k_90_percent": 92.0,
+      "k_99_percent": 111.0,
+      "total_mass_top_k": 0.5026692748069763
+    },
+    {
+      "final_val_acc": 1.0,
+      "generalization_epoch": 1048.0,
+      "final_fourier_sparsity": 0.08228462934494019,
+      "k_90_percent": 92.0,
+      "k_99_percent": 111.0,
+      "total_mass_top_k": 0.5233176946640015
+    },
+    {
+      "final_val_acc": 1.0,
+      "generalization_epoch": 1326.0,
+      "final_fourier_sparsity": 0.07109332084655762,
+      "k_90_percent": 94.0,
+      "k_99_percent": 111.0,
+      "total_mass_top_k": 0.4736751317977905
+    }
+  ],
+  "aggregate": {
+    "total_mass_top_k": {
+      "mean": 0.4998873670895894,
+      "std": 0.020361733225055093,
+      "min": 0.4736751317977905,
+      "max": 0.5233176946640015,
+      "n": 3.0
+    },
+    "generalization_epoch": {
+      "mean": 1208.0,
+      "std": 117.31439241059329,
+      "min": 1048.0,
+      "max": 1326.0,
+      "n": 3.0
+    },
+    "k_99_percent": {
+      "mean": 111.0,
+      "std": 0.0,
+      "min": 111.0,
+      "max": 111.0,
+      "n": 3.0
+    },
+    "final_fourier_sparsity": {
+      "mean": 0.07930978139241536,
+      "std": 0.005883152409518343,
+      "min": 0.07109332084655762,
+      "max": 0.08455139398574829,
+      "n": 3.0
+    },
+    "final_val_acc": {
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0,
+      "n": 3.0
+    },
+    "k_90_percent": {
+      "mean": 92.66666666666667,
+      "std": 0.9428090415820634,
+      "min": 92.0,
+      "max": 94.0,
+      "n": 3.0
+    }
+  },
+  "wall_clock_seconds": 3418.454318,
+  "git_sha": "d48f9ad",
+  "git_dirty": true,
+  "device": "cpu",
+  "torch_version": "2.12.1+cpu",
+  "numpy_version": "2.5.0",
+  "python_version": "3.12.10",
+  "n_parameters": 226560,
+  "created_at": "2026-08-11T18:55:47+00:00",
+  "notes": "P=113 x3 seeds launched as three parallel processes (one per core, OMP_NUM_THREADS=3 each, checkpoint-every 500); manifest built from the final checkpoints by scripts/exp2_manifest_from_checkpoints.py; wall clock = heartbeat-log launch ts -> last final-checkpoint mtime (local clock)."
+}

@@ -19,6 +19,9 @@ venv/
 !07_capstone/data/.gitkeep
 07_capstone/experiments/*.log
 
+# Rolling resume checkpoints + heartbeat/launch logs (runtime state)
+checkpoints/
+
 # Obsidian (local cache, do not share)
 .obsidian/workspace*
 .obsidian/cache
