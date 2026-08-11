@@ -48,6 +48,13 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[22_micro-phase-23-the-res
   table, scaled-R1 paragraph or no-head negative), the standing gate debt closes with
   dates, and exactly one new research question opens as the continuum ledger's row
   (ADR-0006) — one question per phase, the rest closed with one reason each
+- [[26_micro-phase-27-the-unblock|MP-27 · The Unblock (pre-registered)]] — the phase
+  that executes the stack instead of stacking it: ADR-0003's rows run under their own
+  frozen protocols (P=113 ×3 seeds and R1 standard-scale on this machine's CPU —
+  overnight, checkpoint/resume, heartbeats — after the exp2 port that makes the
+  promise mechanical), `verify-claims` goes 2 → 0, the negatives are drafted before
+  the runs end, ADR-0006's candidate set stays frozen (zero new questions), and the
+  paper's first prose is written from disk — release = merge + 14 days
 
 ## Phases
 - [[01_foundations/_MOC|Phase 1 · Foundations]]

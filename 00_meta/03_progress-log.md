@@ -13,6 +13,41 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-11 (fourteenth session) — Micro-Phase 27, Step 0: the unblock roadmap, pre-registered
+
+- **Studied**: the stack itself, row by row — MP-23 current with ADR-0003's seven
+  rows UNDECIDED, MP-24 (ADR-0004, five rows), MP-25 (ADR-0005, eight rows) and
+  MP-26 (ADR-0006, eight rows) pre-registered, no session of any of the four
+  started — and what the record has been naming since MP-18: pre-registration
+  without execution is drift by another name, now four deep. Re-verified the CI
+  floor from the record (the tracked 185 green, ruff clean, blocking mypy clean,
+  full-tree mypy at 171, markdownlint 0) and re-verified the exp2 gap at the
+  source: `exp2_grokking.py`'s parser still exposes no `--resume`,
+  no `--checkpoint-every`, while the full stateful system lives only in exp1 —
+  so ADR-0003 row 1's disconnect-recovery promise is not mechanically real until
+  the port lands. Priced the launch readiness honestly: the Colab notebook is
+  hardened, the probes de-risked the recipe, and this machine's CPU budget (P=113
+  ×3 seeds ≈ one parallel overnight; R1 standard ≈ a second overnight under
+  checkpoint-every-250) makes the "needs a GPU" framing of the P=113 lane an
+  artifact of the MP-9 era, not a fact about the machine.
+- **Built**: [[00_meta/26_micro-phase-27-the-unblock]] — the unblock roadmap,
+  run by design on the record's own law: it executes ADR-0003's frozen protocols
+  instead of pre-registering anything new; its hard gate is a live machine-budget
+  audit (no audit, no launch); Session 1 is the exp2 checkpoint/resume port with
+  its three falsification tests written first and the kill drill v2 repeated; the
+  two lanes launch under heartbeats by Session 3; the scheduled negatives are
+  drafted before the finals; `verify-claims` 2 → 0 is the phase's one measured
+  line; ADR-0006's candidate set stays frozen — zero new questions until the
+  science moves; the terminus is release = this merge + 14 calendar days. Wired
+  into [[00_meta/00_home]] as MP-27 pre-registered (MP-23 stays current);
+  nothing re-plans a single verdict of any of the four phases ahead.
+- **Open question**: the intake itself, as ever — MP-23's Session 1 decides the
+  ADR-0003 rows, and this phase's sessions ARE that execution under a new clock.
+  The roadmap is written verdict-agnostic so that nothing about it waits for
+  data; its only new preconditions are the two it records at the source: the
+  machine-budget audit and the exp2 port, both decisions already named by the
+  record before this phase existed.
+
 ## 2026-08-10 (thirteenth session) — Micro-Phase 26, Step 0: the continuation roadmap, pre-registered
 
 - **Studied**: the MP-25 baseline against the repository (pre-registered
