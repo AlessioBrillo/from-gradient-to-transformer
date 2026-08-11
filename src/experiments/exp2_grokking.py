@@ -1131,13 +1131,22 @@ def main() -> None:
         help=(
             "CPU de-risk probe (Micro-Phase 10): canonical grokking "
             "hyperparameters (d_model=128, d_mlp=512, n_heads=4, wd=1.0, "
-            "train=30%) at a cheaper modulus P=59 with a reduced budget. "
+            "train=30%%) at a cheaper modulus P=59 with a reduced budget. "
             "Used to check the architecture groks at all before spending "
             "GPU hours on the P=113 flagship."
         ),
     )
     parser.add_argument(
         "--micro", action="store_true", help="Micro test: tiny modulus, fast CPU iteration"
+    )
+    parser.add_argument(
+        "--no-normalize-embeddings",
+        action="store_true",
+        help=(
+            "Disable the per-step embedding/unembedding row re-normalization "
+            "(microscope trial 1: unit-sphere constraint vs the dense Fourier "
+            "circuit). Default behavior (normalize) is unchanged."
+        ),
     )
     parser.add_argument(
         "--progress-interval",
@@ -1282,6 +1291,7 @@ def main() -> None:
         d_mlp=args.d_mlp,
         n_heads=args.n_heads,
         modulus=modulus,
+        normalize_embed=not args.no_normalize_embeddings,
     )
     n_params = sum(p.numel() for p in model.parameters())
     logger.info(f"Model parameters: {n_params:,}")
