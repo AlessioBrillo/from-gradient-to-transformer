@@ -23,7 +23,7 @@ Usage:
 
 import argparse
 import time
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 import torch
@@ -193,10 +193,20 @@ def main() -> None:
     ]
 
     if args.start_ts:
-        start = datetime.fromisoformat(args.start_ts.replace("Z", "+00:00"))
-        end = datetime.now(timezone.utc)
-        wall_clock = (end - start).total_seconds()
-        wall_source = "heartbeat-log launch timestamp"
+        # LAUNCH_TS in the heartbeat log is stamped in LOCAL time (with a
+        # cosmetic "Z"); parse it naive-local and compare against the last
+        # final-checkpoint mtime, also local — same clock, no tz math.
+        start_local = datetime.fromisoformat(args.start_ts.replace("Z", ""))
+        end_local = datetime.fromtimestamp(
+            max(
+                (checkpoint_dir / f"exp2_checkpoint_seed{seed}.pt")
+                .stat()
+                .st_mtime
+                for seed in seeds
+            )
+        )
+        wall_clock = (end_local - start_local).total_seconds()
+        wall_source = "heartbeat-log launch ts -> last final-checkpoint mtime (local clock)"
     else:
         mtimes = [
             (checkpoint_dir / f"exp2_checkpoint_seed{seed}.pt").stat().st_mtime
