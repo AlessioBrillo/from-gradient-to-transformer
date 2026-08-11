@@ -13,6 +13,33 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-11 (fifteenth session) — Micro-Phase 28, Sessions 0–2: the unblock executes — port, drill, launch
+
+- **Studied**: PyTorch serialization + RNG-state semantics while porting exp1's
+  stateful checkpoint/resume into exp2 — atomic `os.replace` save, RNG capture
+  (`torch.random.get_rng_state/set_rng_state`), rolling per-seed paths; the
+  MP-12 kill-drill transcript as the port's proof template. Also: the machine's
+  real CPU budget (6 cores/12 threads, 34 GB RAM, 100-epoch probe at
+  ~0.575 s/epoch → P=113 ×3 seeds ≈ one parallel overnight) — the "needs a GPU"
+  framing of the P=113 lane is dead, as MP-27 declared.
+- **Built**: (1) the exp2 checkpoint/resume port — three falsification tests
+  written FIRST (resume == uninterrupted, resume twice == uninterrupted, missing
+  checkpoint starts fresh), red against the pre-port parser, green after the
+  port; (2) the kill drill v2 executed for real — `Stop-Process -Force`
+  mid-run, resume, bit-identical history + weights vs the uninterrupted run,
+  PASS; (3) the P=113 ×3 seeds parallel launch (2026-08-11T19:40:05Z, PIDs
+  2576/4784/20368, OMP_NUM_THREADS=3, checkpoint-every-500, heartbeat log) —
+  all three seeds grokked by epoch ~3000 (val_acc ≈ 1.0) and are running out
+  their 5000-epoch protocol; (4) `scripts/exp2_manifest_from_checkpoints.py`
+  (manifest producer that reads the final checkpoints — the analysis side of
+  the parallel launch) + `scripts/probe_checkpoints.py`; (5) the scheduled
+  negatives drafted in full before the finals ([[06_production_ai/notes/scheduled-negatives-mp28]]);
+  (6) [[00_meta/27_micro-phase-28-the-execution]] wired into home as current.
+- **Open question**: none new — MP-27 closed the intake questions by executing
+  them. The named suspects if P=113's Fourier analysis is negative (embedding
+  re-normalization, cosine schedule) are already the microscope lane's rows in
+  ADR-0003, untouched until the S4 analysis reads the manifests.
+
 ## 2026-08-11 (fourteenth session) — Micro-Phase 27, Step 0: the unblock roadmap, pre-registered
 
 - **Studied**: the stack itself, row by row — MP-23 current with ADR-0003's seven
