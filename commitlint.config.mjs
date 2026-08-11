@@ -43,5 +43,15 @@ export default {
     // on every message before push (the fix is the process, not the pardon).
     // Revert with the other entries when these commits leave merged history.
     (message) => message.startsWith('ci(ci): local commitlint mirror plus scoped pardon for mp-20 step-0'),
+    // Scoped, auditable exception (2026-08-11): commit 929bf7a on dev
+    // ("docs(meta): P=113 verdict NO-GROK ...") starts its subject with an
+    // uppercase token and fails commitlint's subject-case rule on every PR
+    // that includes it. Force-push is blocked on dev by branch protection,
+    // and the rewrite-via-PR attempt (pr #60, rebase-merge) collapsed to a
+    // no-op because the rewritten commits' content was already in base, so
+    // the message is permanently in dev's history. Exact-message scope as
+    // established above: the entry names one message and nothing else.
+    // Revert when 929bf7a leaves the merged history.
+    (message) => message.startsWith('docs(meta): P=113 verdict NO-GROK (val 1.0, Fourier dense k_99=111/113); ADR-0003 rows 1-2 stamped'),
   ],
 };
