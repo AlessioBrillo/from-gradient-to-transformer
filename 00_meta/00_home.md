@@ -75,6 +75,12 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[22_micro-phase-23-the-res
   horizon ledger (ADR-0004) decided row by row in the sitting that decides it, the
   stranger review with its pre-built self-review substitute, the 10-minute talk written
   twice; the premiere and continuum ledgers stay frozen; release = merge + 14 days
+- [[30_micro-phase-31-the-premiere|MP-31 · The Premiere (pre-registered)]] —
+  consumes MP-30's release whatever its rows decided: the public arc reopens as NEW
+  rows (essay, thread, site, Space, walkthrough — the premiere ledger ADR-0005) with
+  the URL as the receipt and the same-sitting launch rule, the revision cycle from the
+  stranger's notes, the ACDC pilot and scaled-up R1 executed or closed as MP-30
+  decided them; the continuum ledger stays frozen; release = merge + 14 days
 
 ## Phases
 - [[01_foundations/_MOC|Phase 1 · Foundations]]
