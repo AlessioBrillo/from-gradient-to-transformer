@@ -13,6 +13,38 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-12 (eighteenth session) — Micro-Phase 31, Step 0: the premiere, pre-registered
+
+- **Studied**: the state this phase is written to consume, verified against
+  the repo — nothing of MP-29 or MP-30 has executed yet (both pre-registered,
+  their residue rows are this phase's intake); ADR-0005's eight premiere rows
+  all UNDECIDED (this phase's rows), ADR-0004 UNDECIDED (MP-30 decides),
+  ADR-0006 frozen; `verify-claims` at its 3 problems owned by MP-29's lines;
+  the CI floor green (185+ tests, ruff, blocking mypy, markdownlint); and the
+  toolchains verified as gaps, not hopes — no LaTeX on this machine, no Pages
+  workflow in `.github/workflows/`, no `publish:` frontmatter policy, the
+  Space engine exists behind the exp3 manifest. The deepest study: the
+  premiere's design canon — MP-25's original pre-registration (re-clocked to
+  MP-30's release), ADR-0002's five undated public-arc rows reopening as NEW
+  rows, and the same-sitting launch rule that makes "planning it" an illegal
+  final state.
+- **Built**: [[00_meta/30_micro-phase-31-the-premiere]] — the MP-31
+  pre-registration, wired into home as pre-registered; the phase's spine is
+  the premiere ledger (ADR-0005) stamped LAUNCHED-with-URL or
+  CLOSED-with-one-reason, the hard Session-0 gate on MP-30's release (no PDF,
+  no phase), the three toolchains pinned in S0 (TeX, Quartz, Gradio), the
+  web inheriting the manifest law, the revision cycle as a first-class row
+  with its kill-dates, the horizon lanes executed as MP-30 decided them, and
+  the hostile-webmaster pass as the release's referee. One measured line
+  carried and extended: ADR-0005 at zero UNDECIDED rows on release day with
+  every public number re-derivable; `dev == main` and the record's first live
+  URL stamped in the same sitting as the merge.
+- **Open question**: none new — the phase opens zero research questions by
+  law (ADR-0006 frozen), and the intake questions it owns are exactly the
+  ones MP-30's dated rows will answer: whether the paper's PDF lands on disk,
+  what ADR-0004's rows decided, and which of the horizon lanes the verdicts
+  left open for this phase to execute.
+
 ## 2026-08-12 (seventeenth session) — Micro-Phase 30, Step 0: the consumption roadmap, pre-registered
 
 - **Studied**: the intake this phase is written to receive — re-verified the
