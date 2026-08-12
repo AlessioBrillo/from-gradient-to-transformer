@@ -13,6 +13,37 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-12 (seventeenth session) — Micro-Phase 30, Step 0: the consumption roadmap, pre-registered
+
+- **Studied**: the intake this phase is written to receive — re-verified the
+  manifests as data one phase ahead (exp2 carries `git_dirty: true` and its
+  checkpoints are cleaned, so re-derivation is MP-29's Session-0 dated option,
+  not mine; the standard-scale exp1 manifest and exp5 manifest do not exist),
+  ADR-0003's rows 1–2 stamped / 3–7 UNDECIDED, `verify-claims` at 3 problems,
+  the CI floor green. And the machinery I am about to inherit: MP-24's
+  synthesis pre-registration (2026-08-09) — the paper scaffold's own
+  manifests-first gate, `make paper`, the horizon ledger — pre-registered and
+  never executed: this phase is that synthesis on a new clock, consuming
+  MP-29 instead of MP-23, with the premiere (ADR-0005) and the continuum
+  (ADR-0006) frozen by design.
+- **Built**: [[00_meta/29_micro-phase-30-the-consumption]] — the MP-30
+  pre-registration, wired into home as pre-registered; the phase's spine is
+  the paper as flagship artifact (sections open only for disks' manifests,
+  `make paper` in the CI mirror from S0, the hostile-webmaster reverse audit
+  as a session), the horizon decided as dated rows (ADR-0004: ACDC pilot,
+  stranger review with its pre-built self-review substitute, scaled-up R1
+  opening only on MP-29's head verdict, the 10-minute talk written twice,
+  stop-and-publish), the graduation proof answered from this phase's own
+  numbers, and the clean-clone rehearsal as the release's referee. One
+  measured line carried and extended: `verify-claims` at 0 as the paper's
+  visa, checked at S0, S6 and on the clone; `make paper` green is the
+  phase's ship date.
+- **Open question**: none new — the phase opens zero research questions by
+  law (ADR-0006 frozen), and the intake questions it does own are exactly the
+  ones MP-29's dated rows will answer. The one the record must not outsource
+  is unchanged from MP-29: *does my own harness ever produce a sparse
+  Fourier solution?* — the paper can only report what the control decides.
+
 ## 2026-08-12 (sixteenth session) — Micro-Phase 29, Step 0: the positive-negative, pre-registered
 
 - **Studied**: the state review that Step 0 of any roadmap owes the record —
