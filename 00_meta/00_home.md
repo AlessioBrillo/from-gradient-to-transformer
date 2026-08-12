@@ -69,6 +69,12 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[22_micro-phase-23-the-res
   microscope lane to its dated terminus, then the dense solution characterized as the
   contribution (per-head Fourier dictionary, norm structure, ablation, SAE reading);
   `verify-claims` from 3 to 0; the paper's Grokking prose; release = merge + 14 days
+- [[29_micro-phase-30-the-consumption|MP-30 · The Consumption (pre-registered)]] —
+  consumes MP-29's release whatever its rows decided: the paper in prose and PDF with
+  every section gated on a manifest, `make paper` in the CI mirror, RESULTS v-final, the
+  horizon ledger (ADR-0004) decided row by row in the sitting that decides it, the
+  stranger review with its pre-built self-review substitute, the 10-minute talk written
+  twice; the premiere and continuum ledgers stay frozen; release = merge + 14 days
 
 ## Phases
 - [[01_foundations/_MOC|Phase 1 · Foundations]]
