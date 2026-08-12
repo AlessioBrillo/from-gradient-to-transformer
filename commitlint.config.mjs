@@ -53,5 +53,16 @@ export default {
     // established above: the entry names one message and nothing else.
     // Revert when 929bf7a leaves the merged history.
     (message) => message.startsWith('docs(meta): P=113 verdict NO-GROK (val 1.0, Fourier dense k_99=111/113); ADR-0003 rows 1-2 stamped'),
+    // Scoped, auditable exception (2026-08-12): the mp-28 squash commit
+    // d626cdb on dev ("feat(grokking): P=113 verdict NO-GROK; microscope
+    // flag; R1/R2 checkpoint infra (mp-28)") starts its subject with an
+    // uppercase token and carries a >200-char body line, failing
+    // commitlint's subject-case and body-max-line-length rules on every PR
+    // that includes it. It entered dev via the PR #59 squash-merge
+    // reconcile, not through a PR commit, so no PR check ever linted it;
+    // force-push is blocked on dev by branch protection. Exact-message
+    // scope as established above: the entry names one message and nothing
+    // else. Revert when d626cdb leaves the merged history.
+    (message) => message.startsWith('feat(grokking): P=113 verdict NO-GROK; microscope flag; R1/R2 checkpoint infra (mp-28)'),
   ],
 };
