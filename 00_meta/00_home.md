@@ -9,7 +9,8 @@ Central map of the vault. Everything starts here.
 
 ## Headline Result
 
-The target research contribution: **mechanistic reverse-engineering of a transformer's learned algorithms at micro scale**. The strongest *verified* piece today is Rung 3's superposition phase transition (root-caused and reproduced 2026-08-02 after two prior audits couldn't explain it); grokking modular addition (the primary flagship) is not yet reproduced.
+The target research contribution: **mechanistic reverse-engineering of a transformer's learned algorithms at micro scale**. The strongest *verified* piece today is Rung 3's superposition phase transition (root-caused and reproduced 2026-08-02 after two prior audits couldn't explain it). Grokking modular addition (the primary flagship) closed its first dated verdict on 2026-08-11 — a **NO-GROK positive-negative**
+(val 1.0 across 3 seeds but Fourier dense, k_99 = 111/113), now the subject of the positive-control and microscope lanes in [[28_micro-phase-29-the-positive-negative|MP-29 · The Positive-Negative]].
 
 See [[portfolio/RESULTS]] for exact per-rung status, [[22_micro-phase-23-the-research-return|MP-23 · The Research Return]] for the current roadmap (the two flagship lanes — P=113 grokking and standard-scale induction heads — stop being pre-registered and run under dated verdicts inside a 14-day window), and [[portfolio/README]] for all showcase artifacts.
 
@@ -62,6 +63,12 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[22_micro-phase-23-the-res
   epoch ~3000 (val_acc ≈ 1.0, manifest analysis pending); the scheduled negatives
   drafted before the finals; R1 standard launched under checkpoint-every-250;
   `verify-claims` driven toward 0, then the paper's first prose from disk
+- [[28_micro-phase-29-the-positive-negative|MP-29 · The Positive-Negative (pre-registered)]] —
+  consumes MP-28's release whatever its rows decided: the NO-GROK verdict earns its proof —
+  the positive control first (does this harness ever produce k_99 < P/2 at all?), then the
+  microscope lane to its dated terminus, then the dense solution characterized as the
+  contribution (per-head Fourier dictionary, norm structure, ablation, SAE reading);
+  `verify-claims` from 3 to 0; the paper's Grokking prose; release = merge + 14 days
 
 ## Phases
 - [[01_foundations/_MOC|Phase 1 · Foundations]]

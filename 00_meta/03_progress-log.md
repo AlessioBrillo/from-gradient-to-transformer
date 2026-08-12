@@ -13,6 +13,43 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-12 (sixteenth session) — Micro-Phase 29, Step 0: the positive-negative, pre-registered
+
+- **Studied**: the state review that Step 0 of any roadmap owes the record —
+  the manifests read as data: `results/exp2_grokking.json` carries
+  `git_dirty: true` (produced mid-phase against an uncommitted tree, and
+  `verify-claims` correctly refuses it — 3 problems now, not the designed 2);
+  `results/exp1_induction_heads.json` is still the old sub-standard run
+  (epochs=150, d_model=24, acc ≈ 0.004) so ADR-0003 row 3's standard-scale
+  manifest does not exist yet; `results/exp5_sae_dashboard.json` does not
+  exist. And the deepest fact the record holds: no run in this repository's
+  history has ever produced a sparse Fourier solution — P=59 drills dense,
+  P=113 k_99 = 111/113. A codebase that has never seen k_99 < P/2 cannot
+  attribute its negatives to the phenomenon until the harness itself is
+  cleared. Also studied: the dense-vs-sparse solution theory the
+  characterization needs (Nanda et al.'s ~√P-frequency dictionary vs the
+  ideal full-support DFT expansion of the addition table — both implement the
+  same function exactly, which is precisely why the frozen criterion is
+  conjunctive, accuracy AND sparsity).
+- **Built**: [[00_meta/28_micro-phase-29-the-positive-negative]] — the MP-29
+  pre-registration, wired into home; the phase's spine is the positive
+  control (does this harness ever go sparse?) gating the microscope's
+  three-trial budget, with the dense solution as the contribution either way;
+  three support notes: [[06_production_ai/notes/positive-control-protocol]]
+  (P=59/67/97 scan, decision tree, pre-registered prediction),
+  [[06_production_ai/notes/microscope-trial-table]] (the 3 trials, each with
+  mechanism hypothesis, prediction and falsification column written before
+  the runs), [[06_production_ai/notes/dense-solutions-modular-addition]] (the
+  characterization study plan: per-head Fourier dictionary, norm structure,
+  frequency ablation, SAE reading). One measured line carried over and
+  sharpened: `make verify-claims` 3 → 0, with the dirty-tree re-derivation as
+  the first move.
+- **Open question**: none new beyond the ones the phase already pre-registered
+  — the control's verdict and the microscope's trial table exist to answer
+  them with dates. The one the record must not outsource: *does my own
+  harness ever produce a sparse Fourier solution?* (Exercise Ex-C in the
+  roadmap makes it a two-hour challenge, not a hope.)
+
 ## 2026-08-11 (fifteenth session) — Micro-Phase 28, Sessions 0–2: the unblock executes — port, drill, launch
 
 - **Studied**: PyTorch serialization + RNG-state semantics while porting exp1's
