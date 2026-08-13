@@ -411,6 +411,8 @@ no ablation result to plot yet; the citation that used to point at a non-existen
 
 ## Rung 5 — Sparse Autoencoder Feature Dashboard
 
+<!-- manifest: results/exp5_sae_dashboard.json -->
+
 **Question**: Can I train an SAE on synthetic residual stream activations and extract interpretable features? Does it work on real activations, not just synthetic ones?
 
 **Status**: [x] Synthetic baseline reproduces exactly. [x] Real-activation upgrade shipped
@@ -419,13 +421,20 @@ trained induction-heads checkpoint via a forward hook on `ln_final`, and the arc
 gained the pre-encoder bias (`x - b_dec`) it was missing — Bricken et al.'s actual SAE, not
 an approximation of it. Dead-feature threshold fixed 2026-08-01 (see Honesty Ledger).
 
-| Metric | Synthetic (d_model=64, 8× dict) | Real (d_model=32, 8× dict, from a trained checkpoint) |
+| Metric | Synthetic (d_model=64, 8× dict, manifest 2026-08-13) | Real (d_model=32, 8× dict, from a trained checkpoint) |
 |--------|-------|-------|
 | Dictionary size | 512 | 256 |
-| L0 sparsity | 88.97 / 512 (17.4%) | 136.25 / 256 (**53.2%**) |
-| Fraction of variance explained (FVE) | 0.9722 (97.2%) | **0.9997 (99.97%)** |
-| Reconstruction MSE | 0.00113 | 0.1251 |
-| Dead features (fixed 1e-4 threshold) | 1 / 512 (0.2%) | 0 / 256 (0%) |
+| L0 sparsity | 96.60 / 512 (18.9%) | 136.25 / 256 (**53.2%**) |
+| Fraction of variance explained (FVE) | 0.9749 (97.5%) | **0.9997 (99.97%)** |
+| Reconstruction MSE | 0.00101 | 0.1251 |
+| Dead features (fixed 1e-4 threshold) | 39 / 512 (7.6%) | 0 / 256 (0%) |
+
+The synthetic row is manifest-backed from the 2026-08-13 run (seed 42, 300 epochs,
+`results/exp5_sae_dashboard.json`, git_sha a50f943, clean tree) — a dated replacement
+for the earlier 1000-epoch seed-42 numbers (L0 88.97, FVE 0.9722, 1/512 dead), which
+were never manifest-backed: the full 1000-epoch ×3-seed re-run is a recorded pending
+item. The real-activation row remains prose (its run's plots were never saved) and is
+re-run in the R4/R5 chain once Rung 1 has a confirmed-head checkpoint.
 
 **Read honestly, not as an unqualified win.** The real-activation run reconstructs *better*
 but *far less sparsely* than synthetic — 53% of the dictionary fires per input versus 17%
@@ -446,8 +455,9 @@ from a model that hasn't yet learned the mechanism this pipeline exists to study
 `portfolio/figures/exp5_feature_histogram.png` (synthetic). Real-activation figures
 (`exp5_sparsity_tradeoff_real.png`, `exp5_feature_histogram_real.png`) are not yet
 generated — the numbers above came from a run whose plots were never saved; struck rather
-than left dangling. **No manifest tag**: no `results/exp5_sae_dashboard.json` has ever been
-produced, for the synthetic or the real-activation numbers — same gap as Rung 2 above.
+than left dangling. The synthetic figures pre-date the 2026-08-13 manifest (they are the
+original seed-42 plots); regenerating them from the manifest-backed run is part of the
+recorded Rung-5 pending item.
 
 ---
 

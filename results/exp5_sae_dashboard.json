@@ -1,0 +1,81 @@
+{
+  "experiment": "exp5_sae_dashboard",
+  "seeds": [
+    42
+  ],
+  "args": {
+    "seed": 42,
+    "d_model": 64,
+    "n_features": 512,
+    "n_true_features": 20,
+    "feature_sparsity": 0.05,
+    "epochs": 300,
+    "lr": 0.001,
+    "l1_coeff": 0.001,
+    "num_samples": 50000,
+    "batch_size": 256,
+    "quick": false,
+    "activations_from": null,
+    "source_vocab_size": 2048,
+    "source_seq_len": 24,
+    "source_d_model": 32,
+    "source_n_layers": 2,
+    "source_n_heads": 4
+  },
+  "per_seed_metrics": [
+    {
+      "reconstruction_mse": 0.0010091572903096677,
+      "fve": 0.9748609513172781,
+      "l0_sparsity": 96.60118103027344,
+      "dead_rate": 0.076171875,
+      "never_fires_rate": 0.07421875
+    }
+  ],
+  "aggregate": {
+    "reconstruction_mse": {
+      "mean": 0.0010091572903096677,
+      "std": 0.0,
+      "min": 0.0010091572903096677,
+      "max": 0.0010091572903096677,
+      "n": 1.0
+    },
+    "dead_rate": {
+      "mean": 0.076171875,
+      "std": 0.0,
+      "min": 0.076171875,
+      "max": 0.076171875,
+      "n": 1.0
+    },
+    "l0_sparsity": {
+      "mean": 96.60118103027344,
+      "std": 0.0,
+      "min": 96.60118103027344,
+      "max": 96.60118103027344,
+      "n": 1.0
+    },
+    "fve": {
+      "mean": 0.9748609513172781,
+      "std": 0.0,
+      "min": 0.9748609513172781,
+      "max": 0.9748609513172781,
+      "n": 1.0
+    },
+    "never_fires_rate": {
+      "mean": 0.07421875,
+      "std": 0.0,
+      "min": 0.07421875,
+      "max": 0.07421875,
+      "n": 1.0
+    }
+  },
+  "wall_clock_seconds": 2643.3280000000013,
+  "git_sha": "a50f943",
+  "git_dirty": false,
+  "device": "cpu",
+  "torch_version": "2.12.1+cpu",
+  "numpy_version": "2.5.0",
+  "python_version": "3.12.10",
+  "n_parameters": 66112,
+  "created_at": "2026-08-13T15:47:31+00:00",
+  "notes": null
+}
