@@ -13,6 +13,48 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-13 (twenty-first session) — Micro-Phase 34, Step 0: the third question, pre-registered
+
+- **Studied**: the state this phase is written to consume, verified against
+  the repo — MP-29 is mid-execution (control stamped ALL-DENSE, trial 1
+  FALSIFIED, the R1 standard-scale run live under checkpoint-every-100 with
+  its ETA inside the pre-registered window, exp2 and exp5 manifests clean on
+  disk), and MP-30/31/32/33 stand pre-registered, gated in series. The
+  deepest study: what the third execution of the continuum law owes the
+  record — ADR-0007's eight rows consumed as NEW rows under a new ledger
+  (the closed-then-reopened law, second application), a candidate set frozen
+  in the roadmap file itself and **conditioned on MP-29–MP-33 verdicts**
+  (C9–C12: the sparse-solution reverse-engineering, the dense-circuit theory
+  row, the head-formation floor, the induction-head portrait — the S0
+  sitting decides with the dates in front of it, never improvises), and the
+  teaching lane compounding: the second runnable artifact is only worth
+  shipping because the first one's stranger-run transcript proved the
+  receipt works.
+- **Built**: [[00_meta/33_micro-phase-34-the-third-question]] — the MP-34
+  pre-registration, wired into home as pre-registered; [[docs/adr/0008-
+  continuum-ledger-3]] — the third continuum ledger with its eight rows
+  pre-stamped and the frozen candidate set C9–C12 (the likely survivor C10 —
+  always answerable from the checkpoints on disk, the reading MP-29's dense
+  characterization explicitly opened; C9 the redemption arc, opening the
+  moment a sparse solution exists). The phase's spine: the continuum law,
+  third execution (exactly one research row, the unchosen closed with reasons
+  in the same sitting), the S0 gate as the mechanical refusal of five stacked
+  phases (no MP-33 release report, no phase), consumption-is-execution for
+  the second research question's verdict, the paper v4 rule ("v4 opens only
+  for new numbers, else the v3 is the record"), the debt rows re-verified
+  with transcripts — the exp5 1000-epoch ×3-seed pending item finally lands
+  as a dated row or closes with its reason — and the teaching lane shipping
+  its second artifact with a stranger-run receipt. One measured line carried
+  and extended: ADR-0008 at zero UNDECIDED rows on release day with the
+  teaching lane's second transcript on disk; `dev == main` and the program's
+  third direction, stamped in the same sitting as the merge.
+- **Open question**: none new — the phase opens zero research questions by
+  law until its Session 0 adjudicates C9–C12, and the intake questions it
+  owns are exactly the ones MP-33's dated rows will answer: which candidate
+  the second executed continuum chose, what its verdict (or scheduled
+  negative) decided, and whether the shelf's second year still holds a live
+  URL at zero.
+
 ## 2026-08-13 (twentieth session) — Micro-Phase 33, Step 0: the second question, pre-registered
 
 - **Studied**: the state this phase is written to consume, verified against
