@@ -13,6 +13,50 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-13 (twenty-second session) — Micro-Phase 35, Step 0: the fourth question, pre-registered
+
+- **Studied**: the state this phase is written to consume, verified against
+  the repo — MP-29 is mid-execution (control stamped ALL-DENSE, microscope
+  trial 1 FALSIFIED, trials 2 and 3 pending, the R1 standard-scale run live
+  under checkpoint-every-100 with its ETA inside the pre-registered window,
+  exp2 and exp5 manifests clean on disk), and MP-30/31/32/33/34 stand
+  pre-registered, gated in series. The deepest study: what the fourth
+  execution of the continuum law owes the record — ADR-0008's eight rows
+  consumed as NEW rows under a new ledger (the closed-then-reopened law,
+  third application), a candidate set frozen in the roadmap file itself and
+  **conditioned on MP-29–MP-34 verdicts** (C13–C16: the dense algorithm
+  identified, the solution-regime phase diagram, the head-formation floor,
+  the induction-head portrait — the S0 sitting decides with the dates in
+  front of it, never improvises), and the teaching lane compounding a third
+  time: the third runnable artifact is only worth shipping because the first
+  two stranger-run transcripts proved the receipt works.
+- **Built**: [[00_meta/34_micro-phase-35-the-fourth-question]] — the MP-35
+  pre-registration, wired into home as pre-registered; [[docs/adr/0009-
+  continuum-ledger-4]] — the fourth continuum ledger with its eight rows
+  pre-stamped and the frozen candidate set C13–C16 (the likely survivor C14 —
+  the solution-regime phase diagram, the only candidate that converts the
+  record's deepest open fact, no run ever producing k_99 < P/2, into a
+  mapped, dated answer instead of a point negative; C13 the fallback, the
+  dense algorithm's computation read from the checkpoints on disk). The
+  phase's spine: the continuum law, fourth execution (exactly one research
+  row, the unchosen closed with reasons in the same sitting), the S0 gate as
+  the mechanical refusal of six stacked phases (no MP-34 release report, no
+  phase), consumption-is-execution for the third research question's
+  verdict, the paper v5 rule ("v5 opens only for new numbers, else the v4 is
+  the record"), the debt rows re-verified with transcripts — the exp5
+  1000-epoch ×3-seed pending item lands as a dated row or closes with its
+  reason — and the teaching lane shipping its third artifact with a
+  stranger-run receipt. One measured line carried and extended: ADR-0009 at
+  zero UNDECIDED rows on release day with the teaching lane's third
+  transcript on disk; `dev == main` and the program's fourth direction,
+  stamped in the same sitting as the merge.
+- **Open question**: none new — the phase opens zero research questions by
+  law until its Session 0 adjudicates C13–C16, and the intake questions it
+  owns are exactly the ones MP-34's dated rows will answer: which candidate
+  the third executed continuum chose, what its verdict (or scheduled
+  negative) decided, and whether the shelf's third year still holds a live
+  URL at zero.
+
 ## 2026-08-13 (twenty-first session) — Micro-Phase 34, Step 0: the third question, pre-registered
 
 - **Studied**: the state this phase is written to consume, verified against
