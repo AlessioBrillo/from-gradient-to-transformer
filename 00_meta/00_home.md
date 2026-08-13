@@ -91,6 +91,16 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[28_micro-phase-29-the-pos
   no-head negative), the essay annex v2, the paper v2 diff, the shelf maintained as a
   dated row with heartbeats, the stranger round 2 with its kill-date, the standing
   gate debt closed with dates; release = merge + 14 days
+- [[32_micro-phase-33-the-second-question|MP-33 · The Second Question (pre-registered)]] —
+  consumes MP-32's release whatever its rows decided (gated hard: no continuum ledger
+  at zero, no phase): the continuum law executes a second time under a new ledger
+  (ADR-0007) — exactly one new research question opens from the frozen candidate set
+  C5–C8 (the unchosen close with dated reasons in the same sitting), the first
+  research question's verdict consumed as an artifact, the paper v3 opens only for
+  new numbers (else "the v2 is the record"), the essay annex v3, the shelf at zero,
+  the stranger round 3 with its kill-date, the debt rows re-verified with transcripts,
+  and the teaching lane ships one runnable artifact a stranger can execute; release =
+  merge + 14 days
 
 ## Phases
 - [[01_foundations/_MOC|Phase 1 · Foundations]]
