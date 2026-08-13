@@ -13,6 +13,57 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-13 (twenty-third session) — Micro-Phase 36, Step 0: the fifth question, pre-registered
+
+- **Studied**: the state this phase is written to consume, verified against
+  the repo — MP-29 is mid-execution (control stamped ALL-DENSE, microscope
+  trial 1 FALSIFIED, trials 2 and 3 pending, the R1 standard-scale run live
+  under checkpoint-every-100 with its ETA inside the pre-registered window,
+  exp2 and exp5 manifests clean on disk, `verify-claims` at 0), and
+  MP-30/31/32/33/34/35 stand pre-registered, gated in series. The deepest
+  study: what the fifth execution of the continuum law owes the record —
+  ADR-0009's eight rows consumed as NEW rows under a new ledger (the
+  closed-then-reopened law, fourth application), a candidate set frozen in
+  the roadmap file itself and **conditioned on MP-29–MP-35 verdicts**
+  (C17–C20: the sparse-regime mechanism, the dense→memorized transition,
+  the stranger-run reproducibility study, the regime-resolved SAE map — the
+  S0 sitting decides with the dates in front of it, never improvises), the
+  induction-head fork finally retired (its R1 condition long adjudicated; a
+  fourth re-inclusion would be a mood, not a candidate), and the teaching
+  lane compounding a fourth time: the fourth runnable artifact is only worth
+  shipping because the first three stranger-run transcripts proved the
+  receipt works.
+- **Built**: [[00_meta/35_micro-phase-36-the-fifth-question]] — the MP-36
+  pre-registration, wired into home as pre-registered; [[docs/adr/0010-
+  continuum-ledger-5]] — the fifth continuum ledger with its eight rows
+  pre-stamped and the frozen candidate set C17–C20 (the likely survivor
+  C18 — the dense→memorized transition, the order-parameter study that
+  converts MP-35's likely mapped all-dense negative into a law-like
+  statement about the boundary, the strongest form of the record's
+  signature: negative → map → characterization; C19 the fallback, the
+  stranger-run reproducibility study, the showcase's own science; C17 the
+  redemption arc, opening the moment a sparse cell exists anywhere). The
+  phase's spine: the continuum law, fifth execution (exactly one research
+  row, the unchosen closed with reasons in the same sitting), the S0 gate as
+  the mechanical refusal of seven stacked phases (no MP-35 release report,
+  no phase), consumption-is-execution for the fourth research question's
+  verdict, the paper v6 rule ("v6 opens only for new numbers, else the v5 is
+  the record"), the debt rows re-verified with transcripts — the exp5
+  1000-epoch ×3-seed resolution's receipt re-checked — and the teaching lane
+  shipping its fourth artifact with a stranger-run receipt. New this phase:
+  the pipeline caps at seven — MP-36 is the last pre-registration until the
+  stack executes, the next roadmap written from a release report, not from
+  the habit of pre-registering. One measured line carried and extended:
+  ADR-0010 at zero UNDECIDED rows on release day with the teaching lane's
+  fourth transcript on disk; `dev == main` and the program's fifth
+  direction, stamped in the same sitting as the merge.
+- **Open question**: none new — the phase opens zero research questions by
+  law until its Session 0 adjudicates C17–C20, and the intake questions it
+  owns are exactly the ones MP-35's dated rows will answer: which candidate
+  the fourth executed continuum chose, whether the phase diagram found any
+  sparse cell (the C17 vs C18 fork is written, verdict-agnostic), and
+  whether the shelf's fourth year still holds a live URL at zero.
+
 ## 2026-08-13 (twenty-second session) — Micro-Phase 35, Step 0: the fourth question, pre-registered
 
 - **Studied**: the state this phase is written to consume, verified against
