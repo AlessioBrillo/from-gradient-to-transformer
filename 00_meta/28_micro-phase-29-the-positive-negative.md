@@ -131,6 +131,43 @@ writing a single claim here.
 - **Exit**: audit sheet signed; the exp2 line either re-running (dated PID) or
   recorded as-is; the control is launched or dated.
 
+## Session 0 executed — deviation log (2026-08-13)
+
+- **Deviation 1 (disk truth)**: the P=113 final checkpoints were NOT cleaned —
+  `checkpoints/exp2_checkpoint_seed{0,1,2}.pt` (2026-08-11 20:37) are on disk.
+  S0's binary resolves as re-derivation, not re-run: the manifest producer is
+  deterministic given the checkpoints, so `results/exp2_grokking.json` is
+  re-derived on a clean tree (minutes) and the NO-GROK row keeps its
+  reproducibility receipt without a ~2 h re-launch.
+- **Deviation 2 (R1, checkpoint cadence)**: the 2026-08-11 R1 launch died at
+  ~epoch 242 with NO checkpoint under checkpoint-every-250 (the first save
+  would have been at 250) — the single worst-case outcome the cadence
+  allowed, realized. Relaunched 2026-08-13 13:29 local at
+  **checkpoint-every-100**, explicit standard-scale flags (NO `--standard`:
+  it forces `save_manifest=True` and parallel seeds would race on one file),
+  `--fresh-batches --resume`, OMP_NUM_THREADS=3 per seed (9/12 threads),
+  workers PID 15100/15940/18212, logs `checkpoints/exp1_seed{0,1,2}.log/.err.log`.
+  Observed ~27 s/epoch → ETA ~22 h wall (13:29 local Aug 13 → ~12:00 local
+  Aug 14), inside the pre-registered 17–24 h window.
+- **Trial 1 decided early**: the microscope trial-1 resume (P=113 seed 0,
+  `--no-normalize-embeddings`, 5000 epochs) completed 14:30 local — val
+  0.7176, gen epoch −1, k_99 = 112/113. Verdict stamped **FALSIFIED**
+  (renormalization not the suppressor) in
+  [[06_production_ai/notes/microscope-trial-table]] — the trial enters the
+  table in the sitting that decided it, one sitting ahead of S2's schedule.
+- **Trial 2 enabler landed**: `--schedule constant` via the
+  `make_lr_scheduler` factory — falsification tests first
+  (`test(grokking)` 82fb216, RED ImportError), implementation
+  (`feat(grokking)` 1479c5d, all 20 grokking tests GREEN). Trial 2 can launch
+  on the control's verdict.
+- **Control scan launched** 14:37 local: P=59/67/97, seed 0 each, 2000
+  epochs, `--no-normalize-embeddings`, checkpoint-every-200,
+  `--resume`, dedicated dirs `checkpoints/control_p{59,67,97}/`, workers PID
+  1840/5240/8372 (3 threads each), logs `checkpoints/control_p{P}.log/.err.log`.
+  ~1 h wall expected; verdict dated in S1's sitting.
+- **CI floor at session start**: `make verify-claims` 3 problems (unchanged);
+  tracked tests, ruff, mypy, markdownlint green.
+
 ## Session 1 — the positive control (next)
 
 - The small-P scan runs: P=59/67/97, one seed each, frozen protocol minus one
@@ -140,6 +177,30 @@ writing a single claim here.
   reading (the renormalization/loss/schedule chain, read as code).
 - **Exit**: the control verdict row dated, either way; the microscope's trial
   order re-confirmed or re-ordered with a one-line justification.
+
+## Session 1 executed — the control verdict (2026-08-13, 15:17–15:31 local)
+
+- **ALL-DENSE, harness-level negative** — decision-tree branch 2:
+  P=59 val 0.0000 (59/59), P=67 val 0.0006 (67/67), P=97 val 0.0002 (96/97),
+  all gen −1 at 2000 epochs (frozen protocol minus renormalization). Stamped
+  in [[06_production_ai/notes/positive-control-protocol]]. The pre-registered
+  prediction ("sparse at least at P=59") is falsified.
+- **The negative compounds**: no small-P run even reached the
+  dense-generalizing regime — val ≈ 0 everywhere below P=113 (the pre-frozen
+  P=59 drills agree). The only generalizing runs in this repository's history
+  remain the P=113 trio (val 1.0, dense). The harness: never sparse at any P;
+  generalizing only at P=113; dense whenever it generalizes.
+- **Root-cause pivot executed**: the reading starts with the weight decay ×
+  cosine interaction (the control's own pre-registered fallback, consistent
+  with trial 1's FALSIFIED verdict at P=113). Trial order re-confirmed with
+  the one-line justification — trials 2–3 ARE the pivot's instruments, tested
+  at P=113, the only lane where a change can be observed to matter.
+- **exp5 lane adjustment (dated)**: the full 1000-epoch ×3-seed synthetic
+  run is ~15 h wall on this machine's load — too slow for today's CI line.
+  Replaced by the dated single-seed (42) 300-epoch run whose manifest the
+  Rung 5 tag will back; the Rung 5 row is rewritten to match, and the full
+  multi-seed re-run is a recorded pending item (Session 5's chain). The
+  real-activation manifest remains pending on R1.
 
 ## Session 2 — the microscope to terminus (next)
 
@@ -230,6 +291,15 @@ tag, Rung 5 tag). Line moved: 3 → 2 in S0 (the exp2 line, by re-run or by
 recorded decision — the checkpoints needed for pure re-derivation were
 cleaned, verified 2026-08-12), 2 → 0 by S6 (the R1 and R5 manifests land
 from this phase's own runs).
+
+Updated 2026-08-13 (S0 executed): 3 → 1 in this sitting — the exp2 manifest
+re-derived on a clean tree (checkpoints found on disk, deviation 1) and the
+Rung 2 rewrite carries its `<!-- manifest: exp2_grokking -->` tag; the Rung 5
+tag lands with the exp5 manifest once its synthetic run completes (the
+real-activation manifest remains a pending row — Session 5's R5 chain — and
+the Rung 5 tag will back the synthetic numbers only, with the honest delta
+noted, per the record's tone). Rung 1's standard-scale manifest remains
+pending on R1's verdict (Session 4).
 
 ## Deep-dive study plan
 

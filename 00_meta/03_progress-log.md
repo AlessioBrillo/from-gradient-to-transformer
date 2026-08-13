@@ -13,6 +13,43 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-13 (nineteenth session) — Micro-Phase 29, Session 0 executed: the disk truth, the control, the trial-1 verdict
+
+- **Studied**: the NO-GROK verdict as the phase's center of gravity — the
+  ladder of attribution (harness → protocol → phenomenon) that makes the
+  positive control the highest-value question; the microscope's pre-registered
+  falsification machinery as it received its first real data. Deepest read:
+  the trial-1 result itself — removing the embedding renormalization did NOT
+  rescue the run (k_99 = 112/113 dense, val 0.7176, gen epoch −1, strictly
+  worse than the baseline seed-0's val 1.0): a one-change experiment that
+  answered in one sitting and confirmed the suspect list, not the mechanism.
+- **Built**: Session 0 of MP-29 executed with a dated deviation log — the
+  P=113 checkpoints were found on disk (the record said cleaned), so the exp2
+  manifest is re-derived instead of re-run; the R1 standard-scale launch
+  relaunched at checkpoint-every-100 (the old cadence had died at ~epoch 242
+  with zero checkpoints — the worst case realized); the trial-2 enabler
+  `--schedule constant` landed TDD-first (`make_lr_scheduler` factory, RED
+  82fb216 → GREEN 1479c5d, 20/20 tests); the positive-control scan launched
+  (P=59/67/97, seed 0, 2000 epochs, checkpoint-every-200, workers 1840/5240/
+  8372); the microscope trial-1 verdict stamped FALSIFIED in the trial table.
+- **Open question**: why does a dense solution generalize as well as it does
+  at P=113 — and is the small-P scan about to clear the harness or condemn
+  it? (Control verdict due ~15:30 local; R1 ETA ~12:00 local Aug 14.)
+
+### Same session, evening update — the control answered: ALL-DENSE
+
+- **Control verdict (15:17–15:31)**: P=59/67/97 all dense (59/59, 67/67,
+  96/97), val ≈ 0.0000–0.0006, gen −1 — the harness-level negative the
+  protocol pre-registered, and stronger than the protocol's own prediction:
+  small P does not even reach the dense-generalizing regime. The root-cause
+  reading pivots to the weight-decay × cosine interaction (consistent with
+  trial 1's FALSIFIED verdict). No run in this repository's history has ever
+  produced k_99 < P/2 — now across 6 P-values and every protocol variant
+  tried. The dense characterization (Session 3) is now the phase's spine.
+- **exp5 adjustment**: the full synthetic run measured ~15 h; a dated
+  single-seed 300-epoch run replaces it for today's `verify-claims` → 0
+  line; the multi-seed re-run is recorded as pending.
+
 ## 2026-08-12 (eighteenth session) — Micro-Phase 31, Step 0: the premiere, pre-registered
 
 - **Studied**: the state this phase is written to consume, verified against

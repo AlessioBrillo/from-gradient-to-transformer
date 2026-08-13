@@ -280,6 +280,28 @@ def evaluate(
     return total_loss / total, total_correct / total
 
 
+def make_lr_scheduler(
+    optimizer: torch.optim.Optimizer,
+    schedule: str,
+    epochs: int,
+    schedule_epochs: Optional[int],
+) -> torch.optim.lr_scheduler.LRScheduler:
+    """Build the LR scheduler for the frozen grokking protocol.
+
+    Microscope trial 2 (ADR-0003 row 2): the named suspect is the cosine
+    schedule locking in the dense solution before the sparse one is
+    reachable. `schedule="constant"` holds the LR at its base value for the
+    full horizon (ConstantLR with factor=1.0 is a flat multiplier); the
+    default "cosine" keeps the canonical CosineAnnealingLR over the full run
+    horizon (`schedule_epochs`, defaulting to `epochs`).
+    """
+    if schedule == "constant":
+        return torch.optim.lr_scheduler.ConstantLR(optimizer, factor=1.0)
+    return torch.optim.lr_scheduler.CosineAnnealingLR(
+        optimizer, T_max=schedule_epochs if schedule_epochs is not None else epochs
+    )
+
+
 def train_model(
     model: nn.Module,
     train_loader: DataLoader,
@@ -294,6 +316,7 @@ def train_model(
     checkpoint_every: int = 0,
     resume_from: Optional[str] = None,
     schedule_epochs: Optional[int] = None,
+    schedule: str = "cosine",
 ) -> dict:
     """Train and return history with progress measures.
 
@@ -356,9 +379,7 @@ def train_model(
         ],
         lr=lr,
     )
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=schedule_epochs if schedule_epochs is not None else epochs
-    )
+    scheduler = make_lr_scheduler(optimizer, schedule, epochs, schedule_epochs)
     criterion = nn.CrossEntropyLoss()
 
     history = {
@@ -386,8 +407,10 @@ def train_model(
         scheduler.load_state_dict(resume_ckpt["scheduler"])
         # The stored T_max came from the plan that saved the checkpoint; the
         # continuation's own horizon (`schedule_epochs`/`epochs`) is the same
-        # plan, so keep it authoritative for the LR curve.
-        scheduler.T_max = schedule_epochs if schedule_epochs is not None else epochs
+        # plan, so keep it authoritative for the LR curve. ConstantLR has no
+        # T_max (flat multiplier), so only cosine restores it.
+        if isinstance(scheduler, torch.optim.lr_scheduler.CosineAnnealingLR):
+            scheduler.T_max = schedule_epochs if schedule_epochs is not None else epochs
         torch.random.set_rng_state(resume_ckpt["rng_state"])
         history = resume_ckpt["history"]
         start_epoch = resume_ckpt["epoch"] + 1
@@ -1149,6 +1172,18 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--schedule",
+        type=str,
+        default="cosine",
+        choices=["cosine", "constant"],
+        help=(
+            "LR schedule: 'cosine' (canonical CosineAnnealingLR over the "
+            "full run horizon) or 'constant' (microscope trial 2: flat LR "
+            "at the base value, testing whether the late annealing locks in "
+            "the dense solution)."
+        ),
+    )
+    parser.add_argument(
         "--progress-interval",
         type=int,
         default=10,
@@ -1316,6 +1351,7 @@ def main() -> None:
         checkpoint_dir=args.checkpoint_dir if args.checkpoint_every > 0 else None,
         checkpoint_every=args.checkpoint_every,
         resume_from=run_resume_from,
+        schedule=args.schedule,
     )
 
     # Fourier analysis
