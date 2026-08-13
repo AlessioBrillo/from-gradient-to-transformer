@@ -389,3 +389,41 @@ class TestGrokkingCheckpointResume:
             resume_from=str(tmp_path / "does_not_exist.pt"),
         )
         assert len(hist["val_acc"]) == 2
+
+
+class TestLRSchedule:
+    """Microscope trial-2 enabler (ADR-0003 row 2): a constant-LR schedule
+    option so the cosine-annealing interaction can be tested as a one-change
+    trial against the frozen P=113 protocol. RED before the factory existed
+    (ImportError), GREEN after — the MP-28 falsification pattern."""
+
+    def test_constant_schedule_keeps_lr_flat(self) -> None:
+        """schedule="constant" must hold the LR at its base value across the
+        whole horizon — the falsification for "the cosine schedule locks in
+        the dense solution before the sparse one is reachable"."""
+        import torch
+
+        from src.experiments.exp2_grokking import make_lr_scheduler
+
+        opt = torch.optim.AdamW([torch.nn.Parameter(torch.zeros(4))], lr=1e-3)
+        sched = make_lr_scheduler(opt, schedule="constant", epochs=100, schedule_epochs=None)
+        assert abs(sched.get_last_lr()[0] - 1e-3) < 1e-9
+        for _ in range(100):
+            opt.step()
+            sched.step()
+        assert abs(sched.get_last_lr()[0] - 1e-3) < 1e-9
+
+    def test_cosine_schedule_still_decays(self) -> None:
+        """The default cosine schedule must keep annealing toward zero — the
+        constant option must not silently change the frozen protocol."""
+        import torch
+
+        from src.experiments.exp2_grokking import make_lr_scheduler
+
+        opt = torch.optim.AdamW([torch.nn.Parameter(torch.zeros(4))], lr=1e-3)
+        sched = make_lr_scheduler(opt, schedule="cosine", epochs=100, schedule_epochs=None)
+        first = sched.get_last_lr()[0]
+        for _ in range(50):
+            opt.step()
+            sched.step()
+        assert sched.get_last_lr()[0] < first
