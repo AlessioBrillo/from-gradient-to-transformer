@@ -59,8 +59,26 @@ interaction, not with renormalization.
 
 ## The dated verdict lives here
 
-- [ ] Control verdict (P=59/67/97 scan): — date + manifest tag:
-- [ ] If all-dense: root-cause reading: — date + reference:
+- [x] Control verdict (P=59/67/97 scan) — **ALL-DENSE, harness-level negative**,
+  2026-08-13. P=59: val 0.0000, gen −1, k_99 = 59/59. P=67: val 0.0006, gen −1,
+  k_99 = 67/67. P=97: val 0.0002, gen −1, k_99 = 96/97. 2000 epochs, frozen
+  protocol minus renormalization, one seed each (logs
+  `checkpoints/control_p{59,67,97}.err.log`, 15:17–15:31 local). The
+  pre-registered prediction ("expected to go sparse at least at P=59") is
+  falsified. Two facts compound the negative: no run went sparse, AND none
+  even reached the dense-generalizing regime (val ≈ 0 at every small P,
+  matching the pre-frozen-protocol P=59 drills — the only generalizing runs
+  in this repository's history remain the P=113 trio, always dense, val 1.0).
+- [x] If all-dense: root-cause reading — the weight decay × cosine-schedule
+  interaction, NOT renormalization (2026-08-13; the control's own
+  pre-registered fallback). Trial 1 (`--no-normalize-embeddings`) is already
+  FALSIFIED at P=113, consistent with this reading. The pivot is executed as:
+  the phase's trials 2–3 ARE the root-cause instruments (constant LR =
+  schedule half of the interaction; wd 1.5× = decay half), at P=113 — the
+  only P where the harness generalizes, hence the only lane where a change
+  can be observed to matter. Trial order re-confirmed with that one-line
+  justification; the trial table's budget (≤ 3) is untouched. Reference:
+  [[06_production_ai/notes/microscope-trial-table]].
 
 ## Links
 

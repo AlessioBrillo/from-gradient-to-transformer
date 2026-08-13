@@ -36,6 +36,20 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
   at P=113 — and is the small-P scan about to clear the harness or condemn
   it? (Control verdict due ~15:30 local; R1 ETA ~12:00 local Aug 14.)
 
+### Same session, evening update — the control answered: ALL-DENSE
+
+- **Control verdict (15:17–15:31)**: P=59/67/97 all dense (59/59, 67/67,
+  96/97), val ≈ 0.0000–0.0006, gen −1 — the harness-level negative the
+  protocol pre-registered, and stronger than the protocol's own prediction:
+  small P does not even reach the dense-generalizing regime. The root-cause
+  reading pivots to the weight-decay × cosine interaction (consistent with
+  trial 1's FALSIFIED verdict). No run in this repository's history has ever
+  produced k_99 < P/2 — now across 6 P-values and every protocol variant
+  tried. The dense characterization (Session 3) is now the phase's spine.
+- **exp5 adjustment**: the full synthetic run measured ~15 h; a dated
+  single-seed 300-epoch run replaces it for today's `verify-claims` → 0
+  line; the multi-seed re-run is recorded as pending.
+
 ## 2026-08-12 (eighteenth session) — Micro-Phase 31, Step 0: the premiere, pre-registered
 
 - **Studied**: the state this phase is written to consume, verified against

@@ -178,6 +178,30 @@ writing a single claim here.
 - **Exit**: the control verdict row dated, either way; the microscope's trial
   order re-confirmed or re-ordered with a one-line justification.
 
+## Session 1 executed — the control verdict (2026-08-13, 15:17–15:31 local)
+
+- **ALL-DENSE, harness-level negative** — decision-tree branch 2:
+  P=59 val 0.0000 (59/59), P=67 val 0.0006 (67/67), P=97 val 0.0002 (96/97),
+  all gen −1 at 2000 epochs (frozen protocol minus renormalization). Stamped
+  in [[06_production_ai/notes/positive-control-protocol]]. The pre-registered
+  prediction ("sparse at least at P=59") is falsified.
+- **The negative compounds**: no small-P run even reached the
+  dense-generalizing regime — val ≈ 0 everywhere below P=113 (the pre-frozen
+  P=59 drills agree). The only generalizing runs in this repository's history
+  remain the P=113 trio (val 1.0, dense). The harness: never sparse at any P;
+  generalizing only at P=113; dense whenever it generalizes.
+- **Root-cause pivot executed**: the reading starts with the weight decay ×
+  cosine interaction (the control's own pre-registered fallback, consistent
+  with trial 1's FALSIFIED verdict at P=113). Trial order re-confirmed with
+  the one-line justification — trials 2–3 ARE the pivot's instruments, tested
+  at P=113, the only lane where a change can be observed to matter.
+- **exp5 lane adjustment (dated)**: the full 1000-epoch ×3-seed synthetic
+  run is ~15 h wall on this machine's load — too slow for today's CI line.
+  Replaced by the dated single-seed (42) 300-epoch run whose manifest the
+  Rung 5 tag will back; the Rung 5 row is rewritten to match, and the full
+  multi-seed re-run is a recorded pending item (Session 5's chain). The
+  real-activation manifest remains pending on R1.
+
 ## Session 2 — the microscope to terminus (next)
 
 - ADR-0003 row 2's three trials, each with its pre-registered prediction and
