@@ -26,7 +26,7 @@ the trials, it does not consume the budget.
 | Mechanism hypothesis | Unit-norm rows are a nonlinear constraint applied in-place after every optimizer step (exp2 line ~428). It distorts the low-norm, phase-structured embedding rows the sparse Fourier circuit needs (Nanda et al. 2023), pushing the solution toward the dense regime |
 | Prediction | k_99 drops below P/2 at P=113 within 5000 epochs, or val-1.0 with a measurably lower k_99 than the 111/113 baseline |
 | What would falsify it | k_99 stays ≥ 111/113 at val 1.0 — renormalization is not the suppressor |
-| Verdict | — (date + manifest tag when observed) |
+| Verdict | **FALSIFIED** 2026-08-13 (observed; manifest `<!-- manifest: exp2_grokking -->` re-derived same sitting): k_99 = 112/113 (≥ 111/113 — the dense solution persisted) and val 0.7176, gen epoch −1 — the run never reached val 1.0 and underperformed the baseline seed-0 (val 1.0 by epoch ~1250). Removing the constraint neither produced sparsity nor helped learning. **Renormalization is not the suppressor.** |
 
 ## Trial 2 — constant LR (cosine schedule off)
 
