@@ -232,37 +232,49 @@ per epoch) and `--seeds` (multi-seed manifest) added 2026-08-02.
 
 ---
 
-## Rung 2 — Grokking Modular Addition (Primary Flagship — NOT YET VERIFIED)
+## Rung 2 — Grokking Modular Addition (Primary Flagship — NO-GROK positive-negative, 2026-08-11)
+
+<!-- manifest: results/exp2_grokking.json -->
 
 **Question**: Can I reproduce the grokking phase transition on modular addition (a+b mod P) and reverse-engineer the discrete Fourier transform algorithm the model learns?
 
-**Status**: [ ] Not reproduced. The train/val split bug that made this structurally
-unreachable was fixed 2026-07-26. The full P=113 run needing GPU-hours still has not been
-executed — this is the single most important open item in the repository. The 2026-08-06
-probe run finished the CPU-side de-risking (below): *the pipeline runs clean and the
-failure to grok is a small-P phenomenon, not a recipe bug that a probe could catch*.
-The P=113 GPU run is ready to go the moment a Colab session is available
-(`notebooks/colab_grokking_full_run.ipynb`).
+**Status**: [x] Decided 2026-08-11 — **NO-GROK, a positive-negative** (full analysis:
+[[06_production_ai/notes/grokking-verdict-p113]]). The train/val split bug that made
+this structurally unreachable was fixed 2026-07-26; the fixed split makes the task
+well-posed. The full P=113 run — three seeds to 5000/5000 epochs under the frozen
+protocol (ADR-0003 row 1) on this machine's CPU — reached **val accuracy 1.0 across
+all three seeds**, but the Fourier representation stayed **dense (k_99 = 111/113)**:
+the model solved modular addition *without* forming the sparse circuit the protocol
+defines as grokking. The pipeline, checkpoint machinery and multi-seed manifest all
+worked; the phenomenon did not appear. That negative is now the center of MP-29
+([[00_meta/28_micro-phase-29-the-positive-negative]]): a small-P positive control
+(P=59/67/97, in flight), a ≤3-trial microscope lane on the frozen protocol
+(trial 1 `--no-normalize-embeddings` FALSIFIED 2026-08-13 — the dense solution
+persists without renormalization, and the run underperformed the baseline:
+val 0.7176 vs 1.0), and the dense solution itself characterized as the contribution.
 
-| Metric | P=29 (2026-08-01) | P=59 probe (2026-08-06) | Full Run (P=113) |
-|--------|-------------------|-------------------------|-------------------|
-| Modulus P | 29 | 59 | 113 |
-| Train fraction | 30% | 30% | 30% |
-| Epochs | 2000 | 1500 ctx / 3000 drill / wd 0.3 drill | 5000+ |
-| Final val accuracy | 0.0017 | 0.0000–0.0012 (all three drills) | not yet run |
-| Generalization epoch | none (-1) | none (-1), all drills | not yet run — needs ~5.5h CPU or minutes on a Colab GPU |
-| Fourier frequencies used | 29 / 29 dense | 59 / 59 dense (all drills) | not yet run |
+| Metric | P=113, frozen protocol, n=3 (manifest) |
+|--------|----------------------------------------|
+| Modulus P | 113 |
+| Train fraction | 30% |
+| Epochs | 5000 (3 seeds, checkpoint-every-500) |
+| Final val accuracy | **1.0000 ± 0.0000** (n=3) |
+| Generalization epoch (val ≥ 0.9) | 1208 ± 117 (range 1048–1326) |
+| Fourier frequencies used (k_99) | **111 / 113 — dense** (all 3 seeds) |
+| k_90 | 92.7 ± 0.9 |
+| Final Fourier sparsity | 0.079 ± 0.006 (dense regime) |
+| Wall clock | ~57 min × 3 seeds (parallel, 9/12 threads) |
 
-The fixed split makes the task well-posed (every class is reachable), but no small-P
-run groks: P=29 at 2000 epochs, P=59 at 1500 epochs, P=59 at 3000 epochs (val loss
-*rising* into the 9s at the end — active memorization, not slow progress), and P=59
-at weight decay 0.3. Combined with the Fourier ablation (keep 59/59 frequencies →
-0.0000) this is three P-values / two budgets / two weight-decay regimes pointing the
-same way: small P lacks the combinatorial diversity for the Fourier algorithm to
-emerge within a fixed budget. The full P=113 run remains the only way to see the
-actual grokking transition; the probes narrowed the residual risk to P=113 itself
-(the embedding re-normalization and cosine schedule are the named suspects if it
-fails there too).
+Earlier small-P probes (P=29 at 2000 epochs, P=59 at 1500/3000 epochs, P=59 at weight
+decay 0.3) were all dense too (59/59 at P=59) — **no run in this repository's history
+has ever produced k_99 < P/2**, which is exactly the question the MP-29 positive
+control exists to answer. Fourier ablation (keep 59/59 frequencies → 0.0000) and the
+val-1.0-with-dense-Fourier outcome together say the harness found a legitimate dense
+algorithm, not a memorization failure: generalization is real at every P tested.
+
+**Verdict ledger**: ADR-0003 row 1 stamped NO-GROK 2026-08-11; row 2 (microscope)
+in flight — trial 1 FALSIFIED 2026-08-13 (renormalization not the suppressor),
+trial 2 (`--schedule constant`) and trial 3 (weight decay 1.5×) pending the control.
 
 **Bug fixed 2026-07-26** (see Honesty Ledger above): the split held out by target class,
 not equation, making some output classes structurally unreachable. Fixed to hold out
@@ -273,12 +285,8 @@ random `(a, b)` pairs.
 **Figures**: `portfolio/figures/exp2_grokking_curve.png`,
 `portfolio/figures/exp2_fourier_weights.png`,
 `portfolio/figures/exp2_frequency_ablation.png`,
-`portfolio/figures/exp2_progress_measures.png` — current contents are the last probe run
-(no-grokking sweeps), not a grokking curve. **No manifest tag**: `exp2_grokking.py` has
-`--seeds` support (see Honesty Ledger, 2026-08-02) but no `results/exp2_grokking.json` has
-ever been produced — the P=113 run that would generate one is still pending a GPU session
-(Step 3a below). Until then this section's numbers are traceable only to the prose above,
-not to a manifest.
+`portfolio/figures/exp2_progress_measures.png` — regenerated from the final
+P=113 seed-0 checkpoint 2026-08-13 (the manifest's provenance receipts this).
 
 ---
 
