@@ -13,6 +13,29 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-13 (nineteenth session) — Micro-Phase 29, Session 0 executed: the disk truth, the control, the trial-1 verdict
+
+- **Studied**: the NO-GROK verdict as the phase's center of gravity — the
+  ladder of attribution (harness → protocol → phenomenon) that makes the
+  positive control the highest-value question; the microscope's pre-registered
+  falsification machinery as it received its first real data. Deepest read:
+  the trial-1 result itself — removing the embedding renormalization did NOT
+  rescue the run (k_99 = 112/113 dense, val 0.7176, gen epoch −1, strictly
+  worse than the baseline seed-0's val 1.0): a one-change experiment that
+  answered in one sitting and confirmed the suspect list, not the mechanism.
+- **Built**: Session 0 of MP-29 executed with a dated deviation log — the
+  P=113 checkpoints were found on disk (the record said cleaned), so the exp2
+  manifest is re-derived instead of re-run; the R1 standard-scale launch
+  relaunched at checkpoint-every-100 (the old cadence had died at ~epoch 242
+  with zero checkpoints — the worst case realized); the trial-2 enabler
+  `--schedule constant` landed TDD-first (`make_lr_scheduler` factory, RED
+  82fb216 → GREEN 1479c5d, 20/20 tests); the positive-control scan launched
+  (P=59/67/97, seed 0, 2000 epochs, checkpoint-every-200, workers 1840/5240/
+  8372); the microscope trial-1 verdict stamped FALSIFIED in the trial table.
+- **Open question**: why does a dense solution generalize as well as it does
+  at P=113 — and is the small-P scan about to clear the harness or condemn
+  it? (Control verdict due ~15:30 local; R1 ETA ~12:00 local Aug 14.)
+
 ## 2026-08-12 (eighteenth session) — Micro-Phase 31, Step 0: the premiere, pre-registered
 
 - **Studied**: the state this phase is written to consume, verified against

@@ -12,7 +12,7 @@ Central map of the vault. Everything starts here.
 The target research contribution: **mechanistic reverse-engineering of a transformer's learned algorithms at micro scale**. The strongest *verified* piece today is Rung 3's superposition phase transition (root-caused and reproduced 2026-08-02 after two prior audits couldn't explain it). Grokking modular addition (the primary flagship) closed its first dated verdict on 2026-08-11 — a **NO-GROK positive-negative**
 (val 1.0 across 3 seeds but Fourier dense, k_99 = 111/113), now the subject of the positive-control and microscope lanes in [[28_micro-phase-29-the-positive-negative|MP-29 · The Positive-Negative]].
 
-See [[portfolio/RESULTS]] for exact per-rung status, [[22_micro-phase-23-the-research-return|MP-23 · The Research Return]] for the current roadmap (the two flagship lanes — P=113 grokking and standard-scale induction heads — stop being pre-registered and run under dated verdicts inside a 14-day window), and [[portfolio/README]] for all showcase artifacts.
+See [[portfolio/RESULTS]] for exact per-rung status, [[28_micro-phase-29-the-positive-negative|MP-29 · The Positive-Negative]] for the current roadmap (the NO-GROK verdict earns its proof: positive control, microscope lane to terminus, the dense solution as the contribution — `verify-claims` from 3 to 0), and [[portfolio/README]] for all showcase artifacts.
 
 > If you have 30 seconds, read the thesis and the Reproducibility Audit in RESULTS.md. There is no mini-paper yet, but `portfolio/paper/` has a scaffold.
 
@@ -56,14 +56,15 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[22_micro-phase-23-the-res
   promise mechanical), `verify-claims` goes 2 → 0, the negatives are drafted before
   the runs end, ADR-0006's candidate set stays frozen (zero new questions), and the
   paper's first prose is written from disk — release = merge + 14 days
-- [[27_micro-phase-28-the-execution|MP-28 · The Execution (current)]] — MP-27
+- [[27_micro-phase-28-the-execution|MP-28 · The Execution (executed)]] — MP-27
   executed: the exp2 checkpoint/resume port landed with its three falsification
   tests first and the kill drill v2 PASS; the P=113 ×3 seeds launched in parallel
   (2026-08-11T19:40:05Z, checkpoint-every-500, heartbeat log) and grokked by
-  epoch ~3000 (val_acc ≈ 1.0, manifest analysis pending); the scheduled negatives
-  drafted before the finals; R1 standard launched under checkpoint-every-250;
-  `verify-claims` driven toward 0, then the paper's first prose from disk
-- [[28_micro-phase-29-the-positive-negative|MP-29 · The Positive-Negative (pre-registered)]] —
+  epoch ~3000 (val_acc ≈ 1.0); the verdict landed **NO-GROK** (Fourier dense,
+  k_99 = 111/113) and the scheduled negatives were drafted before the finals;
+  its residue rows (R1 verdict, R4/R5 chain, paper prose, release) are MP-29's
+  intake
+- [[28_micro-phase-29-the-positive-negative|MP-29 · The Positive-Negative (current)]] —
   consumes MP-28's release whatever its rows decided: the NO-GROK verdict earns its proof —
   the positive control first (does this harness ever produce k_99 < P/2 at all?), then the
   microscope lane to its dated terminus, then the dense solution characterized as the
