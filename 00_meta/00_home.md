@@ -81,6 +81,15 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[22_micro-phase-23-the-res
   the URL as the receipt and the same-sitting launch rule, the revision cycle from the
   stranger's notes, the ACDC pilot and scaled-up R1 executed or closed as MP-30
   decided them; the continuum ledger stays frozen; release = merge + 14 days
+- [[31_micro-phase-32-the-continuation|MP-32 · The Continuation (pre-registered)]] —
+  consumes MP-31's release whatever its rows decided (gated hard: no premiere ledger
+  at zero, no phase): the continuum ledger (ADR-0006) fills under the continuum law —
+  exactly one new research question opens from the frozen candidate set C1–C4 (the
+  unchosen close with dated reasons in the same sitting), the executed horizon
+  verdicts become artifacts (Rung-6 section or trial table, scaled-R1 paragraph or
+  no-head negative), the essay annex v2, the paper v2 diff, the shelf maintained as a
+  dated row with heartbeats, the stranger round 2 with its kill-date, the standing
+  gate debt closed with dates; release = merge + 14 days
 
 ## Phases
 - [[01_foundations/_MOC|Phase 1 · Foundations]]
