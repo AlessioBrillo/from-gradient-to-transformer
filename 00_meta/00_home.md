@@ -112,6 +112,17 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[28_micro-phase-29-the-pos
   transcripts (the exp5 1000-epoch promise lands as a dated row), and the teaching
   lane ships its second runnable artifact a stranger can execute; release = merge + 14
   days
+- [[34_micro-phase-35-the-fourth-question|MP-35 · The Fourth Question (pre-registered)]] —
+  consumes MP-34's release whatever its rows decided (gated hard: no continuum ledger
+  at zero, no phase): the continuum law executes a fourth time under a new ledger
+  (ADR-0009) — exactly one new research question opens from the frozen candidate set
+  C13–C16 (the unchosen close with dated reasons in the same sitting; likely survivor
+  C14, the solution-regime phase diagram), the third research question's verdict
+  consumed as an artifact, the paper v5 opens only for new numbers (else "the v4 is the
+  record"), the essay annex v5, the shelf's year three at zero, the stranger round 5
+  with its kill-date, the debt rows re-verified with transcripts (the exp5 1000-epoch
+  resolution lands as a dated row), and the teaching lane ships its third runnable
+  artifact a stranger can execute; release = merge + 14 days
 
 ## Phases
 - [[01_foundations/_MOC|Phase 1 · Foundations]]
