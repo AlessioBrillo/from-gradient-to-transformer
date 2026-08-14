@@ -64,5 +64,17 @@ export default {
     // scope as established above: the entry names one message and nothing
     // else. Revert when d626cdb leaves the merged history.
     (message) => message.startsWith('feat(grokking): P=113 verdict NO-GROK; microscope flag; R1/R2 checkpoint infra (mp-28)'),
+    // Scoped, auditable exception (2026-08-14): the mp-36 pre-registration
+    // squash commit bcb778a on dev ("docs(meta): pre-register micro-phase
+    // 36, the fifth question") carries a >200-char body line
+    // (body-max-line-length). It entered main via the PR #69 squash-merge
+    // and dev via the reconcile merge, so no PR check ever linted it — the
+    // PR's conventional-commits check ran before the squash commit existed,
+    // and the local `commitlint-head` mirror only surfaces it now that the
+    // reconcile merge makes bcb778a part of the linted range. Force-push is
+    // blocked on dev by branch protection. Exact-message scope as
+    // established above: the entry names one message and nothing else.
+    // Revert when bcb778a leaves the merged history.
+    (message) => message.startsWith('docs(meta): pre-register micro-phase 36, the fifth question'),
   ],
 };
