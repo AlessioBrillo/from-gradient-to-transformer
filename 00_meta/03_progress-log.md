@@ -13,6 +13,60 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-14 (twenty-fourth session) — Micro-Phase 37, draft: the sixth question, conditional on the stack
+
+- **Studied**: the state this phase is written to consume, verified against
+  the repo — MP-29 is mid-execution (control stamped ALL-DENSE, microscope
+  trial 1 FALSIFIED, trials 2 and 3 pending, the R1 standard-scale ×3-seed
+  run COMPLETED 2026-08-14 04:07 local — the scheduled no-head negative is
+  now the verdict: 0/8 heads, peak diag+1 mass 0.075 at epoch 499, peak val
+  accuracy 0.5083 near epoch 1950), and MP-30/31/32/33/34/35/36 stand
+  pre-registered, gated in series, the cap at seven. The deepest study: what
+  the sixth execution of the continuum law owes the record — the first
+  roadmap written from a release report rather than from the habit of
+  pre-registering (the un-cap the pipeline law promised), a DRAFT that opens
+  no rows, its candidate set frozen in the file itself and conditioned on
+  MP-29–MP-36 verdicts (C21–C24: the dense algorithm's computation, the
+  finite-size scaling of the dense→memorized boundary, the stranger-run
+  reproducibility rate at four transcripts, the regime-resolved SAE map —
+  the S0 sitting decides with the dates in front of it, never improvises),
+  the induction-head fork still retired, and the teaching lane compounding a
+  fifth time. The bottleneck review the draft opens with: the critical path
+  is MP-29's release (terminus ≈ 2026-08-26) — every stacked phase's S0 gate
+  consumes the previous release report, a slip at any link slides six
+  phases; the paper's compile gate is the hardest artifact in the stack (no
+  LaTeX toolchain on this machine; MP-31's own rule applied early:
+  toolchains are pinned in S0, never discovered at S7); the standing debt is
+  undated by design and must not survive the stack (exp5 1000-epoch ×3-seed
+  ~15 h, clean-clone proof, graduation proof, reproduce-multiseed, W&B,
+  gate-debt transcript); the science's next fork is already visible (MP-29
+  S3's dense characterization decides whether C18's reading has data); the
+  showcase's receipts are still future (portfolio/projects empty, teaching
+  register reaches four transcripts only if MP-33–36 ship).
+- **Built**: [[00_meta/36_micro-phase-37-the-sixth-question]] — the MP-37
+  conditional draft, NOT wired into home and NOT counted against the cap:
+  DRAFT banner, state review verified against the repo, design decisions
+  (ADR-0011 the sixth ledger, consumption-is-execution, paper v7 rule,
+  teaching lane round five, shelf year five, stranger round 7, debt
+  re-verification, S0 gate = MP-36's release report, terminus = merge + 14
+  days), the frozen candidate set C21–C24, sessions 0–8, gate criteria, one
+  measured line, the seven-topic study plan, documentation contract,
+  exercises Ex-A–Ex-H plus the clock-check habit, strategic tips, and the
+  showcase 30-second story. Also fixed a pre-existing local-mirror failure:
+  the mp-36 pre-registration squash commit (bcb778a, PR #69) carries a
+  >200-char body line that no PR check ever linted (the squash commit did
+  not exist when the check ran); scoped commitlint pardon added per the
+  established doctrine (exact-message scope, revert when it leaves merged
+  history) — local mirror green: ruff clean, blocking mypy clean, 190/190
+  tests, markdownlint 0, `verify-claims` 0, commitlint conforms.
+- **Open question**: none new — the draft opens zero research questions by
+  law until its Session 0 adjudicates C21–C24, and the intake questions it
+  owns are exactly the ones MP-36's dated rows will answer: which candidate
+  the fifth executed continuum chose (C17 sparse vs C18 dense — the fork
+  that decides whether C21's mechanism reading or C22's finite-size scaling
+  survives), whether the phase diagram found any sparse cell, and whether
+  the shelf's fifth year still holds a live URL at zero.
+
 ## 2026-08-13 (twenty-third session) — Micro-Phase 36, Step 0: the fifth question, pre-registered
 
 - **Studied**: the state this phase is written to consume, verified against
