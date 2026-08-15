@@ -16,13 +16,13 @@ created: 2026-08-14
 > rewritten from them, with every deviation recorded as a dated ledger note.
 > It is not wired into home and it is not counted against the cap.
 
-Written as a personal learning log and a public record, like every roadmap
-before it — with one difference that is the point of the file: this roadmap is
-written before the release report it is conditioned on, so its conditions are
-conditions, never predictions, and its candidate set is frozen in this file so
-Session 0 can adjudicate, never improvise.
+I am writing this roadmap as my personal learning log and my public record,
+like every roadmap before it — with one difference that is the point of this
+file: I am writing it before the release report it is conditioned on, so its
+conditions are conditions, never predictions, and its candidate set is frozen
+in this file so Session 0 can adjudicate, never improvise.
 
-MP-37 executes the continuum law for the sixth time, under a NEW ledger
+I will execute the continuum law for the sixth time, under a NEW ledger
 (ADR-0011) and a NEW frozen candidate set (C21–C24, frozen in this file): the
 fifth research question consumed as artifact, the paper v7 rule decided, the
 sixth question chosen from C21–C24 with the unchosen closed in the same
@@ -40,10 +40,10 @@ teaching artifacts strangers have run, and — most decisively — MP-29's dense
 characterization of the P=113 solution (its S3 contribution) on disk with
 manifest-tagged numbers, and whichever of C17/C18 MP-36's sitting opened: a
 sparse cell found (the redemption) or the dense→memorized boundary mapped as
-an order-parameter study. The science has matured from *will grokking
+an order-parameter study. My science has matured from *will grokking
 reproduce?* through *which open question is deepest?* to *what does my own
-phase map say about the boundary?* — the sixth question is the first one
-chosen with a characterization (or its redemption) already on the record, and
+phase map say about the boundary?* — the sixth question is the first one I
+choose with a characterization (or its redemption) already on the record, and
 this roadmap is written verdict-agnostic by law: nothing in it re-plans a
 single row of MP-29–MP-36; its candidates are conditions, not predictions.
 
@@ -370,43 +370,76 @@ the same sitting as the merge.
 
 ## Deep-dive study plan
 
-1. **The dense algorithm's computation (the C21 reading)**: per-head Fourier
-   dictionaries, norm structure vs the ideal full-support DFT expansion of
-   the addition table, QK/OV composition, frequency ablation — reading the
-   P=113 checkpoints as code, with MP-29's S3 characterization as the
-   framing and the C13/C14 verdicts as the record's own map of the dense
-   regime.
-2. **Phase boundaries and finite-size scaling (the C22 reading)**: order
-   parameters, critical lines, boundary width vs P — the
-   statistical-mechanics vocabulary applied to the dense→memorized boundary;
+This is the study I will do between now and the verdict sitting — seven
+readings, each with the paper to read, the prediction I must write before a
+single number is read, and the artifact on disk that is my primary source.
+
+1. **The dense algorithm's computation (the C21 reading — the likely sixth
+   question)**: reading the P=113 solution as code. I will re-read Elhage et
+   al., *A Mathematical Framework for Transformer Circuits* (2021) — my
+   load-bearing Phase-4 text: per-head QK/OV decomposition, virtual weights,
+   the residual stream as a communication channel — and Nanda et al.,
+   *Progress Measures for Grokking via Mechanistic Interpretability* (2023),
+   for the Fourier decomposition of the modular-addition solution (the
+   addition table's DFT expansion, per-frequency progress measures, the
+   weight-decay-driven circuit formation). My C13/C14 verdicts and MP-29's S3
+   dense characterization note are the record's own map of the dense regime:
+   I will study them as the framing before I touch a checkpoint. **Before the
+   analysis**: I will write three falsifiable predictions — the per-head
+   dictionary's support, the norm split vs the ideal full-support DFT
+   expansion, and the ablation effect profile. **Primary sources**:
+   `exp2_checkpoint_seed{0,1,2}.pt` (the checkpoints the manifest cites),
+   the phase-diagram manifest, the S3 note. **Hand-built before reading
+   anything**: Ex-I's ideal-expansion hand-roll, my null hypothesis.
+2. **Phase boundaries and finite-size scaling (the C22 reading)**: the
+   statistical-mechanics vocabulary applied to the dense→memorized boundary —
+   order parameters, critical lines, boundary width vs P. I will study
    Morwani et al., 2024 (the edge-of-numerical-stability regime), Nanda et
-   al., *Progress Measures for Grokking via Mechanistic Interpretability*
-   (2023), Gromov, *Grokking: A Memory Perspective* (2023), Power et al.,
-   2022 — studied as theory before the analysis is fixed, exactly as the
-   phase diagram's axes were studied before its sweep grid.
+   al., 2023, Gromov, *Grokking: A Memory Perspective* (2023), and Power et
+   al., 2022 as theory **before** the order-parameter analysis is fixed,
+   exactly as I studied the phase diagram's axes before its sweep grid.
+   **Before the analysis**: the sharpening-with-P and monotonicity
+   predictions, written with their falsifiers; C18's monotone curves on disk
+   are this reading's admission ticket.
 3. **Shortcut learning and universality** (Liu et al., *Transformers Learn
    Shortcuts to Automata*, 2023; Chughtai et al., *A Toy Model of
    Universality*, 2023): what makes a solution a shortcut vs a canonical
    algorithm — the C10 verdict consumed as framing for whichever regime the
-   diagram found.
+   diagram found. This is the vocabulary I need to say *why* the dense
+   solution is dense honestly: is it a shortcut, or the canonical algorithm
+   computed by a low-weight solution?
 4. **SAE failure modes where the circuit is dense** (Bricken et al., 2023;
    Cunningham et al., 2024): L0/FVE/dead-features as regime labels, not just
-   diagnostics — the C24 reading.
+   diagnostics — the C24 reading. My own Rung-5 datum (99.97% FVE, L0 =
+   136/256, 0% dead features on the 32-dimensional residual stream) is the
+   record's first data point on this exact question: dense-but-reconstructable
+   is not sparse-but-interpretable, and I will write down what distinguishes
+   the two before the map is drawn.
 5. **Reproducibility science (the C23 reading, sixth pass on Gelman &
    Loken)**: how a study of receipts is designed — failure-rate baselines,
    per-step pass/fail definitions, and what a reproducibility rate actually
-   claims; the record's standing countermeasure applied to its own showcase.
+   claims. This is the record's standing countermeasure applied to its own
+   showcase: my four stranger-run transcripts are the data, and I must
+   decide what counts as a "step" and a "pass" before I count any.
 6. **The record teaches, round five**: the sixth question's verdict in four
    registers — the paper's sentence, the annex's sentence, the 30-second
    spoken claim, and the 5-minute teaching explanation with a worked toy a
-   stranger can run; the gap between the last two is where my teaching leaks.
+   stranger can run. The gap between the last two is where my teaching
+   leaks; I will measure it deliberately this phase by writing all four
+   registers for the same verdict.
 7. **Negative results as maps, deepened**: how a characterized boundary is
    reported honestly — critical lines, order parameters, falsified
    predictions — and how the paper presents a mapped negative as a
-   contribution; the dense characterization as the record's strongest form
-   of the signature, now read at the mechanism level.
+   contribution. The dense characterization is the strongest form of my
+   signature, now read at the mechanism level: negative → map →
+   characterization → mechanism. If C21 opens, my paper's hardest paragraph
+   is the one that claims the dense solution *computes something*, and I
+   will draft it against this reading.
 
 ## Documentation contract
+
+This is what I will write, and where, so that every claim of this phase
+re-derives from a manifest and a command:
 
 - This draft (the file you are reading) + the roadmap it becomes at Session
   0, rewritten from MP-36's release report with its deviations recorded.
@@ -468,9 +501,23 @@ the same sitting as the merge.
    cell found) vs the all-dense future written as two one-page paths — what
    each verdict changes downstream, including the C21-vs-C22 choice — so the
    S0 choice next phase is a stamping, not a discovery.
-9. **Habit · The clock check (every session):** ADR-0011's undated rows, the
-   open PR's CI status line, the shelf's health — all three before any new
-   prose.
+9. **Ex-I · The ideal-expansion hand-roll (S5, before any number is read —
+   new):** the ideal full-support DFT expansion of the addition table built
+   by hand and script — its support, its norm structure, its per-frequency
+   energy split — as the null hypothesis every checkpoint reading is
+   measured against. One runnable check: the hand-rolled norm split printed
+   and saved next to Ex-J's observed split, so the S6 comparison is a
+   diff, not a memory.
+10. **Ex-J · The per-head dictionary reader (S5, C21 only — new):** a small
+    script that loads `exp2_checkpoint_seed{0,1,2}.pt`, composes each head's
+    effective weight (embedding → attention → unembed), projects it onto the
+    DFT basis, and emits per-head support, top frequencies and norms as a
+    manifest-tagged JSON — the raw material the S6 verdict reads. One
+    runnable check: the reader runs on the frozen checkpoint and its output
+    is committed before the verdict paragraph is drafted.
+11. **Habit · The clock check (every session):** ADR-0011's undated rows, the
+    open PR's CI status line, the shelf's health — all three before any new
+    prose.
 
 ## Strategic tips and architectural best practices
 
@@ -489,7 +536,7 @@ the same sitting as the merge.
 - **The record teaches, and the receipt compounds.** The fifth runnable
   artifact is only worth shipping because the first four transcripts proved
   the format — and if C23 opens, the receipts stop being anecdotes and
-  become a measured rate. The showcase's story is now "read it, run it,
+  become a measured rate. My showcase's story is now "read it, run it,
   watch me be wrong on the record," five receipts deep.
 - **Verdict-agnostic by law.** This draft re-plans nothing of MP-29–MP-36;
   its candidates are conditions, not predictions. The fork drill (Ex-H) keeps
