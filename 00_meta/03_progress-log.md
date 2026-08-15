@@ -13,6 +13,51 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-15 (twenty-sixth session) — Micro-Phase 39, draft: the eighth question, written from the seventh release report
+
+- **Studied**: the state this phase is written to consume, verified against
+  the repo — MP-38's review and roadmap are on disk (2026-08-15), MP-29 is
+  mid-execution (control stamped ALL-DENSE, microscope trial 1 FALSIFIED,
+  trials 2 and 3 pending, the R1 standard-scale ×3-seed run COMPLETED
+  2026-08-14 04:07 local — the scheduled no-head negative is now the verdict:
+  0/8 heads, peak diag+1 mass 0.075 at epoch 499, peak val accuracy 0.5083
+  near epoch 1950, K-composition max 0.056), and MP-30/31/32/33/34/35/36
+  stand pre-registered, gated in series, the cap at seven. The deepest
+  study: what the eighth execution of the continuum law owes the record —
+  the second roadmap written from an *executed* roadmap's release report,
+  the steady state of the un-cap confirmed twice, a DRAFT that opens no
+  rows, its candidate set frozen in the file itself and **conditioned on
+  ADR-0012's verdicts** (C29–C32: the causal circuit complete, the boundary
+  law at prediction, the receipts now a measured rate, dense-regime features
+  causally verified — each opening only on its predecessor's positive
+  verdict, the S0 sitting decides with the dates in front of it, never
+  improvises), the redemption override still standing (a sparse cell
+  anywhere owns the question), and the teaching lane compounding a seventh
+  time. The bottleneck review the draft opens with: the stacked execution
+  remains the critical path (MP-39's S0 consumes MP-38's release, which
+  awaits the whole stack — protect MP-29's window), the steady state must
+  not become ceremony (rows dated in the sitting that owns them, or they are
+  not rows), the paper's compile gate is still the hardest artifact (no
+  LaTeX toolchain; the v9 rule as insurance), the receipts are still future
+  (six transcripts land only if the stack ships), and stop-and-publish
+  (ADR-0004 row 5) is a row, not a threat — every candidate must beat the
+  honest exit.
+- **Built**: [[00_meta/39_micro-phase-39-review-and-roadmap]] — the MP-39
+  review and roadmap, wired into home as a companion pointer (NOT counted
+  against any cap — the cap is spent): state review verified against the
+  repo, the bottleneck analysis, design decisions (ADR-0013 the eighth
+  ledger, the C29–C32 candidate set frozen with opens-only-if conditions and
+  the redemption override, sessions 0–8 with exits, the one measured line,
+  the seven-topic study plan, the documentation contract, exercises
+  Ex-A–Ex-M plus the clock-check habit, strategic tips, and the showcase
+  30-second story with eight dated directions).
+- **Open question**: none new — the draft opens zero research questions by
+  law until its Session 0 adjudicates C29–C32, and the intake questions it
+  owns are exactly the ones ADR-0012's dated rows will answer: which
+  candidate the seventh executed continuum chose, whether C25's causal
+  reading landed positive (the C29-vs-C30 fork is written, verdict-agnostic),
+  and whether the shelf's seventh year still holds a live URL at zero.
+
 ## 2026-08-15 (twenty-fifth session) — Micro-Phase 38, draft: the seventh question, written from the sixth release report
 
 - **Studied**: the state this phase is written to consume, verified against
