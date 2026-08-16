@@ -13,6 +13,79 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-16 (thirtieth session) — Micro-Phase 43, draft: the twelfth question, written from the eleventh release report
+
+- **Studied**: the state this phase is written to consume, verified against
+  the repo — MP-42's review and roadmap are on disk (2026-08-16, PR #76
+  merged, main at `4863d66`), MP-29 is mid-execution (control stamped
+  ALL-DENSE, microscope trial 1 FALSIFIED, trials 2 and 3 pending, the R1
+  standard-scale ×3-seed run COMPLETED 2026-08-14 04:07 local — the
+  scheduled no-head negative is the verdict: 0/8 heads, peak diag+1 mass
+  0.075 at epoch 499, peak val accuracy 0.5083 near epoch 1950,
+  K-composition max 0.056), and MP-30/31/32/33/34/35/36 stand
+  pre-registered, gated in series, the cap at seven. The deepest study:
+  what the twelfth execution of the continuum law owes the record — the
+  sixth roadmap written from an *executed* roadmap's release report, the
+  steady state of the un-cap confirmed six times, a DRAFT that opens no
+  rows, its candidate set frozen in the file itself and **conditioned on
+  ADR-0016's verdicts** (C45–C48: the law's boundary, the mechanism's
+  driver, the rate's second drift, the feature-complete circuit as a public
+  course — each opening only on its predecessor's positive verdict, the S0
+  sitting decides with the dates in front of it, never improvises), the
+  redemption override still standing (a sparse cell anywhere owns the
+  question), and — the deepest new reading, Lakatos read a third time for
+  what comes *after* the first post-record verdict — **the arc consumption
+  elevated to second generation**: MP-40's Ex-N defined the terminal state;
+  MP-41 executes that rule at its Session 0; MP-42 *consumes that execution
+  and chooses* (the C41–C44 adjudication, or the first post-record question
+  from PR-1/PR-2/PR-3); MP-43 *consumes that choice with dates*, and if the
+  post-record arc governs, its Session 0 continues it with the
+  pre-registered continuation set (PR-4 the new harness's first verdict —
+  the record's laws as the new harness's specification; PR-5 the law at the
+  record's edge, second task; PR-6 the record as a course), stamped as the
+  post-record arc's second dated direction, never a mood. The bottleneck
+  review the draft opens with: the intake is now a consumption of a
+  consumption (the single most dangerous drift is re-litigating a consumed
+  decision — a sitting stamps, it never re-decides); the stacked execution
+  remains the critical path (MP-43's S0 consumes MP-42's release, which
+  awaits the whole stack — protect MP-29's window); the steady state must
+  not become ceremony (rows dated in the sitting that owns them, or they are
+  not rows); the paper's compile gate is still the hardest artifact (no
+  LaTeX toolchain; the v13 rule as insurance); the receipts are still future
+  (ten transcripts land only if the stack ships, the twelfth in this phase);
+  and stop-and-publish (ADR-0004 row 5) is a row, not a threat — now with
+  the post-record criterion two questions deep (the deepest candidate earns
+  the post-record arc's *first new paragraph*). Five dated intake facts
+  found walking the shelf while drafting, each an owned row, never a
+  surprise: local `main` stale (`1acba9e` vs `origin/main` `4863d66`),
+  `portfolio/README.md` stale (mini-paper/demo/tracking claims contradicted
+  by the record), no `essay-annex-*.md` on disk (the annexes live on the
+  live shelf), Rung 6 residue on disk (deleted 2026-08-01, pyc + figure
+  survive), and `checklists/gate-debt.md` absent (a re-verification cannot
+  claim a file that is not there).
+- **Built**: [[00_meta/43_micro-phase-43-review-and-roadmap]] — the MP-43
+  review and roadmap, wired into home as a companion pointer (NOT counted
+  against any cap — the cap is spent): state review verified against the
+  repo, the bottleneck analysis, design decisions (ADR-0017 the twelfth
+  ledger, the C45–C48 candidate set frozen with opens-only-if conditions,
+  the post-record continuation set PR-4/PR-5/PR-6, the redemption override,
+  and the arc consumption above all — the terminal-state object consumed
+  for a second time with dates at Session 0, never improvised; sessions 0–8
+  with exits, the one measured line, the seven-topic study plan including
+  the Lakatos second-generation reading, the documentation contract,
+  exercises Ex-A–Ex-N plus the clock-check habit (Ex-N now the arc
+  consumption, second generation, verdict-agnostic), strategic tips, and
+  the showcase 30-second story with twelve dated directions).
+- **Open question**: none new — the draft opens zero research questions by
+  law until its Session 0 consumes MP-42's choice and adjudicates C45–C48
+  (or continues the post-record arc), and the intake questions it owns are
+  exactly the ones ADR-0016's dated rows will answer: whether MP-42's
+  Session 0 opened the post-record arc (the record's arc complete), which
+  candidate the eleventh executed continuum chose, whether C41's law landed
+  positive (the C45-vs-C46 fork is written, verdict-agnostic), and whether
+  the record's next verdict is its last — or its first new direction's
+  successor.
+
 ## 2026-08-16 (twenty-ninth session) — Micro-Phase 42, draft: the eleventh question, written from the tenth release report
 
 - **Studied**: the state this phase is written to consume, verified against
