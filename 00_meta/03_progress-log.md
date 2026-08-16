@@ -13,6 +13,62 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-16 (twenty-eighth session) — Micro-Phase 41, draft: the tenth question, written from the ninth release report
+
+- **Studied**: the state this phase is written to consume, verified against
+  the repo — MP-40's review and roadmap are on disk (2026-08-16), MP-29 is
+  mid-execution (control stamped ALL-DENSE, microscope trial 1 FALSIFIED,
+  trials 2 and 3 pending, the R1 standard-scale ×3-seed run COMPLETED
+  2026-08-14 04:07 local — the scheduled no-head negative is now the verdict:
+  0/8 heads, peak diag+1 mass 0.075 at epoch 499, peak val accuracy 0.5083
+  near epoch 1950, K-composition max 0.056), and MP-30/31/32/33/34/35/36
+  stand pre-registered, gated in series, the cap at seven. The deepest
+  study: what the tenth execution of the continuum law owes the record —
+  the fourth roadmap written from an *executed* roadmap's release report,
+  the steady state of the un-cap confirmed four times, a DRAFT that opens
+  no rows, its candidate set frozen in the file itself and **conditioned on
+  ADR-0014's verdicts** (C37–C40: the law at the diagram's edge, the
+  mechanism's transfer, the rate at year scale, the feature-complete
+  circuit — each opening only on its predecessor's positive verdict, the S0
+  sitting decides with the dates in front of it, never improvises), the
+  redemption override still standing (a sparse cell anywhere owns the
+  question), and — the deepest new reading, Lakatos, *The Methodology of
+  Scientific Research Programmes* — **the terminal-state rule elevated to
+  first-class**: MP-40's Ex-N defined the terminal state; MP-41 executes
+  that rule with dates at Session 0, and the research row can legitimately
+  close the record ("the record is the contribution") as a stamped release,
+  never a mood. The bottleneck review the draft opens with: the
+  terminal-state decision is now the intake, not the philosophy; the stacked
+  execution remains the critical path (MP-41's S0 consumes MP-40's release,
+  which awaits the whole stack — protect MP-29's window); the steady state
+  must not become ceremony (rows dated in the sitting that owns them, or
+  they are not rows); the paper's compile gate is still the hardest artifact
+  (no LaTeX toolchain; the v11 rule as insurance); the receipts are still
+  future (eight transcripts land only if the stack ships); and
+  stop-and-publish (ADR-0004 row 5) is a row, not a threat — the phase that
+  stamps the record complete is the strongest release this program can
+  make.
+- **Built**: [[00_meta/41_micro-phase-41-review-and-roadmap]] — the MP-41
+  review and roadmap, wired into home as a companion pointer (NOT counted
+  against any cap — the cap is spent): state review verified against the
+  repo, the bottleneck analysis, design decisions (ADR-0015 the tenth
+  ledger, the C37–C40 candidate set frozen with opens-only-if conditions,
+  the redemption override, and the terminal-state override above both —
+  executed with dates at Session 0, never improvised; sessions 0–8 with
+  exits, the one measured line, the seven-topic study plan including the
+  Lakatos terminal-state reading, the documentation contract, exercises
+  Ex-A–Ex-N plus the clock-check habit (Ex-N now the terminal-state
+  *execution* of MP-40's rule, verdict-agnostic), strategic tips, and the
+  showcase 30-second story with ten dated directions).
+- **Open question**: none new — the draft opens zero research questions by
+  law until its Session 0 executes MP-40's terminal-state rule and
+  adjudicates C37–C40, and the intake questions it owns are exactly the
+  ones ADR-0014's dated rows will answer: whether the terminal-state rule
+  fired (the record's arc complete), which candidate the ninth executed
+  continuum chose, whether C33's circuit-as-a-law landed positive (the
+  C37-vs-C38 fork is written, verdict-agnostic), and whether the record's
+  next verdict is its last.
+
 ## 2026-08-16 (twenty-seventh session) — Micro-Phase 40, draft: the ninth question, written from the eighth release report
 
 - **Studied**: the state this phase is written to consume, verified against
