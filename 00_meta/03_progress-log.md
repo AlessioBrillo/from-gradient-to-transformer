@@ -13,6 +13,87 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-17 (thirty-second session) — Micro-Phase 45, draft: the fourteenth question, written from the thirteenth release report
+
+- **Studied**: the state this phase is written to consume, verified against
+  the repo — MP-44's review and roadmap are on disk and MERGED (2026-08-17,
+  PR #78, main at `063339f`, dev reconciled at `759024c` — MP-44's intake
+  fact #1 RESOLVED by the merge itself), MP-29 is mid-execution (terminus ≈
+  2026-08-26; R1's no-head negative 2026-08-14 still the newest dated fact:
+  0/8 heads, peak diag+1 mass 0.075 at epoch 499, peak val accuracy 0.5083
+  near epoch 1950, K-composition max 0.056), and MP-30/31/32/33/34/35/36
+  stand pre-registered, gated in series, the cap at seven. The deepest
+  study: what the fourteenth execution of the continuum law owes the record
+  — the eighth roadmap written from an *executed* roadmap's release report,
+  the steady state of the un-cap confirmed eight times, a DRAFT that opens
+  no rows, its candidate set frozen in the file itself and **conditioned on
+  ADR-0018's verdicts** (C53–C56: the boundary's mechanism, the driver
+  root-caused, the drift's diagnosis, the course's second edition — each
+  opening only on its predecessor's positive verdict, the S0 sitting decides
+  with the dates in front of it, never improvises), the redemption override
+  still standing (a sparse cell anywhere owns the question), and — the
+  deepest new reading, Lakatos read a fifth time for what comes *three*
+  questions past a completed program — **the arc consumption elevated to
+  fourth generation**: MP-40's Ex-N defined the terminal state; MP-41
+  executes it; MP-42 consumes that execution and chooses; MP-43 *consumes
+  that choice with dates* and adjudicates C45–C48 or continues the
+  post-record arc; MP-44 *consumes that Session-0 decision with dates* and
+  adjudicates C49–C52 or continues the post-record arc; MP-45 *consumes that
+  decision with dates*, and if the post-record arc governs, its Session 0
+  continues it with the pre-registered continuation set (PR-10 the new
+  harness's first reproducibility datum; PR-11 the law at the record's
+  edge, fourth task; PR-12 the record as a course, third edition), stamped
+  as the post-record arc's fourth dated direction, never a mood. The
+  bottleneck review the draft opens with: the intake is now a consumption of
+  a consumption of a consumption of a consumption (the decision chain five
+  generations deep — the single most dangerous drift is re-litigating a
+  thrice-consumed decision: a sitting stamps, it never re-decides); the
+  stacked execution remains the critical path (MP-45's S0 consumes MP-44's
+  release, which awaits the whole stack — protect MP-29's window); the
+  steady state must not become ceremony (rows dated in the sitting that owns
+  them, or they are not rows); the paper's compile gate is still the hardest
+  artifact (no LaTeX toolchain; the v15 rule as insurance); the receipts are
+  still future (thirteen transcripts land only if the stack ships, the
+  fourteenth in this phase); and stop-and-publish (ADR-0004 row 5) is a
+  row, not a threat — now with the post-record criterion four questions
+  deep (the deepest candidate earns the post-record arc's *third new
+  paragraph*). The five dated intake facts walked again, each stamped with
+  its 2026-08-17 state — a re-verification, never a memory: local `main`
+  reconciled (`063339f` = `origin/main`, `dev` at `759024c`, MP-44's fact #1
+  RESOLVED), `portfolio/README.md` still stale (the three "not yet" rows
+  re-verified at lines 18–21), no `essay-annex-*.md` on disk (`portfolio/`
+  holds `RESULTS.md`, `README.md`, `model-card.md` and nothing else), Rung 6
+  residue still on disk (both the pyc and `exp6_automated_vs_manual.png`
+  confirmed present), and `checklists/gate-debt.md` still absent — plus the
+  shelf fact carried from MP-44's sitting: `figures/` holds zero tracked
+  files, the corpus is gitignored build product provenanced by the
+  manifests, never by git.
+- **Built**: [[00_meta/45_micro-phase-45-review-and-roadmap]] — the MP-45
+  review and roadmap, wired into home as a companion pointer (NOT counted
+  against any cap — the cap is spent): state review verified against the
+  repo (190 collected, ruff clean, blocking mypy clean, `verify-claims` at
+  0, full suite 190/190 in the local CI mirror), the bottleneck analysis
+  five generations deep, design decisions (ADR-0019 the fourteenth ledger,
+  the C53–C56 candidate set frozen with opens-only-if conditions, the
+  post-record continuation set PR-10/PR-11/PR-12, the redemption override,
+  and the arc consumption above all — the fourth-generation consumption of
+  MP-44's Session-0 decision with dates at Session 0, never improvised;
+  sessions 0–8 with exits, the one measured line, the seven-topic study
+  plan including the Lakatos fifth reading, the documentation contract,
+  exercises Ex-A–Ex-Q plus the clock-check habit (Ex-P the arc consumption,
+  fourth generation, verdict-agnostic; Ex-Q the drift-attribution drill),
+  strategic tips, and the showcase 30-second story with fourteen dated
+  directions).
+- **Open question**: none new — the draft opens zero research questions by
+  law until its Session 0 consumes MP-44's Session-0 decision and
+  adjudicates C53–C56 (or continues the post-record arc), and the intake
+  questions it owns are exactly the ones ADR-0018's dated rows will answer:
+  whether MP-44's Session 0 continued the post-record arc (the record's
+  arc three questions deep), which candidate the thirteenth executed
+  continuum chose, whether C49's boundary law landed positive (the
+  C53-vs-C54 fork is written, verdict-agnostic), and whether the record's
+  next verdict is its last — or its third new direction's successor.
+
 ## 2026-08-17 (thirty-first session) — Micro-Phase 44, draft: the thirteenth question, written from the twelfth release report
 
 - **Studied**: the state this phase is written to consume, verified against
