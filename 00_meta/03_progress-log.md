@@ -13,6 +13,89 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-17 (thirty-fourth session) — Micro-Phase 47, draft: the sixteenth question, written from the fifteenth release report
+
+- **Studied**: the state this phase is written to consume, verified against
+  the repo — MP-46's review and roadmap are on disk and MERGED (2026-08-17,
+  PR #80, main at `ea3ac9d`, dev reconciled at `214dd64` — MP-46's intake
+  fact #1 RESOLVED by the merge itself), MP-29 is mid-execution (terminus ≈
+  2026-08-26; R1's no-head negative 2026-08-14 still the newest dated fact:
+  0/8 heads, peak diag+1 mass 0.075 at epoch 499, peak val accuracy 0.5083
+  near epoch 1950, K-composition max 0.056), and MP-30/31/32/33/34/35/36
+  stand pre-registered, gated in series, the cap at seven. The deepest
+  study: what the sixteenth execution of the continuum law owes the record
+  — the tenth roadmap written from an *executed* roadmap's release report,
+  the steady state of the un-cap confirmed ten times, a DRAFT that opens
+  no rows, its candidate set frozen in the file itself and **conditioned on
+  ADR-0020's verdicts** (C61–C64: the law with a measured domain, the
+  driver as a principle, the rate as a model, the instrument's second
+  validation — each opening only on its predecessor's positive verdict, the
+  S0 sitting decides with the dates in front of it, never improvises), the
+  redemption override still standing (a sparse cell anywhere owns the
+  question), and — the deepest new reading, Lakatos read a seventh time for
+  what comes *five* questions past a completed program — **the arc
+  consumption elevated to sixth generation**: MP-40's Ex-N defined the
+  terminal state; MP-41 executes it; MP-42 consumes that execution and
+  chooses; MP-43 *consumes that choice with dates*; MP-44 *consumes that
+  Session-0 decision with dates*; MP-45 *consumes that decision with dates*;
+  MP-46 *consumes that decision with dates*; MP-47 *consumes MP-46's
+  Session-0 decision with dates*, and if the post-record arc governs, its
+  Session 0 continues it with the pre-registered continuation set (PR-16
+  the new harness's first cross-recipe law; PR-17 the law at the record's
+  edge, sixth task; PR-18 the record as a course, fifth edition), stamped
+  as the post-record arc's sixth dated direction, never a mood. The
+  bottleneck review the draft opens with: the intake is now a consumption of
+  a consumption of a consumption of a consumption of a consumption of a
+  consumption (the decision chain seven generations deep — the single most
+  dangerous drift is re-litigating a five-times-consumed decision: a sitting
+  stamps, it never re-decides); the stacked execution remains the critical
+  path (MP-47's S0 consumes MP-46's release, which awaits the whole stack —
+  protect MP-29's window); the steady state must not become ceremony (rows
+  dated in the sitting that own them, or they are not rows); the paper's
+  compile gate is still the hardest artifact (no LaTeX toolchain; the v17
+  rule as insurance); the receipts are still future (fifteen transcripts
+  land only if the stack ships, the sixteenth in this phase); and
+  stop-and-publish (ADR-0004 row 5) is a row, not a threat — now with the
+  post-record criterion six questions deep (the deepest candidate earns the
+  post-record arc's *fifth new paragraph*). The five dated intake facts
+  walked again, each stamped with its 2026-08-17 state — a re-verification,
+  never a memory: MP-46's roadmap merged (PR #80, main at `ea3ac9d`, dev at
+  `214dd64`, MP-46's fact #1 RESOLVED), `portfolio/README.md` still stale
+  (the three "not yet" rows re-verified), no `essay-annex-*.md` on disk
+  (`portfolio/` holds `RESULTS.md`, `README.md`, `model-card.md` and nothing
+  else), Rung 6 residue still on disk (both the pyc and
+  `exp6_automated_vs_manual.png` confirmed present), and
+  `checklists/gate-debt.md` still absent — plus two shelf facts: `figures/`
+  holds zero tracked files (the corpus is gitignored build product
+  provenanced by the manifests, never by git), and — new to this sitting —
+  `docs/adr/` holds 0001–0010 and nothing else, the stacked phases' ledgers
+  opening at their own Session 0s.
+- **Built**: [[00_meta/47_micro-phase-47-review-and-roadmap]] — the MP-47
+  review and roadmap, wired into home as a companion pointer (NOT counted
+  against any cap — the cap is spent): state review verified against the
+  repo (190 collected, ruff clean, blocking mypy clean, `verify-claims` at
+  0, full suite 190/190 in the local CI mirror), the bottleneck analysis
+  seven generations deep, design decisions (ADR-0021 the sixteenth ledger,
+  the C61–C64 candidate set frozen with opens-only-if conditions, the
+  post-record continuation set PR-16/PR-17/PR-18, the redemption override,
+  and the arc consumption above all — the sixth-generation consumption of
+  MP-46's Session-0 decision with dates at Session 0, never improvised;
+  sessions 0–8 with exits, the one measured line, the seven-topic study
+  plan including the Lakatos seventh reading, the documentation contract,
+  exercises Ex-A–Ex-V plus the clock-check habit (Ex-T the arc consumption,
+  sixth generation, verdict-agnostic; Ex-U the architecture-family sprint;
+  Ex-V the drift-attribution drill, round two), strategic tips, and the
+  showcase 30-second story with sixteen dated directions).
+- **Open question**: none new — the draft opens zero research questions by
+  law until its Session 0 consumes MP-46's Session-0 decision and
+  adjudicates C61–C64 (or continues the post-record arc), and the intake
+  questions it owns are exactly the ones ADR-0020's dated rows will answer:
+  whether MP-46's Session 0 continued the post-record arc (the record's
+  arc five questions deep), which candidate the fifteenth executed
+  continuum chose, whether C57's mechanism-law verdict landed positive (the
+  C61-vs-C62 fork is written, verdict-agnostic), and whether the record's
+  next verdict is its last — or its fifth new direction's successor.
+
 ## 2026-08-17 (thirty-third session) — Micro-Phase 46, draft: the fifteenth question, written from the fourteenth release report
 
 - **Studied**: the state this phase is written to consume, verified against
