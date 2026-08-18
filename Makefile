@@ -81,7 +81,18 @@ typecheck-new:
 # GitHub's PR check, exactly like micro-18/19). The mirror lints the HEAD
 # commit against the same config:
 #   npx --yes commitlint --from HEAD~1 --to HEAD --config commitlint.config.mjs
-ci-check: lint typecheck-new typecheck test-cov commitlint-head
+# commitlint-new closes the gap that let the mp-52 roadmap commit ship with a
+# >200-char footer line (2026-08-18): commitlint-head lints the existing HEAD
+# (usually the reconcile merge), never the commit being created, so a
+# violation introduced by the new commit escapes it. The new-commit mirror
+# lints exactly what the push will add:
+#   npx --yes commitlint --from origin/dev --to HEAD --config commitlint.config.mjs
+ci-check: lint typecheck-new typecheck test-cov commitlint-new commitlint-head
+
+commitlint-new:
+	@echo "=== commitlint (unpushed commits origin/dev..HEAD, mirror of the PR range) ==="
+	@npx --yes commitlint --from origin/dev --to HEAD --config commitlint.config.mjs
+	@echo "commitlint: unpushed commit messages conform."
 
 commitlint-head:
 	@echo "=== commitlint (HEAD commit vs parent, mirror of the PR-only check) ==="
