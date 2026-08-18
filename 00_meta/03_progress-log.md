@@ -68,6 +68,55 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
   record's next verdict is its last — or its sixth new direction's
   successor.
 
+## 2026-08-18 (thirty-sixth session) — Micro-Phase 48, execution roadmap: the architect's review, from the reviewer's chair
+
+- **Studied**: the state this phase is written to consume, re-verified
+  against the repo with the hostile-webmaster walk run as my own transcript —
+  190 tests collected via `pytest --collect-only`, working tree clean, local
+  `main` reconciled to `origin/main` at `2d3b238` (the MP-48 squash, PR #82),
+  `dev` at `426952e`, `git diff main dev` empty; the intake facts walked
+  again: `docs/adr/` holds 0001–0010 only (ADR-0022 is this phase's ledger),
+  `figures/` holds zero tracked files, the Rung 6 residue (the pyc and
+  `exp6_automated_vs_manual.png`) still on disk, `checklists/gate-debt.md`
+  still absent, `portfolio/README.md` still stale, no Pages deploy workflow,
+  no TeX toolchain; and ADR-0003 rows 3–7 still carry UNDECIDED cells — the
+  R1 verdict stamp, the R4/R5 scheduled negatives, the paper prose and the
+  graduation proof must be dated before MP-29's Session 8, or the whole stack
+  stalls. The deepest study: what the seventeenth execution of the continuum
+  law owes the record when the waiting window is made first-class — the days
+  between this draft and the stack's release owned as the Session −1 study
+  lane (readings with predictions written before the reading, the trial-3
+  pre-registration and the R4/R5 scheduled-negative prose pre-drafted
+  verdict-agnostic, the S0 intake checklist pre-built), so no day is unowned
+  and no sitting ever chooses an improvised third trial; the CPU wall as the
+  science's binding constraint (budget the wall-clock at launch, never at
+  Session 7); and the microscope budget one failure away from exhaustion —
+  trial 3's falsifier column filled before trial 2's verdict is read.
+- **Built**: [[00_meta/48b_micro-phase-48-execution-roadmap]] — the MP-48
+  execution roadmap (architect's review), wired into home as a companion
+  pointer (NOT counted against any cap — the cap is spent): state review
+  verified against the repo, the bottleneck analysis eight generations deep
+  with the waiting window scheduled as Session −1, the frozen candidate set
+  C65–C68 with the redemption and terminal-state overrides and the
+  post-record continuation set PR-19/PR-20/PR-21, the ten sessions (−1
+  through 8) with exits, the one measured line, the ten-topic study plan
+  (the C65–C68 readings plus the mathematical bedrock — the DFT of the
+  addition table hand-derived before any fingerprint is read — the CPU-budget
+  canon and the science of the negative), the documentation contract (the
+  Session −1 study log and the trial-3 pre-registration draft added as new
+  rows), the waiting-window exercises Ex-α–Ex-ε plus the clock-check habit
+  alongside the phase's pre-registered exercise contract Ex-A–Ex-Z, and the
+  strategic tips with the showcase 30-second story — written verdict-agnostic,
+  re-planning not a single row of MP-29 through MP-47.
+- **Open question**: none new — the execution roadmap opens zero research
+  questions by law; the questions it owns are exactly the ones ADR-0021's
+  dated rows will answer: whether MP-47's Session 0 continued the post-record
+  arc (the record's arc six questions deep), which candidate the sixteenth
+  executed continuum chose, whether C61's law-with-a-measured-domain verdict
+  landed positive (the C65-vs-C66 fork is written, verdict-agnostic), and
+  whether the record's next verdict is its last — or its sixth new
+  direction's successor.
+
 ## 2026-08-17 (thirty-fourth session) — Micro-Phase 47, draft: the sixteenth question, written from the fifteenth release report
 
 - **Studied**: the state this phase is written to consume, verified against

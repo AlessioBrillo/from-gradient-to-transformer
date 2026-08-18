@@ -181,6 +181,12 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[28_micro-phase-29-the-pos
   from the sixteenth release report; companion to MP-47's review and roadmap,
   it opens no rows until Session 0 and is not counted against any cap (the
   cap is spent)
+- [[48b_micro-phase-48-execution-roadmap|MP-48 · Execution Roadmap (architect's review)]] —
+  the execution companion for the seventeenth question, written from the
+  reviewer's chair: the waiting-window study lane (Session −1), the ten
+  sessions with exits, the study syllabus, the documentation contract, the
+  exercise table and the strategic tips; it opens no rows until Session 0 and
+  is not counted against any cap (the cap is spent)
 - [[35_micro-phase-36-the-fifth-question|MP-36 · The Fifth Question (pre-registered)]] —
   consumes MP-35's release whatever its rows decided (gated hard: no continuum ledger
   at zero, no phase): the continuum law executes a fifth time under a new ledger
