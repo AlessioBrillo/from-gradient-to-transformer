@@ -13,6 +13,75 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-18 (thirty-ninth session) — Micro-Phase 51, draft: the twentieth question, written from the nineteenth release report
+
+- **Studied**: the state this phase is written to consume, verified against
+  the repo — MP-50's review and roadmap are on disk and MERGED (2026-08-18,
+  PR #85, main at `520fd75`, dev reconciled, `git diff main dev` empty),
+  MP-29 is mid-execution (terminus ≈ 2026-08-26; R1's no-head negative
+  2026-08-14 still the newest dated fact: 0/8 heads, peak diag+1 mass 0.075
+  at epoch 499, peak val accuracy 0.5083 near epoch 1950, K-composition max
+  0.056; ADR-0003 rows 3–7 still UNDECIDED), and MP-30/31/32/33/34/35/36
+  stand pre-registered, gated in series, the cap at seven. The deepest
+  study: what the twentieth execution of the continuum law owes the record
+  — the thirteenth roadmap written from an *executed* roadmap's release
+  report, drafted as a companion inside MP-50's Session −1 waiting window,
+  its candidate set frozen in the file itself and **conditioned on
+  ADR-0024's verdicts** (C77–C80: the theory as a paradigm — a fourth
+  prediction; the phase diagram as the law's equation of state — a fourth
+  recipe; the discipline as an institution — a fourteenth study; the
+  instrument as the standard — a sixth cohort; each opening only on its
+  predecessor's positive verdict, the S0 sitting decides with the dates in
+  front of it, never improvises), the redemption override still standing (a
+  sparse cell anywhere owns the question), and — the deepest new reading,
+  the arc consumption elevated to **tenth generation**: MP-51's Ex-T4
+  consumes MP-50's Session-0 decision with dates — if the post-record arc
+  governs, the tenth post-record question chosen from the pre-registered
+  continuation set (PR-28 the new harness's fifth cross-recipe law; PR-29
+  the law at the record's edge, tenth task; PR-30 the record as a course,
+  ninth edition), stamped as the post-record arc's tenth dated direction,
+  never a mood. New this sitting, beyond the companion pattern: the
+  pending-run wall-clock budget table (trial 2/3 at ~3.5 h each, the
+  characterization at ~1–2 h, the SAE re-run at ~1 h — all fit overnight
+  windows, none fit a weekday morning), the toolchain recommendation pinned
+  for Session 0 (MiKTeX locally + a TeX Live compile step in the CI mirror,
+  Overleaf as fallback venue), the patching-validity appendix (a C77 verdict
+  doubles as the path-patching machinery's first end-to-end validation or
+  its dated negative), the stranger-recruitment plan for round 21 (the
+  channels that produced the first twenty transcripts re-used plus one new
+  channel), and the `typecheck-new` strict-allowlist ratchet as the rule for
+  all new research code.
+- **Built**: [[00_meta/51_micro-phase-51-review-and-roadmap]] — the MP-51
+  review and roadmap, wired into home as a companion pointer (NOT counted
+  against any cap — the cap is spent): state review verified against the
+  repo (190 collected, ruff clean on `src/` and `tests/`, blocking mypy
+  clean, `verify-claims` at 0, all five manifests on disk, exp6 residue
+  confirmed present for MP-50's Session 1 to remove), design decisions
+  (ADR-0025 the twentieth ledger, the C77–C80 candidate set frozen with
+  opens-only-if conditions, the post-record continuation set PR-28/PR-29/
+  PR-30, the redemption override, and the arc consumption above all — the
+  tenth-generation consumption of MP-50's Session-0 decision with dates at
+  Session 0, never improvised; sessions −1 through 8 with exits, the one
+  measured line, the study plan with the C77–C80 readings plus the
+  mathematical bedrock fourth pass, the epistemology of the fourth
+  prediction, and the preregistration-value reading, the documentation
+  contract with the study log as a new row, exercises Ex-A–Ex-Z4 plus the
+  clock-check habit (Ex-T4 the arc consumption, tenth generation,
+  verdict-agnostic; Ex-W4 the theory's falsifier column, round four; Ex-X4
+  the exception-map hand-roll, round four; Ex-Y4 the policy allocation
+  drill, round four; Ex-Z4 the public rubric draft, round four), strategic
+  tips, and the showcase 30-second story with twenty dated directions).
+- **Open question**: none new — the draft opens zero research questions by
+  law until its Session 0 consumes MP-50's Session-0 decision and
+  adjudicates C77–C80 (or continues the post-record arc), and the intake
+  questions it owns are exactly the ones ADR-0024's dated rows will answer:
+  whether MP-50's Session 0 continued the post-record arc (the record's
+  arc nine questions deep), which candidate the nineteenth executed
+  continuum chose, whether C73's theory-as-a-programme verdict landed
+  positive (the C77-vs-C78 fork is written, verdict-agnostic), and whether
+  the record's next verdict is its last — or its ninth new direction's
+  successor.
+
 ## 2026-08-18 (thirty-seventh session) — Micro-Phase 49, draft: the eighteenth question, written from the seventeenth release report
 
 - **Studied**: the state this phase is written to consume, verified against
