@@ -157,6 +157,90 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
   continuum chose, whether C101's tenth prediction landed positive (the
   C101-vs-C102 fork is written, verdict-agnostic), and whether the record's
   next verdict is its last — or its fifteenth new direction's successor.
+- **Dated correction (2026-08-18, post-release, the MP-54 law's first
+  violation):** PR #92's squash body landed on main (`e26d31c`) as a single
+  unwrapped line >200 chars — the merge call passed the pre-wrapped body as
+  one quoted string without literal newlines, so the pre-wrap step the MP-54
+  law governs was skipped in exactly that call. Detected by the local
+  `commitlint-head` mirror after landing; nothing fails on GitHub (the
+  conventional-commits workflow is PR-only and `e26d31c` is main-side, so no
+  exact-message pardon was added — those exceptions exist for commits that
+  break CI, this one breaks only the transient mirror pair, which recovers
+  at the next reconcile once `e26d31c` leaves the range). Process lesson,
+  recorded with a date: the squash body must be passed with literal newline
+  characters in the merge call, never as a single quoted line. The MP-54
+  law stands.
+
+## 2026-08-18 (forty-fourth session) — Micro-Phase 58, draft: the twenty-seventh question, written from the twenty-sixth release report
+
+- **Studied**: the state this phase is written to consume, verified against
+  the repo — MP-57's review and execution roadmap are on disk and MERGED
+  (2026-08-18, PR #92, main at `e26d31c`, dev at `a90007b`, `git diff main
+  dev` holding exactly the dated correction: the squash-body deviation's
+  progress-log entry), MP-29 is mid-execution (terminus ≈ 2026-08-26; R1's
+  no-head negative 2026-08-14 still the newest dated fact: 0/8 heads, peak
+  diag+1 mass 0.075 at epoch 499, peak val accuracy 0.5083 near epoch 1950,
+  K-composition max 0.056; ADR-0003 rows 3–7 still UNDECIDED), and
+  MP-30/31/32/33/34/35/36 stand pre-registered, gated in series, the cap at
+  seven. The deepest study: what the twenty-seventh execution of the
+  continuum law owes the record — the twenty-first roadmap written from an
+  *executed* roadmap's release report, drafted as a companion inside MP-57's
+  Session −1 waiting window, its candidate set frozen in the file itself and
+  **conditioned on ADR-0031's verdicts** (C105–C108: the paradigm confirmed
+  an eleventh time or its boundary mapped — the failure-cell theory's
+  twelfth unseen task family and eleventh architecture family predicted
+  before any number is read; the equation of state's seventh transfer — the
+  eleventh recipe's failure cells predicted from the ten-recipe map before
+  the recipe runs; the institution, twenty-first study — the sixteenth drift
+  measurement with the next measurement's schedule predicted a tenth time;
+  the standard, thirteenth cohort — the twelfth-edition course validated a
+  thirteenth time by the uninvited under the already-released rubric; each
+  opening only on its predecessor's positive verdict, the S0 sitting decides
+  with the dates in front of it, never improvises), the redemption override
+  still standing (a sparse cell anywhere owns the question), and — the
+  deepest new reading — the arc consumption elevated to **seventeenth
+  generation**: MP-58's Ex-T11 consumes MP-57's Session-0 decision with
+  dates — if the post-record arc governs, the seventeenth post-record
+  question chosen from the pre-registered continuation set (PR-49 the new
+  harness's twelfth cross-recipe law; PR-50 the law at the record's edge,
+  seventeenth task; PR-51 the record as a course, sixteenth edition),
+  stamped as the post-record arc's seventeenth dated direction, never a
+  mood. New this sitting, beyond the companion pattern: the **waiting
+  window is now eight phases wide** (MP-51's through MP-58's Session −1
+  lanes share the same weeks — the separation countermeasure is named files
+  of each lane's own plus the sixth-pass audit), the **pre-draft stack
+  audit's sixth pass (Ex-Ψ6)** as the anti-ceremony gate — the same sixth
+  pass that re-verifies the pre-draft prose and the microscope trial 3
+  pre-registration from the prior waiting windows, never re-drafts them —
+  and the honest branch transcript: `git diff main dev` holds exactly the
+  MP-57 roadmap's dated correction, never a reconciled silence.
+- **Built**: [[00_meta/58_micro-phase-58-review-and-roadmap]] — the MP-58
+  review and execution roadmap, wired into home as a companion pointer (NOT
+  counted against any cap — the cap is spent): state review verified against
+  the repo (190 tests collected in this drafting sitting, 6.10 s; ruff clean
+  and blocking mypy clean at the last release; `verify-claims` at 0; all
+  five manifests on disk), design decisions (ADR-0032 the twenty-seventh
+  ledger, the C105–C108 candidate set frozen with opens-only-if conditions,
+  the post-record continuation set PR-49/PR-50/PR-51, the redemption
+  override, and the arc consumption above all — the seventeenth-generation
+  consumption of MP-57's Session-0 decision with dates at Session 0, never
+  improvised; sessions −1 through 8 with exits, the one measured line, the
+  study plan with the C105–C108 readings plus the paradigm's eleventh round
+  and the long-window discipline's sixth pass, the documentation contract
+  with the study log as a standing lane, exercises Ex-A–Ex-Ω plus the
+  clock-check habit (Ex-T11 the arc consumption, seventeenth generation,
+  verdict-agnostic; Ex-Ψ6 the pre-draft stack audit, sixth pass), strategic
+  tips, and the showcase 30-second story with twenty-seven dated
+  directions).
+- **Open question**: none new — the draft opens zero research questions by
+  law until its Session 0 consumes MP-57's Session-0 decision and
+  adjudicates C105–C108 (or continues the post-record arc), and the intake
+  questions it owns are exactly the ones ADR-0031's dated rows will answer:
+  whether MP-57's Session 0 continued the post-record arc (the record's arc
+  sixteen questions deep), which candidate the twenty-sixth executed
+  continuum chose, whether C105's eleventh prediction landed positive (the
+  C105-vs-C106 fork is written, verdict-agnostic), and whether the record's
+  next verdict is its last — or its sixteenth new direction's successor.
 
 ## 2026-08-18 (forty-first session) — Micro-Phase 54, draft: the twenty-third question, written from the twenty-second release report
 
