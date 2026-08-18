@@ -13,6 +13,85 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-18 (fortieth session) — Micro-Phase 52, draft: the twenty-first question, written from the twentieth release report
+
+- **Studied**: the state this phase is written to consume, verified against
+  the repo — MP-51's review and roadmap are on disk and MERGED (2026-08-18,
+  PR #86, dev reconciled at `6f57ed4`, `git diff main dev` empty), MP-29 is
+  mid-execution (terminus ≈ 2026-08-26; R1's no-head negative 2026-08-14
+  still the newest dated fact: 0/8 heads, peak diag+1 mass 0.075 at epoch
+  499, peak val accuracy 0.5083 near epoch 1950, K-composition max 0.056;
+  ADR-0003 rows 3–7 still UNDECIDED), and MP-30/31/32/33/34/35/36 stand
+  pre-registered, gated in series, the cap at seven. The deepest study: what
+  the twenty-first execution of the continuum law owes the record — the
+  fifteenth roadmap written from an *executed* roadmap's release report,
+  drafted as a companion inside MP-51's Session −1 waiting window, its
+  candidate set frozen in the file itself and **conditioned on ADR-0025's
+  verdicts** (C81–C84: the paradigm confirmed or its boundary mapped — a
+  fifth prediction; the equation of state's first transfer — the fifth
+  recipe's failure cells predicted from the completed map; the institution,
+  fifteenth study — a tenth drift measurement; the standard, seventh cohort;
+  each opening only on its predecessor's positive verdict, the S0 sitting
+  decides with the dates in front of it, never improvises), the redemption
+  override still standing (a sparse cell anywhere owns the question), and —
+  the deepest new reading, the arc consumption elevated to **eleventh
+  generation**: MP-52's Ex-T5 consumes MP-51's Session-0 decision with dates
+  — if the post-record arc governs, the eleventh post-record question chosen
+  from the pre-registered continuation set (PR-31 the new harness's sixth
+  cross-recipe law; PR-32 the law at the record's edge, eleventh task; PR-33
+  the record as a course, tenth edition), stamped as the post-record arc's
+  eleventh dated direction, never a mood. New this sitting, beyond the
+  companion pattern: the **annex snapshot rule (Ex-Φ)** — each annex on the
+  live shelf mirrored into the repo as a dated, read-only copy in the same
+  writing session, so the record survives a hosting-side loss; the
+  **figure-regeneration audit (Ex-Ω)** — the twelve tracked figures in
+  `portfolio/figures/` re-derived from `make reproduce` at Session 1, a
+  manifest tag on a stale figure being a silent lie; the **paper compile
+  gate's new shape** — with MP-51's Session 0 pinning the toolchain, this
+  phase's Session 1 verifies `make paper` green to a PDF on this machine and
+  in the CI mirror, graceful failure being the bridge and green the
+  destination; the **paradigm's sociology reading** (Kuhn's *Structure of
+  Scientific Revolutions* read against my own record for the first time) and
+  the **released instrument's law reading** (artifact licensing and
+  evaluation norms for the C84 lane); and the intake re-verification of the
+  standing shelf facts (README still stale, exp6 residue confirmed, annexes
+  absent from the repo, `gate-debt.md` still absent, ADR-0001–0010 only).
+- **Built**: [[00_meta/52_micro-phase-52-review-and-roadmap]] — the MP-52
+  review and roadmap, wired into home as a companion pointer (NOT counted
+  against any cap — the cap is spent): state review verified against the
+  repo (190 collected, ruff clean on `src/` and `tests/`, blocking mypy
+  clean, `verify-claims` at 0, all five manifests on disk), design decisions
+  (ADR-0026 the twenty-first ledger, the C81–C84 candidate set frozen with
+  opens-only-if conditions, the post-record continuation set PR-31/PR-32/
+  PR-33, the redemption override, and the arc consumption above all — the
+  eleventh-generation consumption of MP-51's Session-0 decision with dates
+  at Session 0, never improvised; sessions −1 through 8 with exits, the one
+  measured line, the study plan with the C81–C84 readings plus the
+  mathematical bedrock fifth pass, the paradigm's sociology, and the
+  released instrument's law, the documentation contract with the study log
+  as a standing lane, exercises Ex-A–Ex-Ω plus the clock-check habit (Ex-T5
+  the arc consumption, eleventh generation, verdict-agnostic; Ex-W5 the
+  theory's falsifier column, round five; Ex-X5 the equation-of-state
+  prediction table, round five; Ex-Y5 the policy allocation drill, round
+  five; Ex-Z5 the public rubric draft, round five; Ex-Φ the annex snapshot;
+  Ex-Ω the figure-regeneration audit), strategic tips, and the showcase
+  30-second story with twenty-one dated directions). The delivery re-verified
+  the CI mirror locally (ruff clean, blocking mypy clean, 190 tests green,
+  markdownlint clean on the repo, commitlint-head conforms) and corrected the
+  honest non-blocking count: 176 errors as of 2026-08-18 (154 at the
+  2026-08-01 baseline, the +22 accumulated through new research code since —
+  verified identical under mypy 1.20.2/2.1.0/2.3.0, so not a tool upgrade);
+  Makefile and CI comments updated, uv.lock untouched.
+- **Open question**: none new — the draft opens zero research questions by
+  law until its Session 0 consumes MP-51's Session-0 decision and
+  adjudicates C81–C84 (or continues the post-record arc), and the intake
+  questions it owns are exactly the ones ADR-0025's dated rows will answer:
+  whether MP-51's Session 0 continued the post-record arc (the record's arc
+  ten questions deep), which candidate the twentieth executed continuum
+  chose, whether C77's theory-as-a-paradigm verdict landed positive (the
+  C81-vs-C82 fork is written, verdict-agnostic), and whether the record's
+  next verdict is its last — or its tenth new direction's successor.
+
 ## 2026-08-18 (thirty-ninth session) — Micro-Phase 51, draft: the twentieth question, written from the nineteenth release report
 
 - **Studied**: the state this phase is written to consume, verified against
