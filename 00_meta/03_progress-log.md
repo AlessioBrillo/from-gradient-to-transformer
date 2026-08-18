@@ -157,6 +157,19 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
   continuum chose, whether C101's tenth prediction landed positive (the
   C101-vs-C102 fork is written, verdict-agnostic), and whether the record's
   next verdict is its last — or its fifteenth new direction's successor.
+- **Dated correction (2026-08-18, post-release, the MP-54 law's first
+  violation):** PR #92's squash body landed on main (`e26d31c`) as a single
+  unwrapped line >200 chars — the merge call passed the pre-wrapped body as
+  one quoted string without literal newlines, so the pre-wrap step the MP-54
+  law governs was skipped in exactly that call. Detected by the local
+  `commitlint-head` mirror after landing; nothing fails on GitHub (the
+  conventional-commits workflow is PR-only and `e26d31c` is main-side, so no
+  exact-message pardon was added — those exceptions exist for commits that
+  break CI, this one breaks only the transient mirror pair, which recovers
+  at the next reconcile once `e26d31c` leaves the range). Process lesson,
+  recorded with a date: the squash body must be passed with literal newline
+  characters in the merge call, never as a single quoted line. The MP-54
+  law stands.
 
 ## 2026-08-18 (forty-first session) — Micro-Phase 54, draft: the twenty-third question, written from the twenty-second release report
 
