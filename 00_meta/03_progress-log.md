@@ -13,6 +13,80 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-18 (forty-second session) — Micro-Phase 56, draft: the twenty-fifth question, written from the twenty-fourth release report
+
+- **Studied**: the state this phase is written to consume, verified against
+  the repo — MP-55's review and execution roadmap are on disk and MERGED
+  (2026-08-18, PR #90, main at `6ef7230`, dev at `329414d`, `git diff main
+  dev` holding exactly the MP-55 roadmap, its home wiring and the scoped CI
+  pardon for its squash, which MP-55's Session 8 folds in — recorded here
+  honestly, never as a reconciled silence; a dated fact I also record rather
+  than silently renumber: MP-55's draft session never received its journal
+  entry — the MP-55 file merged (PR #90) without one, so this entry is the
+  forty-second session), MP-29 is mid-execution (terminus ≈ 2026-08-26; R1's
+  no-head negative 2026-08-14 still the newest dated fact: 0/8 heads, peak
+  diag+1 mass 0.075 at epoch 499, peak val accuracy 0.5083 near epoch 1950,
+  K-composition max 0.056; ADR-0003 rows 3–7 still UNDECIDED), and
+  MP-30/31/32/33/34/35/36 stand pre-registered, gated in series, the cap at
+  seven. The deepest study: what the twenty-fifth execution of the continuum
+  law owes the record — the nineteenth roadmap written from an *executed*
+  roadmap's release report, drafted as a companion inside MP-55's Session −1
+  waiting window, its candidate set frozen in the file itself and
+  **conditioned on ADR-0029's verdicts** (C97–C100: the paradigm confirmed
+  or its boundary mapped — a ninth prediction; the equation of state's fifth
+  transfer — the ninth recipe's failure cells predicted from the
+  eight-recipe map; the institution, nineteenth study — a fourteenth drift
+  measurement; the standard, eleventh cohort; each opening only on its
+  predecessor's positive verdict, the S0 sitting decides with the dates in
+  front of it, never improvises), the redemption override still standing (a
+  sparse cell anywhere owns the question), and — the deepest new reading —
+  the arc consumption elevated to **fifteenth generation**: MP-56's Ex-T9
+  consumes MP-55's Session-0 decision with dates — if the post-record arc
+  governs, the fifteenth post-record question chosen from the pre-registered
+  continuation set (PR-43 the new harness's tenth cross-recipe law; PR-44
+  the law at the record's edge, fifteenth task; PR-45 the record as a
+  course, fourteenth edition), stamped as the post-record arc's fifteenth
+  dated direction, never a mood. New this sitting, beyond the companion
+  pattern: the **waiting window is now six phases wide** (MP-51's, MP-52's,
+  MP-53's, MP-54's, MP-55's and MP-56's Session −1 lanes share the same
+  weeks — the separation countermeasure is named files of each lane's own
+  plus the second-pass audit), the **pre-draft stack audit's fourth pass
+  (Ex-Ψ4)** as the anti-ceremony gate, and the honest branch transcript:
+  `git diff main dev` holds exactly the MP-55 roadmap, its wiring and the
+  scoped CI pardon, never a reconciled silence.
+- **Built**: [[00_meta/56_micro-phase-56-review-and-roadmap]] — the MP-56
+  review and execution roadmap, wired into home as a companion pointer (NOT
+  counted against any cap — the cap is spent): state review verified against
+  the repo (190 tests collected and green at the last release, ruff clean
+  and blocking mypy clean at the last release, `verify-claims` at 0, all
+  five manifests on disk), design decisions (ADR-0030 the twenty-fifth
+  ledger, the C97–C100 candidate set frozen with opens-only-if conditions,
+  the post-record continuation set PR-43/PR-44/PR-45, the redemption
+  override, and the arc consumption above all — the fifteenth-generation
+  consumption of MP-55's Session-0 decision with dates at Session 0, never
+  improvised; sessions −1 through 8 with exits, the one measured line, the
+  study plan with the C97–C100 readings plus the mathematical bedrock ninth
+  pass, the paradigm's sociology fifth pass, and the long-window discipline
+  fourth pass, the documentation contract with the study log as a standing
+  lane, exercises Ex-A–Ex-Ω plus the clock-check habit (Ex-T9 the arc
+  consumption, fifteenth generation, verdict-agnostic; Ex-W9 the theory's
+  falsifier column, round nine; Ex-X9 the equation-of-state prediction
+  table, round nine; Ex-Y9 the policy allocation drill, round nine; Ex-Z9
+  the public rubric draft, round nine; Ex-Φ the annex snapshot; Ex-Ω the
+  figure-regeneration audit; Ex-Ψ4 the pre-draft stack audit, fourth pass),
+  strategic tips, and the showcase 30-second story with twenty-five dated
+  directions).
+- **Open question**: none new — the draft opens zero research questions by
+  law until its Session 0 consumes MP-55's Session-0 decision and
+  adjudicates C97–C100 (or continues the post-record arc), and the intake
+  questions it owns are exactly the ones ADR-0029's dated rows will answer:
+  whether MP-55's Session 0 continued the post-record arc (the record's arc
+  fourteen questions deep), which candidate the twenty-fourth executed
+  continuum chose, whether C93's theory-as-a-paradigm verdict landed
+  positive (the C97-vs-C98 fork is written, verdict-agnostic), and whether
+  the record's next verdict is its last — or its fourteenth new direction's
+  successor.
+
 ## 2026-08-18 (forty-first session) — Micro-Phase 54, draft: the twenty-third question, written from the twenty-second release report
 
 - **Studied**: the state this phase is written to consume, verified against
