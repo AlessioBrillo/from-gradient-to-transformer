@@ -42,11 +42,14 @@ lint:
 lint-fix:
 	uv run ruff check --fix src/ tests/
 
-# Non-blocking: strict mode currently reports 154+ errors (2026-08-01 count,
-# after fixing a python_version mismatch that previously made mypy crash on
-# numpy's stubs before checking a single line of src/ — see pyproject.toml
+# Non-blocking: strict mode currently reports 176 errors (2026-08-18 count;
+# the 2026-08-01 baseline was 154, the +22 accumulated since through new
+# research code — see the progress log's MP-52 entry — not from a tool
+# upgrade: verified identical under mypy 1.20.2, 2.1.0, and 2.3.0. After fixing a
+# python_version mismatch that previously made mypy crash on numpy's stubs
+# before checking a single line of src/ — see pyproject.toml
 # [tool.mypy]). Mostly missing-generic-args pedantry (dict -> dict[str,
-# Any], DataLoader -> DataLoader[Any]), not caught bugs, but 154 is real
+# Any], DataLoader -> DataLoader[Any]), not caught bugs, but 176 is real
 # work, not something to silently claim fixed. Tracked as follow-up. Unlike
 # `|| true`, this still fails on a genuine mypy crash (exit 2) — see
 # .github/workflows/python-ci.yml for why that distinction matters.
@@ -78,7 +81,18 @@ typecheck-new:
 # GitHub's PR check, exactly like micro-18/19). The mirror lints the HEAD
 # commit against the same config:
 #   npx --yes commitlint --from HEAD~1 --to HEAD --config commitlint.config.mjs
-ci-check: lint typecheck-new typecheck test-cov commitlint-head
+# commitlint-new closes the gap that let the mp-52 roadmap commit ship with a
+# >200-char footer line (2026-08-18): commitlint-head lints the existing HEAD
+# (usually the reconcile merge), never the commit being created, so a
+# violation introduced by the new commit escapes it. The new-commit mirror
+# lints exactly what the push will add:
+#   npx --yes commitlint --from origin/dev --to HEAD --config commitlint.config.mjs
+ci-check: lint typecheck-new typecheck test-cov commitlint-new commitlint-head
+
+commitlint-new:
+	@echo "=== commitlint (unpushed commits origin/dev..HEAD, mirror of the PR range) ==="
+	@npx --yes commitlint --from origin/dev --to HEAD --config commitlint.config.mjs
+	@echo "commitlint: unpushed commit messages conform."
 
 commitlint-head:
 	@echo "=== commitlint (HEAD commit vs parent, mirror of the PR-only check) ==="

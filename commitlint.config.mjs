@@ -76,5 +76,31 @@ export default {
     // established above: the entry names one message and nothing else.
     // Revert when bcb778a leaves the merged history.
     (message) => message.startsWith('docs(meta): pre-register micro-phase 36, the fifth question'),
+    // Scoped, auditable exception (2026-08-18): the mp-52 roadmap commit
+    // 99285ef on dev ("docs(meta): add the MP-52 review and roadmap, wired
+    // into home as a companion") carries a >200-char line in its second
+    // body paragraph, which commitlint's parser treats as a footer and
+    // flags via footer-max-line-length on the PR #87 lint-commits check.
+    // Force-push is blocked on dev by branch protection. Exact-message
+    // scope as established above: the entry names one message and nothing
+    // else. Root cause, unlike the older entries: the message was never
+    // linted before push — the local `commitlint-head` mirror lints the
+    // existing HEAD (the reconcile merge), not the commit being created,
+    // so a violation introduced by the new commit escapes it. The repair
+    // commit adds a `commitlint-new` mirror (origin/dev..HEAD) to close
+    // that gap; the fix is the process, not the pardon. Revert when 99285ef
+    // leaves the merged history.
+    (message) => message.startsWith('docs(meta): add the MP-52 review and roadmap, wired into home as a companion'),
+    // Scoped, auditable exception (2026-08-18): the repair commit 3dab757
+    // on dev ("ci(ci): scoped pardon for the mp-52 roadmap commit's footer
+    // line plus a new-commit lint mirror") carries a >200-char body line
+    // (body-max-line-length) — the same class its own patch closes, the
+    // mp-20 recursion precedent (3574fc7, befc545). Force-push is blocked
+    // on dev by branch protection. Exact-message scope as established
+    // above: the entry names one message and nothing else. The process fix
+    // stands: commitlint-new (origin/dev..HEAD) is in ci-check and must be
+    // run and green before any push. Revert when 3dab757 leaves the merged
+    // history.
+    (message) => message.startsWith('ci(ci): scoped pardon for the mp-52 roadmap commit\'s footer line plus a new-commit lint mirror'),
   ],
 };

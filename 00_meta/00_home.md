@@ -202,6 +202,11 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[28_micro-phase-29-the-pos
   from the nineteenth release report; companion to MP-50's review and
   roadmap, it opens no rows until Session 0 and is not counted against any
   cap (the cap is spent)
+- [[52_micro-phase-52-review-and-roadmap|MP-52 · Review + Roadmap (companion)]] —
+  my state review and step-by-step plan for the twenty-first question, written
+  from the twentieth release report; companion to MP-51's review and
+  roadmap, it opens no rows until Session 0 and is not counted against any
+  cap (the cap is spent)
 - [[35_micro-phase-36-the-fifth-question|MP-36 · The Fifth Question (pre-registered)]] —
   consumes MP-35's release whatever its rows decided (gated hard: no continuum ledger
   at zero, no phase): the continuum law executes a fifth time under a new ledger

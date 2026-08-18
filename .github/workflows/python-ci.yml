@@ -93,7 +93,7 @@ jobs:
             echo "mypy crashed (exit 2) rather than reporting type errors — failing the build."
             exit 1
           fi
-          echo "mypy exited $code; non-blocking (154+ pre-existing errors as of 2026-08-01, mostly missing generic type args — see Makefile's typecheck-strict target)."
+          echo "mypy exited $code; non-blocking (176 pre-existing errors as of 2026-08-18; 154 at the 2026-08-01 baseline, +22 accumulated since through new research code — see Makefile's typecheck-strict target and the progress log's MP-52 entry)."
 
       - name: Test (pytest + coverage)
         run: uv run pytest -v --tb=short --cov=src --cov-report=term-missing
