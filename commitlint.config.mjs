@@ -91,5 +91,16 @@ export default {
     // that gap; the fix is the process, not the pardon. Revert when 99285ef
     // leaves the merged history.
     (message) => message.startsWith('docs(meta): add the MP-52 review and roadmap, wired into home as a companion'),
+    // Scoped, auditable exception (2026-08-18): the repair commit 3dab757
+    // on dev ("ci(ci): scoped pardon for the mp-52 roadmap commit's footer
+    // line plus a new-commit lint mirror") carries a >200-char body line
+    // (body-max-line-length) — the same class its own patch closes, the
+    // mp-20 recursion precedent (3574fc7, befc545). Force-push is blocked
+    // on dev by branch protection. Exact-message scope as established
+    // above: the entry names one message and nothing else. The process fix
+    // stands: commitlint-new (origin/dev..HEAD) is in ci-check and must be
+    // run and green before any push. Revert when 3dab757 leaves the merged
+    // history.
+    (message) => message.startsWith('ci(ci): scoped pardon for the mp-52 roadmap commit\'s footer line plus a new-commit lint mirror'),
   ],
 };
