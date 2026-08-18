@@ -114,5 +114,20 @@ export default {
     // names one message and nothing else. Revert when ae867d5 leaves the
     // merged history.
     (message) => message.startsWith('docs(meta): add the MP-53 execution roadmap with architect\'s review, wired into home as a companion (#88)'),
+    // Scoped, auditable exception (2026-08-18): the mp-54 squash commit
+    // ae4875b on main ("docs(meta): add the MP-54 review and roadmap, wired
+    // into home as a companion (#89)") carries a >200-char body line
+    // (body-max-line-length, 483 chars) — supplied by me as a single
+    // unwrapped paragraph in the `gh pr merge --body` call, the same class
+    // as the mp-52 footer-line incident and exactly what the post-reconcile
+    // commitlint-head mirror exists to catch. The message is
+    // GitHub-generated at squash time and already merged on main; force-push
+    // is blocked on dev, so the exception is exact-message-scoped as
+    // established above: the entry names one message and nothing else. The
+    // process lesson, recorded alongside the pardon: a squash body must be
+    // pre-wrapped to <200-char lines before the merge call — the squash
+    // message is never linted before it lands on main. Revert when ae4875b
+    // leaves the merged history.
+    (message) => message.startsWith('docs(meta): add the MP-54 review and roadmap, wired into home as a companion (#89)'),
   ],
 };
