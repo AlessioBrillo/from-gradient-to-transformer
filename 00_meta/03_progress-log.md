@@ -13,6 +13,61 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-18 (thirty-seventh session) — Micro-Phase 49, draft: the eighteenth question, written from the seventeenth release report
+
+- **Studied**: the state this phase is written to consume, verified against
+  the repo — MP-48's review and execution roadmaps are on disk and MERGED
+  (2026-08-18, PRs #82/#83, main at `17c21a4`, dev reconciled at `0812f7b`,
+  `git diff main dev` empty), MP-29 is mid-execution (terminus ≈ 2026-08-26;
+  R1's no-head negative 2026-08-14 still the newest dated fact: 0/8 heads,
+  peak diag+1 mass 0.075 at epoch 499, peak val accuracy 0.5083 near epoch
+  1950, K-composition max 0.056; ADR-0003 rows 3–7 still UNDECIDED), and
+  MP-30/31/32/33/34/35/36 stand pre-registered, gated in series, the cap at
+  seven. The deepest study: what the eighteenth execution of the continuum
+  law owes the record — the twelfth roadmap written from an *executed*
+  roadmap's release report, drafted as a companion inside MP-48's Session −1
+  waiting window, its candidate set frozen in the file itself and
+  **conditioned on ADR-0022's verdicts** (C69–C72: the theory's second
+  prediction, the exception map as a boundary law, the policy as discipline,
+  the instrument as a public good — each opening only on its predecessor's
+  positive verdict, the S0 sitting decides with the dates in front of it,
+  never improvises), the redemption override still standing (a sparse cell
+  anywhere owns the question), and — the deepest new reading, the arc
+  consumption elevated to **eighth generation**: MP-49's Ex-T2 consumes
+  MP-48's Session-0 decision with dates — if the post-record arc governs,
+  the eighth post-record question chosen from the pre-registered
+  continuation set (PR-22 the new harness's third cross-recipe law; PR-23
+  the law at the record's edge, eighth task; PR-24 the record as a course,
+  seventh edition), stamped as the post-record arc's eighth dated direction,
+  never a mood.
+- **Built**: [[00_meta/49_micro-phase-49-review-and-roadmap]] — the MP-49
+  review and roadmap, wired into home as a companion pointer (NOT counted
+  against any cap — the cap is spent): state review verified against the
+  repo (190 collected, ruff clean, blocking mypy clean, `verify-claims` at
+  0, all five manifests on disk), design decisions (ADR-0023 the eighteenth
+  ledger, the C69–C72 candidate set frozen with opens-only-if conditions,
+  the post-record continuation set PR-22/PR-23/PR-24, the redemption
+  override, and the arc consumption above all — the eighth-generation
+  consumption of MP-48's Session-0 decision with dates at Session 0, never
+  improvised; sessions 0–8 with exits, the one measured line, the study plan
+  with the C69–C72 readings plus the mathematical bedrock second pass and
+  the epistemology of the second prediction, the documentation contract
+  with the waiting-window pre-drafts as a new row, exercises Ex-A–Ex-Z2
+  plus the clock-check habit (Ex-T2 the arc consumption, eighth generation,
+  verdict-agnostic; Ex-W2 the theory's falsifier column, round two; Ex-X2
+  the exception-map hand-roll, round two; Ex-Y2 the policy allocation drill,
+  round two; Ex-Z2 the public rubric draft, round two), strategic tips, and
+  the showcase 30-second story with eighteen dated directions).
+- **Open question**: none new — the draft opens zero research questions by
+  law until its Session 0 consumes MP-48's Session-0 decision and
+  adjudicates C69–C72 (or continues the post-record arc), and the intake
+  questions it owns are exactly the ones ADR-0022's dated rows will answer:
+  whether MP-48's Session 0 continued the post-record arc (the record's arc
+  seven questions deep), which candidate the seventeenth executed continuum
+  chose, whether C65's theory-of-failure verdict landed positive (the
+  C69-vs-C70 fork is written, verdict-agnostic), and whether the record's
+  next verdict is its last — or its seventh new direction's successor.
+
 ## 2026-08-18 (thirty-fifth session) — Micro-Phase 48, draft: the seventeenth question, written from the sixteenth release report
 
 - **Studied**: the state this phase is written to consume, verified against
