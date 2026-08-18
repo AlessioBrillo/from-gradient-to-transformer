@@ -102,5 +102,17 @@ export default {
     // run and green before any push. Revert when 3dab757 leaves the merged
     // history.
     (message) => message.startsWith('ci(ci): scoped pardon for the mp-52 roadmap commit\'s footer line plus a new-commit lint mirror'),
+    // Scoped, auditable exception (2026-08-18): the mp-53 squash commit
+    // ae867d5 on main ("docs(meta): add the MP-53 execution roadmap with
+    // architect's review, wired into home as a companion (#88)") embeds the
+    // mp-52 PR's commit messages in its GitHub-generated squash body, whose
+    // >200-char lines (the 99285ef and 3dab757 bodies) fail
+    // footer-max-line-length whenever the linted range includes it — so the
+    // post-reconcile commitlint-head mirror fails on every dev HEAD. The
+    // message is GitHub-generated and force-push is blocked on dev, so the
+    // exception is exact-message-scoped as established above: the entry
+    // names one message and nothing else. Revert when ae867d5 leaves the
+    // merged history.
+    (message) => message.startsWith('docs(meta): add the MP-53 execution roadmap with architect\'s review, wired into home as a companion (#88)'),
   ],
 };
