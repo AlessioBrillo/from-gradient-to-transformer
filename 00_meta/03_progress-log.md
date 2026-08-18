@@ -13,6 +13,61 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-18 (thirty-fifth session) — Micro-Phase 48, draft: the seventeenth question, written from the sixteenth release report
+
+- **Studied**: the state this phase is written to consume, verified against
+  the repo — MP-47's review and roadmap are on disk and MERGED (2026-08-17,
+  PR #81, main at `48ea7a4`, dev reconciled at `6c82cf9` — MP-47's intake
+  fact #1 RESOLVED by the merge itself; the drafting sitting found local
+  `main` one commit behind `origin/main` and fast-forwarded it before the
+  walk, the branch list the transcript), MP-29 is mid-execution (terminus ≈
+  2026-08-26; R1's no-head negative 2026-08-14 still the newest dated fact:
+  0/8 heads, peak diag+1 mass 0.075 at epoch 499, peak val accuracy 0.5083
+  near epoch 1950, K-composition max 0.056), and MP-30/31/32/33/34/35/36
+  stand pre-registered, gated in series, the cap at seven. The deepest
+  study: what the seventeenth execution of the continuum law owes the record
+  — the eleventh roadmap written from an *executed* roadmap's release report,
+  the steady state of the un-cap confirmed eleven times, a DRAFT that opens
+  no rows, its candidate set frozen in the file itself and **conditioned on
+  ADR-0021's verdicts** (C65–C68: the law as a theory, the principle's
+  exception map, the rate as a policy, the instrument as a standard — each
+  opening only on its predecessor's positive verdict, the S0 sitting decides
+  with the dates in front of it, never improvises), the redemption override
+  still standing (a sparse cell anywhere owns the question), and — the
+  deepest new reading, the arc consumption elevated to **seventh
+  generation**: MP-48's Ex-T consumes MP-47's Session-0 decision with dates
+  — if the post-record arc governs, the seventh post-record question chosen
+  from the pre-registered continuation set (PR-19 the new harness's second
+  cross-recipe law; PR-20 the law at the record's edge, seventh task; PR-21
+  the record as a course, sixth edition), stamped as the post-record arc's
+  seventh dated direction, never a mood.
+- **Built**: [[00_meta/48_micro-phase-48-review-and-roadmap]] — the MP-48
+  review and roadmap, wired into home as a companion pointer (NOT counted
+  against any cap — the cap is spent): state review verified against the
+  repo (190 collected, ruff clean, blocking mypy clean, `verify-claims` at
+  0), design decisions (ADR-0022 the seventeenth ledger, the C65–C68
+  candidate set frozen with opens-only-if conditions, the post-record
+  continuation set PR-19/PR-20/PR-21, the redemption override, and the arc
+  consumption above all — the seventh-generation consumption of MP-47's
+  Session-0 decision with dates at Session 0, never improvised; sessions
+  0–8 with exits, the one measured line, the study plan with the C65–C68
+  readings, the documentation contract, exercises Ex-A–Ex-Z plus the
+  clock-check habit (Ex-T the arc consumption, seventh generation,
+  verdict-agnostic; Ex-W the theory's falsifier column; Ex-X the
+  exception-map hand-roll; Ex-Y the policy allocation drill; Ex-Z the
+  public rubric draft), strategic tips, and the showcase 30-second story
+  with seventeen dated directions).
+- **Open question**: none new — the draft opens zero research questions by
+  law until its Session 0 consumes MP-47's Session-0 decision and
+  adjudicates C65–C68 (or continues the post-record arc), and the intake
+  questions it owns are exactly the ones ADR-0021's dated rows will answer:
+  whether MP-47's Session 0 continued the post-record arc (the record's
+  arc six questions deep), which candidate the sixteenth executed continuum
+  chose, whether C61's law-with-a-measured-domain verdict landed positive
+  (the C65-vs-C66 fork is written, verdict-agnostic), and whether the
+  record's next verdict is its last — or its sixth new direction's
+  successor.
+
 ## 2026-08-17 (thirty-fourth session) — Micro-Phase 47, draft: the sixteenth question, written from the fifteenth release report
 
 - **Studied**: the state this phase is written to consume, verified against
