@@ -79,6 +79,22 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
   chose, whether C117's verdict landed positive (the C121-vs-C122 fork is
   written, verdict-agnostic), and whether the record's next verdict is its
   last — or its thirtieth new direction's successor.
+- **Dated correction (2026-08-19, post-release, the reconcile-message law's
+  first violation):** PR #97's reconcile merge landed on `origin/dev`
+  (`611ade7`) with git's default message `Merge branch 'main' into dev`
+  instead of the house `merge(meta): reconcile dev with main after the
+  mp-62 squash (pr #97)` — I ran `git merge main` without `-m`, so the
+  merge call skipped the message the house law governs in exactly that
+  call. Detected by the local mirror immediately after landing; the
+  rewrite was attempted and **rejected by the branch protection itself**
+  (`GH006: Cannot force-push to this branch`) — the architecture law
+  ("never bypass the protected branch") outranked the cosmetic law, so the
+  deviation stands as a dated fact rather than a rewritten history.
+  Process lesson, recorded with a date: the reconcile merge call must pass
+  `-m "merge(meta): reconcile dev with main after the mp-<n> squash (pr
+  #<n>)"` — the message is part of the merge call, never left to git's
+  default. The deviation is closed as recorded, never reconciled as a
+  silence; the next reconcile's message resumes the house form.
 
 ## 2026-08-18 (forty-second session) — Micro-Phase 56, draft: the twenty-fifth question, written from the twenty-fourth release report
 
