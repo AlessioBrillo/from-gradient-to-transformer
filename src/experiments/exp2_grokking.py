@@ -31,6 +31,11 @@ from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
+from src.experiments.checkpointing import (
+    checkpoint_path_for_seed,
+    load_training_checkpoint,
+    save_training_checkpoint,
+)
 from src.experiments.runner import parse_seeds, run_seeds
 from src.reproducibility import set_seed
 from src.results import ResultsManifest, count_parameters
@@ -149,12 +154,8 @@ class OneLayerTransformer(nn.Module):
     def normalize_embeddings(self) -> None:
         if self.normalize_embed:
             with torch.no_grad():
-                self.embed.weight.data = nn.functional.normalize(
-                    self.embed.weight.data, dim=-1
-                )
-                self.unembed.weight.data = nn.functional.normalize(
-                    self.unembed.weight.data, dim=-1
-                )
+                self.embed.weight.data = nn.functional.normalize(self.embed.weight.data, dim=-1)
+                self.unembed.weight.data = nn.functional.normalize(self.unembed.weight.data, dim=-1)
 
     def forward(
         self, x: torch.Tensor, return_activations: bool = False
@@ -181,7 +182,7 @@ class OneLayerTransformer(nn.Module):
         K = self.W_K(h_ln).view(B, 2, self.n_heads, self.d_head).transpose(1, 2)
         V = self.W_V(h_ln).view(B, 2, self.n_heads, self.d_head).transpose(1, 2)
 
-        attn_scores = Q @ K.transpose(-2, -1) / (self.d_head ** 0.5)
+        attn_scores = Q @ K.transpose(-2, -1) / (self.d_head**0.5)
         # No causal mask needed for 2 positions (full visibility)
         attn_probs = attn_scores.softmax(dim=-1)
 
@@ -209,60 +210,15 @@ class OneLayerTransformer(nn.Module):
 # ---------------------------------------------------------------------------
 # Checkpoint / resume (Micro-Phase 28: ported from exp1)
 # ---------------------------------------------------------------------------
-def checkpoint_path_for_seed(checkpoint_dir: str, seed: int) -> Path:
-    """Rolling resume checkpoint path for one seed — a single file holds the
-    latest state, so `--resume` just points at this and keeps the newest
-    state without an ever-growing set of artifacts."""
-    return Path(checkpoint_dir) / f"exp2_checkpoint_seed{seed}.pt"
-
-
-def save_training_checkpoint(
-    path: Path,
-    epoch: int,
-    model: nn.Module,
-    optimizer: torch.optim.Optimizer,
-    scheduler: nn.Module,
-    history: dict,
-    rng_state,
-) -> None:
-    """Atomically write a resume checkpoint. The saved RNG state is captured
-    *after* the training loop of `epoch` has finished and *before* any state
-    of epoch `epoch + 1` has been drawn, which is exactly the continuity
-    point a seamless resume needs (see train_model()'s docstring)."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(".tmp")
-    torch.save(
-        {
-            "epoch": epoch,
-            "model": model.state_dict(),
-            "optimizer": optimizer.state_dict(),
-            "scheduler": scheduler.state_dict(),
-            "rng_state": rng_state,
-            "history": history,
-        },
-        tmp,
-    )
-    # Atomic rename: a kill mid-save leaves the *old* valid checkpoint, not
-    # a truncated one.
-    tmp.replace(path)
-
-
-def load_training_checkpoint(path: Path) -> Optional[dict]:
-    """Load a checkpoint written by save_training_checkpoint. Returns None
-    if the file does not exist, so `--resume` on a machine with nothing to
-    resume degrades to a fresh, logged start rather than a crash."""
-    if not path.exists():
-        return None
-    return torch.load(path, map_location=DEVICE)
+# save/load/path helpers live in src/experiments/checkpointing.py (shared
+# with exp1); see its docstring for the RNG continuity contract.
 
 
 # ---------------------------------------------------------------------------
 # Training
 # ---------------------------------------------------------------------------
 @torch.no_grad()
-def evaluate(
-    model: nn.Module, loader: DataLoader
-) -> tuple[float, float]:
+def evaluate(model: nn.Module, loader: DataLoader) -> tuple[float, float]:
     model.eval()
     total_loss = 0.0
     total_correct = 0
@@ -349,6 +305,7 @@ def train_model(
     if use_wandb:
         try:
             import wandb as _wandb
+
             _wandb.init(
                 project="from-gradient-to-transformer",
                 config={
@@ -399,7 +356,7 @@ def train_model(
 
     start_epoch = 0
     resume_ckpt = (
-        load_training_checkpoint(Path(resume_from)) if resume_from else None
+        load_training_checkpoint(Path(resume_from), map_location=DEVICE) if resume_from else None
     )
     if resume_ckpt is not None:
         model.load_state_dict(resume_ckpt["model"])
@@ -419,20 +376,14 @@ def train_model(
             f"{resume_ckpt['epoch']}) — continuing from epoch {start_epoch}"
         )
     elif resume_from:
-        logger.warning(
-            f"RESUME: checkpoint {resume_from} not found — starting fresh"
-        )
+        logger.warning(f"RESUME: checkpoint {resume_from} not found — starting fresh")
 
     ckpt_path: Optional[Path] = None
     if checkpoint_dir and checkpoint_every > 0:
-        ckpt_path = checkpoint_path_for_seed(checkpoint_dir, seed)
+        ckpt_path = checkpoint_path_for_seed(checkpoint_dir, "exp2", seed)
 
-    last_fourier_sparsity = (
-        history["fourier_sparsity"][-1] if history["fourier_sparsity"] else 0.0
-    )
-    last_weight_norm = (
-        history["weight_norm"][-1] if history["weight_norm"] else 0.0
-    )
+    last_fourier_sparsity = history["fourier_sparsity"][-1] if history["fourier_sparsity"] else 0.0
+    last_weight_norm = history["weight_norm"][-1] if history["weight_norm"] else 0.0
 
     for epoch in tqdm(range(start_epoch, epochs), desc="Training"):
         model.train()
@@ -467,7 +418,8 @@ def train_model(
         unembed_norm = model.unembed.weight.norm(dim=-1)
         unembed_norm_mean = unembed_norm.mean().item()
         wd_norm = sum(
-            p.norm().item() for n, p in model.named_parameters()
+            p.norm().item()
+            for n, p in model.named_parameters()
             if "weight" in n and "ln" not in n and "embed" not in n
         )
 
@@ -505,24 +457,27 @@ def train_model(
         history["weight_norm"].append(last_weight_norm)
 
         if _wandb is not None:
-            _wandb.log({
-                "train/loss": train_loss,
-                "val/loss": val_loss,
-                "train/acc": train_acc,
-                "val/acc": val_acc,
-                "metrics/embed_norm_mean": embed_norm_mean,
-                "metrics/embed_norm_max": embed_norm_max,
-                "metrics/embed_norm_min": embed_norm_min,
-                "metrics/unembed_norm": unembed_norm_mean,
-                "metrics/attn_entropy": entropy,
-                "metrics/weight_decay_norm": wd_norm,
-                "lr": scheduler.get_last_lr()[0],
-            }, step=epoch)
+            _wandb.log(
+                {
+                    "train/loss": train_loss,
+                    "val/loss": val_loss,
+                    "train/acc": train_acc,
+                    "val/acc": val_acc,
+                    "metrics/embed_norm_mean": embed_norm_mean,
+                    "metrics/embed_norm_max": embed_norm_max,
+                    "metrics/embed_norm_min": embed_norm_min,
+                    "metrics/unembed_norm": unembed_norm_mean,
+                    "metrics/attn_entropy": entropy,
+                    "metrics/weight_decay_norm": wd_norm,
+                    "lr": scheduler.get_last_lr()[0],
+                },
+                step=epoch,
+            )
 
         current_lr = scheduler.get_last_lr()[0]
         if (epoch + 1) % 50 == 0 or epoch == 0:
             logger.info(
-                f"Epoch {epoch+1:4d} | train loss: {train_loss:.4f} | "
+                f"Epoch {epoch + 1:4d} | train loss: {train_loss:.4f} | "
                 f"val loss: {val_loss:.4f} | val acc: {val_acc:.4f} | "
                 f"embed norm: {embed_norm_mean:.2f} ({embed_norm_min:.2f}-{embed_norm_max:.2f}) | "
                 f"unembed norm: {unembed_norm_mean:.2f} | "
@@ -550,9 +505,7 @@ def train_model(
 # ---------------------------------------------------------------------------
 # Fourier analysis
 # ---------------------------------------------------------------------------
-def fourier_decompose_embeddings(
-    embed_weight: torch.Tensor, modulus: int
-) -> dict:
+def fourier_decompose_embeddings(embed_weight: torch.Tensor, modulus: int) -> dict:
     """Decompose the learned embeddings into Fourier frequencies.
 
     The model learns a discrete Fourier transform basis. The embedding for
@@ -574,7 +527,7 @@ def fourier_decompose_embeddings(
     k = torch.arange(modulus, device=embed_weight.device).float()
     n = torch.arange(modulus, device=embed_weight.device).float()
     fourier_basis = torch.exp(-2j * np.pi * k[:, None] * n[None, :] / modulus)
-    fourier_basis = fourier_basis / (modulus ** 0.5)
+    fourier_basis = fourier_basis / (modulus**0.5)
 
     # Project each embedding dimension onto the Fourier basis
     # embed_weight: (P, d_model) -> fourier_coeffs: (P, d_model)
@@ -639,7 +592,7 @@ def fourier_sparsity_progress(
     k = torch.arange(modulus, device=embed_weight.device).float()
     n = torch.arange(modulus, device=embed_weight.device).float()
     basis = torch.exp(-2j * np.pi * k[:, None] * n[None, :] / modulus)
-    basis = basis / (modulus ** 0.5)
+    basis = basis / (modulus**0.5)
 
     embed = embed_weight.to(basis.dtype)
     coeffs = basis.conj().T @ embed  # (P, d_model)
@@ -658,7 +611,7 @@ def weight_norm_progress(model: nn.Module) -> float:
     with torch.no_grad():
         for p in model.parameters():
             total += (p.detach() ** 2).sum().item()
-    return float(total ** 0.5)
+    return float(total**0.5)
 
 
 # ---------------------------------------------------------------------------
@@ -690,12 +643,14 @@ def ablate_frequencies(
     k = torch.arange(modulus).float()
     n = torch.arange(modulus).float()
     fourier_basis = torch.exp(-2j * np.pi * k[:, None] * n[None, :] / modulus)
-    fourier_basis = fourier_basis / (modulus ** 0.5)
+    fourier_basis = fourier_basis / (modulus**0.5)
 
     # Build the projection matrix onto the kept frequencies
     proj_matrix = torch.zeros(modulus, modulus, dtype=torch.complex64)
     for f in frequencies_to_keep:
-        proj_matrix = proj_matrix + fourier_basis[:, f:f+1] @ fourier_basis[:, f:f+1].conj().T
+        proj_matrix = (
+            proj_matrix + fourier_basis[:, f : f + 1] @ fourier_basis[:, f : f + 1].conj().T
+        )
 
     # Apply to embeddings (real part)
     with torch.no_grad():
@@ -743,20 +698,10 @@ def run_ablation_sweep(
 
     for n in n_freqs_to_test:
         if n == 0:
-            # Random baseline: shuffle labels
-            model.eval()
-            correct = 0
-            total = 0
-            for x, y in loader:
-                x = x.to(DEVICE)
-                logits, _ = model(x)
-                # Random prediction
-                preds = torch.randint(0, modulus, y.shape, device=DEVICE)
-                correct += (preds == y.to(DEVICE)).sum().item()
-                total += y.size(0)
-            accuracies.append(correct / total)
-            acc_str = f"{accuracies[-1]:.4f}"
-            logger.info(f"Ablation: keep {n:4d} freqs → accuracy: {acc_str} (random baseline)")
+            # Random baseline: chance accuracy for uniform labels.
+            acc = 1.0 / modulus
+            accuracies.append(acc)
+            logger.info(f"Ablation: keep {n:4d} freqs → accuracy: {acc:.4f} (random baseline)")
         else:
             freqs_to_keep = sorted_freqs[:n].tolist()
             acc = ablate_frequencies(model, loader, freqs_to_keep)
@@ -787,9 +732,7 @@ def run_ablation_sweep(
 # ---------------------------------------------------------------------------
 # Progress measures
 # ---------------------------------------------------------------------------
-def compute_progress_measures(
-    history: dict, fourier_result: dict, modulus: int
-) -> dict:
+def compute_progress_measures(history: dict, fourier_result: dict, modulus: int) -> dict:
     """Analyze the three phases of grokking.
 
     Phase 1 - Memorization: train loss drops, val loss stays high.
@@ -1071,18 +1014,23 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
     modulus = args.modulus
 
     train_dataset, val_dataset = make_modular_addition_data(
-        modulus=modulus, train_fraction=args.train_fraction, seed=seed,
+        modulus=modulus,
+        train_fraction=args.train_fraction,
+        seed=seed,
     )
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
 
     model = OneLayerTransformer(
-        d_model=args.d_model, d_mlp=args.d_mlp, n_heads=args.n_heads, modulus=modulus,
+        d_model=args.d_model,
+        d_mlp=args.d_mlp,
+        n_heads=args.n_heads,
+        modulus=modulus,
     )
 
     run_resume_from = None
     if getattr(args, "resume", False) and getattr(args, "checkpoint_every", 0) > 0:
-        run_resume_from = str(checkpoint_path_for_seed(args.checkpoint_dir, seed))
+        run_resume_from = str(checkpoint_path_for_seed(args.checkpoint_dir, "exp2", seed))
     elif getattr(args, "resume_from", None):
         run_resume_from = args.resume_from
 
@@ -1101,15 +1049,11 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         resume_from=run_resume_from,
     )
 
-    fourier_result = fourier_decompose_embeddings(
-        model.embed.weight.data.detach().cpu(), modulus
-    )
+    fourier_result = fourier_decompose_embeddings(model.embed.weight.data.detach().cpu(), modulus)
     sparsity = analyze_fourier_sparsity(fourier_result, top_k=20)
 
     final_val_acc = history["val_acc"][-1]
-    generalization_epoch = next(
-        (i for i, acc in enumerate(history["val_acc"]) if acc > 0.9), -1
-    )
+    generalization_epoch = next((i for i, acc in enumerate(history["val_acc"]) if acc > 0.9), -1)
 
     return {
         "final_val_acc": float(final_val_acc),
@@ -1130,9 +1074,7 @@ def main() -> None:
         description="Rung 2: Grokking modular addition with Fourier reverse-engineering"
     )
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
-    parser.add_argument(
-        "--modulus", type=int, default=113, help="Modulus P for a+b mod P"
-    )
+    parser.add_argument("--modulus", type=int, default=113, help="Modulus P for a+b mod P")
     parser.add_argument(
         "--train-fraction", type=float, default=0.3, help="Fraction of data for training"
     )
@@ -1215,12 +1157,7 @@ def main() -> None:
         default=None,
         help="Explicit checkpoint file to resume from (overrides --resume).",
     )
-    parser.add_argument(
-        "--wandb", action="store_true", help="Log metrics to Weights & Biases"
-    )
-    parser.add_argument(
-        "--diagnose", action="store_true", help="Print per-row norms and Fourier details each epoch"
-    )
+    parser.add_argument("--wandb", action="store_true", help="Log metrics to Weights & Biases")
     parser.add_argument(
         "--save-model", action="store_true", help="Save trained model to figures/ dir"
     )
@@ -1309,15 +1246,11 @@ def main() -> None:
         train_fraction=args.train_fraction,
         seed=args.seed,
     )
-    train_loader = DataLoader(
-        train_dataset, batch_size=args.batch_size, shuffle=True
-    )
-    val_loader = DataLoader(
-        val_dataset, batch_size=args.batch_size, shuffle=False
-    )
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
     logger.info(
         f"Data: train={len(train_dataset)} ({args.train_fraction:.0%}), "
-        f"val={len(val_dataset)} ({1-args.train_fraction:.0%})"
+        f"val={len(val_dataset)} ({1 - args.train_fraction:.0%})"
     )
 
     # Model
@@ -1334,9 +1267,7 @@ def main() -> None:
     # Train
     run_resume_from = None
     if args.resume and args.checkpoint_every > 0:
-        run_resume_from = str(
-            checkpoint_path_for_seed(args.checkpoint_dir, args.seed)
-        )
+        run_resume_from = str(checkpoint_path_for_seed(args.checkpoint_dir, "exp2", args.seed))
     elif args.resume_from:
         run_resume_from = args.resume_from
     history = train_model(
@@ -1363,9 +1294,7 @@ def main() -> None:
         torch.zeros((1, 2), dtype=torch.long, device=DEVICE),
         return_activations=True,
     )
-    fourier_result = fourier_decompose_embeddings(
-        model.embed.weight.data.detach().cpu(), modulus
-    )
+    fourier_result = fourier_decompose_embeddings(model.embed.weight.data.detach().cpu(), modulus)
     sparsity = analyze_fourier_sparsity(fourier_result, top_k=20)
     logger.info(f"Top 10 frequencies: {sparsity['top_frequencies'][:10]}")
     logger.info(f"Frequencies for 90% mass: {sparsity['k_90_percent']} / {modulus}")
@@ -1414,21 +1343,18 @@ def main() -> None:
     logger.info("GROKKING EXPERIMENT COMPLETE")
     logger.info("=" * 60)
     final_val_acc = history["val_acc"][-1]
-    grokking_step = next(
-        (i for i, acc in enumerate(history["val_acc"]) if acc > 0.9), -1
-    )
+    grokking_step = next((i for i, acc in enumerate(history["val_acc"]) if acc > 0.9), -1)
     logger.info(f"Final validation accuracy: {final_val_acc:.4f}")
     logger.info(f"Generalization achieved at epoch: {grokking_step}")
     logger.info(
         f"Fourier frequencies used: {sparsity['k_99_percent']} / {modulus} "
-        f"({sparsity['k_99_percent']/modulus:.1%})"
+        f"({sparsity['k_99_percent'] / modulus:.1%})"
     )
     if sparsity["k_99_percent"] < modulus * 0.5:
         logger.info("✓ CONFIRMED: Model uses sparse Fourier representation")
     else:
         logger.warning(
-            "Fourier representation is dense. "
-            "Try increasing weight decay or training longer."
+            "Fourier representation is dense. Try increasing weight decay or training longer."
         )
 
 

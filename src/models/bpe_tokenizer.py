@@ -5,10 +5,6 @@ from collections import Counter
 from typing import List
 
 
-def _get_stats(pairs: List[tuple]) -> Counter:
-    return Counter(pairs)
-
-
 def _merge(ids: List[int], pair: tuple, idx: int) -> List[int]:
     new_ids = []
     i = 0
@@ -63,7 +59,7 @@ class BPETokenizer:
             stats: Counter = Counter()
             for word, ids in splits.items():
                 freq = word_freqs[word]
-                pairs = _get_stats([(ids[j], ids[j + 1]) for j in range(len(ids) - 1)])
+                pairs = Counter((ids[j], ids[j + 1]) for j in range(len(ids) - 1))
                 for pair, count in pairs.items():
                     stats[pair] += count * freq
 

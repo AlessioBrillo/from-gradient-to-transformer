@@ -28,6 +28,11 @@ from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
+from src.experiments.checkpointing import (
+    checkpoint_path_for_seed,
+    load_training_checkpoint,
+    save_training_checkpoint,
+)
 from src.experiments.runner import parse_seeds, run_seeds
 from src.reproducibility import set_seed
 from src.results import ResultsManifest, count_parameters
@@ -176,9 +181,7 @@ class AttentionOnlyBlock(nn.Module):
         # arbitrary post-mixing subspace. See causal_ablation().
         self.head_mask: Optional[torch.Tensor] = None
 
-    def forward(
-        self, x: torch.Tensor, past_attn: Optional[list] = None
-    ) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, past_attn: Optional[list] = None) -> torch.Tensor:
         residual = x
         x = self.ln(x)
         B, S, D = x.shape
@@ -187,11 +190,9 @@ class AttentionOnlyBlock(nn.Module):
         K = self.W_K(x).view(B, S, self.n_heads, self.d_head).transpose(1, 2)
         V = self.W_V(x).view(B, S, self.n_heads, self.d_head).transpose(1, 2)
 
-        attn_scores = Q @ K.transpose(-2, -1) / (self.d_head ** 0.5)
+        attn_scores = Q @ K.transpose(-2, -1) / (self.d_head**0.5)
         # Causal mask
-        mask = torch.triu(
-            torch.full((S, S), float("-inf"), device=x.device), diagonal=1
-        )
+        mask = torch.triu(torch.full((S, S), float("-inf"), device=x.device), diagonal=1)
         attn_scores = attn_scores + mask
         attn_probs = attn_scores.softmax(dim=-1)
 
@@ -221,9 +222,7 @@ class AttentionOnlyTransformer(nn.Module):
         super().__init__()
         self.embed = nn.Embedding(vocab_size, d_model)
         self.pos_embed = nn.Embedding(max_seq_len, d_model)
-        self.blocks = nn.ModuleList(
-            [AttentionOnlyBlock(d_model, n_heads) for _ in range(n_layers)]
-        )
+        self.blocks = nn.ModuleList([AttentionOnlyBlock(d_model, n_heads) for _ in range(n_layers)])
         self.ln_final = nn.LayerNorm(d_model)
         self.unembed = nn.Linear(d_model, vocab_size, bias=False)
 
@@ -247,9 +246,7 @@ class AttentionOnlyTransformer(nn.Module):
 # Training
 # ---------------------------------------------------------------------------
 @torch.no_grad()
-def evaluate(
-    model: nn.Module, loader: DataLoader
-) -> tuple[float, float]:
+def evaluate(model: nn.Module, loader: DataLoader) -> tuple[float, float]:
     """Compute validation loss and accuracy."""
     model.eval()
     total_loss = 0.0
@@ -273,56 +270,11 @@ def evaluate(
 # ---------------------------------------------------------------------------
 # Checkpoint / resume (Micro-Phase 12)
 # ---------------------------------------------------------------------------
-def checkpoint_path_for_seed(checkpoint_dir: str, seed: int) -> Path:
-    """Rolling resume checkpoint path for one seed — a single file holds the
-    latest state, so `--resume` just points at this and keeps the newest
-    state without an ever-growing set of artifacts."""
-    return Path(checkpoint_dir) / f"exp1_checkpoint_seed{seed}.pt"
+# save/load/path helpers live in src/experiments/checkpointing.py (shared
+# with exp2); see its docstring for the RNG continuity contract.
 
 
-def save_training_checkpoint(
-    path: Path,
-    epoch: int,
-    model: nn.Module,
-    optimizer: torch.optim.Optimizer,
-    scheduler: nn.Module,
-    history: dict,
-    rng_state,
-) -> None:
-    """Atomically write a resume checkpoint. The saved RNG state is captured
-    *after* the training loop of `epoch` has finished and *before* any state
-    of epoch `epoch + 1` has been drawn, which is exactly the continuity
-    point a seamless resume needs (see train_model()'s docstring)."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(".tmp")
-    torch.save(
-        {
-            "epoch": epoch,
-            "model": model.state_dict(),
-            "optimizer": optimizer.state_dict(),
-            "scheduler": scheduler.state_dict(),
-            "rng_state": rng_state,
-            "history": history,
-        },
-        tmp,
-    )
-    # Atomic rename: a kill mid-save leaves the *old* valid checkpoint, not
-    # a truncated one.
-    tmp.replace(path)
-
-
-def load_training_checkpoint(path: Path) -> Optional[dict]:
-    """Load a checkpoint written by save_training_checkpoint. Returns None
-    if the file does not exist, so `--resume` on a machine with nothing to
-    resume degrades to a fresh, logged start rather than a crash."""
-    if not path.exists():
-        return None
-    return torch.load(path, map_location=DEVICE)
-
-
-def compute_attention_entropy(
-    model: nn.Module, loader: DataLoader
-) -> dict:
+def compute_attention_entropy(model: nn.Module, loader: DataLoader) -> dict:
     """Compute per-layer attention entropy and diagonal+1 mass.
 
     `diag1_mass` reports, per layer, the **max over heads** of the diagonal+1
@@ -421,6 +373,7 @@ def train_model(
     if use_wandb:
         try:
             import wandb as _wandb
+
             _wandb.init(
                 project="from-gradient-to-transformer",
                 config={
@@ -439,23 +392,22 @@ def train_model(
             logger.warning(f"W&B init failed: {e}")
             _wandb = None
 
-    optimizer = torch.optim.AdamW(
-        model.parameters(), lr=lr, weight_decay=weight_decay
-    )
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
     T_max = schedule_epochs if schedule_epochs is not None else epochs
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=T_max
-    )
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=T_max)
     criterion = nn.CrossEntropyLoss()
 
     history = {
-        "train_loss": [], "val_loss": [], "val_acc": [],
-        "attn_entropy": [], "diag1_mass": [],
+        "train_loss": [],
+        "val_loss": [],
+        "val_acc": [],
+        "attn_entropy": [],
+        "diag1_mass": [],
     }
 
     start_epoch = 0
     resume_ckpt = (
-        load_training_checkpoint(Path(resume_from)) if resume_from else None
+        load_training_checkpoint(Path(resume_from), map_location=DEVICE) if resume_from else None
     )
     if resume_ckpt is not None:
         model.load_state_dict(resume_ckpt["model"])
@@ -473,13 +425,11 @@ def train_model(
             f"{resume_ckpt['epoch']}) — continuing from epoch {start_epoch}"
         )
     elif resume_from:
-        logger.warning(
-            f"RESUME: checkpoint {resume_from} not found — starting fresh"
-        )
+        logger.warning(f"RESUME: checkpoint {resume_from} not found — starting fresh")
 
     ckpt_path: Optional[Path] = None
     if checkpoint_dir and checkpoint_every > 0:
-        ckpt_path = checkpoint_path_for_seed(checkpoint_dir, seed)
+        ckpt_path = checkpoint_path_for_seed(checkpoint_dir, "exp1", seed)
 
     for epoch in tqdm(range(start_epoch, epochs), desc="Training"):
         epoch_loader = fresh_batches_fn(epoch) if fresh_batches_fn is not None else train_loader
@@ -490,9 +440,7 @@ def train_model(
             x, y = x.to(DEVICE), y.to(DEVICE)
             optimizer.zero_grad()
             logits, _ = model(x, record_attn=False)
-            loss = criterion(
-                logits.reshape(-1, logits.size(-1)), y.reshape(-1)
-            )
+            loss = criterion(logits.reshape(-1, logits.size(-1)), y.reshape(-1))
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
@@ -521,18 +469,21 @@ def train_model(
         history["diag1_mass"].append(diag1_mass)
 
         if _wandb is not None:
-            _wandb.log({
-                "train/loss": train_loss,
-                "val/loss": val_loss,
-                "val/acc": val_acc,
-                "metrics/attn_entropy": attn_entropy,
-                "metrics/diag1_mass": diag1_mass,
-                "lr": scheduler.get_last_lr()[0],
-            }, step=epoch)
+            _wandb.log(
+                {
+                    "train/loss": train_loss,
+                    "val/loss": val_loss,
+                    "val/acc": val_acc,
+                    "metrics/attn_entropy": attn_entropy,
+                    "metrics/diag1_mass": diag1_mass,
+                    "lr": scheduler.get_last_lr()[0],
+                },
+                step=epoch,
+            )
 
         if (epoch + 1) % 50 == 0:
             logger.info(
-                f"Epoch {epoch+1:4d} | train loss: {train_loss:.4f} | "
+                f"Epoch {epoch + 1:4d} | train loss: {train_loss:.4f} | "
                 f"val loss: {val_loss:.4f} | val acc: {val_acc:.4f} | "
                 f"attn entropy: {attn_entropy:.2f} | diag+1: {diag1_mass:.3f}"
             )
@@ -557,9 +508,7 @@ def train_model(
 # ---------------------------------------------------------------------------
 # Analysis
 # ---------------------------------------------------------------------------
-def analyze_induction_heads(
-    model: nn.Module, loader: DataLoader
-) -> tuple[list, list]:
+def analyze_induction_heads(model: nn.Module, loader: DataLoader) -> tuple[list, list]:
     """Identify induction heads by their attention patterns.
 
     An induction head has the characteristic pattern where it strongly attends
@@ -701,9 +650,7 @@ def diagnose_induction_formation(all_patterns: list) -> dict:
     }
 
 
-def plot_composition_diagnostic(
-    all_patterns: list, diagnosis: dict, save_path: Path
-) -> None:
+def plot_composition_diagnostic(all_patterns: list, diagnosis: dict, save_path: Path) -> None:
     """Two-panel figure: the best L0 duplicate head's attention (Step 1) and
     the best L1 head's attention with the K-composition `prev(q)+1` curve
     overlaid (Step 2) — the visual "how far" answer."""
@@ -726,8 +673,14 @@ def plot_composition_diagnostic(
         ax.set_xlabel("Key Position")
         ax.set_ylabel("Query Position")
         fig.colorbar(im, ax=ax, shrink=0.8)
-    axes[1].plot(prev_curve, np.arange(S), color="red", ls="--", lw=1.2,
-                 label="prev(q) + 1 (K-composition target)")
+    axes[1].plot(
+        prev_curve,
+        np.arange(S),
+        color="red",
+        ls="--",
+        lw=1.2,
+        label="prev(q) + 1 (K-composition target)",
+    )
     axes[1].legend(fontsize=9)
     axes[0].set_title(
         f"L0 head {h0} — duplicate-token head (Step 1)\n"
@@ -735,8 +688,7 @@ def plot_composition_diagnostic(
         fontsize=12,
     )
     axes[1].set_title(
-        f"L1 head {h1} — K-composition (Step 2)\n"
-        f"score: {diagnosis['step2_k_composition']:.3f}",
+        f"L1 head {h1} — K-composition (Step 2)\nscore: {diagnosis['step2_k_composition']:.3f}",
         fontsize=12,
     )
     fig.tight_layout()
@@ -745,9 +697,7 @@ def plot_composition_diagnostic(
     logger.info(f"Saved composition diagnostic to {save_path}")
 
 
-def _make_fresh_batches_fn(
-    args: argparse.Namespace, seed: int
-) -> Callable[[int], DataLoader]:
+def _make_fresh_batches_fn(args: argparse.Namespace, seed: int) -> Callable[[int], DataLoader]:
     """Build a per-epoch DataLoader factory: a fresh set of sequences every
     epoch instead of one fixed set reshuffled — see train_model()'s
     fresh_batches_fn docstring."""
@@ -765,9 +715,7 @@ def _make_fresh_batches_fn(
     return fn
 
 
-def causal_ablation(
-    model: nn.Module, loader: DataLoader, layer: int, head: int
-) -> float:
+def causal_ablation(model: nn.Module, loader: DataLoader, layer: int, head: int) -> float:
     """Ablate a specific attention head by zeroing its contribution.
 
     Measures the accuracy drop when a head's contribution is removed,
@@ -826,9 +774,7 @@ def plot_induction_pattern(
     logger.info(f"Saved induction pattern to {save_path}")
 
 
-def plot_training_curves(
-    history: dict, save_path: Path
-) -> None:
+def plot_training_curves(history: dict, save_path: Path) -> None:
     """Plot training + attention metrics."""
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 
@@ -888,9 +834,7 @@ def _headline_metrics(
         "total_induction_heads": float(total_induction),
         "peak_diag1_mass": peak_diag1,
         "k_composition_score": float(diagnosis["step2_k_composition"]),
-        "l0_duplicate_head_mass": float(
-            max(diagnosis["step1_l0_duplicate_mass"] or [0.0])
-        ),
+        "l0_duplicate_head_mass": float(max(diagnosis["step1_l0_duplicate_mass"] or [0.0])),
         "mean_ablation_drop": 0.0,
     }
 
@@ -910,8 +854,7 @@ def _write_single_manifest(
         args={k: v for k, v in vars(args).items() if k != "seeds"},
         per_seed_metrics=[metrics],
         aggregate={
-            k: {"mean": v, "std": 0.0, "min": v, "max": v, "n": 1.0}
-            for k, v in metrics.items()
+            k: {"mean": v, "std": 0.0, "min": v, "max": v, "n": 1.0} for k, v in metrics.items()
         },
         wall_clock_seconds=wall_clock_seconds,
         device=str(DEVICE),
@@ -959,7 +902,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
 
     resume_from = None
     if args.resume and args.checkpoint_every > 0:
-        resume_from = str(checkpoint_path_for_seed(args.checkpoint_dir, seed))
+        resume_from = str(checkpoint_path_for_seed(args.checkpoint_dir, "exp1", seed))
     elif getattr(args, "resume_from", None):
         resume_from = args.resume_from
 
@@ -1015,28 +958,16 @@ def main() -> None:
         ),
     )
     parser.add_argument("--seq-len", type=int, default=64, help="Sequence length")
-    parser.add_argument(
-        "--d-model", type=int, default=64, help="Model dimension"
-    )
+    parser.add_argument("--d-model", type=int, default=64, help="Model dimension")
     parser.add_argument("--n-layers", type=int, default=2, help="Number of layers")
     parser.add_argument("--n-heads", type=int, default=4, help="Heads per layer")
     parser.add_argument("--epochs", type=int, default=5000, help="Training epochs")
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
-    parser.add_argument(
-        "--weight-decay", type=float, default=0.1, help="Weight decay"
-    )
-    parser.add_argument(
-        "--batch-size", type=int, default=64, help="Batch size"
-    )
-    parser.add_argument(
-        "--num-train", type=int, default=8192, help="Training samples"
-    )
-    parser.add_argument(
-        "--no-train", action="store_true", help="Skip training (analysis only)"
-    )
-    parser.add_argument(
-        "--quick", action="store_true", help="Quick test (reduced config)"
-    )
+    parser.add_argument("--weight-decay", type=float, default=0.1, help="Weight decay")
+    parser.add_argument("--batch-size", type=int, default=64, help="Batch size")
+    parser.add_argument("--num-train", type=int, default=8192, help="Training samples")
+    parser.add_argument("--no-train", action="store_true", help="Skip training (analysis only)")
+    parser.add_argument("--quick", action="store_true", help="Quick test (reduced config)")
     parser.add_argument(
         "--standard",
         action="store_true",
@@ -1048,12 +979,8 @@ def main() -> None:
             "model, not three similar ones."
         ),
     )
-    parser.add_argument(
-        "--wandb", action="store_true", help="Log metrics to Weights & Biases"
-    )
-    parser.add_argument(
-        "--save-model", action="store_true", help="Save trained model"
-    )
+    parser.add_argument("--wandb", action="store_true", help="Log metrics to Weights & Biases")
+    parser.add_argument("--save-model", action="store_true", help="Save trained model")
     parser.add_argument(
         "--fresh-batches",
         action="store_true",
@@ -1196,15 +1123,9 @@ def main() -> None:
         num_val=1024,
         seed=args.seed,
     )
-    train_loader = DataLoader(
-        train_dataset, batch_size=args.batch_size, shuffle=True
-    )
-    val_loader = DataLoader(
-        val_dataset, batch_size=args.batch_size, shuffle=False
-    )
-    logger.info(
-        f"Data: train={len(train_dataset)}, val={len(val_dataset)}"
-    )
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
+    logger.info(f"Data: train={len(train_dataset)}, val={len(val_dataset)}")
 
     # Model
     model = AttentionOnlyTransformer(
@@ -1218,15 +1139,11 @@ def main() -> None:
     logger.info(f"Model parameters: {n_params:,}")
 
     if not args.no_train:
-        fresh_batches_fn = (
-            _make_fresh_batches_fn(args, args.seed) if args.fresh_batches else None
-        )
+        fresh_batches_fn = _make_fresh_batches_fn(args, args.seed) if args.fresh_batches else None
 
         run_resume_from = None
         if args.resume and args.checkpoint_every > 0:
-            run_resume_from = str(
-                checkpoint_path_for_seed(args.checkpoint_dir, args.seed)
-            )
+            run_resume_from = str(checkpoint_path_for_seed(args.checkpoint_dir, "exp1", args.seed))
         elif args.resume_from:
             run_resume_from = args.resume_from
         t_run_start = time.monotonic()
@@ -1262,7 +1179,7 @@ def main() -> None:
         val_accs = np.array(history["val_acc"])
         diag1_mass = np.array(history["diag1_mass"])
         if len(val_accs) > 100:
-            val_smooth = np.convolve(val_accs, np.ones(10)/10, mode='valid')
+            val_smooth = np.convolve(val_accs, np.ones(10) / 10, mode="valid")
             max_smooth_idx = np.argmax(val_smooth)
             loss_bump_idx = np.argmax(np.abs(np.diff(history["val_loss"])))
             logger.info(
@@ -1298,39 +1215,28 @@ def main() -> None:
             f"Step 2 — K-composition: best score {diagnosis['step2_k_composition']:.3f} "
             f"(L0 head {diagnosis['best_l0_head']}, L1 head {diagnosis['best_l1_head']})"
         )
-        plot_composition_diagnostic(
-            all_patterns, diagnosis, FIGURES_DIR / "exp1_k_composition.png"
-        )
+        plot_composition_diagnostic(all_patterns, diagnosis, FIGURES_DIR / "exp1_k_composition.png")
 
     logger.info("=" * 60)
     logger.info("Induction Head Analysis")
     logger.info("=" * 60)
 
     for layer_idx, heads in enumerate(induction_heads):
-        logger.info(
-            f"Layer {layer_idx}: {len(heads)} induction head(s): {heads}"
-        )
+        logger.info(f"Layer {layer_idx}: {len(heads)} induction head(s): {heads}")
         for head_idx in heads[:2]:  # plot first 2 per layer
             plot_induction_pattern(
                 all_patterns,
                 layer=layer_idx,
                 head=head_idx,
-                save_path=(
-                    FIGURES_DIR
-                    / f"exp1_induction_pattern_L{layer_idx}H{head_idx}.png"
-                ),
+                save_path=(FIGURES_DIR / f"exp1_induction_pattern_L{layer_idx}H{head_idx}.png"),
             )
 
     total_induction = sum(len(h) for h in induction_heads)
-    logger.info(
-        f"Total induction heads: {total_induction} / "
-        f"{args.n_layers * args.n_heads}"
-    )
+    logger.info(f"Total induction heads: {total_induction} / {args.n_layers * args.n_heads}")
 
     if total_induction == 0:
         logger.warning(
-            "No induction heads detected. Try: longer training, "
-            "or lower threshold in detection."
+            "No induction heads detected. Try: longer training, or lower threshold in detection."
         )
     else:
         logger.info("✓ Induction heads successfully identified!")
@@ -1340,9 +1246,7 @@ def main() -> None:
         for layer_idx, heads in enumerate(induction_heads):
             for head_idx in heads:
                 full_acc = history["val_acc"][-1] if not args.no_train else 0.0
-                ablated_acc = causal_ablation(
-                    model, val_loader, layer_idx, head_idx
-                )
+                ablated_acc = causal_ablation(model, val_loader, layer_idx, head_idx)
                 logger.info(
                     f"Ablation L{layer_idx}H{head_idx}: "
                     f"accuracy {full_acc:.4f} → {ablated_acc:.4f} "

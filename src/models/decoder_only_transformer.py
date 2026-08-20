@@ -128,8 +128,8 @@ class Attention(nn.Module):
             K = torch.cat([past_K, K], dim=2)
             V = torch.cat([past_V, V], dim=2)
 
-        attn_scores = Q @ K.transpose(-2, -1) / (self.d_head ** 0.5)
-        attn_scores = attn_scores + self.causal_mask[:, :, :S, :K.size(2)]
+        attn_scores = Q @ K.transpose(-2, -1) / (self.d_head**0.5)
+        attn_scores = attn_scores + self.causal_mask[:, :, :S, : K.size(2)]
         attn_probs = attn_scores.softmax(dim=-1)
         attn_probs = self.dropout(attn_probs)
 
@@ -137,9 +137,7 @@ class Attention(nn.Module):
         attn_out = attn_out.transpose(1, 2).contiguous().view(B, S, D)
 
         if self.head_mask is not None:
-            mask = self.head_mask.repeat_interleave(self.d_head).view(1, 1, D).to(
-                x.device, x.dtype
-            )
+            mask = self.head_mask.repeat_interleave(self.d_head).view(1, 1, D).to(x.device, x.dtype)
             attn_out = attn_out * mask
 
         attn_out = self.W_O(attn_out)
@@ -240,7 +238,6 @@ class DecoderOnlyTransformer(nn.Module):
         max_seq_len: Maximum sequence length.
         dropout: Dropout probability.
         tie_weights: Tie embedding and unembedding weights.
-        normalize_embed: Normalize embedding weights after each step.
     """
 
     def __init__(
@@ -253,24 +250,24 @@ class DecoderOnlyTransformer(nn.Module):
         max_seq_len: int = 256,
         dropout: float = 0.0,
         tie_weights: bool = False,
-        normalize_embed: bool = False,
     ) -> None:
         super().__init__()
         self.d_model = d_model
         self.n_layers = n_layers
         self.n_heads = n_heads
         self.max_seq_len = max_seq_len
-        self.normalize_embed = normalize_embed
 
         if d_mlp is None:
             d_mlp = 4 * d_model
         self.d_mlp = d_mlp
 
         self.embed = nn.Embedding(vocab_size, d_model)
-        self.blocks = nn.ModuleList([
-            TransformerBlock(d_model, n_heads, d_mlp, max_seq_len, dropout)
-            for _ in range(n_layers)
-        ])
+        self.blocks = nn.ModuleList(
+            [
+                TransformerBlock(d_model, n_heads, d_mlp, max_seq_len, dropout)
+                for _ in range(n_layers)
+            ]
+        )
         self.ln_final = RMSNorm(d_model)
         self.unembed = nn.Linear(d_model, vocab_size, bias=False)
 
@@ -283,11 +280,6 @@ class DecoderOnlyTransformer(nn.Module):
         for p in self.parameters():
             if p.ndim >= 2:
                 nn.init.normal_(p, mean=0.0, std=0.02)
-
-    def normalize_embeddings(self) -> None:
-        if self.normalize_embed:
-            with torch.no_grad():
-                self.embed.weight.data = nn.functional.normalize(self.embed.weight.data, dim=-1)
 
     def forward(
         self,
@@ -340,7 +332,7 @@ class DecoderOnlyTransformer(nn.Module):
 
         for _ in range(max_new_tokens):
             if generated.size(1) > self.max_seq_len:
-                generated = generated[:, -self.max_seq_len:]
+                generated = generated[:, -self.max_seq_len :]
 
             logits, cache = self(generated[:, -1:], past_kv=past_kv, return_cache=True)
 
@@ -358,7 +350,8 @@ class DecoderOnlyTransformer(nn.Module):
                             past_kv[i] = (past_k, past_v)
                         else:
                             past_kv[i] = (
-                                new_k.to(device=generated.device), new_v.to(device=generated.device)
+                                new_k.to(device=generated.device),
+                                new_v.to(device=generated.device),
                             )
 
             next_token_logits = logits[:, -1, :] / temperature

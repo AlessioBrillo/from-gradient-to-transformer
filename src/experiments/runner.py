@@ -80,6 +80,19 @@ def run_seeds(
                 "seed must report the same metrics for a valid aggregate."
             )
 
+    aggregate = aggregate_metrics(per_seed)
+
+    return SeedAggregate(per_seed=per_seed, aggregate=aggregate, wall_clock_seconds=wall_clock)
+
+
+def aggregate_metrics(per_seed: list[dict[str, float]]) -> dict[str, dict[str, float]]:
+    """Aggregate per-seed metric dicts into mean/std/min/max/n per metric.
+
+    The single aggregation used by the live runner and by the manifest
+    producers that rebuild manifests from disk checkpoints, so a pinned
+    manifest is indistinguishable from a locally-run one. Requires every
+    seed to report the same metric keys."""
+    keys = set(per_seed[0].keys())
     aggregate: dict[str, dict[str, float]] = {}
     for key in keys:
         values = np.array([m[key] for m in per_seed], dtype=float)
@@ -90,10 +103,7 @@ def run_seeds(
             "max": float(values.max()),
             "n": float(len(values)),
         }
-
-    return SeedAggregate(
-        per_seed=per_seed, aggregate=aggregate, wall_clock_seconds=wall_clock
-    )
+    return aggregate
 
 
 def parse_seeds(seeds_arg: str) -> list[int]:
