@@ -484,7 +484,7 @@ class TestCheckpointResume:
             broken_model, tl, vl, epochs=8,
             lr=1e-3, weight_decay=0.1, seed=0,
             fresh_batches_fn=self._fresh_batches(args),
-            resume_from=str(checkpoint_path_for_seed(str(tmp_path), 0)),
+            resume_from=str(checkpoint_path_for_seed(str(tmp_path), "exp1", 0)),
         )
 
         assert len(resumed_hist["train_loss"]) == 8
@@ -520,7 +520,7 @@ class TestCheckpointResume:
             broken, tl, vl, epochs=8,
             lr=1e-3, weight_decay=0.1, seed=0,
             fresh_batches_fn=self._fresh_batches(args),
-            resume_from=str(checkpoint_path_for_seed(str(tmp_path), 0)),
+            resume_from=str(checkpoint_path_for_seed(str(tmp_path), "exp1", 0)),
         )
         for key in full_hist:
             np.testing.assert_allclose(

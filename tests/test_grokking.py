@@ -335,7 +335,7 @@ class TestGrokkingCheckpointResume:
         resumed_hist = self._train(
             model=broken_model, train_loader=tl, val_loader=vl,
             epochs=8, lr=1e-3, weight_decay=0.1, seed=0,
-            resume_from=str(checkpoint_path_for_seed(str(tmp_path), 0)),
+            resume_from=str(checkpoint_path_for_seed(str(tmp_path), "exp2", 0)),
         )
 
         assert len(resumed_hist["train_loss"]) == 8
@@ -370,7 +370,7 @@ class TestGrokkingCheckpointResume:
         resumed_hist = self._train(
             model=broken, train_loader=tl, val_loader=vl,
             epochs=8, lr=1e-3, weight_decay=0.1, seed=0,
-            resume_from=str(checkpoint_path_for_seed(str(tmp_path), 0)),
+            resume_from=str(checkpoint_path_for_seed(str(tmp_path), "exp2", 0)),
         )
         for key in full_hist:
             np.testing.assert_allclose(

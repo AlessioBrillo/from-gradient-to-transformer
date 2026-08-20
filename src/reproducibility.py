@@ -10,7 +10,6 @@ Usage:
 
 import os
 import random
-from typing import Any, Callable, Optional
 
 import numpy as np
 
@@ -48,39 +47,3 @@ def set_seed(seed: int = 42, deterministic: bool = True) -> None:
         except AttributeError:
             pass  # older PyTorch version
         os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
-
-
-def worker_init_fn(seed: Optional[int] = None) -> Callable[[int], None]:
-    """Returns a worker_init_fn for torch DataLoader reproducibility.
-
-    Usage:
-        DataLoader(..., worker_init_fn=worker_init_fn(42))
-    """
-    if seed is None:
-        seed = 42
-
-    def _init(worker_id: int) -> None:
-        np.random.seed(seed + worker_id)
-        random.seed(seed + worker_id)
-
-    return _init
-
-
-def seed_info() -> dict[str, Any]:
-    """Report current seed state across frameworks."""
-    info: dict[str, Any] = {
-        "python_random": "set" if random.getstate() else "unknown",
-        "numpy_seed": int(np.random.get_state()[1][0]),
-    }
-    try:
-        import torch
-
-        info["torch_seed"] = int(torch.initial_seed())
-        info["torch_deterministic"] = (
-            torch.are_deterministic_algorithms_enabled()
-            if hasattr(torch, "are_deterministic_algorithms_enabled")
-            else False
-        )
-    except ImportError:
-        pass
-    return info

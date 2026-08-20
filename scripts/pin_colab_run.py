@@ -41,46 +41,11 @@ prevent.
 
 import argparse
 import json
-import subprocess
 import sys
 from pathlib import Path
 
-import numpy as np
-
-from src.experiments.runner import parse_seeds
-from src.results import ResultsManifest
-
-
-def _current_sha() -> str:
-    try:
-        return subprocess.check_output(
-            ["git", "rev-parse", "--short", "HEAD"], text=True, stderr=subprocess.DEVNULL
-        ).strip()
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return "unknown"
-
-
-def _aggregate(per_seed: list[dict[str, float]]) -> dict[str, dict[str, float]]:
-    """Mirror run_seeds' aggregate exactly so a pinned manifest is
-    indistinguishable from a locally-run one."""
-    keys = set(per_seed[0].keys())
-    for i, m in enumerate(per_seed[1:], start=1):
-        if set(m.keys()) != keys:
-            raise ValueError(
-                f"Seed {i} reported different metric keys ({set(m.keys())}) "
-                f"than seed 0 ({keys})"
-            )
-    aggregate: dict[str, dict[str, float]] = {}
-    for key in keys:
-        values = np.array([m[key] for m in per_seed], dtype=float)
-        aggregate[key] = {
-            "mean": float(values.mean()),
-            "std": float(values.std(ddof=0)) if len(values) > 1 else 0.0,
-            "min": float(values.min()),
-            "max": float(values.max()),
-            "n": float(len(values)),
-        }
-    return aggregate
+from src.experiments.runner import aggregate_metrics, parse_seeds
+from src.results import ResultsManifest, git_provenance
 
 
 def main() -> None:
@@ -88,9 +53,7 @@ def main() -> None:
     parser.add_argument("--metrics-json", type=Path, required=True)
     parser.add_argument("--args-json", type=Path, required=True)
     parser.add_argument("--seeds", type=str, required=True)
-    parser.add_argument(
-        "--experiment", type=str, default="exp2_grokking"
-    )
+    parser.add_argument("--experiment", type=str, default="exp2_grokking")
     parser.add_argument("--out", type=Path, default=None)
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--n-parameters", type=int, default=None)
@@ -111,7 +74,7 @@ def main() -> None:
     if not isinstance(run_args, dict):
         sys.exit("--args-json must be a JSON object")
 
-    sha = _current_sha()
+    sha, dirty = git_provenance()
     if args.git_sha and args.git_sha != sha:
         if not args.allow_sha_mismatch:
             sys.exit(
@@ -122,7 +85,7 @@ def main() -> None:
             )
         sha = args.git_sha
 
-    aggregate = _aggregate(per_seed)
+    aggregate = aggregate_metrics(per_seed)
     manifest = ResultsManifest.from_run(
         experiment=args.experiment,
         seeds=parse_seeds(args.seeds),
@@ -141,18 +104,14 @@ def main() -> None:
     # git_dirty: this checkout is where the pin happened, not where the run
     # happened; re-probe the current tree so the manifest doesn't lie about
     # the state of the code it was pinned against.
-    manifest.git_dirty = any(
-        not line.split(maxsplit=1)[-1].startswith("results/")
-        for line in subprocess.check_output(
-            ["git", "status", "--porcelain"], text=True, stderr=subprocess.DEVNULL
-        ).splitlines()
-    )
+    manifest.git_dirty = dirty
 
     out = args.out or (Path("results") / f"{args.experiment}.json")
     manifest.save(out)
     print(f"Pinned Colab run -> {out}")
     for key in aggregate:
-        print(f"  {key}: {aggregate[key]['mean']:.4f} ± {aggregate[key]['std']:.4f} (n={int(aggregate[key]['n'])})")
+        agg = aggregate[key]
+        print(f"  {key}: {agg['mean']:.4f} ± {agg['std']:.4f} (n={int(agg['n'])})")
     print("Next: make verify-claims")
 
 

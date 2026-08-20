@@ -73,9 +73,9 @@ cosine schedule) are the microscope lane (ADR-0003 row 2):
   2026-08-11T19:40:05Z → final ckpt 20:37:03 local, all three seeds).
 - Checkpoints: `checkpoints/exp2_checkpoint_seed{0,1,2}.pt` (final state,
   epoch 5000, val_acc 1.0).
-- Verdict script: `scripts/exp2_verdict_from_checkpoints.py` (applies the
-  frozen criteria mechanically; k_99 = the experiment's own CONFIRMED-line
-  metric).
+- Verdict script: applied the frozen criteria mechanically; k_99 = the
+  experiment's own CONFIRMED-line metric (one-off script removed in the
+  2026-08-19 audit cleanup; criteria preserved in this note).
 - Figures: `figures/exp2_grokking_curve.png`, `exp2_fourier_weights.png`,
   `exp2_frequency_ablation.png`, `exp2_progress_measures.png` (regenerated
   from best-seed checkpoint by the manifest producer).

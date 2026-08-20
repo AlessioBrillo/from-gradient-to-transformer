@@ -103,13 +103,7 @@ commitlint-head:
 # Full-scale run of every surviving rung (Rung 6 was descoped — see
 # 07_capstone/research-plan.md). This is hours, not minutes; use
 # reproduce-quick for a fast smoke pass.
-reproduce:
-	@echo "=== Regenerating all experiment figures ==="
-	uv run python -m src.experiments.exp1_induction_heads
-	uv run python -m src.experiments.exp2_grokking
-	uv run python -m src.experiments.exp3_superposition
-	uv run python -m src.experiments.exp4_circuit_patching
-	uv run python -m src.experiments.exp5_sae_dashboard
+reproduce: reproduce-induction reproduce-grokking reproduce-superposition reproduce-patching reproduce-sae
 	@echo "Done. See figures/ and portfolio/RESULTS.md"
 
 reproduce-quick:

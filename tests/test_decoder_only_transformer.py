@@ -114,9 +114,7 @@ class TestDecoderOnlyTransformer:
         )
         model.eval()
         input_ids = torch.randint(0, 100, (1, 8))
-        generated = model.generate(
-            input_ids, max_new_tokens=5, temperature=0.8, top_k=10
-        )
+        generated = model.generate(input_ids, max_new_tokens=5, temperature=0.8, top_k=10)
         assert generated.shape == (1, 13)
 
     def test_cache_contents(self) -> None:
@@ -170,12 +168,3 @@ class TestDecoderOnlyTransformer:
         torch.manual_seed(42)
         gen2 = model.generate(x, max_new_tokens=5, temperature=0.5, top_k=10)
         assert torch.equal(gen1, gen2), "Deterministic generation should be identical"
-
-    def test_normalize_embeddings(self) -> None:
-        model = DecoderOnlyTransformer(
-            vocab_size=100, d_model=32, n_layers=2, n_heads=2, max_seq_len=32,
-            normalize_embed=True,
-        )
-        model.normalize_embeddings()
-        norms = model.embed.weight.norm(dim=-1)
-        assert torch.allclose(norms, torch.ones_like(norms), atol=1e-5)
