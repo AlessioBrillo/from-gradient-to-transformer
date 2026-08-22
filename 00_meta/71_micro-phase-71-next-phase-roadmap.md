@@ -51,7 +51,12 @@ near epoch 1950, K-composition max 0.056). This remains the newest dated fact on
 record's negative side.
 - All five manifests are on disk (`results/exp1…exp5`), and `verify-claims` is at **0** — re-verified live in this drafting sitting.
 
-The arc my science has taken is the strongest thing I own: *will grokking reproduce?* (MP-28) → *is the harness itself the suppressor?* (MP-29) → *what is the dense solution's structure?* (MP-29 S3's characterization) → *which open question is deepest?* (MP-36) → the question chain from MP-37 through MP-67 → *which of C145–C148 does the consumed thirty-sixth verdict open?* (MP-68) → *the GPU unblock that the previous twenty-three could not execute locally* (MP-69/70). **This phase executes that unblock.**
+The arc my science has taken is the strongest thing I own: *will grokking reproduce?* (MP-28) →
+*is the harness itself the suppressor?* (MP-29) → *what is the dense solution's structure?*
+(MP-29 S3's characterization) → *which open question is deepest?* (MP-36) → the question chain
+from MP-37 through MP-67 → *which of C145–C148 does the consumed thirty-sixth verdict open?*
+(MP-68) → *the GPU unblock that the previous twenty-three could not execute locally*
+(MP-69/70). **This phase executes that unblock.**
 
 ### The Stack at Intake
 
@@ -86,7 +91,11 @@ Each is a dated row owned by MP-30–MP-36 — their residue, never my re-planni
 
 ### 1. The Consumption Chain Is Now Twenty-Nine Generations Deep
 
-MP-40's Ex-N defined the terminal state; MP-41's Session 0 executed it; MP-42's Session 0 consumed that execution and chose; ... MP-70's Session 0 consumed MP-69's Session-0 decision with dates. **This phase's Session 0 must consume MP-70's Session-0 decision with dates** — the single most dangerous drift is re-litigating a thirty-times-consumed decision. The decision chain is now twenty-nine generations deep; a sitting stamps, it never re-decides.
+MP-40's Ex-N defined the terminal state; MP-41's Session 0 executed it; MP-42's Session 0
+consumed that execution and chose; ... MP-70's Session 0 consumed MP-69's Session-0 decision
+with dates. **This phase's Session 0 must consume MP-70's Session-0 decision with dates** —
+the single most dangerous drift is re-litigating a thirty-times-consumed decision. The decision
+chain is now twenty-nine generations deep; a sitting stamps, it never re-decides.
 
 ### 2. The Stacked Execution Remains the Critical Path
 
@@ -129,7 +138,10 @@ The eighteenth stranger-run transcript lands only if the lanes execute; C67 (the
 | R7 | **Paper v20 / Annex v20** — if R1/R2/R3/R5 produce new numbers → paper v20 diff + annex v20; else "v19 is the record" dated memo | New numbers from R1, R2, R3, or R5 | If no new numbers → v20 is a dated memo, not a compilation crisis |
 | R8 | **Gate-Debt Re-verification** — re-verify all MP-30–MP-36 row closures with transcripts; `gate-debt.md` complete or absent-with-date | All MP-30–MP-36 rows | Session 1 (initial), re-verified Session 7 |
 
-**Universal Override**: If GPU run (R1) produces **sparse Fourier** (k₉₉ < P/2 sustained ≥3 checkpoints) → R1 becomes the sparse-regime mechanism study (Nanda-style per-frequency reading), R2/R5 reprioritized to characterize the difference between this run and the NO-GROK runs.
+**Universal Override**: If GPU run (R1) produces **sparse Fourier** (k₉₉ < P/2 sustained ≥3
+checkpoints) → R1 becomes the sparse-regime mechanism study (Nanda-style per-frequency
+reading), R2/R5 reprioritized to characterize the difference between this run and the
+NO-GROK runs.
 
 **Post-Record Override**: If MP-70's Session 0 continued the post-record arc → R1 becomes "Post-Record Harness Design from Dated Negatives", R2 becomes "Eighth Post-Record Question", etc. — but MP-70 has not yet consumed MP-69's decision, so this roadmap assumes the pre-record arc.
 
@@ -467,7 +479,11 @@ drift-of-drift-of-drift-of-drift-of-drift-of-drift-of-drift-of-drift number meas
 times in a row, tested by people I did not choose, across an aging codebase. My showcase's
 story is now "read it, run it, watch me be wrong on the record," nineteen receipts deep.
 
-- **The steady state is the reward, not the ceremony.** MP-71 is the twenty-first roadmap written from an *executed* roadmap's release report — the program at its normal, confirmed twenty-one times. The cap's lesson was that promises without dates drift; the steady state's discipline is that the machinery never becomes the goal: rows are dated in the sitting that owns them, or they are not rows.
+- **The steady state is the reward, not the ceremony.** MP-71 is the twenty-first roadmap
+written from an *executed* roadmap's release report — the program at its normal, confirmed
+twenty-one times. The cap's lesson was that promises without dates drift; the steady state's
+discipline is that the machinery never becomes the goal: rows are dated in the sitting that
+owns them, or they are not rows.
 
 - **Stop-and-publish stays open, and the post-record criterion is now nine questions deep.** ADR-0004's row 5 is the honest exit; a candidate set that cannot earn a paragraph the record lacks is a phase that should close itself. If the post-record arc governs, the deepest candidate earns the post-record arc's *eighth new paragraph* — the record's closing sentence consumed nine times, never repeated. This is the deepest form of laziness: do not build what the record has already said.
 
@@ -475,7 +491,9 @@ story is now "read it, run it, watch me be wrong on the record," nineteen receip
 
 - **Protect the release report.** The serialized stack means MP-29's release is the artifact everything downstream consumes; a slip at any link slides the whole chain. The deepest law still applies: a promise can be re-planned forever, but a dated row is answered.
 
-- **The S0 gate is a checklist with receipts.** ADR-0023 at zero, the live URL, `verify-claims` at 0, the eighteenth teaching transcript on disk — a condition with artifacts, not a paragraph.
+- **The S0 gate is a checklist with receipts.** ADR-0023 at zero, the live URL,
+`verify-claims` at 0, the eighteenth teaching transcript on disk — a condition with
+artifacts, not a paragraph.
 
 - **The negative stays the signature.** The row that closes with one reason dated in the sitting that owns it is the strongest artifact in the repository. Every positive result in this program has a negative twin that was measured, drafted, and stamped — and the negative twin is the one that proves the positive wasn't cherry-picked. The GPU unblock is the act of finally measuring the primary flagship on its native hardware; whatever it returns, the measurement is the contribution.
 
