@@ -5,13 +5,31 @@ created: 2026-08-22
 
 # Micro-Phase 71 — Next Micro-Phase Roadmap: Executing the GPU Unblock and Cascade
 
-> **STATUS: EXECUTION-READY ROADMAP.** This note is my step-by-step plan for the micro-phase that starts after MP-70's Session 8 release. It is written from the reviewer's chair in the same first-person register as my progress log so it doubles as the public record of how I reason about the program's steady state *before* the work begins. Everything factual in this file was re-verified against the repository on 2026-08-22: working tree clean, `origin/main` at `ea90829` (PR #104's squash of MP-68's review and roadmap), `origin/dev` at `2e74577` (the reconcile merge), `git diff origin/main origin.dev` empty, 189 tests collected, ruff clean, blocking mypy clean on `src/results.py` + `src/experiments/runner.py`, `verify-claims` at 0, all five manifests on disk. The three hard blockers from MP-70's roadmap (GPU access for P=113, induction heads at scale, clean-clone proof) are the *only* research questions this phase opens — no improvisation at Session 0.
+> **STATUS: EXECUTION-READY ROADMAP.** This note is my step-by-step plan for the micro-phase
+> that starts after MP-70's Session 8 release. It is written from the reviewer's chair in the
+> same first-person register as my progress log so it doubles as the public record of how I
+> reason about the program's steady state *before* the work begins. Everything factual in this
+> file was re-verified against the repository on 2026-08-22: working tree clean,
+> `origin/main` at `ea90829` (PR #104's squash of MP-68's review and roadmap),
+> `origin/dev` at `2e74577` (the reconcile merge), `git diff origin/main origin.dev` empty,
+> 189 tests collected, ruff clean, blocking mypy clean on `src/results.py` +
+> `src/experiments/runner.py`, `verify-claims` at 0, all five manifests on disk. The three
+> hard blockers from MP-70's roadmap (GPU access for P=113, induction heads at scale,
+> clean-clone proof) are the *only* research questions this phase opens — no improvisation
+> at Session 0.
 
 ---
 
 ## Showcase Framing — How This Document Reads in Public
 
-This is not an internal memo. It is a dated, first-person artifact of how a research program reasons about its own steady state: what is verified, what is honestly still open, and what the next step is — before that step runs. Anyone reading the repository in sequence (MP-37 through this file) can watch the same discipline recur: facts re-verified sitting by sitting, a ledger that stamps rows or closes them with one named reason, negatives shipped as loudly as positives, and one deep question chosen per phase. If you take one thing from this phase's chapter, take the measured line in Part III: **the record ships its 40th dated direction or the phase does not release.**
+This is not an internal memo. It is a dated, first-person artifact of how a research program
+reasons about its own steady state: what is verified, what is honestly still open, and what the
+next step is — before that step runs. Anyone reading the repository in sequence (MP-37 through
+this file) can watch the same discipline recur: facts re-verified sitting by sitting, a ledger
+that stamps rows or closes them with one named reason, negatives shipped as loudly as positives,
+and one deep question chosen per phase. If you take one thing from this phase's chapter, take
+the measured line in Part III: **the record ships its 40th dated direction or the phase does not
+release.**
 
 ---
 
@@ -19,11 +37,18 @@ This is not an internal memo. It is a dated, first-person artifact of how a rese
 
 ### The Scientific Ledger
 
-The record's deepest fact has not changed and still carries every dated confirmation the record holds: **no run in this repository's history has ever produced a sparse Fourier solution.** The count advances only with a new verdict; between MP-70's drafting and this one, no new Fourier cell landed — the microscope's trials 2 (`--schedule constant`) and 3 (wd 1.5×) remain pending in ADR-0003's budget.
+The record's deepest fact has not changed and still carries every dated confirmation the record
+holds: **no run in this repository's history has ever produced a sparse Fourier solution.** The
+count advances only with a new verdict; between MP-70's drafting and this one, no new Fourier
+cell landed — the microscope's trials 2 (`--schedule constant`) and 3 (wd 1.5×) remain pending
+in ADR-0003's budget.
 
 - **P=59 drills dense 59/59**; **P=113's three-seed verdict is NO-GROK** (val 1.0, k_99 = 111/113); the positive-control scan stamped **ALL-DENSE** at P=59/67/97.
 - **Microscope trial 1 FALSIFIED** (embedding re-normalization is not the suppressor: k_99 = 112/113, val 0.7176); trials 2 and 3 pending in ADR-0003's budget.
-- **R1 standard-scale ×3-seed run COMPLETED 2026-08-14** with the scheduled no-head negative as its verdict (0/8 heads, peak diag+1 mass 0.075 at epoch 499, peak val accuracy 0.5083 near epoch 1950, K-composition max 0.056). This remains the newest dated fact on the record's negative side.
+- **R1 standard-scale ×3-seed run COMPLETED 2026-08-14** with the scheduled no-head negative
+as its verdict (0/8 heads, peak diag+1 mass 0.075 at epoch 499, peak val accuracy 0.5083
+near epoch 1950, K-composition max 0.056). This remains the newest dated fact on the
+record's negative side.
 - All five manifests are on disk (`results/exp1…exp5`), and `verify-claims` is at **0** — re-verified live in this drafting sitting.
 
 The arc my science has taken is the strongest thing I own: *will grokking reproduce?* (MP-28) → *is the harness itself the suppressor?* (MP-29) → *what is the dense solution's structure?* (MP-29 S3's characterization) → *which open question is deepest?* (MP-36) → the question chain from MP-37 through MP-67 → *which of C145–C148 does the consumed thirty-sixth verdict open?* (MP-68) → *the GPU unblock that the previous twenty-three could not execute locally* (MP-69/70). **This phase executes that unblock.**
@@ -37,7 +62,8 @@ The arc my science has taken is the strongest thing I own: *will grokking reprod
 
 ### The CI Floor and Toolchains
 
-189 tracked tests, ruff, blocking mypy, and markdownlint are green at the last release; `verify-claims` at 0. The verified gaps, stated as facts not hopes:
+189 tracked tests, ruff, blocking mypy, and markdownlint are green at the last release;
+`verify-claims` at 0. The verified gaps, stated as facts not hopes:
 - No LaTeX toolchain on this machine (`make paper` is graceful, not green)
 - No Pages deploy workflow in `.github/workflows/`
 - No `publish:` frontmatter policy
@@ -72,7 +98,11 @@ The MP-70 roadmap's eight candidates (R1–R8) are this phase's frozen candidate
 
 ### 4. The Steady State Must Not Become Ceremony
 
-This will be the twenty-first roadmap written from an *executed* roadmap's release report — the program's normal, confirmed twenty-one times. The drift risk inverts and deepens: the machinery (ledgers, sessions, gate criteria) is now twenty executions deep, so the law's countermeasure is that rows must still be dated in the sitting that owns them, verdicts still consumed as artifacts, and zero UNDECIDED rows at Session 8.
+This will be the twenty-first roadmap written from an *executed* roadmap's release report
+— the program's normal, confirmed twenty-one times. The drift risk inverts and deepens: the
+machinery (ledgers, sessions, gate criteria) is now twenty executions deep, so the law's
+countermeasure is that rows must still be dated in the sitting that owns them, verdicts still
+consumed as artifacts, and zero UNDECIDED rows at Session 8.
 
 ### 5. The Paper's Compile Gate Remains the Hardest Artifact
 
@@ -125,7 +155,9 @@ The eighteenth stranger-run transcript lands only if the lanes execute; C67 (the
 - **Exit**: R2 running; R3 complete or running; R1 at 1000+ epochs per seed.
 
 #### Session 3 (~2 h) — The GPU Run Verdict Intake + Extended Run Monitor
-- R1 completes (or checkpoints at 3000+ epochs). Download: checkpoints, `results/exp2_grokking.json`, `figures/exp2_*.png`. Verify manifest against RESULTS.md tags (`verify-claims` at 0).
+- R1 completes (or checkpoints at 3000+ epochs). Download: checkpoints,
+`results/exp2_grokking.json`, `figures/exp2_*.png`. Verify manifest against
+RESULTS.md tags (`verify-claims` at 0).
 - R2 monitor: check 2k/4k epoch checkpoints for Step 1 formation (L0 duplicate mass).
 - **Exit**: R1 manifest on disk; `verify-claims` updated; R2 at 4k+ epochs.
 
@@ -147,19 +179,32 @@ The eighteenth stranger-run transcript lands only if the lanes execute; C67 (the
 - **Exit**: artifact shipped with transcript; Ex-F distillation complete.
 
 #### Session 7 (~2 h) — The Shelf Rehearsal + The Re-check Row + The Teaching Polish
-- Row 5: hostile-webmaster walk at zero beside the browser, every public number clicked back to disk; the repo-shelf findings re-checked (local `main` reconciled, README current, residue gone, annexes' home verified).
+- Row 5: hostile-webmaster walk at zero beside the browser, every public number clicked back
+to disk; the repo-shelf findings re-checked (local `main` reconciled, README current,
+residue gone, annexes' home verified).
 - Row 6's re-check row dated.
-- Row 7: the eighteenth artifact runs end to end on a stranger's machine (fresh clone / Colab session); the run transcript is the receipt; the teaching distillation (Ex-F) lands here.
+- Row 7: the eighteenth artifact runs end to end on a stranger's machine (fresh clone /
+Colab session); the run transcript is the receipt; the teaching distillation (Ex-F)
+lands here.
 - **Exit**: rows 5, 6, 7 dated; the artifact shipped with its transcript.
 
 #### Session 8 (~1 h) — The Release
-- ADR-0024 at zero UNDECIDED rows; the merge green locally and on GitHub; `dev == main`; home wired — this roadmap's companion status retired; the roadmap archived with its deviations, every deviation a dated ledger note.
+- ADR-0024 at zero UNDECIDED rows; the merge green locally and on GitHub; `dev == main`;
+home wired — this roadmap's companion status retired; the roadmap archived with its
+deviations, every deviation a dated ledger note.
 - If the post-record arc governs, this sitting stamps the post-record arc's eighth dated direction — the record's closing sentence consumed eight times, never repeated.
 - **Exit**: the merge; the program's twentieth dated direction — or the post-record arc's eighth.
 
 ### The One Measured Line
 
-ADR-0024 at **zero UNDECIDED rows** on release day, with exactly one LAUNCHED research row (R1, the GPU grokking run) whose verdict (or scheduled negative) re-derives from a manifest; `verify-claims` at 0 with every public number re-derivable from one command line; the hostile-webmaster walk at zero on the live shelf and on the repo's own shelf (local `main` reconciled, README current, residue removed, the debt ledger present or absent-with-date); the eighteenth teaching artifact shipped with a stranger-runnable transcript; `dev == main` and the program's twentieth dated direction — or, if the post-record arc governs, its eighth dated direction.
+ADR-0024 at **zero UNDECIDED rows** on release day, with exactly one LAUNCHED research row
+(R1, the GPU grokking run) whose verdict (or scheduled negative) re-derives from a manifest;
+`verify-claims` at 0 with every public number re-derivable from one command line; the
+hostile-webmaster walk at zero on the live shelf and on the repo's own shelf (local `main`
+reconciled, README current, residue removed, the debt ledger present or absent-with-date);
+the eighteenth teaching artifact shipped with a stranger-runnable transcript; `dev == main`
+and the program's twentieth dated direction — or, if the post-record arc governs, its eighth
+dated direction.
 
 ---
 
@@ -203,7 +248,11 @@ The study I will do between now and the verdict sitting — each reading with th
   - Cunningham et al., *Sparse Autoencoders Find Highly Interpretable Features in Language Models* (ICLR 2024) — evaluation metrics
   - Templeton et al., *Scaling Monosemanticity* (2024) — dictionary size scaling laws
 
-- **Prediction**: The 32-dim residual stream from a small, undertrained model (150-300 epochs, no confirmed induction head) contains *no genuinely sparse features* — the SAE is learning a dense overcomplete basis because the ground truth isn't sparse yet. Once Rung 1 produces a checkpoint with real induction heads, the SAE on *that* checkpoint should show sparse features (L0 ~ 20-30).
+- **Prediction**: The 32-dim residual stream from a small, undertrained model (150-300 epochs,
+no confirmed induction head) contains *no genuinely sparse features* — the SAE is learning a
+dense overcomplete basis because the ground truth isn't sparse yet. Once Rung 1 produces a
+checkpoint with real induction heads, the SAE on *that* checkpoint should show sparse
+features (L0 ~ 20-30).
 
 - **Experiment**: Re-run `exp5_sae_dashboard --activations-from` on the first checkpoint that has a confirmed induction head. Compare L0/FVE tradeoff curves.
 
@@ -211,19 +260,37 @@ The study I will do between now and the verdict sitting — each reading with th
 
 **Question**: *What does the record's eighth post-record verdict open?*
 
-- **Primary sources**: Lakatos, *The Methodology of Scientific Research Programmes* (1978) — read a tenth time, now for the *ninth* question past a completed program: progressive vs degenerating problem shifts when the *eighth* post-record verdict lands, Kuhn's normal science as the post-record arc's axioms, and the honest criterion for the ninth post-record question — a question that must earn the post-record arc's eighth *new* paragraph. This reading feeds Ex-T and the Session-0 question this phase owns more deeply than any phase before it: *what does the record's eighth post-record verdict open?* The answer can be the post-record arc's ninth dated row — Lakatos' point is that the decision is made on the record, never as a mood.
+- **Primary sources**: Lakatos, *The Methodology of Scientific Research Programmes* (1978) — read
+a tenth time, now for the *ninth* question past a completed program: progressive vs
+degenerating problem shifts when the *eighth* post-record verdict lands, Kuhn's normal
+science as the post-record arc's axioms, and the honest criterion for the ninth
+post-record question — a question that must earn the post-record arc's eighth *new*
+paragraph. This reading feeds Ex-T and the Session-0 question this phase owns more deeply
+than any phase before it: *what does the record's eighth post-record verdict open?* The
+answer can be the post-record arc's ninth dated row — Lakatos' point is that the decision
+is made on the record, never as a mood.
 
 ### 5. The Record Teaches, Round Nineteen
 
 **Question**: *Can I distill the nineteenth verdict into four registers without leakage?*
 
-The nineteenth verdict in four registers — the paper's sentence, the annex's sentence, the 30-second spoken claim, and the 5-minute teaching explanation with a worked toy a stranger can run; the gap between the last two is where my teaching leaks, and I will measure it deliberately by writing all four registers for the same verdict (Ex-F).
+The nineteenth verdict in four registers — the paper's sentence, the annex's sentence,
+the 30-second spoken claim, and the 5-minute teaching explanation with a worked toy a
+stranger can run; the gap between the last two is where my teaching leaks, and I will
+measure it deliberately by writing all four registers for the same verdict (Ex-F).
 
 ### 6. The Redemption Reading, or Negative Results as Maps, the Nineteenth Pass
 
 **Question**: *How is the completed law reported honestly?*
 
-If a sparse cell exists by S0: Nanda et al.'s full per-frequency reading on the first sparse solution this harness ever produced. If not: how the *completed* law is reported honestly — the law's domain closed with its measured boundaries and its failure cells explained or mapped, the driver a principle or a case study with a dated exception map, the drift numbers nine deep, the negative as a contribution — and how the post-record harness (if PR-22 governs) would be designed from the dated negatives instead of from hope. Either way, the paper's hardest paragraph is the one that claims the dense solution *computes something*; I will draft it against this reading and let the manifest referee it.
+If a sparse cell exists by S0: Nanda et al.'s full per-frequency reading on the first sparse
+solution this harness ever produced. If not: how the *completed* law is reported honestly —
+the law's domain closed with its measured boundaries and its failure cells explained or
+mapped, the driver a principle or a case study with a dated exception map, the drift numbers
+nine deep, the negative as a contribution — and how the post-record harness (if PR-22
+governs) would be designed from the dated negatives instead of from hope. Either way, the
+paper's hardest paragraph is the one that claims the dense solution *computes something*; I
+will draft it against this reading and let the manifest referee it.
 
 ---
 
@@ -231,17 +298,27 @@ If a sparse cell exists by S0: Nanda et al.'s full per-frequency reading on the 
 
 Everything this phase claims re-derives from a manifest and a command. The documentation I will write, and where:
 
-- **This roadmap**, promoted from the companion review at Session 0, rewritten from MP-70's release report, deviations recorded as dated ledger notes.
-- **ADR-0024**, the twentieth continuum ledger — eight rows pre-stamped with windows and kill-dates; rows 1–2 consumed from ADR-0023's verdicts; row 3 the twentieth research question with its protocol note and heartbeat (or the post-record continuation row's protocol); rows 4–8 the continuum's decisions.
+- **This roadmap**, promoted from the companion review at Session 0, rewritten from MP-70's
+release report, deviations recorded as dated ledger notes.
+- **ADR-0024**, the twentieth continuum ledger — eight rows pre-stamped with windows and
+kill-dates; rows 1–2 consumed from ADR-0023's verdicts; row 3 the twentieth research
+question with its protocol note and heartbeat (or the post-record continuation row's
+protocol); rows 4–8 the continuum's decisions.
 - **GPU Colab Execution Protocol** — `06_production_ai/notes/gpu-colab-execution-protocol.md` updated with actual run transcript.
 - **Extended Induction Run Spec** — `04_nlp_and_transformers/notes/induction-extended-run.md` updated with actual 10k-epoch curves.
 - **Clean-Clone Reproducibility Proof** — `06_production_ai/proofs/reproducible-from-clean-clone.md` updated with actual transcript and timestamps.
 - **Paper v20 Diff** — `portfolio/paper/main.tex` v20 + diff log or the dated "v19 is the record" memo; `make paper` re-verified in the CI mirror.
 - **Essay Annex v20** — `portfolio/essay-annex-20.md` (on live shelf) manifest-tagged, amended never rewritten; the annexes' home (the live shelf) recorded with a date.
 - **Gate-Debt Ledger** — `checklists/gate-debt.md` — each cell's transcript or one-line reason, dated in Session 1, including the exp5 1000-epoch resolution's receipt re-checked; the file's absence, if still absent, recorded with a date.
-- **Research Row's Pre-registration Note** — in `06_production_ai/notes/` + the heartbeat artifact; if R1: the law-theory figure spec written before the analysis, the figure itself manifest-tagged after. If the post-record arc governs: the continuation row's protocol note instead.
+- **Research Row's Pre-registration Note** — in `06_production_ai/notes/` + the heartbeat
+artifact; if R1: the law-theory figure spec written before the analysis, the figure itself
+manifest-tagged after. If the post-record arc governs: the continuation row's protocol
+note instead.
 - **The Nineteenth Teaching Artifact + its Stranger-Run Transcript** — (fresh-clone or Colab session receipt).
-- **Ex-T's Execution Memo** — MP-70's arc decision run with dates: the post-record verdict consumed or the R1–R8 adjudication executed, the criteria cited, the decision that follows (the ninth post-record question, or the continuation), written verdict-agnostic in Session 2 and executed at Session 0.
+- **Ex-T's Execution Memo** — MP-70's arc decision run with dates: the post-record verdict
+consumed or the R1–R8 adjudication executed, the criteria cited, the decision that follows
+(the ninth post-record question, or the continuation), written verdict-agnostic in Session 2
+and executed at Session 0.
 - **`00_meta/03-progress-log`** — one dated entry per session; home wired at release; the continuum ledger's rows cited by the skill tree's publication flips.
 
 ### Manifest Tags Required in RESULTS.md
@@ -345,11 +422,19 @@ uv run python -m src.experiments.exp5_sae_dashboard \
 
 ### Ex-7 · The Arc Consumption, Thirtieth Generation (Session 0, New, Verdict-Agnostic)
 
-The consumption chain's deepest run — MP-70's Session-0 decision consumed with dates as MP-71's intake, the eighth-generation post-record verdict read from ADR-0023 row 3 if the arc governs, the criteria cited, the release that follows (the ninth post-record question, or the R1–R8 adjudication), and what each of ADR-0023's possible verdicts changes in that execution. One runnable check: the execution memo exists, names the decision rule that closes or continues the program's science, and cites the criteria from MP-70's release report — the chain now thirty generations deep, a sitting stamps, it never re-decides.
+The consumption chain's deepest run — MP-70's Session-0 decision consumed with dates as
+MP-71's intake, the eighth-generation post-record verdict read from ADR-0023 row 3 if the arc
+governs, the criteria cited, the release that follows (the ninth post-record question, or the
+R1–R8 adjudication), and what each of ADR-0023's possible verdicts changes in that execution.
+One runnable check: the execution memo exists, names the decision rule that closes or
+continues the program's science, and cites the criteria from MP-70's release report — the
+chain now thirty generations deep, a sitting stamps, it never re-decides.
 
 ### Ex-8 · The Fork Drill, Deepest Form (Session 2, Verdict-Agnostic)
 
-The continuing state (R1–R8) vs the post-record state (continuation set) written as two one-page paths — what each verdict changes downstream, including the R1-vs-R2 choice and the post-record continuation choice — so next phase's S0 decision is a stamping, not a discovery.
+The continuing state (R1–R8) vs the post-record state (continuation set) written as two
+one-page paths — what each verdict changes downstream, including the R1-vs-R2 choice and the
+post-record continuation choice — so next phase's S0 decision is a stamping, not a discovery.
 
 ---
 
@@ -357,11 +442,30 @@ The continuing state (R1–R8) vs the post-record state (continuation set) writt
 
 - **The one-question law, twentieth execution.** A phase that opens two research questions is drift by another name; the unchosen candidates close in the same sitting as the choice — and the arc consumption may close all of them with the post-record verdict. The continuum law is the mechanical refusal of this drift — proven executable nineteen times, it must simply be executed again.
 
-- **The candidate set is frozen before S0, never improvised at it.** R1–R8 are conditions, not predictions; a sitting decides, it never invents — and the terminal-state object is the hardest frozen object on the record: written by MP-40, executed by MP-41, consumed by MP-42, consumed again by MP-43, consumed a third time by MP-44, consumed a fourth time by MP-45, consumed a fifth time by MP-46, consumed a sixth time by MP-47, consumed a seventh time by MP-48, consumed an eighth time by MP-49, consumed a ninth time by MP-50, consumed a tenth time by MP-51, consumed an eleventh time by MP-52, consumed a twelfth time by MP-53, consumed a thirteenth time by MP-54, consumed a fourteenth time by MP-55, consumed a fifteenth time by MP-56, consumed a sixteenth time by MP-57, consumed a seventeenth time by MP-58, consumed an eighteenth time by MP-59, consumed a nineteenth time by MP-60, consumed a twentieth time by MP-61, consumed a twenty-first time by MP-62, consumed a twenty-second time by MP-63, consumed a twenty-third time by MP-64, consumed a twenty-fourth time by MP-65, consumed a twenty-fifth time by MP-66, consumed a twenty-sixth time by MP-67, consumed a twenty-seventh time by MP-68, consumed a twenty-eighth time by MP-69, consumed a twenty-ninth time by MP-70, **consumed a thirtieth time by MP-71** — never re-negotiated in the consuming sitting.
+- **The candidate set is frozen before S0, never improvised at it.** R1–R8 are conditions,
+not predictions; a sitting decides, it never invents — and the terminal-state object is the
+hardest frozen object on the record: written by MP-40, executed by MP-41, consumed by
+MP-42, consumed again by MP-43, consumed a third time by MP-44, consumed a fourth time by
+MP-45, consumed a fifth time by MP-46, consumed a sixth time by MP-47, consumed a seventh
+time by MP-48, consumed an eighth time by MP-49, consumed a ninth time by MP-50, consumed
+a tenth time by MP-51, consumed an eleventh time by MP-52, consumed a twelfth time by
+MP-53, consumed a thirteenth time by MP-54, consumed a fourteenth time by MP-55, consumed
+a fifteenth time by MP-56, consumed a sixteenth time by MP-57, consumed a seventeenth time
+by MP-58, consumed an eighteenth time by MP-59, consumed a nineteenth time by MP-60,
+consumed a twentieth time by MP-61, consumed a twenty-first time by MP-62, consumed a
+twenty-second time by MP-63, consumed a twenty-third time by MP-64, consumed a
+twenty-fourth time by MP-65, consumed a twenty-fifth time by MP-66, consumed a
+twenty-sixth time by MP-67, consumed a twenty-seventh time by MP-68, consumed a
+twenty-eighth time by MP-69, consumed a twenty-ninth time by MP-70, **consumed a thirtieth
+time by MP-71** — never re-negotiated in the consuming sitting.
 
 - **Consumption is execution.** A verdict consumed into an artifact in the same sitting is a result; consumed into a paragraph written later it is a memory. Row 1 consumes ADR-0023's row-3 verdict in the sitting that owns it — or the post-record statement, if the arc governs.
 
-- **The receipt compounds.** The nineteenth runnable artifact is only worth shipping because the first eighteen transcripts proved the format — and if R5 opens, the receipts are a drift-of-drift-of-drift-of-drift-of-drift-of-drift-of-drift-of-drift number measured eight times in a row, tested by people I did not choose, across an aging codebase. My showcase's story is now "read it, run it, watch me be wrong on the record," nineteen receipts deep.
+- **The receipt compounds.** The nineteenth runnable artifact is only worth shipping because the
+first eighteen transcripts proved the format — and if R5 opens, the receipts are a
+drift-of-drift-of-drift-of-drift-of-drift-of-drift-of-drift-of-drift number measured eight
+times in a row, tested by people I did not choose, across an aging codebase. My showcase's
+story is now "read it, run it, watch me be wrong on the record," nineteen receipts deep.
 
 - **The steady state is the reward, not the ceremony.** MP-71 is the twenty-first roadmap written from an *executed* roadmap's release report — the program at its normal, confirmed twenty-one times. The cap's lesson was that promises without dates drift; the steady state's discipline is that the machinery never becomes the goal: rows are dated in the sitting that owns them, or they are not rows.
 
@@ -375,7 +479,11 @@ The continuing state (R1–R8) vs the post-record state (continuation set) writt
 
 - **The negative stays the signature.** The row that closes with one reason dated in the sitting that owns it is the strongest artifact in the repository. Every positive result in this program has a negative twin that was measured, drafted, and stamped — and the negative twin is the one that proves the positive wasn't cherry-picked. The GPU unblock is the act of finally measuring the primary flagship on its native hardware; whatever it returns, the measurement is the contribution.
 
-- **Architectural integrity check for this phase:** The checkpointing infrastructure in `src/experiments/checkpointing.py` (shared by exp1/exp2) was battle-tested in MP-12/MP-28 and must not be touched unless a falsification test fails. The `runner.py` multi-seed aggregation and `results.py` manifest/verification machinery are the backbone — they are the contract, not the implementation.
+- **Architectural integrity check for this phase:** The checkpointing infrastructure in
+`src/experiments/checkpointing.py` (shared by exp1/exp2) was battle-tested in MP-12/MP-28
+and must not be touched unless a falsification test fails. The `runner.py` multi-seed
+aggregation and `results.py` manifest/verification machinery are the backbone — they are the
+contract, not the implementation.
 
 - **Reproducibility as a first-class citizen:** Every figure, every number, every claim must trace back to a manifest and a command. The `make reproduce` target is the single source of truth for "what does this repo produce?" — if it drifts, the science drifts.
 
