@@ -13,6 +13,12 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-21 (fifty-sixth session) — Micro-Phase 70, kickoff: the GPU unblock and cascade execution
+
+- **Studied**: Full repository state verified against MP-69 roadmap — 189 tests pass, ruff clean, blocking mypy clean on `src/results.py` + `src/experiments/runner.py`, `verify-claims` at 0, all five manifests on disk. The three hard blockers confirmed: (1) P=113 grokking flagship never run on GPU, (2) Induction heads 0/8 at standard scale (3000 epochs), (3) Clean-clone proof not green.
+- **Built**: ADR-0023 (`docs/adr/0023-gpu-unblock-and-cascade.md`) — eighteen-generation roadmap with eight frozen rows, explicit windows/kill-dates/opening-conditions. GPU Colab execution protocol (`06_production_ai/notes/gpu-colab-execution-protocol.md`). Extended induction run spec (`04_nlp_and_transformers/notes/induction-extended-run.md`).
+- **Open question**: None new — the roadmap freezes the candidate set at Session 0. The intake questions are exactly what ADR-0023's rows will answer: whether the GPU run produces sparse or dense Fourier, whether 10k epochs crosses the induction threshold, whether the clean clone reproduces.
+
 ## 2026-08-20 (fifty-fifth session) — Micro-Phase 69, draft: the thirty-eighth question, written from the thirty-seventh release report
 
 - **Studied**: the state this phase is written to consume, verified against
