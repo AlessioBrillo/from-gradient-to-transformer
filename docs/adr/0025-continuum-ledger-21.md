@@ -10,7 +10,11 @@ tags: [phase/7, research/experiment, plan]
 
 ## Context
 
-Micro-Phase 29 (the positive-negative harness) remains mid-execution. The P=113 grokking flagship (Rung 2) has never run on GPU — this environment is CPU-only. The cascade (Rung 1 → 4 → 5) requires a Rung 1 checkpoint with a confirmed induction head, which the 3000-epoch fresh-batches run did not produce (peak diag+1 mass 0.075 vs 0.3 threshold). Phase 6's clean-clone reproducibility proof is not yet green.
+Micro-Phase 29 (the positive-negative harness) remains mid-execution. The P=113 grokking flagship
+(Rung 2) has never run on GPU — this environment is CPU-only. The cascade (Rung 1 → 4 → 5)
+requires a Rung 1 checkpoint with a confirmed induction head, which the 3000-epoch fresh-batches
+run did not produce (peak diag+1 mass 0.075 vs 0.3 threshold). Phase 6's clean-clone
+reproducibility proof is not yet green.
 
 Three hard blockers gate everything downstream:
 1. **GPU access** for the P=113 3-seed grokking run
