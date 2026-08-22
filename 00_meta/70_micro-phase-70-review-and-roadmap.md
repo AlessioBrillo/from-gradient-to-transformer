@@ -306,23 +306,95 @@ phase**). My teaching lane ships the eighteenth artifact this phase.
 
 ### The nine sessions
 
-1. **Session 0 (~1 h) — the gate truthing + the twenty-ninth-generation arc + the continuum choice.** Consume MP-69's release report row by row: ADR-0043 at zero UNDECIDED rows, the live URL re-clicked in the sitting, `verify-claims` at its actual count, the seventeenth teaching transcript on disk, `dev == main`. Commit the intake table before a single continuum row opens. Then **Ex-T: consume MP-69's Session-0 decision with dates** — the twenty-ninth-generation consumption: if the post-record arc continued, the eighth post-record question's verdict is read from ADR-0043 row 3 and the ninth post-record question chosen from the pre-registered continuation set; if not, the R1–R8 adjudication: exactly one opens as row 3, the unchosen close with one dated reason each, stamped in the same sitting. Open ADR-0023 with its eight rows, windows and kill-dates; declare the terminus (release = merge + 14 calendar days); promote this roadmap from MP-69's release report, deviations recorded as dated ledger notes. *Exit: intake signed; the twenty-ninth-generation arc stamped; row 3 chosen (or the post-record continuation row opened); ledger open.*
+1. **Session 0 (~1 h) — the gate truthing + the twenty-ninth-generation arc +**
+   **the continuum choice.** Consume MP-69's release report row by row: ADR-0043
+   at zero UNDECIDED rows, the live URL re-clicked in the sitting,
+   `verify-claims` at its actual count, the seventeenth teaching transcript
+   on disk, `dev == main`. Commit the intake table before a single
+   continuum row opens. Then **Ex-T: consume MP-69's Session-0 decision
+   with dates** — the twenty-ninth-generation consumption: if the post-record
+   arc continued, the eighth post-record question's verdict is read from
+   ADR-0043 row 3 and the ninth post-record question chosen from the
+   pre-registered continuation set; if not, the R1–R8 adjudication: exactly
+   one opens as row 3, the unchosen close with one dated reason each,
+   stamped in the same sitting. Open ADR-0023 with its eight rows, windows
+   and kill-dates; declare the terminus (release = merge + 14 calendar
+   days); promote this roadmap from MP-69's release report, deviations
+   recorded as dated ledger notes. *Exit: intake signed; the
+   twenty-ninth-generation arc stamped; row 3 chosen (or the post-record
+   continuation row opened); ledger open.*
 
-2. **Session 1 (~2 h) — the GPU launch + the shelf baseline + the debt re-verification.** Row 5: hostile-webmaster walk of the live site + Space at zero (links, assets, a11y, orphans) — extended to the repo's own shelf: local `main` re-verified reconciled to `origin/main` (branch list as the transcript), `portfolio/README.md`'s staleness verified closed (MP-69's Session 1 owned the first fix; this sitting verifies the file is current), the exp6 residue removed with a transcript, the annexes' location verified. Row 8: MP-69's stamped closures re-verified (W&B, clean-clone proof, graduation proof, `reproduce-multiseed` exp2/exp5, the exp5 1000-epoch resolution, the README fix, the residue removal) — each cell LAUNCHED-with-transcript or CLOSED-with-one-reason; a claimed closure without its transcript stays open and blocks Session 8; `gate-debt.md`'s absence, if still absent, recorded with a date. **Launch R1 (GPU Grokking)** — upload notebook to Colab, mount Drive, start 3-seed run. *Exit: rows 5 and 8 stamped; R1 running on Colab.*
+2. **Session 1 (~2 h) — the GPU launch + the shelf baseline + the debt**
+   **re-verification.** Row 5: hostile-webmaster walk of the live site + Space at
+   zero (links, assets, a11y, orphans) — extended to the repo's own shelf:
+   local `main` re-verified reconciled to `origin/main` (branch list as the
+   transcript), `portfolio/README.md`'s staleness verified closed (MP-69's
+   Session 1 owned the first fix; this sitting verifies the file is current),
+   the exp6 residue removed with a transcript, the annexes' location verified.
+   Row 8: MP-69's stamped closures re-verified (W&B, clean-clone proof,
+   graduation proof, `reproduce-multiseed` exp2/exp5, the exp5 1000-epoch
+   resolution, the README fix, the residue removal) — each cell
+   LAUNCHED-with-transcript or CLOSED-with-one-reason; a claimed closure
+   without its transcript stays open and blocks Session 8; `gate-debt.md`'s
+   absence, if still absent, recorded with a date. **Launch R1 (GPU
+   Grokking)** — upload notebook to Colab, mount Drive, start 3-seed run.
+   *Exit: rows 5 and 8 stamped; R1 running on Colab.*
 
-3. **Session 2 (~3 h) — the extended induction launch + neuron ablation + GPU monitor.** Launch R2 (Extended Induction 10k epochs ×3 seeds) in background with checkpointing every 500 epochs. Launch R3 (Neuron Ablation) on existing P=113 CPU checkpoints — scripted, produces `figures/exp2_neuron_ablation.png`. Monitor R1: check Colab runtime, download first checkpoint if available. *Exit: R2 running; R3 complete or running; R1 at 1000+ epochs per seed.*
+3. **Session 2 (~3 h) — the extended induction launch + neuron ablation +**
+   **GPU monitor.** Launch R2 (Extended Induction 10k epochs ×3 seeds) in
+   background with checkpointing every 500 epochs. Launch R3 (Neuron
+   Ablation) on existing P=113 CPU checkpoints — scripted, produces
+   `figures/exp2_neuron_ablation.png`. Monitor R1: check Colab runtime,
+   download first checkpoint if available. *Exit: R2 running; R3 complete or
+   running; R1 at 1000+ epochs per seed.*
 
-4. **Session 3 (~2 h) — the GPU run verdict intake + extended run monitor.** R1 completes (or checkpoints at 3000+ epochs). Download: checkpoints, `results/exp2_grokking.json`, `figures/exp2_*.png`. Verify manifest against RESULTS.md tags (`verify-claims` at 0). R2 monitor: check 2k/4k epoch checkpoints for Step 1 formation (L0 duplicate mass). *Exit: R1 manifest on disk; `verify-claims` updated; R2 at 4k+ epochs.*
+4. **Session 3 (~2 h) — the GPU run verdict intake + extended run**
+   **monitor.** R1 completes (or checkpoints at 3000+ epochs). Download:
+   checkpoints, `results/exp2_grokking.json`, `figures/exp2_*.png`. Verify
+   manifest against RESULTS.md tags (`verify-claims` at 0). R2 monitor: check
+   2k/4k epoch checkpoints for Step 1 formation (L0 duplicate mass). *Exit:
+   R1 manifest on disk; `verify-claims` updated; R2 at 4k+ epochs.*
 
-5. **Session 4 (~2 h) — clean-clone proof + paper v19 decision.** Execute clean-clone protocol: fresh clone → `uv sync` → `make reproduce-quick` → `make verify-claims`. Full transcript to `06_production_ai/proofs/reproducible-from-clean-clone.md`. Paper v19 decision: if R1/R2/R3 produced new numbers → paper v19 diff + annex v19 scaffold; else "v18 is the record" memo. *Exit: clean-clone transcript; paper decision dated.*
+5. **Session 4 (~2 h) — clean-clone proof + paper v19 decision.** Execute
+   clean-clone protocol: fresh clone → `uv sync` → `make reproduce-quick` →
+   `make verify-claims`. Full transcript to
+   `06_production_ai/proofs/reproducible-from-clean-clone.md`. Paper v19
+   decision: if R1/R2/R3 produced new numbers → paper v19 diff + annex v19
+   scaffold; else "v18 is the record" memo. *Exit: clean-clone transcript;
+   paper decision dated.*
 
-6. **Session 5 (~2 h) — essay annex v19 + SAE protocol (gated on R2 verdict).** `portfolio/essay-annex-19.md` (on live shelf, dated): R1/R2/R3 verdict set distilled into one dated annex; reverse claims audit at zero (prose → manifest → command). If R2 produced confirmed head: write R5 protocol (SAE on head checkpoint) with site, metric, negative control, kill-date. *Exit: annex drafted; R5 protocol written or closed with reason.*
+6. **Session 5 (~2 h) — essay annex v19 + SAE protocol (gated on R2**
+   **verdict).** `portfolio/essay-annex-19.md` (on live shelf, dated): R1/R2/R3
+   verdict set distilled into one dated annex; reverse claims audit at zero
+   (prose → manifest → command). If R2 produced confirmed head: write R5
+   protocol (SAE on head checkpoint) with site, metric, negative control,
+   kill-date. *Exit: annex drafted; R5 protocol written or closed with
+   reason.*
 
-7. **Session 6 (~3 h) — the teaching artifact + stranger run.** Build R6 (Teaching Artifact v19 Colab notebook). Execute on fresh Colab session as stranger — full transcript saved. Compare against previous artifact's transcript (Ex-M). *Exit: artifact shipped with transcript; Ex-F distillation complete.*
+7. **Session 6 (~3 h) — the teaching artifact + stranger run.** Build R6
+   (Teaching Artifact v19 Colab notebook). Execute on fresh Colab session as
+   stranger — full transcript saved. Compare against previous artifact's
+   transcript (Ex-M). *Exit: artifact shipped with transcript; Ex-F
+   distillation complete.*
 
-8. **Session 7 (~2 h) — the shelf rehearsal + the re-check row + the teaching polish.** Row 5: hostile-webmaster walk at zero beside the browser, every public number clicked back to disk; the repo-shelf findings re-checked (local `main` reconciled, README current, residue gone, annexes' home verified). Row 6's re-check row dated. Row 7: the eighteenth artifact runs end to end on a stranger's machine (fresh clone / Colab session); the run transcript is the receipt; the teaching distillation (Ex-F) lands here. *Exit: rows 5, 6, 7 dated; the artifact shipped with its transcript.*
+8. **Session 7 (~2 h) — the shelf rehearsal + the re-check row + the**
+   **teaching polish.** Row 5: hostile-webmaster walk at zero beside the
+   browser, every public number clicked back to disk; the repo-shelf
+   findings re-checked (local `main` reconciled, README current, residue
+   gone, annexes' home verified). Row 6's re-check row dated. Row 7: the
+   eighteenth artifact runs end to end on a stranger's machine (fresh clone /
+   Colab session); the run transcript is the receipt; the teaching
+   distillation (Ex-F) lands here. *Exit: rows 5, 6, 7 dated; the artifact
+   shipped with its transcript.*
 
-9. **Session 8 (~1 h) — the release.** ADR-0023 at zero UNDECIDED rows; the merge green locally and on GitHub; `dev == main`; home wired — this roadmap's companion status retired; the roadmap archived with its deviations, every deviation a dated ledger note. If the post-record arc governs, this sitting stamps the post-record arc's eighth dated direction — the record's closing sentence consumed eight times, never repeated. *Exit: the merge; the program's nineteenth dated direction — or the post-record arc's eighth.*
+9. **Session 8 (~1 h) — the release.** ADR-0023 at zero UNDECIDED rows;
+   the merge green locally and on GitHub; `dev == main`; home wired — this
+   roadmap's companion status retired; the roadmap archived with its
+   deviations, every deviation a dated ledger note. If the post-record arc
+   governs, this sitting stamps the post-record arc's eighth dated direction
+   — the record's closing sentence consumed eight times, never repeated.
+   *Exit: the merge; the program's nineteenth dated direction — or the
+   post-record arc's eighth.*
 
 ### The one measured line
 
@@ -382,17 +454,40 @@ single number is read, and the primary source on disk.
 ### 4. The Post-Record Program, Eighth Generation (new, deepest)
 **Question**: *What does the record's seventh post-record verdict open?*
 
-- **Primary sources**: Lakatos, *The Methodology of Scientific Research Programmes* (1978) — read a ninth time, now for the *eighth* question past a completed program: progressive vs degenerating problem shifts when the *seventh* post-record verdict lands, Kuhn's normal science as the post-record arc's axioms, and the honest criterion for the eighth post-record question — a question that must earn the post-record arc's seventh *new* paragraph. This reading feeds Ex-T and the Session-0 question MP-70 owns more deeply than any phase before it: *what does the record's seventh post-record verdict open?* The answer can be the post-record arc's eighth dated row — Lakatos' point is that the decision is made on the record, never as a mood.
+- **Primary sources**: Lakatos, *The Methodology of Scientific Research
+  Programmes* (1978) — read a ninth time, now for the *eighth* question past
+  a completed program: progressive vs degenerating problem shifts when the
+  *seventh* post-record verdict lands, Kuhn's normal science as the
+  post-record arc's axioms, and the honest criterion for the eighth
+  post-record question — a question that must earn the post-record arc's
+  seventh *new* paragraph. This reading feeds Ex-T and the Session-0 question
+  MP-70 owns more deeply than any phase before it: *what does the record's
+  seventh post-record verdict open?* The answer can be the post-record arc's
+  eighth dated row — Lakatos' point is that the decision is made on the
+  record, never as a mood.
 
 ### 5. The Record Teaches, Round Eighteen
 **Question**: *Can I distill the eighteenth verdict into four registers without leakage?*
 
-The eighteenth verdict in four registers — the paper's sentence, the annex's sentence, the 30-second spoken claim, and the 5-minute teaching explanation with a worked toy a stranger can run; the gap between the last two is where my teaching leaks, and I will measure it deliberately by writing all four registers for the same verdict (Ex-F).
+The eighteenth verdict in four registers — the paper's sentence, the
+annex's sentence, the 30-second spoken claim, and the 5-minute teaching
+explanation with a worked toy a stranger can run; the gap between the last
+two is where my teaching leaks, and I will measure it deliberately by
+writing all four registers for the same verdict (Ex-F).
 
 ### 6. The Redemption Reading, or Negative Results as Maps, the Eighteenth Pass
 **Question**: *How is the completed law reported honestly?*
 
-If a sparse cell exists by S0: Nanda et al.'s full per-frequency reading on the first sparse solution this harness ever produced. If not: how the *completed* law is reported honestly — the law's domain closed with its measured boundaries and its failure cells explained or mapped, the driver a principle or a case study with a dated exception map, the drift numbers eight deep, the negative as a contribution — and how the post-record harness (if PR-22 governs) would be designed from the dated negatives instead of from hope. Either way, the paper's hardest paragraph is the one that claims the dense solution *computes something*; I will draft it against this reading and let the manifest referee it.
+If a sparse cell exists by S0: Nanda et al.'s full per-frequency reading on
+the first sparse solution this harness ever produced. If not: how the
+*completed* law is reported honestly — the law's domain closed with its
+measured boundaries and its failure cells explained or mapped, the driver a
+principle or a case study with a dated exception map, the drift numbers
+eight deep, the negative as a contribution — and how the post-record
+harness (if PR-22 governs) would be designed from the dated negatives
+instead of from hope. Either way, the paper's hardest paragraph is the one
+that claims the dense solution *computes something*; I will draft it against
+this reading and let the manifest referee it.
 
 ## Part V — Documentation requirements (the contract)
 
@@ -504,7 +599,15 @@ uv run python -m src.experiments.exp5_sae_dashboard \
 **Transcript**: Stranger runs it on fresh Colab session → saves output → transcript committed.
 
 ### Ex-7 · The Arc Consumption, Twenty-Ninth Generation (Session 0, new, verdict-agnostic)
-The consumption chain's deepest run — MP-69's Session-0 decision consumed with dates as MP-70's intake, the eighth-generation post-record verdict read from ADR-0043 row 3 if the arc governs, the criteria cited, the release that follows (the ninth post-record question, or the R1–R8 adjudication), and what each of ADR-0043's possible verdicts changes in that execution. One runnable check: the execution memo exists, names the decision rule that closes or continues the program's science, and cites the criteria from MP-69's release report — the chain now thirty generations deep, a sitting stamps, it never re-decides.
+The consumption chain's deepest run — MP-69's Session-0 decision consumed
+with dates as MP-70's intake, the eighth-generation post-record verdict read
+from ADR-0043 row 3 if the arc governs, the criteria cited, the release that
+follows (the ninth post-record question, or the R1–R8 adjudication), and
+what each of ADR-0043's possible verdicts changes in that execution. One
+runnable check: the execution memo exists, names the decision rule that
+closes or continues the program's science, and cites the criteria from
+MP-69's release report — the chain now thirty generations deep, a sitting
+stamps, it never re-decides.
 
 ### Ex-8 · The Fork Drill, Deepest Form (Session 2, verdict-agnostic)
 The continuing state (R1–R8) vs the post-record state (continuation set) written as two one-page paths — what each verdict changes downstream, including the R1-vs-R2 choice and the post-record continuation choice — so next phase's S0 decision is a stamping, not a discovery.

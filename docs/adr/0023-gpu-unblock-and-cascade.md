@@ -6,7 +6,7 @@ status: OPEN
 tags: [phase/7, research/experiment, plan]
 ---
 
-# ADR-0023: GPU Unblock and Cascade Execution
+## ADR-0023: GPU Unblock and Cascade Execution
 
 ## Context
 
