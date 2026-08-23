@@ -8,8 +8,6 @@ tags: [type/ledger, phase/7, research/experiment]
 consumes: [ADR-0023]
 ---
 
-# ADR-0024: Continuum Ledger — Twentieth Execution
-
 **Written from MP-70's release report at Session 0 of MP-74.**
 **Terminus**: Release = merge + 14 calendar days (2026-09-06).
 **Consumes**: ADR-0023 row 3 verdict (post-record arc or R1–R8 adjudication).
