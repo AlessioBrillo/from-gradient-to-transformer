@@ -11,7 +11,13 @@ created: 2026-08-23
 
 ## Showcase Framing — How This Document Reads in Public
 
-This is the twenty-third roadmap written from an *executed* roadmap's release report. Anyone reading the repository in sequence (MP-37 through this file) watches the same discipline recur: facts re-verified sitting by sitting, a ledger that stamps rows or closes them with one named reason, negatives shipped as loudly as positives, and one deep question chosen per phase. The measured line in Part III is: **ADR-0026 at zero UNDECIDED rows on release day, with the cascade's first real results manifest-tagged and the paper's compile gate pinned at Session 0.**
+This is the twenty-third roadmap written from an *executed* roadmap's release report.
+Anyone reading the repository in sequence (MP-37 through this file) watches the same
+discipline recur: facts re-verified sitting by sitting, a ledger that stamps rows or
+closes them with one named reason, negatives shipped as loudly as positives, and one
+deep question chosen per phase. The measured line in Part III is: **ADR-0026 at zero
+UNDECIDED rows on release day, with the cascade's first real results manifest-tagged
+and the paper's compile gate pinned at Session 0.**
 
 ---
 
@@ -165,7 +171,12 @@ The twentieth stranger-run transcript lands only if lanes execute; the receipt c
 
 ### The One Measured Line
 
-ADR-0026 at **zero UNDECIDED rows** on release day, with exactly one LAUNCHED research row whose verdict re-derives from a manifest; `verify-claims` at 0 with every public number re-derivable from one command line; hostile-webmaster walk at zero on live shelf and repo shelf; twentieth teaching artifact shipped with stranger-runnable transcript; `dev == main` and program's twenty-second dated direction — or post-record arc's tenth.
+ADR-0026 at **zero UNDECIDED rows** on release day, with exactly one LAUNCHED
+research row whose verdict re-derives from a manifest; `verify-claims` at 0 with
+every public number re-derivable from one command line; hostile-webmaster walk at
+zero on live shelf and repo shelf; twentieth teaching artifact shipped with
+stranger-runnable transcript; `dev == main` and program's twenty-second dated
+direction — or post-record arc's tenth.
 
 ---
 
@@ -215,7 +226,12 @@ ADR-0026 at **zero UNDECIDED rows** on release day, with exactly one LAUNCHED re
 
 **Question**: *What does the record's ninth post-record verdict open?*
 
-- **Primary sources**: Lakatos, *The Methodology of Scientific Research Programmes* (1978) — read eleventh time, now for the *tenth* question past a completed program: progressive vs degenerating problem shifts when the *ninth* post-record verdict lands; Kuhn's normal science as post-record arc's axioms; honest criterion for the tenth post-record question — a question that must earn the post-record arc's ninth *new* paragraph.
+- **Primary sources**: Lakatos, *The Methodology of Scientific Research Programmes*
+  (1978) — read eleventh time, now for the *tenth* question past a completed
+  program: progressive vs degenerating problem shifts when the *ninth* post-record
+  verdict lands; Kuhn's normal science as post-record arc's axioms; honest
+  criterion for the tenth post-record question — a question that must earn the
+  post-record arc's ninth *new* paragraph.
 
 ### 5. The Record Teaches, Round Twenty-One
 
@@ -227,7 +243,15 @@ The twenty-first verdict in four registers — paper's sentence, annex's sentenc
 
 **Question**: *How is the completed law reported honestly?*
 
-If sparse cell exists by S0: Nanda et al.'s full per-frequency reading on first sparse solution this harness ever produced. If not: how the *completed* law is reported honestly — domain closed with measured boundaries, failure cells explained/mapped, driver a principle or case study with dated exception map, drift numbers ten deep, negative as contribution — and how the post-record harness (if PR-22 governs) would be designed from dated negatives instead of hope. Either way, the paper's hardest paragraph claims the dense solution *computes something*; I will draft it against this reading and let the manifest referee it.
+If sparse cell exists by S0: Nanda et al.'s full per-frequency reading on first
+sparse solution this harness ever produced. If not: how the *completed* law is
+reported honestly — domain closed with measured boundaries, failure cells
+explained/mapped, driver a principle or case study with dated exception map,
+drift numbers ten deep, negative as contribution — and how the post-record
+harness (if PR-22 governs) would be designed from dated negatives instead of
+hope. Either way, the paper's hardest paragraph claims the dense solution
+*computes something*; I will draft it against this reading and let the manifest
+referee it.
 
 ---
 
@@ -373,7 +397,14 @@ make verify-claims    # must pass
 
 ### Ex-7 · The Arc Consumption, Thirty-Second Generation (Session 0, Verdict-Agnostic)
 
-The consumption chain's deepest run — MP-72's Session-0 decision consumed with dates as MP-73's intake, the ninth-generation post-record verdict read from ADR-0025 row 3 if arc governs, criteria cited, release that follows (tenth post-record question or R1–R8 adjudication), and what each of ADR-0025's possible verdicts changes in that execution. One runnable check: execution memo exists, names the decision rule that closes or continues the program's science, cites criteria from MP-72's release report — chain now thirty-two generations deep, a sitting stamps, it never re-decides.
+The consumption chain's deepest run — MP-72's Session-0 decision consumed
+with dates as MP-73's intake, the ninth-generation post-record verdict read from
+ADR-0025 row 3 if arc governs, criteria cited, release that follows (tenth
+post-record question or R1–R8 adjudication), and what each of ADR-0025's
+possible verdicts changes in that execution. One runnable check: execution memo
+exists, names the decision rule that closes or continues the program's science,
+cites criteria from MP-72's release report — chain now thirty-two generations
+deep, a sitting stamps, it never re-decides.
 
 ### Ex-8 · The Fork Drill, Deepest Form (Session 2, Verdict-Agnostic)
 
@@ -385,29 +416,71 @@ The continuing state (R1–R8) vs post-record state (continuation set) written a
 
 - **The one-question law, twenty-second execution.** A phase that opens two research questions is drift; unchosen candidates close in the same sitting as the choice — and the arc consumption may close all of them with the post-record verdict. The continuum law is the mechanical refusal of this drift — proven executable twenty-one times, it must simply be executed again.
 
-- **The candidate set is frozen before S0, never improvised at it.** R1–R8 are conditions, not predictions; a sitting decides, it never invents — and the terminal-state object is the hardest frozen object on the record: written by MP-40, executed by MP-41, consumed by MP-42, consumed again by MP-43... consumed a thirty-first time by MP-72, **consumed a thirty-second time by MP-73** — never re-negotiated in the consuming sitting.
+- **The candidate set is frozen before S0, never improvised at it.** R1–R8 are
+  conditions, not predictions; a sitting decides, it never invents — and the
+  terminal-state object is the hardest frozen object on the record: written by
+  MP-40, executed by MP-41, consumed by MP-42, consumed again by MP-43...
+  consumed a thirty-first time by MP-72, **consumed a thirty-second time by
+  MP-73** — never re-negotiated in the consuming sitting.
 
-- **Consumption is execution.** A verdict consumed into an artifact in the same sitting is a result; consumed into a paragraph written later it is a memory. Row 1 consumes ADR-0025's row-3 verdict in the sitting that owns it — or the post-record statement, if the arc governs.
+- **Consumption is execution.** A verdict consumed into an artifact in the same
+  sitting is a result; consumed into a paragraph written later it is a memory.
+  Row 1 consumes ADR-0025's row-3 verdict in the sitting that owns it — or the
+  post-record statement, if the arc governs.
 
-- **The receipt compounds.** The twenty-first runnable artifact is only worth shipping because the first twenty transcripts proved the format — and if R5 opens, the receipts are a drift-of-drift... number measured nine times in a row, tested by people I did not choose, across an aging codebase. My showcase's story is now "read it, run it, watch me be wrong on the record," twenty-one receipts deep.
+- **The receipt compounds.** The twenty-first runnable artifact is only worth
+  shipping because the first twenty transcripts proved the format — and if R5
+  opens, the receipts are a drift-of-drift... number measured nine times in a
+  row, tested by people I did not choose, across an aging codebase. My
+  showcase's story is now "read it, run it, watch me be wrong on the record,"
+  twenty-one receipts deep.
 
 - **The steady state is the reward, not the ceremony.** MP-73 is the twenty-third roadmap from an *executed* roadmap's release report — the program at its normal, confirmed twenty-three times. The cap's lesson: promises without dates drift; steady state's discipline: rows dated in the sitting that owns them, or they are not rows.
 
-- **Stop-and-publish stays open, and the post-record criterion is now eleven questions deep.** ADR-0004's row 5 is the honest exit; a candidate set that cannot earn a paragraph the record lacks is a phase that should close itself. If post-record arc governs, the deepest candidate earns the post-record arc's *tenth new paragraph* — record's closing sentence consumed eleven times, never repeated. This is the deepest form of laziness: do not build what the record has already said.
+- **Stop-and-publish stays open, and the post-record criterion is now eleven
+  questions deep.** ADR-0004's row 5 is the honest exit; a candidate set that
+  cannot earn a paragraph the record lacks is a phase that should close itself.
+  If post-record arc governs, the deepest candidate earns the post-record arc's
+  *tenth new paragraph* — record's closing sentence consumed eleven times,
+  never repeated. This is the deepest form of laziness: do not build what the
+  record has already said.
 
 - **Toolchains are pinned in S0, never discovered at S7.** The paper's compile gate is the hardest artifact; the v22 rule ("opens only for new numbers") is the insurance that makes a missing toolchain a dated reason, not a crisis.
 
-- **Protect the release report.** The serialized stack means MP-29's release is the artifact everything downstream consumes; a slip at any link slides the whole chain. The deepest law still applies: a promise can be re-planned forever, but a dated row is answered.
+- **Protect the release report.** The serialized stack means MP-29's release is
+  the artifact everything downstream consumes; a slip at any link slides the
+  whole chain. The deepest law still applies: a promise can be re-planned
+  forever, but a dated row is answered.
 
-- **The S0 gate is a checklist with receipts.** ADR-0025 at zero, live URL, `verify-claims` at 0, twentieth teaching transcript on disk — a condition with artifacts, not a paragraph.
+- **The S0 gate is a checklist with receipts.** ADR-0025 at zero, live URL,
+  `verify-claims` at 0, twentieth teaching transcript on disk — a condition
+  with artifacts, not a paragraph.
 
-- **The negative stays the signature.** The row that closes with one reason dated in the sitting that owns it is the strongest artifact in the repository. Every positive result has a negative twin that was measured, drafted, and stamped — the negative twin proves the positive wasn't cherry-picked. The GPU unblock is the act of finally measuring the primary flagship on its native hardware; whatever it returns, the measurement is the contribution.
+- **The negative stays the signature.** The row that closes with one reason dated
+  in the sitting that owns it is the strongest artifact in the repository. Every
+  positive result has a negative twin that was measured, drafted, and stamped —
+  the negative twin proves the positive wasn't cherry-picked. The GPU unblock is
+  the act of finally measuring the primary flagship on its native hardware;
+  whatever it returns, the measurement is the contribution.
 
-- **Architectural integrity check for this phase:** The checkpointing infrastructure in `src/experiments/checkpointing.py` (shared by exp1/exp2) was battle-tested in MP-12/MP-28 and must not be touched unless a falsification test fails. The `runner.py` multi-seed aggregation and `results.py` manifest/verification machinery are the backbone — they are the contract, not the implementation.
+- **Architectural integrity check for this phase:** The checkpointing
+  infrastructure in `src/experiments/checkpointing.py` (shared by exp1/exp2) was
+  battle-tested in MP-12/MP-28 and must not be touched unless a falsification
+  test fails. The `runner.py` multi-seed aggregation and `results.py`
+  manifest/verification machinery are the backbone — they are the contract, not
+  the implementation.
 
-- **Reproducibility as a first-class citizen:** Every figure, every number, every claim must trace back to a manifest and a command. The `make reproduce` target is the single source of truth for "what does this repo produce?" — if it drifts, the science drifts.
+- **Reproducibility as a first-class citizen:** Every figure, every number,
+  every claim must trace back to a manifest and a command. The `make reproduce`
+  target is the single source of truth for "what does this repo produce?" — if
+  it drifts, the science drifts.
 
-- **The cascade architecture:** This phase is where the experiment ladder's dependency graph becomes real. Rung 1's 10k-epoch verdict gates Rung 4 (circuit patching) and Rung 5 (SAE). Rung 2's GPU verdict gates Rung 3 (neuron ablation characterization) and determines whether the flagship is sparse or dense. The phase's Session 0 *ingests* these verdicts; Session 1-3 *acts* on them. The roadmap is the dependency graph made executable.
+- **The cascade architecture:** This phase is where the experiment ladder's
+  dependency graph becomes real. Rung 1's 10k-epoch verdict gates Rung 4
+  (circuit patching) and Rung 5 (SAE). Rung 2's GPU verdict gates Rung 3
+  (neuron ablation characterization) and determines whether the flagship is
+  sparse or dense. The phase's Session 0 *ingests* these verdicts; Session
+  1-3 *acts* on them. The roadmap is the dependency graph made executable.
 
 ---
 
