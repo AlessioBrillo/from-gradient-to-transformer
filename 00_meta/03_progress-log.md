@@ -13,6 +13,12 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-08-24 (fifty-eighth session) — Micro-Phase 74, Session 1: GPU launch + shelf baseline + debt re-verification + local cascade kickoff
+
+- **Studied**: ADR-0024 row by row — all 8 rows PENDING/GATED with explicit windows/kill-dates. GPU Colab notebook hardened and ready. Local stack verified: 189 tests pass, ruff clean, blocking mypy clean on `src/results.py` + `src/experiments/runner.py`, `verify-claims` at 0, all 5 manifests on disk. `dev` branch checked out and synced with `origin/dev`.
+- **Built**: Progress log entry stamped; shelf baseline verified (local `main` reconciled to `origin/main`, `portfolio/README.md` current, exp6 residue removed, annexes' location verified). Gate-debt re-verification initiated (Row 8 of ADR-0024). Colab GPU Grokking 3-seed P=113 launch protocol confirmed — notebook clones `dev` branch, installs via `uv sync --frozen`, runs `--save-model` plotted run + `--seeds 0,1,2` manifest run, zips figures/results for download.
+- **Open question**: None new — the frozen candidate set (Rows 1–8) is this phase's only research surface. Row 1 (GPU Grokking) launches on Colab this session; Rows 2–3 (Extended Induction 10k + Neuron Ablation) kick off locally in parallel next session. The GPU unblock is the act of finally measuring the primary flagship on its native hardware; whatever it returns, the measurement is the contribution.
+
 ## 2026-08-21 (fifty-sixth session) — Micro-Phase 70, kickoff: the GPU unblock and cascade execution
 
 - **Studied**: Full repository state verified against MP-69 roadmap — 189 tests pass, ruff clean, blocking mypy clean on `src/results.py` + `src/experiments/runner.py`, `verify-claims` at 0, all five manifests on disk. The three hard blockers confirmed: (1) P=113 grokking flagship never run on GPU, (2) Induction heads 0/8 at standard scale (3000 epochs), (3) Clean-clone proof not green.
