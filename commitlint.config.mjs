@@ -25,5 +25,8 @@ export default {
     (message) => message.startsWith("ci(ci): scoped pardon for the mp-52 roadmap commit's footer line plus a new-commit lint mirror"),
     (message) => message.startsWith("docs(meta): add the MP-53 execution roadmap with architect's review, wired into home as a companion (#88)"),
     (message) => message.startsWith("docs(meta): add the MP-54 review and roadmap, wired into home as a companion (#89)"),
+    // MP-74 Session 0 & 1 commits (2026-08-24) - subject-case violations, force-push blocked
+    (message) => message.startsWith('docs(phase7): MP-74 Session 0 — gate truthing, 30th-gen arc consumption, continuum choice'),
+    (message) => message.startsWith('docs(phase7): MP-74 Session 1 — progress log, gate-debt ledger, neuron ablation & clean-clone scripts'),
   ],
 };
