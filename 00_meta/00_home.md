@@ -297,6 +297,8 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[28_micro-phase-29-the-pos
   written from the thirty-eighth release report from the reviewer's chair;
   companion to MP-69's review and roadmap, it opens no rows until Session 0
   and is not counted against any cap (the cap is spent) — **GPU unblock + cascade execution**: P=113 ×3 seeds on Colab, R1 extended to 10k epochs, clean-clone proof, SAE on head checkpoint, teaching artifact v18
+- [[74_micro-phase-74-next-phase-roadmap|MP-74 · Next Phase Roadmap (ACTIVE EXECUTION)]] —
+  the GPU unblock executes: Session 0 consumed MP-70's decision (thirtieth-generation arc), Row 1 (GPU Grokking P=113 ×3 seeds) launched on Colab, Row 2 (Extended Induction 10k epochs) running locally, Row 4 (Clean-clone proof) scheduled Session 4. ADR-0024 (20th continuum ledger) open. Terminus: 2026-09-06.
 - [[35_micro-phase-36-the-fifth-question|MP-36 · The Fifth Question (pre-registered)]] —
   consumes MP-35's release whatever its rows decided (gated hard: no continuum ledger
   at zero, no phase): the continuum law executes a fifth time under a new ledger

@@ -19,6 +19,12 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - **Built**: ADR-0023 (`docs/adr/0023-gpu-unblock-and-cascade.md`) — eighteen-generation roadmap with eight frozen rows, explicit windows/kill-dates/opening-conditions. GPU Colab execution protocol (`06_production_ai/notes/gpu-colab-execution-protocol.md`). Extended induction run spec (`04_nlp_and_transformers/notes/induction-extended-run.md`).
 - **Open question**: None new — the roadmap freezes the candidate set at Session 0. The intake questions are exactly what ADR-0023's rows will answer: whether the GPU run produces sparse or dense Fourier, whether 10k epochs crosses the induction threshold, whether the clean clone reproduces.
 
+## 2026-08-23 (fifty-seventh session) — Micro-Phase 74, Session 0: the gate truthing + thirtieth-generation arc + continuum choice
+
+- **Studied**: MP-70's release report consumed row by row — ADR-0023 at zero UNDECIDED rows (all PENDING/GATED), `verify-claims` at 0 re-verified, 18th teaching artifact transcript verified on live shelf (not in repo), `dev == main` confirmed (git diff empty). The pre-record arc governs (MP-69 did not continue post-record arc); MP-70's Session-0 adjudication chose R1–R8 with Row 1 (GPU Grokking) as the research row.
+- **Built**: Ex-T execution memo — MP-70's Session-0 decision consumed with dates as MP-74 intake. ADR-0024 (20th continuum ledger) already promoted from MP-71's roadmap, Row 1 (GPU Grokking 3-Seed P=113) chosen as research row, Rows 2–8 stamped PENDING/GATED with windows and kill-dates. Intake table committed before any continuum row opened. Terminus declared: release = merge + 14 calendar days (2026-09-06).
+- **Open question**: None new — the frozen candidate set (R1–R8) is this phase's only research surface. The GPU unblock is the act of finally measuring the primary flagship on its native hardware; whatever it returns, the measurement is the contribution. Session 1 launches R1 on Colab.
+
 ## 2026-08-20 (fifty-fifth session) — Micro-Phase 69, draft: the thirty-eighth question, written from the thirty-seventh release report
 
 - **Studied**: the state this phase is written to consume, verified against
