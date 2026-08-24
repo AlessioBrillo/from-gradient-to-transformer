@@ -177,6 +177,14 @@ None at Session 0. Any deviations recorded here as dated ledger notes.
 
 **Session 0 (2026-08-23)**: Intake table committed; thirtieth-generation arc stamped; Row 1 (GPU Grokking 3-Seed P=113) chosen as research row; Rows 2–8 stamped PENDING/GATED; ADR-0024 promoted from MP-71's roadmap. Deviations from MP-70's release report: none at Session 0.
 
-**Ex-T Execution Memo (2026-08-23, Session 0)**: MP-70's Session-0 decision consumed with dates as MP-74 intake. Pre-record arc governs (MP-69 did not continue post-record arc). MP-70's Session-0 adjudication: R1–R8 frozen, Row 1 (GPU Grokking) opened as research row, Rows 2–8 closed with dated reasons or marked GATED. Criteria cited: ADR-0023 at zero UNDECIDED, `verify-claims` at 0, 18th teaching transcript on live shelf, `dev == main`. The thirtieth-generation consumption chain: MP-40's Ex-N → MP-41 → ... → MP-69 → MP-70 → MP-74. A sitting stamps, it never re-decides.
+**Ex-T Execution Memo (2026-08-23, Session 0)**: MP-70's Session-0
+  decision consumed with dates as MP-74 intake. Pre-record arc governs
+  (MP-69 did not continue post-record arc). MP-70's Session-0 adjudication:
+  R1–R8 frozen, Row 1 (GPU Grokking) opened as research row, Rows 2–8
+  closed with dated reasons or marked GATED. Criteria cited: ADR-0023 at
+  zero UNDECIDED, `verify-claims` at 0, 18th teaching transcript on live
+  shelf, `dev == main`. The thirtieth-generation consumption chain:
+  MP-40's Ex-N → MP-41 → ... → MP-69 → MP-70 → MP-74. A sitting stamps,
+  it never re-decides.
 
 **Session 8**: ADR-0024 at zero UNDECIDED rows; merge green; `dev == main`; home wired; roadmap archived with deviations as dated ledger notes.
