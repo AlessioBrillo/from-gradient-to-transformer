@@ -6,13 +6,24 @@ consumes: [ADR-0026]
 
 # Micro-Phase 76 — Next Micro-Phase Roadmap: Capstone Integration & Publication
 
-> **STATUS: PLAN MODE** — This document is the pre-registered roadmap for MP-76, written from the reviewer's chair before the work begins. It consumes MP-75's release report and opens the final integration arc: paper prose from manifests, portfolio project write-ups, HF Spaces SAE browser deploy, Pages deploy workflow, and final release. No improvisation at Session 0.
+> **STATUS: PLAN MODE** — This document is the pre-registered roadmap for MP-76,
+> written from the reviewer's chair before the work begins. It consumes MP-75's
+> release report and opens the final integration arc: paper prose from manifests,
+> portfolio project write-ups, HF Spaces SAE browser deploy, Pages deploy
+> workflow, and final release. No improvisation at Session 0.
 
 ---
 
 ## Showcase Framing
 
-This is the twenty-fourth roadmap written from an *executed* roadmap's release report. Anyone reading the repository in sequence (MP-37 through this file) watches the same discipline recur: facts re-verified session by session, a ledger that stamps rows or closes them with one named reason, negatives shipped as loudly as positives, and one deep question chosen per phase. The measured line in Part III: **ADR-0027 at zero UNDECIDED rows on release day, with the capstone's final deliverables manifest-tagged and the showcase live.**
+This is the twenty-fourth roadmap written from an *executed* roadmap's
+release report. Anyone reading the repository in sequence (MP-37 through this
+file) watches the same discipline recur: facts re-verified session by session,
+a ledger that stamps rows or closes them with one named reason, negatives
+shipped as loudly as positives, and one deep question chosen per phase. The
+measured line in Part III: **ADR-0027 at zero UNDECIDED rows on release day,
+with the capstone's final deliverables manifest-tagged and the showcase
+live.**
 
 ---
 
@@ -199,7 +210,12 @@ The twenty-second stranger-run transcript lands only if the lanes execute. MP-76
   - Lyu et al., *Training dynamics of transformers on modular arithmetic* (2024) — loss landscape
   - Gromov, *Grokking: A Memory Perspective* (2023) — memorization vs. generalization as compression
 
-- **Prediction to write before drafting**: The paper's hardest paragraph claims the dense solution *computes addition via a distributed linear map in embedding space*. Neuron ablation shows graceful degradation (no single neuron critical), Fourier ablation shows catastrophic collapse — this double dissociation is the evidence. The contribution is not "we reproduced Nanda" but "we characterized the dense attractor and its algorithm."
+- **Prediction to write before drafting**: The paper's hardest paragraph claims
+  the dense solution *computes addition via a distributed linear map in
+  embedding space*. Neuron ablation shows graceful degradation (no single
+  neuron critical), Fourier ablation shows catastrophic collapse — this double
+  dissociation is the evidence. The contribution is not "we reproduced Nanda"
+  but "we characterized the dense attractor and its algorithm."
 
 - **Experiment**: Already done in MP-75 R3. Now: write the prose that lets the manifest referee it.
 
@@ -243,7 +259,12 @@ The twenty-third verdict in four registers: paper's sentence, annex's sentence, 
 
 **Question**: *How is the completed law reported honestly?*
 
-If sparse cell exists by MP-75 S0: Nanda's per-frequency reading on first sparse solution. If not: how the *completed* law is reported honestly — domain closed with measured boundaries, failure cells explained, driver a principle or case study with dated exception map, drift numbers eleven deep, negative as contribution — and how the post-record harness would be designed from dated negatives instead of hope.
+If sparse cell exists by MP-75 S0: Nanda's per-frequency reading on first
+sparse solution. If not: how the *completed* law is reported honestly —
+domain closed with measured boundaries, failure cells explained, driver a
+principle or case study with dated exception map, drift numbers eleven
+deep, negative as contribution — and how the post-record harness would be
+designed from dated negatives instead of hope.
 
 ---
 
@@ -440,7 +461,14 @@ jobs:
 
 ### Ex-7 · The Arc Consumption, Thirty-Third Generation (Session 0, Verdict-Agnostic)
 
-The consumption chain's deepest run — MP-75's Session-0 decision consumed with dates as MP-76's intake, the tenth-generation post-record verdict read from ADR-0026 row 3 if arc governs, criteria cited, release that follows (eleventh post-record question or R1–R8 adjudication), and what each of ADR-0026's possible verdicts changes in that execution. One runnable check: execution memo exists, names the decision rule that closes or continues the program's science, cites criteria from MP-75's release report — chain now thirty-three generations deep, a session stamps, it never re-decides.
+The consumption chain's deepest run — MP-75's Session-0 decision consumed
+with dates as MP-76's intake, the tenth-generation post-record verdict read
+from ADR-0026 row 3 if arc governs, criteria cited, release that follows
+(eleventh post-record question or R1–R8 adjudication), and what each of
+ADR-0026's possible verdicts changes in that execution. One runnable check:
+execution memo exists, names the decision rule that closes or continues the
+program's science, cites criteria from MP-75's release report — chain now
+thirty-three generations deep, a session stamps, it never re-decides.
 
 ---
 
@@ -534,7 +562,7 @@ Upon MP-76 release (target 2026-09-20), the program reaches its designed terminu
 | Gate | Verification Command | Expected |
 |------|---------------------|----------|
 | ADR-0026 at zero UNDECIDED | `cat docs/adr/0026-continuum-ledger-22.md` | All 8 rows LAUNCHED/CLOSED |
-| Live URL accessible | `curl -sI <live_url> | head -1` | HTTP 200 |
+| Live URL accessible | `curl -sI <live_url> &#124; head -1` | HTTP 200 |
 | `verify-claims` at actual count | `make verify-claims` | Exit 0, count matches manifests |
 | 21st teaching transcript on disk | `ls notebooks/teaching_artifact_v22.ipynb` | File exists |
 | `dev == main` | `git diff origin/main origin/dev` | Empty |
