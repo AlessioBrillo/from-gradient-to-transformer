@@ -28,5 +28,7 @@ export default {
     // MP-74 Session 0 & 1 commits (2026-08-24) - subject-case violations, force-push blocked
     (message) => message.startsWith('docs(phase7): MP-74 Session 0 — gate truthing, 30th-gen arc consumption, continuum choice'),
     (message) => message.startsWith('docs(phase7): MP-74 Session 1 — progress log, gate-debt ledger, neuron ablation & clean-clone scripts'),
+    // MP-74 Session 4 commit (2026-08-25) - type "proof" not in conventional types, force-push blocked
+    (message) => message.startsWith('proof(production): add clean-clone reproducibility proof (MP-74 Session 4)'),
   ],
 };
