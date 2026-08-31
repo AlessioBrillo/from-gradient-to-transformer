@@ -22,5 +22,7 @@ jobs:
         with:
           globs: |
             !.github/**/*.md
+            !.opencode/**/*.md
+            !.venv/**/*.md
             !LICENSE
             **/*.md
