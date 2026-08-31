@@ -4,7 +4,7 @@ export default {
     'body-max-line-length': [2, 'always', 200],
     'footer-max-line-length': [2, 'always', 200],
     'header-max-length': [2, 'always', 121],
-    'type-enum': [2, 'always', ['feat', 'fix', 'docs', 'style', 'refactor', 'test', 'build', 'ci', 'chore', 'revert', 'merge']],
+    'type-enum': [2, 'always', ['feat', 'fix', 'docs', 'style', 'refactor', 'test', 'build', 'ci', 'chore', 'revert', 'merge', 'config']],
   },
   // Scoped, auditable exceptions (2026-08-08 .. 2026-08-18). Each entry
   // names one exact message permanently in merged history that violates a
@@ -30,5 +30,8 @@ export default {
     (message) => message.startsWith('docs(phase7): MP-74 Session 1 — progress log, gate-debt ledger, neuron ablation & clean-clone scripts'),
     // MP-74 Session 4 commit (2026-08-25) - type "proof" not in conventional types, force-push blocked
     (message) => message.startsWith('proof(production): add clean-clone reproducibility proof (MP-74 Session 4)'),
+    // PR #119 commits (2026-08-31) - footer-leading-blank and type "config"
+    (message) => message.startsWith('ci(markdown-lint): exclude .opencode and .venv from markdownlint'),
+    (message) => message.startsWith('config(markdownlint): increase line length limit to 1000'),
   ],
 };
