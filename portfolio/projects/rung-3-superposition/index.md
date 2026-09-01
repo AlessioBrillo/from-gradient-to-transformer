@@ -6,8 +6,6 @@ phase: 1
 rung: 3
 ---
 
-# Rung 3: Superposition & Feature Geometry
-
 **Problem**: Study superposition — how neural networks represent more features than they have dimensions. Train sparse autoencoders on synthetic data with known ground-truth feature geometry to validate interpretability methods.
 
 **Methodology**:

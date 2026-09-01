@@ -6,8 +6,6 @@ phase: 1
 rung: 2
 ---
 
-# Rung 2: Grokking Modular Addition
-
 **Problem**: Train a 1-layer transformer on modular addition (a + b mod P) and observe delayed generalization (grokking). Reverse-engineer the learned algorithm via Fourier decomposition of embeddings: the model implements addition via discrete Fourier transforms and trigonometric identities.
 
 **Methodology**:

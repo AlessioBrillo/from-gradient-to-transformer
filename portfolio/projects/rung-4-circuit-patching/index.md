@@ -6,8 +6,6 @@ phase: 1
 rung: 4
 ---
 
-# Rung 4: Circuit Patching
-
 **Problem**: Discover and verify computational circuits in trained transformers using causal intervention methods: activation patching (swap activations between runs) and path patching (isolate specific pathways).
 
 **Methodology**:

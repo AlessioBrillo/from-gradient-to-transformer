@@ -6,8 +6,6 @@ phase: 1
 rung: 5
 ---
 
-# Rung 5: SAE Feature Dashboard
-
 **Problem**: Extract interpretable features from trained transformer activations using Sparse Autoencoders (SAEs). Build interactive dashboard for feature exploration.
 
 **Methodology**:
