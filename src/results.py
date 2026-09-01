@@ -121,6 +121,7 @@ class ResultsManifest:
         default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds")
     )
     notes: str | None = None
+    neuron_ablation: dict[str, Any] | None = None
 
     @classmethod
     def from_run(

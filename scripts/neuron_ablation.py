@@ -19,8 +19,9 @@ from src.models.decoder_only_transformer import DecoderOnlyTransformer
 from src.experiments.exp2_grokking import (
     make_modular_addition_data,
     analyze_fourier_sparsity,
-    fourier_ablation,
+    ablate_frequencies,
 )
+from src.experiments.exp2_grokking import fourier_decompose_embeddings
 
 
 def load_checkpoint(ckpt_path: Path, model: DecoderOnlyTransformer) -> dict:

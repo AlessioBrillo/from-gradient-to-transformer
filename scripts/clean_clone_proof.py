@@ -64,9 +64,9 @@ def main():
             )
             print("```", file=log_file)
             if rc != 0:
-                print("❌ **FAILED**: Clone failed", file=log_file)
+                print("[FAILED]: Clone failed", file=log_file)
                 return 1
-            print("✅ Clone successful", file=log_file)
+            print("[OK] Clone successful", file=log_file)
             print("", file=log_file)
 
             # 2. uv sync
@@ -75,9 +75,9 @@ def main():
             rc, out, err = run_cmd(["uv", "sync"], clone_dir, log_file)
             print("```", file=log_file)
             if rc != 0:
-                print("❌ **FAILED**: uv sync failed", file=log_file)
+                print("[FAILED]: uv sync failed", file=log_file)
                 return 1
-            print("✅ uv sync successful", file=log_file)
+            print("[OK] uv sync successful", file=log_file)
             print("", file=log_file)
 
             # 3. make reproduce-quick
@@ -86,9 +86,9 @@ def main():
             rc, out, err = run_cmd(["make", "reproduce-quick"], clone_dir, log_file)
             print("```", file=log_file)
             if rc != 0:
-                print("❌ **FAILED**: make reproduce-quick failed", file=log_file)
+                print("[FAILED]: make reproduce-quick failed", file=log_file)
                 return 1
-            print("✅ make reproduce-quick successful", file=log_file)
+            print("[OK] make reproduce-quick successful", file=log_file)
             print("", file=log_file)
 
             # 4. make verify-claims
@@ -97,13 +97,13 @@ def main():
             rc, out, err = run_cmd(["make", "verify-claims"], clone_dir, log_file)
             print("```", file=log_file)
             if rc != 0:
-                print("❌ **FAILED**: make verify-claims failed", file=log_file)
+                print("[FAILED]: make verify-claims failed", file=log_file)
                 return 1
-            print("✅ make verify-claims successful", file=log_file)
+            print("[OK] make verify-claims successful", file=log_file)
             print("", file=log_file)
 
             print("## Summary", file=log_file)
-            print("✅ **ALL STEPS PASSED** — Clean-clone reproducibility proven", file=log_file)
+            print("[OK] ALL STEPS PASSED -- Clean-clone reproducibility proven", file=log_file)
             print(f"**Completed**: {time.strftime('%Y-%m-%d %H:%M:%S')}", file=log_file)
 
     print(f"Transcript written to {output_path}")
