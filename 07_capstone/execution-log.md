@@ -98,6 +98,7 @@ uv run python -m src.experiments.exp6_capstone \
 - verify-claims: [PASSES/FAILS]
 
 ### Capstone Monitor (5k steps)
+
 | Seed | Steps | Modular Acc | Induction Acc | Fourier k_99 | Max K-comp | Val Loss |
 |------|-------|-------------|---------------|--------------|------------|----------|
 | 0    | 5000  |             |               |              |            |          |
