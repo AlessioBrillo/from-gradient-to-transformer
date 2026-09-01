@@ -6,7 +6,7 @@ phase: 1
 rung: 1
 ---
 
-**Problem**: Detect and verify induction heads in a small 2-layer attention-only transformer trained on repeated random tokens. Induction heads implement the algorithm `\`[A][B]...[A] → [B]\`` — they attend from the current token to its previous occurrence and copy the next token.
+**Problem**: Detect and verify induction heads in a small 2-layer attention-only transformer trained on repeated random tokens. Induction heads implement the algorithm `[A][B]...[A] → [B]` — they attend from the current token to its previous occurrence and copy the next token.
 
 **Methodology**:
 - Train 2-layer attention-only transformer on repeated random token sequences (Olsson et al. 2022)
