@@ -11,6 +11,8 @@ Built 2026-08-02 (Micro-Phase 8, the Evidence Pass) because
 "[x] Results reported as mean ± std over ≥3 seeds" while no experiment in
 `src/` had ever run more than one seed. See
 06_production_ai/notes/multi-seed-experiment-design.md.
+
+Optional W&B integration added 2026-09-01 (MP-78) for experiment tracking.
 """
 
 from __future__ import annotations
@@ -19,10 +21,98 @@ import logging
 import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
 logger = logging.getLogger(__name__)
+
+
+# Optional W&B integration — lazy import to avoid hard dependency
+_wandb: Any = None
+
+
+def _get_wandb() -> Any:
+    global _wandb
+    if _wandb is None:
+        try:
+            import wandb
+
+            _wandb = wandb
+        except ImportError:
+            _wandb = False
+    return _wandb
+
+
+def init_wandb(
+    project: str,
+    entity: str | None = None,
+    config: dict[str, Any] | None = None,
+    tags: list[str] | None = None,
+    group: str | None = None,
+    name: str | None = None,
+) -> Any | None:
+    """Initialize W&B run if available. Returns run object or None."""
+    wandb = _get_wandb()
+    if not wandb:
+        logger.debug("wandb not available, skipping initialization")
+        return None
+    try:
+        run = wandb.init(
+            project=project,
+            entity=entity,
+            config=config,
+            tags=tags,
+            group=group,
+            name=name,
+        )
+        logger.info(f"W&B run initialized: {run.url}")
+        return run
+    except Exception as e:
+        logger.warning(f"Failed to initialize W&B: {e}")
+        return None
+
+
+def log_wandb_metrics(
+    run: Any, metrics: dict[str, float], step: int | None = None
+) -> None:
+    """Log metrics to W&B run if available."""
+    wandb = _get_wandb()
+    if not wandb or run is None:
+        return
+    try:
+        if hasattr(run, "log"):
+            run.log(metrics, step=step)
+    except Exception as e:
+        logger.warning(f"Failed to log metrics to W&B: {e}")
+
+
+def log_wandb_artifact(
+    run: Any, filepath: str, name: str, type_: str = "model"
+) -> None:
+    """Log file as W&B artifact if available."""
+    wandb = _get_wandb()
+    if not wandb or run is None:
+        return
+    try:
+        if hasattr(run, "log_artifact"):
+            artifact = wandb.Artifact(name, type=type_)
+            artifact.add_file(filepath)
+            run.log_artifact(artifact)
+    except Exception as e:
+        logger.warning(f"Failed to log artifact to W&B: {e}")
+
+
+def finish_wandb(run: Any) -> None:
+    """Finish W&B run if available."""
+    wandb = _get_wandb()
+    if not wandb or run is None:
+        return
+    try:
+        if hasattr(run, "finish"):
+            run.finish()
+    except Exception as e:
+        logger.warning(f"Failed to finish W&B run: {e}")
 
 
 @dataclass
