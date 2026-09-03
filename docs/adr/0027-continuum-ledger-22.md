@@ -12,6 +12,16 @@ consumes: [ADR-0024]
 **Terminus**: Release = merge + 14 calendar days (target 2026-09-20).
 **Consumes**: ADR-0024 final state (zero UNDECIDED rows, R1 verdict, R2/R3/R5 verdicts, teaching artifact v20 transcript, paper v20 decision).
 
+**MP-74 Actual Verdicts (as of 2026-09-03, Session 0 sync):**
+- **R1 (GPU Grokking 3-Seed P=113)**: IN_PROGRESS — Colab launched 2026-08-24, verdict pending (no manifest downloaded yet)
+- **R2 (Extended Induction 10k Epochs ×3 Seeds)**: NOT_STARTED — only tiny 150-epoch multi-seed exists; 10k standard-scale not yet run
+- **R3 (Neuron Ablation on Dense Grokking)**: COMPLETE — results in `results/exp2_grokking.json` under `neuron_ablation`; graceful degradation confirms dense distributed solution
+- **R4 (Clean-Clone Reproducibility Proof)**: **GREEN 2026-08-27** — transcript at `06_production_ai/proofs/reproducible-from-clean-clone.md`
+- **R5 (SAE on Confirmed-Head Checkpoint)**: GATED — no confirmed induction head produced
+- **R6 (Teaching Artifact v20)**: PENDING — not yet built
+- **R7 (Paper v20 / Annex v20)**: GATED — no new numbers from MP-74
+- **R8 (Gate-Debt Re-verification)**: IN_PROGRESS — ledger updated in `checklists/gate-debt.md`
+
 ---
 
 ## Ledger Rows (Eight, Pre-Stamped with Windows and Kill-Dates)
@@ -285,8 +295,8 @@ None at Session 0. Any deviations recorded here as dated ledger notes.
 
 ## Sign-Off
 
-**Session 0 (2026-09-01)**: Intake table committed; thirty-first-generation arc stamped; Row 1 (Capstone Research Plan Execution) chosen as research row; Rows 2–8 stamped PENDING/GATED; ADR-0027 created. Deviations from ADR-0024 final state: none at Session 0.
+**Session 0 (2026-09-03)**: Intake table committed; thirty-first-generation arc stamped; Row 1 (Capstone Research Plan Execution) chosen as research row; Rows 2–8 stamped PENDING/GATED with actual MP-74 verdicts; ADR-0027 updated. Deviations from ADR-0024 final state: R1 IN_PROGRESS (not complete), R2 NOT_STARTED, R3 COMPLETE, R4 GREEN.
 
-**Ex-T31 Execution Memo (2026-09-01, Session 0)**: MP-74/77's release report consumed with dates as MP-78 intake. Pre-record arc governs (ADR-0024 confirms). MP-74/77's adjudication: R1 GPU grokking verdict [TO BE FILLED AT SESSION 0], R2 extended induction [TO BE FILLED], R3 neuron ablation [TO BE FILLED], R5 SAE on head [TO BE FILLED], teaching artifact v20 transcript on live shelf, paper v20 decision [TO BE FILLED]. Criteria cited: ADR-0024 at zero UNDECIDED, `verify-claims` at 0, 20th teaching transcript on live shelf, `dev == main`. The thirty-first-generation consumption chain: MP-40's Ex-N → MP-41 → ... → MP-70 → MP-74 → MP-78. A session stamps, it never re-decides.
+**Ex-T31 Execution Memo (2026-09-03, Session 0)**: MP-74/77's release report consumed with dates as MP-78 intake. Pre-record arc governs (ADR-0024 confirms). MP-74/77's adjudication: R1 GPU grokking = IN_PROGRESS (Colab launched 2026-08-24, verdict pending); R2 extended induction = NOT_STARTED (10k standard-scale not run); R3 neuron ablation = COMPLETE (graceful degradation, dense distributed solution confirmed); R5 SAE on head = GATED (no confirmed head); teaching artifact v20 = PENDING; paper v20 = GATED (no new numbers). Criteria cited: ADR-0024 at zero UNDECIDED, `verify-claims` at 0, 20th teaching transcript on live shelf, `dev == main`. The thirty-first-generation consumption chain: MP-40's Ex-N → MP-41 → ... → MP-70 → MP-74 → MP-78. A session stamps, it never re-decides.
 
 **Session 8**: ADR-0027 at zero UNDECIDED rows; merge green; `dev == main`; home wired; roadmap archived with deviations as dated ledger notes; program's twenty-second dated direction.
