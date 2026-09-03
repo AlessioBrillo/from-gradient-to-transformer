@@ -83,7 +83,14 @@ class RotaryEmbedding(nn.Module):
 class Attention(nn.Module):
     """Multi-head causal self-attention with RoPE."""
 
-    def __init__(self, d_model: int, n_heads: int, max_seq_len: int, dropout: float = 0.0) -> None:
+    def __init__(
+        self,
+        d_model: int,
+        n_heads: int,
+        max_seq_len: int,
+        dropout: float = 0.0,
+        rotary_base: float = 10000.0,
+    ) -> None:
         super().__init__()
         assert d_model % n_heads == 0
         self.d_model = d_model
@@ -98,7 +105,7 @@ class Attention(nn.Module):
         self.W_O = nn.Linear(d_model, d_model, bias=False)
         self.dropout = nn.Dropout(dropout)
 
-        self.rope = RotaryEmbedding(self.d_head, max_seq_len)
+        self.rope = RotaryEmbedding(self.d_head, max_seq_len, base=rotary_base)
 
         self.register_buffer(
             "causal_mask",
@@ -179,12 +186,13 @@ class TransformerBlock(nn.Module):
     """Single transformer block: Attention + MLP with Pre-RMSNorm and residual connections."""
 
     def __init__(
-        self, d_model: int, n_heads: int, d_mlp: int, max_seq_len: int, dropout: float = 0.0
+        self, d_model: int, n_heads: int, d_mlp: int, max_seq_len: int, dropout: float = 0.0,
+        rotary_base: float = 10000.0, rmsnorm_eps: float = 1e-6
     ) -> None:
         super().__init__()
-        self.ln_attn = RMSNorm(d_model)
-        self.attn = Attention(d_model, n_heads, max_seq_len, dropout)
-        self.ln_mlp = RMSNorm(d_model)
+        self.ln_attn = RMSNorm(d_model, eps=rmsnorm_eps)
+        self.attn = Attention(d_model, n_heads, max_seq_len, dropout, rotary_base)
+        self.ln_mlp = RMSNorm(d_model, eps=rmsnorm_eps)
         self.mlp = MLP(d_model, d_mlp, dropout)
 
     def forward(
@@ -250,6 +258,8 @@ class DecoderOnlyTransformer(nn.Module):
         max_seq_len: int = 256,
         dropout: float = 0.0,
         tie_weights: bool = False,
+        rotary_base: float = 10000.0,
+        rmsnorm_eps: float = 1e-6,
     ) -> None:
         super().__init__()
         self.d_model = d_model
@@ -264,11 +274,13 @@ class DecoderOnlyTransformer(nn.Module):
         self.embed = nn.Embedding(vocab_size, d_model)
         self.blocks = nn.ModuleList(
             [
-                TransformerBlock(d_model, n_heads, d_mlp, max_seq_len, dropout)
+                TransformerBlock(
+                    d_model, n_heads, d_mlp, max_seq_len, dropout, rotary_base, rmsnorm_eps
+                )
                 for _ in range(n_layers)
             ]
         )
-        self.ln_final = RMSNorm(d_model)
+        self.ln_final = RMSNorm(d_model, eps=rmsnorm_eps)
         self.unembed = nn.Linear(d_model, vocab_size, bias=False)
 
         if tie_weights:

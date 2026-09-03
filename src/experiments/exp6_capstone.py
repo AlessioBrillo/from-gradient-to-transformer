@@ -34,7 +34,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F  # noqa: N812
 import yaml
-from torch.utils.data import ConcatDataset, DataLoader, TensorDataset
+from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
 from src.experiments.checkpointing import save_training_checkpoint
@@ -56,14 +56,15 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 # ---------------------------------------------------------------------------
-# Data: Modular Addition + Induction (ConcatDataset)
+# Data: Modular Addition + Induction (Round-Robin DataLoaders)
 # ---------------------------------------------------------------------------
 def make_modular_addition_data(
     modulus: int,
     train_fraction: float,
+    seq_len: int,
     seed: int = 42,
 ) -> tuple[TensorDataset, TensorDataset]:
-    """Generate modular addition task (a + b mod P)."""
+    """Generate modular addition task (a + b mod P) padded to seq_len."""
     rng = np.random.default_rng(seed)
 
     all_pairs = [(a, b) for a in range(modulus) for b in range(modulus)]
@@ -77,15 +78,31 @@ def make_modular_addition_data(
         a = torch.tensor([p[0] for p in pairs], dtype=torch.long)
         b = torch.tensor([p[1] for p in pairs], dtype=torch.long)
         target = (a + b) % modulus
-        return torch.stack([a, b], dim=1), target
+        # Create sequences of length seq_len: [a, b, pad, pad, ...]
+        # Target is only at position 1 (after b), rest are ignored via loss masking
+        pad_id = modulus  # vocab_size - 1
+        x = torch.full((len(pairs), seq_len), pad_id, dtype=torch.long)
+        x[:, 0] = a
+        x[:, 1] = b
+        # Language modeling format: input = x[:-1], target = x[1:]
+        # But we only care about predicting at position 1 (after seeing a, b)
+        return x, target
 
     train_x, train_y = _to_tensor(train_pairs)
     val_x, val_y = _to_tensor(val_pairs)
 
-    # Format: input_ids = [a, b], target = (a+b) % P
+    # Language modeling: input = tokens[:-1], target = tokens[1:]
+    # For modular: we want to predict target at position 1 (after a, b)
+    # So input is [:, :-1], target is [:, 1:]
+    # But we'll mask loss to only care about position 1
+    train_x_lm = train_x[:, :-1]
+    train_y_lm = train_x[:, 1:]
+    val_x_lm = val_x[:, :-1]
+    val_y_lm = val_x[:, 1:]
+
     return (
-        TensorDataset(train_x, train_y),
-        TensorDataset(val_x, val_y),
+        TensorDataset(train_x_lm, train_y_lm, train_y),  # Include original target for masking
+        TensorDataset(val_x_lm, val_y_lm, val_y),
     )
 
 
@@ -127,19 +144,59 @@ def make_repeated_token_data(
     )
 
 
+class RoundRobinDataLoader:
+    """Iterates over multiple dataloaders in round-robin fashion."""
+
+    def __init__(self, dataloaders: list[DataLoader]):
+        self.dataloaders = dataloaders
+        self.iterators = [iter(dl) for dl in dataloaders]
+        self.lengths = [len(dl) for dl in dataloaders]
+        self.total_batches = sum(self.lengths)
+
+    def __iter__(self):
+        self.iterators = [iter(dl) for dl in self.dataloaders]
+        return self
+
+    def __next__(self):
+        # Round-robin: yield from each dataloader in turn
+        for i, it in enumerate(self.iterators):
+            try:
+                batch = next(it)
+                # Add task_id to batch for loss masking
+                # batch can be tuple or list from DataLoader
+                batch = tuple(batch) if isinstance(batch, list) else batch
+                if isinstance(batch, tuple) and len(batch) == 3:
+                    # Modular addition: (x, y, target) - task_id = 0
+                    x, y, target = batch
+                    return x, y, target, 0
+                else:
+                    # Induction: (x, y) - task_id = 1
+                    x, y = batch[:2]
+                    return x, y, None, 1
+            except StopIteration:
+                continue
+        raise StopIteration
+
+    def __len__(self):
+        return self.total_batches
+
+
 def make_mixed_dataloaders(
     cfg: dict,
     seed: int,
-) -> tuple[DataLoader, DataLoader]:
-    """Create mixed dataloaders for both tasks."""
+) -> tuple[RoundRobinDataLoader, RoundRobinDataLoader]:
+    """Create round-robin dataloaders for both tasks."""
     mod_cfg = cfg["task"]["modular"]
     ind_cfg = cfg["task"]["induction"]
     train_cfg = cfg["training"]
 
-    # Modular addition data
+    seq_len = ind_cfg["seq_len"]
+
+    # Modular addition data (padded to induction seq_len)
     mod_train, mod_val = make_modular_addition_data(
         modulus=mod_cfg["modulus"],
         train_fraction=mod_cfg["train_fraction"],
+        seq_len=seq_len,
         seed=seed,
     )
 
@@ -150,16 +207,17 @@ def make_mixed_dataloaders(
         num_train=ind_cfg["num_train"],
         num_val=ind_cfg["num_val"],
         prefix_ratio=ind_cfg["prefix_ratio"],
-        seed=seed + 1000,  # Different seed for induction
+        seed=seed + 1000,
     )
 
-    # Concatenate datasets
-    train_dataset = ConcatDataset([mod_train, ind_train])
-    val_dataset = ConcatDataset([mod_val, ind_val])
-
     batch_size = train_cfg["batch_size"]
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    mod_train_loader = DataLoader(mod_train, batch_size=batch_size, shuffle=True, drop_last=True)
+    mod_val_loader = DataLoader(mod_val, batch_size=batch_size, shuffle=False)
+    ind_train_loader = DataLoader(ind_train, batch_size=batch_size, shuffle=True, drop_last=True)
+    ind_val_loader = DataLoader(ind_val, batch_size=batch_size, shuffle=False)
+
+    train_loader = RoundRobinDataLoader([mod_train_loader, ind_train_loader])
+    val_loader = RoundRobinDataLoader([mod_val_loader, ind_val_loader])
 
     return train_loader, val_loader
 
@@ -185,8 +243,9 @@ def fourier_decomposition(
     t = torch.arange(P, device=embeddings.device, dtype=embeddings.dtype)
     basis = torch.exp(-2j * math.pi * torch.outer(freqs, t) / P) / math.sqrt(P)
 
-    # Decompose each neuron
-    coeffs = basis @ embeddings  # [P, d_model]
+    # Decompose each neuron - cast embeddings to complex for matmul with complex basis
+    embeddings_c = embeddings.to(torch.complex64)
+    coeffs = basis @ embeddings_c  # [P, d_model]
     magnitudes = coeffs.abs()
 
     # Dominant frequencies per neuron
@@ -251,28 +310,29 @@ def compute_k_composition_scores(
     scores = {}
 
     with torch.no_grad():
-        for batch_idx, (x, y) in enumerate(dataloader):
+        for batch_idx, batch in enumerate(dataloader):
             if batch_idx >= num_batches:
                 break
+            # Handle both RoundRobinDataLoader (4-tuple) and regular DataLoader (2-tuple)
+            if isinstance(batch, tuple) and len(batch) == 4:
+                x, y, mod_target, task_id = batch
+            else:
+                x, y = batch[:2]
+                _mod_target = None
+                _task_id = 1
             x = x.to(DEVICE)
             y = y.to(DEVICE)
 
-            # Run with attention hooks to capture patterns
-            logits, attn_weights = model(x, return_attn=True)
+            # Run with cache to capture attention patterns
+            logits, cache = model(x, return_cache=True)
 
-            # attn_weights: [batch, n_layers, n_heads, seq_len, seq_len]
-            # K-composition: L1 head attends to position where L0 attended
-            for layer_idx in range(1, model.config.n_layers):
-                for head_idx in range(model.config.n_heads):
+            # Placeholder implementation - full K-composition in exp1_induction_heads.py
+            for layer_idx in range(1, model.n_layers):
+                for head_idx in range(model.n_heads):
                     key = f"L{layer_idx}H{head_idx}"
                     if key not in scores:
                         scores[key] = []
-
-                    # Simplified: measure how much L1 head attends to L0's
-                    # max-attended position
-                    # Full implementation would be more detailed
-                    # (see exp1_induction_heads.py)
-                    scores[key].append(0.0)  # Placeholder
+                    scores[key].append(0.0)
 
     # Average across batches
     for key in scores:
@@ -417,20 +477,33 @@ def train_single_seed(
         "induction_acc": [],
     }
 
+    mod_weight = train_cfg.get("modular_weight", 1.0)
+    ind_weight = train_cfg.get("induction_weight", 1.0)
+
     while step < train_cfg["steps"]:
-        for x, y in train_loader:
+        for batch in train_loader:
             if step >= train_cfg["steps"]:
                 break
 
+            x, y, mod_target, task_id = batch
             x = x.to(DEVICE)
             y = y.to(DEVICE)
 
             optimizer.zero_grad()
-            logits = model(x)
+            logits, _ = model(x)
 
-            # Split loss by task (heuristic: first half modular, second half induction)
-            # In practice, would use task-specific masking
-            loss = F.cross_entropy(logits.view(-1, logits.size(-1)), y.view(-1))
+            # Compute loss with task-specific masking
+            if task_id == 0:
+                # Modular addition: only compute loss at position 1 (predicting target after a, b)
+                # x shape: [batch, seq_len-1], y shape: [batch, seq_len-1]
+                # mod_target shape: [batch] - the actual (a+b)%P target
+                # We only care about the prediction at position 1 (after seeing a, b)
+                loss = F.cross_entropy(logits[:, 1, :], mod_target.to(DEVICE))
+                loss = loss * mod_weight
+            else:
+                # Induction: standard language modeling loss on all positions
+                loss = F.cross_entropy(logits.view(-1, logits.size(-1)), y.view(-1))
+                loss = loss * ind_weight
 
             loss.backward()
             torch.nn.utils.clip_grad_norm_(
@@ -444,12 +517,15 @@ def train_single_seed(
 
             # Logging
             if step % 100 == 0:
-                metrics_log["modular_loss"].append(loss.item())
+                if task_id == 0:
+                    metrics_log["modular_loss"].append(loss.item() / mod_weight)
+                else:
+                    metrics_log["induction_loss"].append(loss.item() / ind_weight)
 
             # Instrumentation checkpoints
             if step % inst_cfg["fourier_every"] == 0:
                 # Fourier analysis on modular addition embeddings
-                mod_embeddings = model.token_embedding.weight[
+                mod_embeddings = model.embed.weight[
                     : cfg["task"]["modular"]["modulus"]
                 ]
                 fourier_result = fourier_decomposition(
@@ -486,17 +562,32 @@ def train_single_seed(
             if step % 1000 == 0:
                 model.eval()
                 with torch.no_grad():
-                    # Quick val pass
+                    # Quick val pass - handle RoundRobinDataLoader batches
                     val_losses = []
                     val_accs = []
-                    for vx, vy in val_loader:
+                    for batch in val_loader:
+                        vx, vy, vmod_target, vtask_id = batch
                         vx = vx.to(DEVICE)
                         vy = vy.to(DEVICE)
-                        vlogits = model(vx)
-                        vloss = F.cross_entropy(
-                            vlogits.view(-1, vlogits.size(-1)), vy.view(-1)
-                        )
-                        vacc = (vlogits.argmax(-1) == vy).float().mean()
+
+                        vlogits, _ = model(vx)
+
+                        if vtask_id == 0:
+                            # Modular: loss at position 1
+                            vloss = F.cross_entropy(
+                                vlogits[:, 1, :], vmod_target.to(DEVICE)
+                            )
+                            vacc = (
+                                vlogits[:, 1, :].argmax(-1)
+                                == vmod_target.to(DEVICE)
+                            ).float().mean()
+                        else:
+                            # Induction: standard LM loss
+                            vloss = F.cross_entropy(
+                                vlogits.view(-1, vlogits.size(-1)), vy.view(-1)
+                            )
+                            vacc = (vlogits.argmax(-1) == vy).float().mean()
+
                         val_losses.append(vloss.item())
                         val_accs.append(vacc.item())
 
@@ -511,23 +602,24 @@ def train_single_seed(
     # Final evaluation
     model.eval()
     with torch.no_grad():
-        # Modular addition eval
+        # Modular addition eval - use the padded data format
         mod_train, mod_val = make_modular_addition_data(
             cfg["task"]["modular"]["modulus"],
             cfg["task"]["modular"]["train_fraction"],
+            seq_len=cfg["task"]["induction"]["seq_len"],
             seed=seed,
         )
         mod_val_loader = DataLoader(mod_val, batch_size=train_cfg["batch_size"])
 
         mod_correct = 0
         mod_total = 0
-        for x, y in mod_val_loader:
+        for x, y, mod_target in mod_val_loader:
             x = x.to(DEVICE)
-            y = y.to(DEVICE)
-            logits = model(x)
-            pred = logits.argmax(-1)
-            mod_correct += (pred == y).sum().item()
-            mod_total += y.numel()
+            mod_target = mod_target.to(DEVICE)
+            logits, _ = model(x)
+            pred = logits[:, 1, :].argmax(-1)  # Predict at position 1
+            mod_correct += (pred == mod_target).sum().item()
+            mod_total += mod_target.numel()
         mod_acc = mod_correct / mod_total if mod_total > 0 else 0.0
 
         # Induction eval
@@ -546,14 +638,14 @@ def train_single_seed(
         for x, y in ind_val_loader:
             x = x.to(DEVICE)
             y = y.to(DEVICE)
-            logits = model(x)
+            logits, _ = model(x)
             pred = logits.argmax(-1)
             ind_correct += (pred == y).sum().item()
             ind_total += y.numel()
         ind_acc = ind_correct / ind_total if ind_total > 0 else 0.0
 
         # Final Fourier analysis
-        mod_embeddings = model.token_embedding.weight[
+        mod_embeddings = model.embed.weight[
             : cfg["task"]["modular"]["modulus"]
         ]
         fourier_result = fourier_decomposition(
@@ -607,6 +699,22 @@ def main():
     with open(args.config) as fh:
         cfg = yaml.safe_load(fh)
 
+    # Quick mode overrides
+    if args.quick:
+        cfg["training"]["steps"] = 100
+        cfg["training"]["batch_size"] = 32
+        cfg["model"]["d_model"] = 64
+        cfg["model"]["n_layers"] = 2
+        cfg["model"]["n_heads"] = 4
+        cfg["model"]["d_mlp"] = 256
+        cfg["task"]["induction"]["vocab_size"] = 256
+        cfg["task"]["induction"]["seq_len"] = 32
+        cfg["task"]["induction"]["num_train"] = 512
+        cfg["task"]["induction"]["num_val"] = 128
+        cfg["task"]["modular"]["modulus"] = 17
+        cfg["checkpoint_every"] = 50
+        logger.info("QUICK MODE: reduced config for fast iteration")
+
     # Override from CLI
     if args.seeds:
         seeds = parse_seeds(args.seeds)
@@ -644,11 +752,14 @@ def main():
     # Save manifest
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     manifest = ResultsManifest.from_run(
-        experiment_name="exp6_capstone",
-        config=cfg,
-        aggregate=aggregate,
-        git_sha=ResultsManifest.get_git_sha(),
-        git_dirty=ResultsManifest.is_dirty(),
+        experiment="exp6_capstone",
+        seeds=seeds,
+        args=cfg,
+        per_seed_metrics=aggregate.per_seed,
+        aggregate=aggregate.aggregate,
+        wall_clock_seconds=aggregate.wall_clock_seconds,
+        device=str(DEVICE),
+        n_parameters=aggregate.per_seed[0].get("model_params") if aggregate.per_seed else None,
     )
     manifest.save(RESULTS_DIR / cfg["output"]["manifest_name"])
 
