@@ -41,3 +41,4 @@ compass_artifact_wf-*.md
 
 # OS
 .DS_Store
+src/from_gradient_to_transformer.egg-info/
