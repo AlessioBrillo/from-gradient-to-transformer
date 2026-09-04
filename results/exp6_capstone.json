@@ -81,11 +81,18 @@
     }
   ],
   "aggregate": {
-    "total_steps": {
-      "mean": 100.0,
+    "final_modular_acc": {
+      "mean": 0.0,
       "std": 0.0,
-      "min": 100.0,
-      "max": 100.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 1.0
+    },
+    "final_max_kcomp": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
       "n": 1.0
     },
     "final_induction_acc": {
@@ -95,13 +102,6 @@
       "max": 0.004032258064516129,
       "n": 1.0
     },
-    "final_k_99": {
-      "mean": 15.296875,
-      "std": 0.0,
-      "min": 15.296875,
-      "max": 15.296875,
-      "n": 1.0
-    },
     "model_params": {
       "mean": 134848.0,
       "std": 0.0,
@@ -109,11 +109,18 @@
       "max": 134848.0,
       "n": 1.0
     },
-    "final_modular_acc": {
-      "mean": 0.0,
+    "final_k_99": {
+      "mean": 15.296875,
       "std": 0.0,
-      "min": 0.0,
-      "max": 0.0,
+      "min": 15.296875,
+      "max": 15.296875,
+      "n": 1.0
+    },
+    "total_steps": {
+      "mean": 100.0,
+      "std": 0.0,
+      "min": 100.0,
+      "max": 100.0,
       "n": 1.0
     },
     "final_k_90": {
@@ -122,24 +129,17 @@
       "min": 10.65625,
       "max": 10.65625,
       "n": 1.0
-    },
-    "final_max_kcomp": {
-      "mean": 0.0,
-      "std": 0.0,
-      "min": 0.0,
-      "max": 0.0,
-      "n": 1.0
     }
   },
-  "wall_clock_seconds": 9.867075696995016,
-  "git_sha": "dbb7ad4",
-  "git_dirty": false,
+  "wall_clock_seconds": 6.7858471870000585,
+  "git_sha": "e204791",
+  "git_dirty": true,
   "device": "cpu",
   "torch_version": "2.12.1+cu130",
   "numpy_version": "2.5.0",
   "python_version": "3.12.12",
   "n_parameters": 134848,
-  "created_at": "2026-09-03T15:58:59+00:00",
+  "created_at": "2026-09-04T08:32:12+00:00",
   "notes": null,
   "neuron_ablation": null
 }
