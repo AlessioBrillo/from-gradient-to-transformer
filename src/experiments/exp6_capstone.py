@@ -28,7 +28,7 @@ import argparse
 import logging
 import math
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 import torch
@@ -408,6 +408,9 @@ def train_single_seed(
     seed: int,
     resume_step: int = 0,
     checkpoint_dir: Optional[Path] = None,
+    wandb_run: Any = None,
+    log_wandb_metrics: Any = None,
+    log_wandb_artifact: Any = None,
 ) -> dict[str, float]:
     """Train capstone model for a single seed.
 
@@ -522,6 +525,18 @@ def train_single_seed(
                 else:
                     metrics_log["induction_loss"].append(loss.item() / ind_weight)
 
+            # W&B per-step metrics logging
+            if wandb_run and log_wandb_metrics:
+                metrics_to_log = {
+                    f"seed_{seed}/loss": loss.item(),
+                    f"seed_{seed}/lr": scheduler.get_last_lr()[0],
+                }
+                if task_id == 0:
+                    metrics_to_log[f"seed_{seed}/modular_loss"] = loss.item() / mod_weight
+                else:
+                    metrics_to_log[f"seed_{seed}/induction_loss"] = loss.item() / ind_weight
+                log_wandb_metrics(wandb_run, metrics_to_log, step=step)
+
             # Instrumentation checkpoints
             if step % inst_cfg["fourier_every"] == 0:
                 # Fourier analysis on modular addition embeddings
@@ -537,6 +552,13 @@ def train_single_seed(
                 )
                 logger.info(f"Step {step}: Fourier k_99 = {sparsity['k_99_mean']:.1f}")
 
+                # Log Fourier sparsity to W&B
+                if wandb_run and log_wandb_metrics:
+                    log_wandb_metrics(wandb_run, {
+                        f"seed_{seed}/fourier_k_90": sparsity["k_90_mean"],
+                        f"seed_{seed}/fourier_k_99": sparsity["k_99_mean"],
+                    }, step=step)
+
             if step % inst_cfg["kcomp_every"] == 0:
                 # K-composition on induction data
                 kcomp_scores = compute_k_composition_scores(
@@ -545,11 +567,18 @@ def train_single_seed(
                 max_kcomp = max(kcomp_scores.values()) if kcomp_scores else 0.0
                 logger.info(f"Step {step}: Max K-comp = {max_kcomp:.4f}")
 
+                # Log K-composition to W&B
+                if wandb_run and log_wandb_metrics:
+                    log_wandb_metrics(wandb_run, {
+                        f"seed_{seed}/max_kcomp": max_kcomp,
+                    }, step=step)
+
             # Checkpointing
             if step % cfg["checkpoint_every"] == 0:
                 if checkpoint_dir:
+                    ckpt_path = checkpoint_dir / f"exp6_capstone_seed{seed}_step{step}.pt"
                     save_training_checkpoint(
-                        checkpoint_dir / f"exp6_capstone_seed{seed}_step{step}.pt",
+                        ckpt_path,
                         model=model,
                         optimizer=optimizer,
                         scheduler=scheduler,
@@ -557,6 +586,14 @@ def train_single_seed(
                         seed=seed,
                         config=cfg,
                     )
+                    # Log checkpoint as W&B artifact
+                    if wandb_run and log_wandb_artifact:
+                        log_wandb_artifact(
+                            wandb_run,
+                            str(ckpt_path),
+                            f"capstone-seed{seed}-step{step}",
+                            type_="model",
+                        )
 
             # Evaluation
             if step % 1000 == 0:
@@ -595,6 +632,12 @@ def train_single_seed(
                         f"Step {step}: Val Loss = {np.mean(val_losses):.4f}, "
                         f"Val Acc = {np.mean(val_accs):.4f}"
                     )
+                    # Log validation metrics to W&B
+                    if wandb_run and log_wandb_metrics:
+                        log_wandb_metrics(wandb_run, {
+                            f"seed_{seed}/val_loss": float(np.mean(val_losses)),
+                            f"seed_{seed}/val_acc": float(np.mean(val_accs)),
+                        }, step=step)
                 model.train()
 
     pbar.close()
@@ -660,6 +703,16 @@ def train_single_seed(
             model, ind_val_loader, num_batches=10
         )
         max_kcomp = max(kcomp_scores.values()) if kcomp_scores else 0.0
+
+        # Log final evaluation metrics to W&B
+        if wandb_run and log_wandb_metrics:
+            log_wandb_metrics(wandb_run, {
+                f"seed_{seed}/final_modular_acc": mod_acc,
+                f"seed_{seed}/final_induction_acc": ind_acc,
+                f"seed_{seed}/final_k_90": sparsity["k_90_mean"],
+                f"seed_{seed}/final_k_99": sparsity["k_99_mean"],
+                f"seed_{seed}/final_max_kcomp": max_kcomp,
+            }, step=train_cfg["steps"])
 
     # Return metrics for aggregation
     return {
@@ -741,11 +794,22 @@ def main():
         except ImportError:
             logger.warning("wandb not installed, skipping W&B logging")
 
+    # Import runner's W&B utilities for per-step logging
+    from src.experiments.runner import log_wandb_artifact, log_wandb_metrics
+
     # Run multi-seed
     checkpoint_dir = CHECKPOINTS_DIR if args.save_model else None
 
     def seed_fn(seed):
-        return train_single_seed(cfg, seed, resume_step=args.resume, checkpoint_dir=checkpoint_dir)
+        return train_single_seed(
+            cfg,
+            seed,
+            resume_step=args.resume,
+            checkpoint_dir=checkpoint_dir,
+            wandb_run=wandb_run,
+            log_wandb_metrics=log_wandb_metrics,
+            log_wandb_artifact=log_wandb_artifact,
+        )
 
     aggregate = run_seeds(seed_fn, seeds)
 
