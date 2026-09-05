@@ -151,29 +151,34 @@ class RoundRobinDataLoader:
         self.iterators = [iter(dl) for dl in dataloaders]
         self.lengths = [len(dl) for dl in dataloaders]
         self.total_batches = sum(self.lengths)
+        self._cursor = 0
 
     def __iter__(self):
         self.iterators = [iter(dl) for dl in self.dataloaders]
+        self._cursor = 0
         return self
 
     def __next__(self):
-        # Round-robin: yield from each dataloader in turn
-        for i, it in enumerate(self.iterators):
+        # True round-robin: resume from the cursor so successive calls
+        # alternate across loaders instead of draining loader 0 first.
+        # Exhausted iterators are skipped; StopIteration when all are done.
+        for _ in range(len(self.iterators)):
+            it = self.iterators[self._cursor]
+            self._cursor = (self._cursor + 1) % len(self.iterators)
             try:
                 batch = next(it)
-                # Add task_id to batch for loss masking
-                # batch can be tuple or list from DataLoader
-                batch = tuple(batch) if isinstance(batch, list) else batch
-                if isinstance(batch, tuple) and len(batch) == 3:
-                    # Modular addition: (x, y, target) - task_id = 0
-                    x, y, target = batch
-                    return x, y, target, 0
-                else:
-                    # Induction: (x, y) - task_id = 1
-                    x, y = batch[:2]
-                    return x, y, None, 1
             except StopIteration:
                 continue
+            # Add task_id to batch for loss masking
+            # batch can be tuple or list from DataLoader
+            batch = tuple(batch) if isinstance(batch, list) else batch
+            if isinstance(batch, tuple) and len(batch) == 3:
+                # Modular addition: (x, y, target) - task_id = 0
+                x, y, target = batch
+                return x, y, target, 0
+            # Induction: (x, y) - task_id = 1
+            x, y = batch[:2]
+            return x, y, None, 1
         raise StopIteration
 
     def __len__(self):
@@ -380,7 +385,13 @@ def harvest_activations(
 
     total_tokens = 0
     with torch.no_grad():
-        for x, y in dataloader:
+        for batch in dataloader:
+            # Accept both RoundRobinDataLoader 4-tuples (x, y, target, task_id)
+            # and plain DataLoader 2-tuples (x, y).
+            if isinstance(batch, tuple) and len(batch) == 4:
+                x, y, _mod_target, _task_id = batch
+            else:
+                x, y = batch[:2]
             if total_tokens >= max_tokens:
                 break
             x = x.to(DEVICE)

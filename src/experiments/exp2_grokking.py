@@ -1068,8 +1068,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
-def main() -> None:
-    FIGURES_DIR.mkdir(exist_ok=True)
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Rung 2: Grokking modular addition with Fourier reverse-engineering"
     )
@@ -1174,7 +1173,22 @@ def main() -> None:
             "you want plotted)."
         ),
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "--manifest-path",
+        type=str,
+        default=None,
+        help=(
+            "Override the multi-seed manifest path (default: "
+            "results/exp2_grokking.json). Probes at a non-flagship modulus "
+            "MUST set this so they can never overwrite the flagship manifest."
+        ),
+    )
+    return parser
+
+
+def main() -> None:
+    FIGURES_DIR.mkdir(exist_ok=True)
+    args = build_parser().parse_args()
 
     logging.basicConfig(
         level=logging.INFO,
@@ -1233,7 +1247,11 @@ def main() -> None:
             device=str(DEVICE),
             n_parameters=count_parameters(probe_model),
         )
-        manifest_path = Path("results") / "exp2_grokking.json"
+        manifest_path = (
+            Path(args.manifest_path)
+            if args.manifest_path
+            else Path("results") / "exp2_grokking.json"
+        )
         manifest.save(manifest_path)
         logger.info(f"Saved multi-seed manifest to {manifest_path}")
         for key in result.aggregate:

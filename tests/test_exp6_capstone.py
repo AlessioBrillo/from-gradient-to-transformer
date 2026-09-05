@@ -12,8 +12,14 @@ the symmetric contract: what the saver writes, the resumer must read.
 from pathlib import Path
 
 import torch
+from torch.utils.data import DataLoader, TensorDataset
 
-from src.experiments.exp6_capstone import train_single_seed
+from src.experiments.exp6_capstone import (
+    RoundRobinDataLoader,
+    harvest_activations,
+    train_single_seed,
+)
+from src.models.decoder_only_transformer import DecoderOnlyTransformer
 
 
 def _tiny_cfg(steps: int, checkpoint_every: int) -> dict:
@@ -83,3 +89,45 @@ def test_resume_continues_from_checkpoint(tmp_path: Path) -> None:
         tmp_path / "exp6_capstone_seed0_step6.pt", map_location="cpu"
     )
     assert resumed["step"] == 6
+
+
+def _two_task_loader() -> RoundRobinDataLoader:
+    """Modular-style 3-tuple loader + induction-style 2-tuple loader."""
+    mod = TensorDataset(
+        torch.zeros(4, 7, dtype=torch.long),
+        torch.zeros(4, 7, dtype=torch.long),
+        torch.zeros(4, dtype=torch.long),
+    )
+    ind = TensorDataset(
+        torch.ones(4, 7, dtype=torch.long),
+        torch.ones(4, 7, dtype=torch.long),
+    )
+    return RoundRobinDataLoader(
+        [
+            DataLoader(mod, batch_size=2, shuffle=False),
+            DataLoader(ind, batch_size=2, shuffle=False),
+        ]
+    )
+
+
+def test_round_robin_alternates_tasks() -> None:
+    """Batches must alternate mod/ind, not drain one loader first."""
+    task_ids = [batch[3] for batch in _two_task_loader()]
+    assert task_ids == [0, 1, 0, 1], f"expected alternation, got {task_ids}"
+
+
+def test_harvest_activations_accepts_round_robin_batches() -> None:
+    """harvest_activations must unpack 4-tuple RoundRobin batches."""
+    model = DecoderOnlyTransformer(
+        vocab_size=64,
+        d_model=16,
+        n_layers=1,
+        n_heads=2,
+        d_mlp=32,
+        dropout=0.0,
+    )
+    out = harvest_activations(
+        model, _two_task_loader(), hooks=["ln_final"], max_tokens=64
+    )
+    assert "ln_final" in out
+    assert out["ln_final"].numel() > 0
