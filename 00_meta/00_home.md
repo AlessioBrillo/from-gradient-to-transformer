@@ -301,6 +301,8 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[28_micro-phase-29-the-pos
   the GPU unblock executes: Session 0 consumed MP-70's decision (thirtieth-generation arc), Row 1 (GPU Grokking P=113 ×3 seeds) launched on Colab, Row 2 (Extended Induction 10k epochs) running locally, Row 4 (Clean-clone proof) scheduled Session 4. ADR-0024 (20th continuum ledger) open. Terminus: 2026-09-06.
 - [[79_micro-phase-79-next-phase-roadmap|MP-79 · Next Phase Roadmap (PRE-EXECUTION)]] —
   stabilize then showcase: RoundRobin true alternation, harvest 4-tuple unpack, and `--manifest-path` probe guardrail landed test-first (203 tests green); the 1-seed × 2k-step capstone shakedown, portfolio click-through, and W&B verdict execute under ADR-0028. Terminus: Session 6 release.
+- [[80_micro-phase-80-from-shakedown-to-showcase|MP-80 · From Shakedown to Showcase (PRE-EXECUTION)]] —
+  Session 0 stamped ADR-0028 (twenty-third continuum ledger): 1-seed × 2k-step exp6 shakedown with real K-comp and probe-safe manifests, portfolio click-through lock-in, W&B verdict, paper v-next decision, teaching artifact v22. Baseline 208 tests green, ruff/mypy/verify-claims at 0. Terminus: Session 6 release.
 - [[35_micro-phase-36-the-fifth-question|MP-36 · The Fifth Question (pre-registered)]] —
   consumes MP-35's release whatever its rows decided (gated hard: no continuum ledger
   at zero, no phase): the continuum law executes a fifth time under a new ledger
