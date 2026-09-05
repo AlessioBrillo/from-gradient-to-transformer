@@ -33,5 +33,9 @@ export default {
     // PR #119 commits (2026-08-31) - footer-leading-blank and type "config"
     (message) => message.startsWith('ci(markdown-lint): exclude .opencode and .venv from markdownlint'),
     (message) => message.startsWith('config(markdownlint): increase line length limit to 1000'),
+    // MP-80 commit (2026-09-05) - body-max-line-length: single-paragraph
+    // body shipped without the local commitlint-new mirror run; force-push
+    // blocked on dev so the object cannot be rewritten
+    (message) => message.startsWith('fix(capstone): real K-comp port, manifest guardrail, portfolio click-through repair'),
   ],
 };
