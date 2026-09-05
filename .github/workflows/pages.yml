@@ -55,7 +55,7 @@ jobs:
 
       - name: Verify claims
         run: |
-          python -m src.results verify
+          uv run python -m src.results verify
 
       - name: Build portfolio (copy figures, ensure structure)
         run: |
