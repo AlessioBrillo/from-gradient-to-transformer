@@ -22,6 +22,11 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # The quick sweep (notably exp3's 2000-epoch sparsity sweep) needs
+    # ~20-30 min on a GH CPU runner; the prior 10-min step timeout failed
+    # five consecutive main pushes at ~34% of the sweep. Verified from
+    # run logs (e.g. 2026-09-05): timeout, not a science failure.
+    timeout-minutes: 35
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -46,7 +51,7 @@ jobs:
       - name: Verify reproducibility (quick)
         run: |
           make reproduce-quick
-        timeout-minutes: 10
+        timeout-minutes: 30
 
       - name: Verify claims
         run: |
