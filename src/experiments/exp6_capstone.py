@@ -37,7 +37,6 @@ import yaml
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
-from src.experiments.checkpointing import save_training_checkpoint
 from src.experiments.runner import parse_seeds, run_seeds
 from src.models.decoder_only_transformer import DecoderOnlyTransformer
 from src.reproducibility import set_seed
@@ -573,19 +572,27 @@ def train_single_seed(
                         f"seed_{seed}/max_kcomp": max_kcomp,
                     }, step=step)
 
-            # Checkpointing
+            # Checkpointing (raw step format, mirroring the resume branch
+            # above: keys model/optimizer/scheduler/step. The shared
+            # epoch-oriented helper does not apply here — this loop is
+            # step-based with no epoch history — so save directly, atomically
+            # (tmp + replace) so a kill mid-save keeps the previous valid
+            # checkpoint, per the repo's kill-drill durability standard.
             if step % cfg["checkpoint_every"] == 0:
                 if checkpoint_dir:
                     ckpt_path = checkpoint_dir / f"exp6_capstone_seed{seed}_step{step}.pt"
-                    save_training_checkpoint(
-                        ckpt_path,
-                        model=model,
-                        optimizer=optimizer,
-                        scheduler=scheduler,
-                        step=step,
-                        seed=seed,
-                        config=cfg,
+                    tmp_path = ckpt_path.with_suffix(".tmp")
+                    torch.save(
+                        {
+                            "model": model.state_dict(),
+                            "optimizer": optimizer.state_dict(),
+                            "scheduler": scheduler.state_dict(),
+                            "step": step,
+                            "seed": seed,
+                        },
+                        tmp_path,
                     )
+                    tmp_path.replace(ckpt_path)
                     # Log checkpoint as W&B artifact
                     if wandb_run and log_wandb_artifact:
                         log_wandb_artifact(
