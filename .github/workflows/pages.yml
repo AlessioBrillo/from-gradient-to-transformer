@@ -37,7 +37,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
+        # No pip cache here: deps install via `uv sync` (cached by
+        # setup-uv above). The pip cache post-step flaked the build when
+        # the GH cache service was down, failing an otherwise-green run.
 
       - name: Install uv
         uses: astral-sh/setup-uv@v3
