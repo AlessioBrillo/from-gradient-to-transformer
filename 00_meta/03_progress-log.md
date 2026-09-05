@@ -13,6 +13,12 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-09-05 — Micro-Phase 80, Session 0: roadmap + ledger + toolchain pinning
+
+- **Studied**: MP-79 intake plus ADR-0027 row states (R1/R3/R5 PENDING, rest GATED; GPU grokking IN_PROGRESS, extended induction NOT_STARTED, clean-clone GREEN 2026-08-27). Verified baseline live: 208 tests pass, `ruff check src/ tests/` clean, blocking `mypy` clean, `verify-claims` at 0, six manifests on disk. Toolchains pinned live: no pdflatex/latexmk, `pages.yml` exists, wandb 0.28.0 / hf 1.28.0 installed (logins unverified — Row 5 work).
+- **Built**: [[00_meta/80_micro-phase-80-from-shakedown-to-showcase|MP-80 roadmap]] (Sessions 0–6, eight frozen rows, shakedown-first + vocab-offset-at-Session-4 decisions) + `docs/adr/0028-continuum-ledger-23.md` with Ex-T32 execution memo + home wiring. Decisions: CPU shakedown runs regardless of the pending GPU manifest (consumed, never waited on); path-patching vacuous zeros reported as vacuous, never plotted.
+- **Open question**: Does the joint modular-plus-induction shakedown move K-comp off zero, or confirm the dense attractor at joint scale — answered by Row 1 checkpoints, not by argument.
+
 ## 2026-09-05 — Micro-Phase 80: stabilize-then-showcase execution (exp6 guardrail + real K-comp + portfolio repair)
 
 - **Studied**: MP-79 intake (PRE-EXECUTION) plus two read-only audits: capstone stack (K-comp placeholder, missing `--manifest-path`, `model.layers` vs `model.blocks`, checkpoint-every override) and portfolio gaps (5 orphan pages, wrong figure prefix on all 5, 8/13 dangling figures, stale Rung-2 summary and Phase-6 gate cell, 12-day log gap, unpinned toolchains).
