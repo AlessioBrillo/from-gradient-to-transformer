@@ -300,6 +300,20 @@ def analyze_fourier_sparsity(
 # ---------------------------------------------------------------------------
 # Instrumentation: K-Composition (Induction Heads)
 # ---------------------------------------------------------------------------
+KCOMP_VACUOUS = False
+
+try:
+    from src.experiments.exp1_induction_heads import (
+        diagnose_induction_formation as _diagnose_induction_formation,
+    )
+    from src.experiments.exp1_induction_heads import (
+        k_composition_scores as _k_composition_scores,
+    )
+except ImportError:  # pragma: no cover - exp1 is always present in-repo
+    _k_composition_scores = None  # type: ignore[assignment]
+    _diagnose_induction_formation = None  # type: ignore[assignment]
+
+
 def compute_k_composition_scores(
     model: DecoderOnlyTransformer,
     dataloader: DataLoader,
@@ -307,42 +321,78 @@ def compute_k_composition_scores(
 ) -> dict:
     """Compute K-composition scores for induction head detection.
 
-    Returns:
-        dict with k_comp_scores per head per layer
+    Real port of the exp1 detector (Nanda & Jacobsen 2023, Step 2):
+    collects per-layer ``attn_probs`` from the model cache on induction
+    batches only (``task_id == 1``; modular batches carry no induction
+    structure) and scores adjacent layer pairs with
+    ``exp1_induction_heads.k_composition_scores``. Returns per-head
+    ``L{L}H{H}`` max-over-pairs scores plus ``_diagnosis`` metadata
+    (Step 1 duplicate mass, Step 2 best pair). Never returns vacuous
+    zeros as measurements: when no induction batch is seen the dict
+    carries ``_vacuous: True`` and callers must not plot it as a result.
     """
+    global KCOMP_VACUOUS
     model.eval()
-    scores = {}
+    patterns_per_layer: dict[int, list[torch.Tensor]] = {}
+    seen_induction = 0
 
     with torch.no_grad():
         for batch_idx, batch in enumerate(dataloader):
             if batch_idx >= num_batches:
                 break
-            # Handle both RoundRobinDataLoader (4-tuple) and regular DataLoader (2-tuple)
             if isinstance(batch, tuple) and len(batch) == 4:
-                x, y, mod_target, task_id = batch
+                x, _y, _mod_target, task_id = batch
+                tid = task_id.item() if isinstance(task_id, torch.Tensor) else task_id
+                if tid != 1:
+                    continue
             else:
-                x, y = batch[:2]
-                _mod_target = None
-                _task_id = 1
+                x = batch[0] if isinstance(batch, (tuple, list)) else batch
             x = x.to(DEVICE)
-            y = y.to(DEVICE)
 
-            # Run with cache to capture attention patterns
-            logits, cache = model(x, return_cache=True)
+            _logits, cache = model(x, return_cache=True)
+            assert cache is not None
+            for layer_idx in range(model.n_layers):
+                key = f"blocks.{layer_idx}.attn.attn_probs"
+                if key in cache:
+                    patterns_per_layer.setdefault(layer_idx, []).append(
+                        cache[key].detach().cpu()
+                    )
+            seen_induction += 1
 
-            # Placeholder implementation - full K-composition in exp1_induction_heads.py
-            for layer_idx in range(1, model.n_layers):
-                for head_idx in range(model.n_heads):
-                    key = f"L{layer_idx}H{head_idx}"
-                    if key not in scores:
-                        scores[key] = []
-                    scores[key].append(0.0)
+    if seen_induction == 0 or len(patterns_per_layer) < 2:
+        KCOMP_VACUOUS = True
+        logger.warning(
+            "K-comp: no induction batches (or <2 layers with patterns) — "
+            "returning vacuous marker, not a measurement."
+        )
+        return {"_vacuous": True}
 
-    # Average across batches
-    for key in scores:
-        scores[key] = float(np.mean(scores[key]))
+    KCOMP_VACUOUS = False
+    layers = sorted(patterns_per_layer)
+    stacked = {
+        li: torch.cat(patterns_per_layer[li], dim=0) for li in layers
+    }
+    # Score every adjacent pair; keep per-head max over pairs.
+    best: dict[str, float] = {}
+    best_pair_score = 0.0
+    for a, b in zip(layers, layers[1:]):
+        p0, p1 = stacked[a], stacked[b]
+        n = min(p0.shape[0], p1.shape[0])
+        comp = _k_composition_scores(p0[:n].to(DEVICE), p1[:n].to(DEVICE))
+        best_pair_score = max(best_pair_score, float(comp.max()))
+        for h1 in range(comp.shape[1]):
+            k = f"L{b}H{h1}"
+            best[k] = max(best.get(k, 0.0), float(comp[:, h1].max()))
 
-    return scores
+    diag = _diagnose_induction_formation(
+        [stacked[layers[0]].to(DEVICE), stacked[layers[1]].to(DEVICE)]
+    )
+    best["_diagnosis_step1_max"] = float(max(diag["step1_l0_duplicate_mass"] or [0.0]))
+    best["_diagnosis_step2"] = float(diag["step2_k_composition"])
+    best["_diagnosis_best_pair"] = (
+        f"L{layers[0]}H{diag['best_l0_head']}-L{layers[1]}H{diag['best_l1_head']}"
+    )
+    return best
 
 
 # ---------------------------------------------------------------------------
@@ -374,8 +424,10 @@ def harvest_activations(
             )
             handles.append(handle)
         else:
-            # Try to find in layers
-            for layer in model.layers:
+            # Try to find in blocks (DecoderOnlyTransformer.blocks;
+            # accept legacy .layers alias if present).
+            _blocks = getattr(model, "blocks", getattr(model, "layers", []))
+            for layer in _blocks:
                 if hasattr(layer, hook_name):
                     handle = getattr(layer, hook_name).register_forward_hook(
                         make_hook(hook_name)
@@ -574,8 +626,20 @@ def train_single_seed(
                 kcomp_scores = compute_k_composition_scores(
                     model, val_loader, num_batches=5
                 )
-                max_kcomp = max(kcomp_scores.values()) if kcomp_scores else 0.0
-                logger.info(f"Step {step}: Max K-comp = {max_kcomp:.4f}")
+                head_scores = [
+                    v
+                    for k, v in kcomp_scores.items()
+                    if not k.startswith("_") and isinstance(v, (int, float))
+                ]
+                if kcomp_scores.get("_vacuous"):
+                    logger.warning(
+                        f"Step {step}: K-comp vacuous (no induction signal) — "
+                        "not a measurement, not plotted as a result."
+                    )
+                    max_kcomp = 0.0
+                else:
+                    max_kcomp = max(head_scores) if head_scores else 0.0
+                    logger.info(f"Step {step}: Max K-comp = {max_kcomp:.4f}")
 
                 # Log K-composition to W&B
                 if wandb_run and log_wandb_metrics:
@@ -716,11 +780,20 @@ def train_single_seed(
             fourier_result["fourier_magnitudes"], cfg["task"]["modular"]["modulus"]
         )
 
-        # Final K-composition
+        # Final K-composition (pure induction loader: 2-tuple batches)
         kcomp_scores = compute_k_composition_scores(
             model, ind_val_loader, num_batches=10
         )
-        max_kcomp = max(kcomp_scores.values()) if kcomp_scores else 0.0
+        _head_scores = [
+            v
+            for k, v in kcomp_scores.items()
+            if not k.startswith("_") and isinstance(v, (int, float))
+        ]
+        if kcomp_scores.get("_vacuous"):
+            logger.warning("Final K-comp vacuous — not a measurement.")
+            max_kcomp = 0.0
+        else:
+            max_kcomp = max(_head_scores) if _head_scores else 0.0
 
         # Log final evaluation metrics to W&B
         if wandb_run and log_wandb_metrics:
@@ -744,7 +817,7 @@ def train_single_seed(
     }
 
 
-def main():
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Capstone: Decoder-Only Transformer Training & Reverse-Engineering"
     )
@@ -756,7 +829,10 @@ def main():
     )
     parser.add_argument("--seeds", type=str, help="Comma-separated seeds, e.g. '0,1,2'")
     parser.add_argument(
-        "--checkpoint-every", type=int, default=1000, help="Checkpoint interval"
+        "--checkpoint-every",
+        type=int,
+        default=None,
+        help="Checkpoint interval (default: config value; --quick sets 50)",
     )
     parser.add_argument("--save-model", action="store_true", help="Save final model checkpoints")
     parser.add_argument("--resume", type=int, default=0, help="Resume from step")
@@ -764,7 +840,21 @@ def main():
     parser.add_argument("--wandb-project", type=str, help="W&B project name")
     parser.add_argument("--wandb-entity", type=str, help="W&B entity/username")
     parser.add_argument("--quick", action="store_true", help="Quick mode for testing")
-    args = parser.parse_args()
+    parser.add_argument(
+        "--manifest-path",
+        type=str,
+        default=None,
+        help=(
+            "Override the manifest path (default: "
+            "results/<manifest_name from config>). Probes and shakedowns "
+            "MUST set this so they can never overwrite the flagship manifest."
+        ),
+    )
+    return parser
+
+
+def main() -> None:
+    args = build_parser().parse_args()
 
     # Load config
     with open(args.config) as fh:
@@ -843,7 +933,13 @@ def main():
         device=str(DEVICE),
         n_parameters=aggregate.per_seed[0].get("model_params") if aggregate.per_seed else None,
     )
-    manifest.save(RESULTS_DIR / cfg["output"]["manifest_name"])
+    manifest_path = (
+        Path(args.manifest_path)
+        if args.manifest_path
+        else RESULTS_DIR / cfg["output"]["manifest_name"]
+    )
+    manifest.save(manifest_path)
+    logger.info(f"Saved manifest to {manifest_path}")
 
     # Log to W&B
     if wandb_run:

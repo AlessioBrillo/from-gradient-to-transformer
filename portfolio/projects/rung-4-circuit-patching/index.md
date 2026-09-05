@@ -11,27 +11,31 @@ rung: 4
 **Methodology**:
 - Train models on induction and modular addition tasks
 - Detect induction heads via K-composition diagnostic
-- Activation patching: swap activations between clean/corrupted runs to measure causal effect
-- Path patching: isolate direct/indirect effects through specific heads/MLPs
-- Head ablation: verify necessity of detected heads
+- Activation patching: hook the block's `attn` output directly (post-W_O, the tensor that survives to the next layer), swapping `resid_mid` from a corrupted run
+- Path patching: isolate a single head's direct effect on logits via per-head W_O column blocks
+- Head ablation: `head_mask` zeroes a head's contribution before W_O
 
 **Key Result**:
 <!-- manifest: results/exp4_circuit_patching.json -->
-Circuit patching infrastructure built and tested on small models. Self-patching is no-op; cross-run patching changes output. Path patching returns expected keys (direct/indirect effects). Awaiting confirmed induction head checkpoint for real circuit discovery.
+Quick-mode 3-seed manifest: mean activation-patching recovery ~0.20 across 10 layer/position combos with 0/8 heads detected in all 3 seeds — a real, small, consistent circuit sensitivity, just not concentrated enough in one head to cross the 0.3 threshold. Head ablation and path patching skipped again (no head to target): path patching remains validated by unit tests only.
 
 **Figures**:
-![Induction Head Detection](figures/exp4_induction_detection.png) <!-- manifest: results/exp4_circuit_patching.json -->
-![Head Ablation](figures/exp4_head_ablation.png) <!-- manifest: results/exp4_circuit_patching.json -->
-![Activation Patching](figures/exp4_activation_patching.png) <!-- manifest: results/exp4_circuit_patching.json -->
+![Attention Patterns](../../figures/exp4_attention_patterns.png) <!-- manifest: results/exp4_circuit_patching.json -->
+![Patching Results](../../figures/exp4_patching_results.png) <!-- manifest: results/exp4_circuit_patching.json -->
+Head-ablation figure struck: ablation is skipped whenever 0 heads are detected, so there is no result to plot — struck rather than left dangling.
 
-**Notebook**: `notebooks/exp4_circuit_patching_demo.ipynb`
+**Reproduce**: `uv run python -m src.experiments.exp4_circuit_patching --quick` (smoke test) or `--quick --seeds 0,1,2` for the manifest config.
 
 **Limitations**:
-- Gated on Rung 1 producing confirmed induction heads (0/8 at 3k epochs, 10k in progress)
-- Tested only on small synthetic/untrained models so far
+- Gated on Rung 1 producing confirmed induction heads (0/8 so far)
 - No real circuit discovery yet — infrastructure ready, awaiting real heads
 
+**Links**:
+- [[portfolio/RESULTS]] — my honesty ledger and per-rung numbers
+- [[07_capstone/research-plan]] — where this rung sits in the experiment ladder
+- [[05_llm_engineering/proofs/intervention-validity]] — my patch-site and metric fix reconstruction
+
 **Next Steps**:
-- Run on first confirmed head checkpoint from Rung 1 (10k epoch run)
-- Run on capstone model checkpoints (MP-78)
+- Run on first confirmed head checkpoint from Rung 1
+- Run on capstone model checkpoints
 - Extend to modular addition circuits (Fourier frequencies as circuits)

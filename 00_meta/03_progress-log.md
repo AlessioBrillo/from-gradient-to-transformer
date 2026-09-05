@@ -13,6 +13,12 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-09-05 — Micro-Phase 80: stabilize-then-showcase execution (exp6 guardrail + real K-comp + portfolio repair)
+
+- **Studied**: MP-79 intake (PRE-EXECUTION) plus two read-only audits: capstone stack (K-comp placeholder, missing `--manifest-path`, `model.layers` vs `model.blocks`, checkpoint-every override) and portfolio gaps (5 orphan pages, wrong figure prefix on all 5, 8/13 dangling figures, stale Rung-2 summary and Phase-6 gate cell, 12-day log gap, unpinned toolchains).
+- **Built**: Real K-comp port in `src/experiments/exp6_capstone.py` (induction-only batches, adjacent-pair scoring via exp1 detector, `_vacuous` marker instead of silent zeros); `build_parser()` with `--manifest-path` and `--checkpoint-every default None`; `blocks`/`layers` hook fallback; `tests/test_exp6_manifest_path.py` + `tests/test_exp6_kcomp.py` (9 pass with existing exp6 tests); 5 rung pages repaired (correct `../../figures/` prefix, real filenames, struck-not-dangling honesty, >=2 `[[links]]` each); RESULTS Rung-2 summary and Phase-6 gate cell truthed. Baseline re-verified: 203+9 tests pass, ruff clean, blocking mypy clean, `verify-claims` at 0. Toolchains pinned: no pdflatex/latexmk, wandb 0.28.0 installed, hf 1.28.0 installed, `pages.yml` exists.
+- **Open question**: Vocab-offset redesign (modular ids share embedding rows with induction tokens) — decided with shakedown data in MP-80 Session 4, not patched blind.
+
 ## 2026-08-24 (fifty-eighth session) — Micro-Phase 74, Session 1: GPU launch + shelf baseline + debt re-verification + local cascade kickoff
 
 - **Studied**: ADR-0024 row by row — all 8 rows PENDING/GATED with explicit windows/kill-dates. GPU Colab notebook hardened and ready. Local stack verified: 189 tests pass, ruff clean, blocking mypy clean on `src/results.py` + `src/experiments/runner.py`, `verify-claims` at 0, all 5 manifests on disk. `dev` branch checked out and synced with `origin/dev`.
