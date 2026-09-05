@@ -470,7 +470,7 @@ recorded Rung-5 pending item.
 | 3 — Deep Learning | ✅ Complete | gradient-flow-and-architectures |
 | 4 — NLP & Transformers | ✅ Complete | circuit-analysis-complete |
 | 5 — LLM Engineering | [~] Instrumentation done (hooks, determinism, harvesting, circuit datasets proven; nnsight pending) | — |
-| 6 — Production AI | [~] Reproducibility harness built (multi-seed + manifests + `verify-claims` + figure-provenance gate 2026-08-07, kill drill + bit-identical checkpoint/resume, CI/mypy fixed, paper scaffold + `make paper` added) — W&B, Hugging Face Spaces, and the mini-paper prose are still open | [[06_production_ai/proofs/reproducible-from-clean-clone]] (not yet green — needs a post-commit clean-clone run) |
+| 6 — Production AI | [~] Reproducibility harness built (multi-seed + manifests + `verify-claims` + figure-provenance gate 2026-08-07, kill drill + bit-identical checkpoint/resume, CI/mypy fixed, paper scaffold + `make paper` added) — W&B, Hugging Face Spaces, and the mini-paper prose are still open | [[06_production_ai/proofs/reproducible-from-clean-clone]] (GREEN 2026-08-27, transcript committed) |
 | 7 — Capstone | [~] Research plan written | — |
 
 ## Summary
@@ -478,7 +478,7 @@ recorded Rung-5 pending item.
 | Rung | Status | Key Result |
 |------|--------|------------|
 | 1 — Induction Heads (fallback flagship) | ⚠️ Task design fixed, memorization confirmed, no head yet | Fresh-batches: 52.2% val acc vs. fixed dataset's 0.05% (matched 800-epoch comparison); 0/8 heads either way at this scale |
-| 2 — Grokking (primary flagship) | ⏳ Not yet reproduced | `--seeds` added, Colab notebook hardened; GPU run still pending — the top open item |
+| 2 — Grokking (primary flagship) | ✅ Decided 2026-08-11: NO-GROK positive-negative | P=113 CPU 3-seed: val accuracy 1.0 all seeds, Fourier dense (k_99 = 111/113); no run in repo history ever sparse; GPU verdict pending as scale follow-up, not the decision |
 | 3 — Superposition | ✅ Phase transition confirmed | Root cause found (no real bottleneck); rewritten, reproduces cleanly: 10/20 → 20/20 features represented |
 | 4 — Circuit Patching | ⚠️ Fixed 2026-08-01, quick multi-seed re-run 2026-08-02 | See Rung 4 above for the current numbers; path patching still only unit-tested, no real head to validate against yet |
 | 5 — SAE Dashboard | ✅ Synthetic reproduced; ⚠️ real-activation upgrade shipped | Real: 99.97% FVE but 53% L0 (dense, not sparse) — informative gap, not yet a clean win |
@@ -491,5 +491,4 @@ better checkpoint (one with a confirmed induction head) before the sparsity gap 
 anything conclusive. (3) Rung 1's fixed-vs-fresh comparison — a real, large, matched effect,
 though at a scale still well below standard. (4) Rung 4's quick multi-seed re-run — internal
 consistency confirmed (activation patching runs cleanly, matches Rung 1's "0 heads" finding)
-but path patching remains unvalidated against a real head. (5) Rung 2 — still nothing to
-trust yet; the GPU run is the blocker.
+but path patching remains unvalidated against a real head. (5) Rung 2 — the NO-GROK negative is trustworthy (val 1.0 + dense Fourier, 3 seeds, dated 2026-08-11); what is still open is whether any scale/hardware produces the sparse regime, not whether the flagship was measured.

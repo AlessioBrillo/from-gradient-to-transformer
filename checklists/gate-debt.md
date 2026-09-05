@@ -1,7 +1,7 @@
 ---
 tags: [checklist, gate-debt, phase/6, phase/7]
 created: 2026-08-24
-updated: 2026-09-01
+updated: 2026-09-05
 ---
 
 # Gate-Debt Ledger — MP-30 through MP-36 Row Closures
@@ -66,9 +66,16 @@ Updated from ADR-0027 adjudication at MP-78 Session 0:
 - MP-31 Row 2 (Pages): ADR-0027 Row 6 — needs paper compile
 
 **Still Pending** (Phase 6/7 residue):
-- MP-31 Row 1 (LaTeX): No TeX toolchain — documented reason
-- MP-31 Row 3 (Publish policy): Not yet defined
+- MP-31 Row 1 (LaTeX): No TeX toolchain — re-verified 2026-09-05 (no pdflatex/latexmk on this machine; `make paper` graceful, not green)
+- MP-31 Row 3 (Publish policy): Not yet defined (unchanged 2026-09-05)
 - MP-36 Row 1 (Final release): Gated on Rows 1-6
+
+## MP-80 Sync (2026-09-05)
+
+- Portfolio click-through blockers repaired: 5 rung pages now carry >=2 `[[links]]`, correct `../../figures/` prefix, and real filenames (dangling refs struck with reasons).
+- `portfolio/RESULTS.md` Rung-2 summary (NO-GROK 2026-08-11) and Phase-6 gate cell (GREEN 2026-08-27) truthed against the body and this ledger.
+- Exp6 probe guardrail (`--manifest-path`) and real K-comp port landed test-first; shakedown may proceed without flagship-clobber risk.
+- Toolchains pinned: pdflatex/latexmk absent, wandb 0.28.0 present, hf 1.28.0 present, `pages.yml` exists.
 
 ---
 
