@@ -13,6 +13,12 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-09-06 — Micro-Phase 83, Session 0: roadmap + truthing (212, hf-absent) + live toolchain pinning
+
+- **Studied**: MP-82 intake plus ADR-0028 row states (R1/R3/R4/R5 PENDING, rest GATED; GPU grokking IN_PROGRESS, extended induction NOT_STARTED, clean-clone GREEN 2026-08-27). Baseline re-verified live: 212 tests pass and collect (ADR-0028 claimed 213 — fixed at source), `ruff check src/ tests/` clean, blocking `mypy --strict` clean, full-tree mypy 201 errors exit 1 no crash (Makefile/CI "176" stays as dated 2026-08-18 fact), `verify-claims` at 0, six manifests on disk. Toolchains pinned live: no pdflatex/latexmk, `.github/workflows/pages.yml` exists, wandb 0.28.0 present login-unverified, `huggingface_hub` absent (import + `uv pip list` agree — MP-81/82 "hf installed" claim struck, install only when Row 7 needs it). GPG signing live (HEAD shows Good signature). GitHub: latest dev push green on all three checks; one superseded Conventional Commits failure already pardoned in-commit and merged via PR #133; no open PRs; `dev == main`.
+- **Built**: [[00_meta/83_micro-phase-83-from-invocation-to-evidence|MP-83 roadmap]] (Sessions 0–6, ADR-0028's eight frozen rows, zero new candidates — the execution arc) + ADR-0028 MP-83 intake stamp + home wiring. Expert decisions: shakedown stays 1 seed × 2k (second seed only if seed 0 GREEN by S2); paper via dated memo, no CI-PDF rehearsal.
+- **Open question**: Does the joint modular-plus-induction shakedown move K-comp off zero, or confirm the dense attractor at joint scale — answered by Row 1 checkpoints, not by argument.
+
 ## 2026-09-06 — Micro-Phase 82, Session 0: roadmap + invocation freeze + killer tests + portfolio truthing
 
 - **Studied**: MP-81 intake plus ADR-0028 row states (R1/R3/R4/R5 PENDING, rest GATED; GPU grokking IN_PROGRESS, extended induction NOT_STARTED, clean-clone GREEN 2026-08-27). Baseline re-verified live: 208 tests pass pre-change, `ruff check src/ tests/` clean, blocking `mypy --strict` clean, `verify-claims` at 0, six manifests on disk. Toolchains pinned live: no pdflatex/latexmk, `pages.yml` exists, wandb/hf installed (logins unverified — Row 5 work). Expert calls: harden-first for the two killer tests (minutes, mergeable), shakedown warmup cut 1000 → 100 so the 2k window observes early dynamics, portfolio links all three orphaned PNGs now rather than striking.
