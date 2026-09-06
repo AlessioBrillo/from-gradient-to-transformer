@@ -13,6 +13,12 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-09-06 — Micro-Phase 86, Session 0: roadmap + execution-record plan + live baseline pinning
+
+- **Studied**: MP-85 intake plus ADR-0028 row states (R1/R3/R4/R5 PENDING, rest GATED; GPU grokking IN_PROGRESS 13 days with no manifest, extended induction NOT_STARTED, clean-clone GREEN 2026-08-27). Baseline re-verified live with no numbers inherited: 212 tests pass and collect, `ruff check src/ tests/` clean, blocking `mypy --strict` clean, full-tree mypy 201 errors exit 1 no crash (Makefile/CI "176" stays as dated 2026-08-18 fact), `verify-claims` at 0, six manifests on disk. Toolchains pinned live: no pdflatex/latexmk, `.github/workflows/pages.yml` exists, wandb 0.28.0 present login-unverified, `huggingface_hub` absent (import fails — MP-83 correction holds, install only when Row 7 needs it).
+- **Built**: [[00_meta/86_micro-phase-86-from-stamps-to-record|MP-86 roadmap]] (Sessions 0–6, ADR-0028's eight frozen rows, zero new candidates — the execution-record arc) + ADR-0028 MP-86 intake stamp + home wiring. Expert decisions: hybrid premise (consume MP-85 transcripts if they exist, otherwise force the shakedown — never an eighth intake-only roadmap); scope locked at zero new candidates; shakedown frozen at 1 seed by 2k steps under the MP-82/83/84/85 invocation; GPU watch gets a hard close at Session 2 (consume or PENDING-EXTERNAL with one dated reason); paper via dated memo, no CI-PDF rehearsal.
+- **Open question**: Does the joint modular-plus-induction shakedown move K-comp off zero, or confirm the dense attractor at joint scale — answered by Row 1 checkpoints, not by argument.
+
 ## 2026-09-06 — Micro-Phase 85, Session 0: roadmap + execution-verdict plan + live baseline pinning
 
 - **Studied**: MP-84 intake plus ADR-0028 row states (R1/R3/R4/R5 PENDING, rest GATED; GPU grokking IN_PROGRESS 13 days with no manifest, extended induction NOT_STARTED, clean-clone GREEN 2026-08-27). Baseline re-verified live with no numbers inherited: 212 tests pass and collect, `ruff check src/ tests/` clean, blocking `mypy --strict` clean, full-tree mypy 201 errors exit 1 no crash (Makefile/CI "176" stays as dated 2026-08-18 fact), `verify-claims` at 0, six manifests on disk. Toolchains pinned live: no pdflatex/latexmk, `.github/workflows/pages.yml` exists, wandb 0.28.0 present login-unverified, `huggingface_hub` absent (import fails — MP-83 correction holds, install only when Row 7 needs it).
