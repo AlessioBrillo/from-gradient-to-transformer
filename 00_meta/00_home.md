@@ -305,6 +305,8 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[28_micro-phase-29-the-pos
   Session 0 stamped ADR-0028 (twenty-third continuum ledger): 1-seed × 2k-step exp6 shakedown with real K-comp and probe-safe manifests, portfolio click-through lock-in, W&B verdict, paper v-next decision, teaching artifact v22. Baseline 208 tests green, ruff/mypy/verify-claims at 0. Terminus: Session 6 release.
 - [[81_micro-phase-81-from-shakedown-to-evidence|MP-81 · From Shakedown to Evidence (ACTIVE EXECUTION)]] —
   I execute what three consecutive roadmaps planned but left PRE-EXECUTION: the 1-seed × 2k-step exp6 shakedown with real K-composition, the portfolio click-through lock-in, the W&B verdict, and the paper v-next decision under ADR-0028. No new roadmap until ADR-0028 hits zero UNDECIDED. Terminus: Session 6 release.
+- [[82_micro-phase-82-from-debt-to-verdict|MP-82 · From Debt to Verdict (ACTIVE EXECUTION)]] —
+  I freeze the shakedown invocation (`--steps 2000 --warmup-steps 100 --checkpoint-every 500 --save-model --manifest-path results/probe_capstone_shakedown.json`), land the unequal-tail and manifest-integration tests, fix portfolio prose drift and link orphaned figures, and execute ADR-0028 Rows 1–8. No new roadmap until ADR-0028 hits zero unstamped rows. Terminus: Session 6 release.
 - [[35_micro-phase-36-the-fifth-question|MP-36 · The Fifth Question (pre-registered)]] —
   consumes MP-35's release whatever its rows decided (gated hard: no continuum ledger
   at zero, no phase): the continuum law executes a fifth time under a new ledger

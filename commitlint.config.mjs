@@ -37,5 +37,9 @@ export default {
     // body shipped without the local commitlint-new mirror run; force-push
     // blocked on dev so the object cannot be rewritten
     (message) => message.startsWith('fix(capstone): real K-comp port, manifest guardrail, portfolio click-through repair'),
+    // MP-82 commit (2026-09-06) - body-max-line-length: single-paragraph
+    // body shipped despite the local mirror; force-push blocked on dev
+    // (GH006, verified live) so the object cannot be rewritten
+    (message) => message.startsWith('docs(meta): add MP-82 roadmap and stamp ADR-0028 session 0'),
   ],
 };

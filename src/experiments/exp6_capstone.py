@@ -834,6 +834,18 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Checkpoint interval (default: config value; --quick sets 50)",
     )
+    parser.add_argument(
+        "--steps",
+        type=int,
+        default=None,
+        help="Training steps override (default: config value; shakedowns set 2000)",
+    )
+    parser.add_argument(
+        "--warmup-steps",
+        type=int,
+        default=None,
+        help="Warmup steps override (default: config value; 2k shakedowns set 100)",
+    )
     parser.add_argument("--save-model", action="store_true", help="Save final model checkpoints")
     parser.add_argument("--resume", type=int, default=0, help="Resume from step")
     parser.add_argument("--wandb", action="store_true", help="Log to Weights & Biases")
@@ -851,6 +863,18 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     return parser
+
+
+def resolve_manifest_path(manifest_override: str | None, cfg: dict) -> Path:
+    """Resolve the manifest path without touching the flagship by accident.
+
+    Shakedowns and probes MUST pass --manifest-path; the flagship path is
+    only used when the override is None. Extracted so the contract is
+    unit-testable without running training.
+    """
+    if manifest_override:
+        return Path(manifest_override)
+    return RESULTS_DIR / cfg["output"]["manifest_name"]
 
 
 def main() -> None:
@@ -884,6 +908,12 @@ def main() -> None:
 
     if args.checkpoint_every:
         cfg["checkpoint_every"] = args.checkpoint_every
+
+    if args.steps:
+        cfg["training"]["steps"] = args.steps
+
+    if args.warmup_steps is not None:
+        cfg["training"]["warmup_steps"] = args.warmup_steps
 
     # W&B setup
     wandb_run = None
@@ -933,11 +963,7 @@ def main() -> None:
         device=str(DEVICE),
         n_parameters=aggregate.per_seed[0].get("model_params") if aggregate.per_seed else None,
     )
-    manifest_path = (
-        Path(args.manifest_path)
-        if args.manifest_path
-        else RESULTS_DIR / cfg["output"]["manifest_name"]
-    )
+    manifest_path = resolve_manifest_path(args.manifest_path, cfg)
     manifest.save(manifest_path)
     logger.info(f"Saved manifest to {manifest_path}")
 

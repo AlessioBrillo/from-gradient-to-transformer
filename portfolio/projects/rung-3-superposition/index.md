@@ -20,12 +20,14 @@ Phase transition reproduced: 10/20 features represented at sparsity 0.5, rising 
 
 **Figure**:
 ![Pentagon Geometry](../../figures/exp3_pentagon_geometry.png) <!-- manifest: results/exp3_superposition.json -->
+![Phase Change](../../figures/exp3_phase_change.png) <!-- manifest: results/exp3_superposition.json -->
+![Feature Geometry](../../figures/exp3_feature_geometry.png) <!-- manifest: results/exp3_superposition.json -->
 
 **Reproduce**: `uv run python -m src.experiments.exp3_superposition --quick` (smoke test) or `--geometry-check` for the pentagon drill.
 
 **Limitations**:
 - Synthetic data only — no real model activations yet
-- Capacity limit at extreme sparsity (0.001): 14–16/20 features represented
+- Capacity limit at extreme sparsity (0.001): 16/20 features represented (RESULTS table)
 - Pentagon geometry is a property of the *sparse phase*, not universal
 
 **Links**:

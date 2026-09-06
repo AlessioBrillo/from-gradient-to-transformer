@@ -13,6 +13,12 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-09-06 — Micro-Phase 82, Session 0: roadmap + invocation freeze + killer tests + portfolio truthing
+
+- **Studied**: MP-81 intake plus ADR-0028 row states (R1/R3/R4/R5 PENDING, rest GATED; GPU grokking IN_PROGRESS, extended induction NOT_STARTED, clean-clone GREEN 2026-08-27). Baseline re-verified live: 208 tests pass pre-change, `ruff check src/ tests/` clean, blocking `mypy --strict` clean, `verify-claims` at 0, six manifests on disk. Toolchains pinned live: no pdflatex/latexmk, `pages.yml` exists, wandb/hf installed (logins unverified — Row 5 work). Expert calls: harden-first for the two killer tests (minutes, mergeable), shakedown warmup cut 1000 → 100 so the 2k window observes early dynamics, portfolio links all three orphaned PNGs now rather than striking.
+- **Built**: [[00_meta/82_micro-phase-82-from-debt-to-verdict|MP-82 roadmap]] (Sessions 0–6, eight frozen rows + frozen shakedown invocation) + ADR-0028 MP-82 intake stamp + home wiring. Test-first: `--steps`/`--warmup-steps` overrides + `resolve_manifest_path()` in `src/experiments/exp6_capstone.py`, unequal-tail + manifest-integration tests. Portfolio: rung-1 800-epoch fix, rung-3 16/20 fix, `exp2_progress_measures` + `exp3_phase_change` + `exp3_feature_geometry` linked with manifest tags.
+- **Open question**: Does the joint modular-plus-induction shakedown move K-comp off zero, or confirm the dense attractor at joint scale — answered by Row 1 checkpoints, not by argument.
+
 ## 2026-09-06 — Micro-Phase 81, Session 0: roadmap + ledger + toolchain pinning
 
 - **Studied**: MP-80 intake plus ADR-0028 row states (R1/R3/R4/R5 PENDING, rest GATED; GPU grokking IN_PROGRESS, extended induction NOT_STARTED, clean-clone GREEN 2026-08-27). Baseline re-verified live: 208 tests pass, `ruff check src/ tests/` clean, blocking `mypy --strict` clean on `src/results.py` + `src/experiments/runner.py`, `verify-claims` at 0, six manifests on disk. Toolchains pinned live: no pdflatex/latexmk, `pages.yml` exists, wandb 0.28.0 / hf 1.28.0 installed (logins unverified — Row 5 work). One MD013 line-length violation in the new roadmap fixed before commit.
