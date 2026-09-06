@@ -94,6 +94,10 @@ None at Session 0. Any deviations recorded here as dated ledger notes.
 
 MP-80 closed without executing a single row (roadmap merged, Sessions 1–6 never ran — third consecutive PRE-EXECUTION roadmap). MP-81 consumes ADR-0028 unchanged: Rows 1/3/4/5 PENDING, Rows 2/6/7/8 GATED with the same opening conditions and kill-dates shifted to the MP-81 session clock. Baseline re-verified live at intake: 208 tests pass, ruff clean, blocking mypy clean, `verify-claims` at 0, six manifests on disk. Toolchains re-pinned: no pdflatex/latexmk, `pages.yml` exists, wandb 0.28.0 / hf 1.28.0 installed, logins unverified. New standing rule: no new roadmap until ADR-0028 hits zero UNDECIDED. Universal override (sparse GPU manifest pivots Rows 6–7) stands.
 
+### MP-82 Session 0 intake (2026-09-06)
+
+MP-81 closed at Session 0 with guardrails landed but zero rows executed (fourth consecutive roadmap at Session 0). MP-82 consumes ADR-0028 unchanged: Rows 1/3/4/5 PENDING, Rows 2/6/7/8 GATED, kill-dates shifted to the MP-82 session clock. Session 0 deltas landed test-first: `--steps`/`--warmup-steps` overrides + `resolve_manifest_path()` in `src/experiments/exp6_capstone.py`, unequal-tail + manifest-integration tests (213 tests), portfolio prose drift fixed (rung-1 800-epoch, rung-3 16/20) and three orphaned PNGs linked with manifest tags. Frozen shakedown invocation: `--seed 0 --steps 2000 --warmup-steps 100 --checkpoint-every 500 --save-model --manifest-path results/probe_capstone_shakedown.json`. Baseline re-verified live: ruff clean, blocking mypy clean, `verify-claims` at 0. Toolchains re-pinned: no pdflatex/latexmk, `pages.yml` exists, wandb/hf installed, logins unverified. Universal override stands.
+
 ---
 
 ## Sign-Off

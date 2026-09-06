@@ -22,6 +22,7 @@ P=113 CPU 3-seed run, decided 2026-08-11: NO-GROK positive-negative — val accu
 ![Grokking Curve](../../figures/exp2_grokking_curve.png) <!-- manifest: results/exp2_grokking.json -->
 ![Fourier Weights](../../figures/exp2_fourier_weights.png) <!-- manifest: results/exp2_grokking.json -->
 ![Frequency Ablation](../../figures/exp2_frequency_ablation.png) <!-- manifest: results/exp2_grokking.json -->
+![Progress Measures](../../figures/exp2_progress_measures.png) <!-- manifest: results/exp2_grokking.json -->
 Neuron-ablation figure struck: the numbers live in `results/exp2_grokking.json` under `neuron_ablation`; no PNG was generated — struck rather than left dangling.
 
 **Reproduce**: `uv run python -m src.experiments.exp2_grokking --quick` (smoke test); full P=113 via `notebooks/colab_grokking_full_run.ipynb` on GPU.

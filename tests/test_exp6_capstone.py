@@ -116,6 +116,34 @@ def test_round_robin_alternates_tasks() -> None:
     assert task_ids == [0, 1, 0, 1], f"expected alternation, got {task_ids}"
 
 
+def _unequal_loader() -> RoundRobinDataLoader:
+    """Mod loader longer than induction loader: tail must stay honest."""
+    mod = TensorDataset(
+        torch.zeros(6, 7, dtype=torch.long),
+        torch.zeros(6, 7, dtype=torch.long),
+        torch.zeros(6, dtype=torch.long),
+    )
+    ind = TensorDataset(
+        torch.ones(2, 7, dtype=torch.long),
+        torch.ones(2, 7, dtype=torch.long),
+    )
+    return RoundRobinDataLoader(
+        [
+            DataLoader(mod, batch_size=2, shuffle=False),
+            DataLoader(ind, batch_size=2, shuffle=False),
+        ]
+    )
+
+
+def test_round_robin_unequal_tail_does_not_silently_single_task() -> None:
+    """Unequal lengths: total count preserved, tail is explicit single-task."""
+    loader = _unequal_loader()
+    task_ids = [batch[3] for batch in loader]
+    assert len(task_ids) == len(loader) == 4
+    assert task_ids[:2] == [0, 1]
+    assert task_ids[2:] == [0, 0]
+
+
 def test_harvest_activations_accepts_round_robin_batches() -> None:
     """harvest_activations must unpack 4-tuple RoundRobin batches."""
     model = DecoderOnlyTransformer(

@@ -26,7 +26,7 @@ Matched fixed-vs-fresh-batches comparison (800 epochs, identical config): fresh 
 **Limitations**:
 - Standard scale (d_model=64) may not reflect larger model dynamics
 - Fresh-batches training prevents memorization but may slow induction emergence
-- 0/8 heads at 3k epochs; 10k epoch run pending to find emergence boundary
+- 0/8 heads in the matched 800-epoch comparison; 10k epoch run pending to find emergence boundary
 
 **Links**:
 - [[portfolio/RESULTS]] — my honesty ledger and per-rung numbers
