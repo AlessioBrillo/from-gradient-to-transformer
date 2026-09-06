@@ -105,6 +105,23 @@ Session 0 truthing corrections (verified live, fixed at source): test count 213 
 Full-tree mypy observed at 201 errors (exit 1, no crash; Makefile/CI "176" stays as the dated 2026-08-18 fact). Baseline re-verified live: 212 tests pass, ruff clean, blocking mypy clean, `verify-claims` at 0, six manifests on disk, wandb 0.28.0 present (login unverified).
 Expert decisions: shakedown frozen at 1 seed × 2k steps (second seed only if seed 0 GREEN by S2); paper via dated memo (no CI-PDF rehearsal). Universal override stands.
 
+### MP-84 Session 0 intake (2026-09-06)
+
+MP-83 closed at Session 0 with zero rows executed — the fifth consecutive
+Session-0-only roadmap (MP-79 through MP-83). MP-84 consumes ADR-0028 unchanged:
+Rows 1/3/4/5 PENDING, Rows 2/6/7/8 GATED, kill-dates shifted to the MP-84 session
+clock; it opens zero new candidates and is the breakthrough execution arc.
+Session 0 baseline re-verified live (no numbers inherited): 212 tests pass and
+collect, ruff clean, blocking mypy clean, `verify-claims` at 0, six manifests on
+disk, full-tree mypy 201 errors exit 1 no crash, wandb 0.28.0 present
+(login unverified), `huggingface_hub` absent (import fails — MP-83 correction
+holds), no pdflatex/latexmk, `pages.yml` present.
+Expert decisions: scope locked at zero new candidates; shakedown frozen at 1 seed
+by 2k steps under the MP-82/83 invocation; GPU watch gets a hard close at Session
+2 (consume the Colab manifest or close as PENDING-EXTERNAL with one dated
+reason — 13 days stale is a fact, not a queue); paper via dated memo.
+Universal override stands.
+
 ---
 
 ## Sign-Off
