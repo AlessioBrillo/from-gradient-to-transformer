@@ -90,6 +90,10 @@ If the GPU run lands NO-GROK (current expectation):
 
 None at Session 0. Any deviations recorded here as dated ledger notes.
 
+### MP-81 Session 0 intake (2026-09-06)
+
+MP-80 closed without executing a single row (roadmap merged, Sessions 1–6 never ran — third consecutive PRE-EXECUTION roadmap). MP-81 consumes ADR-0028 unchanged: Rows 1/3/4/5 PENDING, Rows 2/6/7/8 GATED with the same opening conditions and kill-dates shifted to the MP-81 session clock. Baseline re-verified live at intake: 208 tests pass, ruff clean, blocking mypy clean, `verify-claims` at 0, six manifests on disk. Toolchains re-pinned: no pdflatex/latexmk, `pages.yml` exists, wandb 0.28.0 / hf 1.28.0 installed, logins unverified. New standing rule: no new roadmap until ADR-0028 hits zero UNDECIDED. Universal override (sparse GPU manifest pivots Rows 6–7) stands.
+
 ---
 
 ## Sign-Off
