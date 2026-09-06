@@ -13,6 +13,24 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-09-06 — Micro-Phase 87, Session 0+1: stall broken — step-500 crash, test-first fix, validation + resume proof
+
+- **Studied**: MP-86 intake plus ADR-0028 row states (unchanged: R1/R3/R4/R5 PENDING, rest GATED). Baseline re-verified live with no numbers inherited: 215 tests pass (212 + 3 new), `ruff check src/ tests/` clean, blocking `mypy --strict` clean, full-tree mypy 201 errors exit 1 no crash, `verify-claims` at 0, eight manifests on disk (six flagships + two new probes). Toolchain correction: `wandb` 0.28.0 verified via `uv run` (system-python import fails — command corrected, fact unchanged); `huggingface_hub` absent; no pdflatex/latexmk.
+- **Built**: Launched the frozen shakedown under the MP-82 invocation — trained 500 steps,
+  crashed at the first `fourier_every` boundary (`RuntimeError: Can't call numpy() on Tensor
+  that requires grad`, `exp6_capstone.py:258`; existing tests pin `fourier_every` to 10**9,
+  which is why it escaped). Fixed test-first: `tests/test_exp6_fourier.py` (3 RED with the
+  exact production error, then GREEN), one-line `detach()` at the `fourier_decomposition`
+  boundary. Validated past the boundary: 550 steps in 1714.5 s (k_99 98.2 dense-early,
+  max K-comp 0.31, step-500 checkpoint 51 MB, `results/probe_capstone_fixcheck.json`).
+  Resume-proven: `--save-model --resume 500 --steps 510` reloaded `ckpt['step'] == 500`
+  (`results/probe_capstone_resume.json`). Wrote
+  [[00_meta/87_micro-phase-87-from-roadmaps-to-transcripts|MP-87 roadmap]] (Sessions 0–6,
+  anti-stall gate: no merge without transcript) + ADR-0028 MP-87 stamp + home wiring.
+  Recorded warts: resume is a silent no-op without `--save-model` (follow-up); frozen
+  shakedown measures ~100+ min (4.26M params), Session 1 runs it in background.
+- **Open question**: Does the full 2000-step shakedown move K-comp off its 0.31 early signal and Fourier off dense — answered by Row 1 checkpoints, not by argument.
+
 ## 2026-09-06 — Micro-Phase 86, Session 0: roadmap + execution-record plan + live baseline pinning
 
 - **Studied**: MP-85 intake plus ADR-0028 row states (R1/R3/R4/R5 PENDING, rest GATED; GPU grokking IN_PROGRESS 13 days with no manifest, extended induction NOT_STARTED, clean-clone GREEN 2026-08-27). Baseline re-verified live with no numbers inherited: 212 tests pass and collect, `ruff check src/ tests/` clean, blocking `mypy --strict` clean, full-tree mypy 201 errors exit 1 no crash (Makefile/CI "176" stays as dated 2026-08-18 fact), `verify-claims` at 0, six manifests on disk. Toolchains pinned live: no pdflatex/latexmk, `.github/workflows/pages.yml` exists, wandb 0.28.0 present login-unverified, `huggingface_hub` absent (import fails — MP-83 correction holds, install only when Row 7 needs it).

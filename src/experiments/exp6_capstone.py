@@ -239,7 +239,14 @@ def fourier_decomposition(
     - 'fourier_coeffs': [P, d_model] complex coefficients
     - 'fourier_magnitudes': [P, d_model] magnitudes
     - 'dominant_frequencies': top-k frequencies per neuron
+
+    Instrumentation never participates in autograd: the training loop passes
+    a live `model.embed.weight` slice (requires_grad=True), so detach at the
+    boundary. Without this, the first `fourier_every` step crashes with
+    `RuntimeError: Can't call numpy() on Tensor that requires grad`
+    (MP-87 Session 1, step 500 of the frozen shakedown).
     """
+    embeddings = embeddings.detach()
     P = embeddings.shape[0]
 
     # DFT matrix
