@@ -169,7 +169,7 @@ that requires grad`, `exp6_capstone.py:258` — live `model.embed.weight`
 slice into `.numpy()`; existing tests pin `fourier_every` to 10**9, which is
 why it escaped). Fixed test-first (`tests/test_exp6_fourier.py`, 3 RED then
 GREEN; `embeddings.detach()` at the function boundary), validated with a
-550-step run (1774.6 s wall clock, k_99 98.2, max K-comp 0.31, step-500
+550-step run (1714.5 s wall clock, k_99 98.2, max K-comp 0.31, step-500
 checkpoint saved, `results/probe_capstone_fixcheck.json`), and resume-proven
 (`--save-model --resume 500 --steps 510`, `ckpt['step'] == 500`,
 `results/probe_capstone_resume.json`). Baseline re-verified live: 215 tests

@@ -97,7 +97,7 @@ Fix (one line + docstring, matching the exp2 convention of
 callers are protected): `embeddings = embeddings.detach()` at the top of
 `fourier_decomposition()`. Regression tests first — 3 failed with the exact
 production `RuntimeError` (RED), then 16/16 exp6 tests pass after the fix
-(GREEN), ruff clean. Full validation run: 550 steps in 1774.6 s wall clock,
+(GREEN), ruff clean. Full validation run: 550 steps in 1714.5 s wall clock,
 crossed the step-500 boundary cleanly, Fourier k_99 = 98.2 and max K-comp
 = 0.31 logged, step-500 checkpoint saved (51 MB), probe manifest written.
 Resume proof: `--save-model --resume 500 --steps 510` reloaded the
