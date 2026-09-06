@@ -309,6 +309,8 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[28_micro-phase-29-the-pos
   I freeze the shakedown invocation (`--steps 2000 --warmup-steps 100 --checkpoint-every 500 --save-model --manifest-path results/probe_capstone_shakedown.json`), land the unequal-tail and manifest-integration tests, fix portfolio prose drift and link orphaned figures, and execute ADR-0028 Rows 1–8. No new roadmap until ADR-0028 hits zero unstamped rows. Terminus: Session 6 release.
 - [[83_micro-phase-83-from-invocation-to-evidence|MP-83 · From Invocation to Evidence (ACTIVE EXECUTION)]] —
   I execute what four consecutive roadmaps planned but left at Session 0: the 1-seed × 2k-step exp6 shakedown under its frozen invocation, the portfolio click-through lock-in, the W&B verdict, and the paper memo decision under ADR-0028 — opening zero new candidates. Session 0 truthing: test count 213 → 212 and hf-absent corrected at source. Terminus: Session 6 release.
+- [[84_micro-phase-84-from-roadmaps-to-verdicts|MP-84 · From Roadmaps to Verdicts (ACTIVE EXECUTION)]] —
+  I break the five-roadmap Session-0-only stall: the 1-seed × 2k-step exp6 shakedown runs under its frozen invocation, Rows 1 and 5 stamp with dated verdicts, the 13-day-stale GPU watch closes or consumes at Session 2, and every public number clicks back to a manifest and a command. Terminus: Session 6 release.
 - [[35_micro-phase-36-the-fifth-question|MP-36 · The Fifth Question (pre-registered)]] —
   consumes MP-35's release whatever its rows decided (gated hard: no continuum ledger
   at zero, no phase): the continuum law executes a fifth time under a new ledger
