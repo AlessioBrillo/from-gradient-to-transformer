@@ -96,7 +96,14 @@ MP-80 closed without executing a single row (roadmap merged, Sessions 1–6 neve
 
 ### MP-82 Session 0 intake (2026-09-06)
 
-MP-81 closed at Session 0 with guardrails landed but zero rows executed (fourth consecutive roadmap at Session 0). MP-82 consumes ADR-0028 unchanged: Rows 1/3/4/5 PENDING, Rows 2/6/7/8 GATED, kill-dates shifted to the MP-82 session clock. Session 0 deltas landed test-first: `--steps`/`--warmup-steps` overrides + `resolve_manifest_path()` in `src/experiments/exp6_capstone.py`, unequal-tail + manifest-integration tests (213 tests), portfolio prose drift fixed (rung-1 800-epoch, rung-3 16/20) and three orphaned PNGs linked with manifest tags. Frozen shakedown invocation: `--seed 0 --steps 2000 --warmup-steps 100 --checkpoint-every 500 --save-model --manifest-path results/probe_capstone_shakedown.json`. Baseline re-verified live: ruff clean, blocking mypy clean, `verify-claims` at 0. Toolchains re-pinned: no pdflatex/latexmk, `pages.yml` exists, wandb/hf installed, logins unverified. Universal override stands.
+MP-81 closed at Session 0 with guardrails landed but zero rows executed (fourth consecutive roadmap at Session 0). MP-82 consumes ADR-0028 unchanged: Rows 1/3/4/5 PENDING, Rows 2/6/7/8 GATED, kill-dates shifted to the MP-82 session clock. Session 0 deltas landed test-first: `--steps`/`--warmup-steps` overrides + `resolve_manifest_path()` in `src/experiments/exp6_capstone.py`, unequal-tail + manifest-integration tests (212 tests), portfolio prose drift fixed (rung-1 800-epoch, rung-3 16/20) and three orphaned PNGs linked with manifest tags. Frozen shakedown invocation: `--seed 0 --steps 2000 --warmup-steps 100 --checkpoint-every 500 --save-model --manifest-path results/probe_capstone_shakedown.json`. Baseline re-verified live: ruff clean, blocking mypy clean, `verify-claims` at 0. Toolchains re-pinned: no pdflatex/latexmk, `pages.yml` exists, wandb/hf installed, logins unverified. Universal override stands.
+
+### MP-83 Session 0 intake (2026-09-06)
+
+MP-82 closed at Session 0 with guardrails landed but zero rows executed. MP-83 consumes ADR-0028 unchanged: Rows 1/3/4/5 PENDING, Rows 2/6/7/8 GATED, kill-dates shifted to the MP-83 session clock; it opens zero new candidates and is the execution arc for these eight rows.
+Session 0 truthing corrections (verified live, fixed at source): test count 213 → 212 (collection and full run agree); `huggingface_hub` absent from this venv (two signals: import fails, `uv pip list` empty) — the MP-81/82 "hf installed" claim is struck, install only when Row 7 needs it via the pinned workflow.
+Full-tree mypy observed at 201 errors (exit 1, no crash; Makefile/CI "176" stays as the dated 2026-08-18 fact). Baseline re-verified live: 212 tests pass, ruff clean, blocking mypy clean, `verify-claims` at 0, six manifests on disk, wandb 0.28.0 present (login unverified).
+Expert decisions: shakedown frozen at 1 seed × 2k steps (second seed only if seed 0 GREEN by S2); paper via dated memo (no CI-PDF rehearsal). Universal override stands.
 
 ---
 
