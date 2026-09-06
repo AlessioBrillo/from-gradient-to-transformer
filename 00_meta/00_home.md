@@ -311,6 +311,8 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[28_micro-phase-29-the-pos
   I execute what four consecutive roadmaps planned but left at Session 0: the 1-seed × 2k-step exp6 shakedown under its frozen invocation, the portfolio click-through lock-in, the W&B verdict, and the paper memo decision under ADR-0028 — opening zero new candidates. Session 0 truthing: test count 213 → 212 and hf-absent corrected at source. Terminus: Session 6 release.
 - [[84_micro-phase-84-from-roadmaps-to-verdicts|MP-84 · From Roadmaps to Verdicts (ACTIVE EXECUTION)]] —
   I break the five-roadmap Session-0-only stall: the 1-seed × 2k-step exp6 shakedown runs under its frozen invocation, Rows 1 and 5 stamp with dated verdicts, the 13-day-stale GPU watch closes or consumes at Session 2, and every public number clicks back to a manifest and a command. Terminus: Session 6 release.
+- [[85_micro-phase-85-from-stall-to-stamps|MP-85 · From Stall to Stamps (ACTIVE EXECUTION)]] —
+  I break the six-roadmap Session-0-only stall: the 1-seed × 2k-step exp6 shakedown runs under its frozen invocation, Rows 1 and 5 stamp with dated verdicts, the GPU watch closes or consumes at Session 2, and every public number clicks back to a manifest and a command. Terminus: Session 6 release.
 - [[35_micro-phase-36-the-fifth-question|MP-36 · The Fifth Question (pre-registered)]] —
   consumes MP-35's release whatever its rows decided (gated hard: no continuum ledger
   at zero, no phase): the continuum law executes a fifth time under a new ledger
