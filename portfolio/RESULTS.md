@@ -365,8 +365,12 @@ epochs=500`):
 |--------|--------------------------|
 | Final val accuracy | 0.489 ± 0.014 |
 | Mean activation-patching recovery (10 layer/position combos) | 0.197 ± 0.007 |
-| Induction heads detected | **0 / 8**, all 3 seeds — consistent with Rung 1 at comparable scale |
+| Induction heads detected | **0 / 4**, all 3 seeds — consistent with Rung 1 at comparable scale |
 | Head ablation / path patching | not run (no head to target) |
+
+Dated correction 2026-09-06 (MP-85 Session 0): this row previously read `0 / 8`.
+The manifest ran `n_layers=2, n_heads=2` (4 heads total), so `0 / 4` is correct.
+Rung 1's `0 / 8` (2 layers by 4 heads) is unaffected.
 
 Activation patching runs cleanly and finds a real, small, consistent recovery signal
 (~0.20, not zero) even without a detected induction head — some circuit sensitivity exists

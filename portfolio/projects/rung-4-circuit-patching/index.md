@@ -17,7 +17,7 @@ rung: 4
 
 **Key Result**:
 <!-- manifest: results/exp4_circuit_patching.json -->
-Quick-mode 3-seed manifest: mean activation-patching recovery ~0.20 across 10 layer/position combos with 0/8 heads detected in all 3 seeds — a real, small, consistent circuit sensitivity, just not concentrated enough in one head to cross the 0.3 threshold. Head ablation and path patching skipped again (no head to target): path patching remains validated by unit tests only.
+Quick-mode 3-seed manifest: mean activation-patching recovery ~0.20 across 10 layer/position combos with 0/4 heads detected in all 3 seeds (2 layers by 2 heads — corrected 2026-09-06; the earlier `0/8` conflated this config with Rung 1's 2-by-4) — a real, small, consistent circuit sensitivity, just not concentrated enough in one head to cross the 0.3 threshold. Head ablation and path patching skipped again (no head to target): path patching remains validated by unit tests only.
 
 **Figures**:
 ![Attention Patterns](../../figures/exp4_attention_patterns.png) <!-- manifest: results/exp4_circuit_patching.json -->
@@ -27,7 +27,7 @@ Head-ablation figure struck: ablation is skipped whenever 0 heads are detected, 
 **Reproduce**: `uv run python -m src.experiments.exp4_circuit_patching --quick` (smoke test) or `--quick --seeds 0,1,2` for the manifest config.
 
 **Limitations**:
-- Gated on Rung 1 producing confirmed induction heads (0/8 so far)
+- Gated on Rung 1 producing confirmed induction heads (0/8 at Rung 1 scale; 0/4 in this rung's own quick config, so far)
 - No real circuit discovery yet — infrastructure ready, awaiting real heads
 
 **Links**:

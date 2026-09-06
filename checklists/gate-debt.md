@@ -77,11 +77,21 @@ Updated from ADR-0027 adjudication at MP-78 Session 0:
 - Exp6 probe guardrail (`--manifest-path`) and real K-comp port landed test-first; shakedown may proceed without flagship-clobber risk.
 - Toolchains pinned: pdflatex/latexmk absent, wandb 0.28.0 present, hf 1.28.0 present, `pages.yml` exists.
 
+## MP-85 Session 0 correction (2026-09-06)
+
+- The table above holds **11 rows**, not 12: 2 PENDING (MP-31 R1 LaTeX, MP-31 R3
+  publish policy), 4 GATED (MP-30 R2 HF Spaces, MP-30 R3 paper prose, MP-31 R2
+  Pages, MP-36 R1 release), 4 LAUNCHED-without-transcript (MP-30 R1, MP-32 R1,
+  MP-33 R1, MP-35 R1), 1 LAUNCHED-WITH-TRANSCRIPT (MP-34 R1 clean-clone GREEN
+  2026-08-27). The sign-off header below is corrected to 11; the "twelve cells"
+  mentions in the already-merged MP-83/MP-84 roadmaps stand as dated history and
+  are not rewritten.
+
 ---
 
 ## Sign-Off Criteria for MP-78 Session 8 Release
 
-- [ ] All 12 cells show **LAUNCHED-with-transcript** or **CLOSED-with-one-reason**
+- [ ] All 11 cells show **LAUNCHED-with-transcript** or **CLOSED-with-one-reason**
 - [ ] No cell with "PENDING" or empty transcript/reason
 - [ ] Transcripts accessible from repo (committed files or live URLs)
 - [ ] ADR-0027 at zero UNDECIDED rows
