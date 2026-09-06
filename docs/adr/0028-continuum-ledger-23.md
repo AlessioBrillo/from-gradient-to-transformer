@@ -158,6 +158,31 @@ Colab manifest or close as PENDING-EXTERNAL with one dated reason); paper via
 dated memo.
 Universal override stands.
 
+### MP-87 Session 0 intake + Session-1 transcript (2026-09-06)
+
+MP-86 closed at Session 0 with zero rows executed — the seventh consecutive
+Session-0-only roadmap (MP-79 through MP-86). MP-87 breaks the stall by
+merging with a Session-1 transcript attached: the frozen shakedown was
+launched under the MP-82 invocation, trained 500 steps, and crashed at the
+first `fourier_every` boundary (`RuntimeError: Can't call numpy() on Tensor
+that requires grad`, `exp6_capstone.py:258` — live `model.embed.weight`
+slice into `.numpy()`; existing tests pin `fourier_every` to 10**9, which is
+why it escaped). Fixed test-first (`tests/test_exp6_fourier.py`, 3 RED then
+GREEN; `embeddings.detach()` at the function boundary), validated with a
+550-step run (1774.6 s wall clock, k_99 98.2, max K-comp 0.31, step-500
+checkpoint saved, `results/probe_capstone_fixcheck.json`), and resume-proven
+(`--save-model --resume 500 --steps 510`, `ckpt['step'] == 500`,
+`results/probe_capstone_resume.json`). Baseline re-verified live: 215 tests
+pass, ruff clean, blocking mypy clean, `verify-claims` at 0, full-tree mypy
+201 errors exit 1 no crash, wandb 0.28.0 present via `uv run` (system-python
+import fails — command corrected, not the fact), `huggingface_hub` absent,
+no pdflatex/latexmk. Rows 1/3/4/5 PENDING, Rows 2/6/7/8 GATED, kill-dates
+shifted to the MP-87 session clock. Recorded warts: resume is a silent no-op
+without `--save-model` (exp1/exp2 warn; exp6 does not — follow-up, not this
+PR); frozen shakedown measures ~100+ min for 2000 steps (4.26M params), so
+Session 1 runs it in background post-merge.
+Universal override stands.
+
 ---
 
 ## Sign-Off
