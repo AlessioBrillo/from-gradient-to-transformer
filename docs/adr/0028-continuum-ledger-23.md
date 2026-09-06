@@ -139,6 +139,25 @@ Session 2 (consume the Colab manifest or close as PENDING-EXTERNAL with one date
 reason); paper via dated memo.
 Universal override stands.
 
+### MP-86 Session 0 intake (2026-09-06)
+
+MP-85 closed at Session 0 with zero rows executed — the seventh consecutive
+Session-0-only roadmap (MP-79 through MP-85). MP-86 consumes ADR-0028 unchanged:
+Rows 1/3/4/5 PENDING, Rows 2/6/7/8 GATED, kill-dates shifted to the MP-86 session
+clock; it opens zero new candidates and is the execution-record arc.
+Session 0 baseline re-verified live (no numbers inherited): 212 tests pass and
+collect, ruff clean, blocking mypy clean, `verify-claims` at 0, six manifests on
+disk, full-tree mypy 201 errors exit 1 no crash, wandb 0.28.0 present
+(login unverified), `huggingface_hub` absent (import fails — MP-83 correction
+holds), no pdflatex/latexmk, `pages.yml` present.
+Expert decisions: hybrid premise (consume MP-85 transcripts if they exist,
+otherwise force the shakedown — never an eighth intake-only roadmap); scope
+locked at zero new candidates; shakedown frozen at 1 seed by 2k steps under the
+MP-82/83/84/85 invocation; GPU watch gets a hard close at Session 2 (consume the
+Colab manifest or close as PENDING-EXTERNAL with one dated reason); paper via
+dated memo.
+Universal override stands.
+
 ---
 
 ## Sign-Off
