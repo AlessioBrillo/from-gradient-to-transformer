@@ -1,0 +1,145 @@
+{
+  "experiment": "exp6_capstone",
+  "seeds": [
+    0
+  ],
+  "args": {
+    "task": {
+      "name": "modular_addition + induction",
+      "modular": {
+        "modulus": 113,
+        "train_fraction": 0.3,
+        "max_epochs": 5000
+      },
+      "induction": {
+        "vocab_size": 2048,
+        "seq_len": 128,
+        "num_train": 8192,
+        "num_val": 1024,
+        "prefix_ratio": 0.5
+      }
+    },
+    "model": {
+      "d_model": 256,
+      "n_layers": 4,
+      "n_heads": 8,
+      "d_mlp": 1024,
+      "dropout": 0.1,
+      "rotary_base": 10000,
+      "rmsnorm_eps": 1e-05
+    },
+    "training": {
+      "steps": 500,
+      "batch_size": 128,
+      "lr": 0.0003,
+      "weight_decay": 0.1,
+      "lr_schedule": "cosine",
+      "warmup_steps": 100,
+      "gradient_clip": 1.0,
+      "modular_weight": 1.0,
+      "induction_weight": 1.0
+    },
+    "instrumentation": {
+      "fourier_every": 500,
+      "kcomp_every": 500,
+      "sae_hooks": [
+        "ln_final"
+      ],
+      "circuit_patching_every": 2000,
+      "activation_harvest_every": 5000
+    },
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "checkpoint_every": 500,
+    "wandb_project": "from-gradient-to-transformer-capstone",
+    "wandb_entity": null,
+    "wandb_tags": [
+      "capstone",
+      "modular_addition",
+      "induction",
+      "mechanistic"
+    ],
+    "output": {
+      "figures_dir": "figures",
+      "checkpoints_dir": "checkpoints",
+      "results_dir": "results",
+      "manifest_name": "exp6_capstone.json"
+    }
+  },
+  "per_seed_metrics": [
+    {
+      "final_modular_acc": 0.006152813513815863,
+      "final_induction_acc": 0.0004921259842519685,
+      "final_k_90": 67.1640625,
+      "final_k_99": 98.1796875,
+      "final_max_kcomp": 0.36903443932533264,
+      "total_steps": 500,
+      "model_params": 4259584
+    }
+  ],
+  "aggregate": {
+    "final_max_kcomp": {
+      "mean": 0.36903443932533264,
+      "std": 0.0,
+      "min": 0.36903443932533264,
+      "max": 0.36903443932533264,
+      "n": 1.0
+    },
+    "final_k_90": {
+      "mean": 67.1640625,
+      "std": 0.0,
+      "min": 67.1640625,
+      "max": 67.1640625,
+      "n": 1.0
+    },
+    "final_k_99": {
+      "mean": 98.1796875,
+      "std": 0.0,
+      "min": 98.1796875,
+      "max": 98.1796875,
+      "n": 1.0
+    },
+    "final_induction_acc": {
+      "mean": 0.0004921259842519685,
+      "std": 0.0,
+      "min": 0.0004921259842519685,
+      "max": 0.0004921259842519685,
+      "n": 1.0
+    },
+    "final_modular_acc": {
+      "mean": 0.006152813513815863,
+      "std": 0.0,
+      "min": 0.006152813513815863,
+      "max": 0.006152813513815863,
+      "n": 1.0
+    },
+    "model_params": {
+      "mean": 4259584.0,
+      "std": 0.0,
+      "min": 4259584.0,
+      "max": 4259584.0,
+      "n": 1.0
+    },
+    "total_steps": {
+      "mean": 500.0,
+      "std": 0.0,
+      "min": 500.0,
+      "max": 500.0,
+      "n": 1.0
+    }
+  },
+  "wall_clock_seconds": 2183.657,
+  "git_sha": "2ef533b",
+  "git_dirty": true,
+  "device": "cpu",
+  "torch_version": "2.12.1+cpu",
+  "numpy_version": "2.5.0",
+  "python_version": "3.12.10",
+  "n_parameters": 4259584,
+  "created_at": "2026-09-07T09:29:36+00:00",
+  "notes": null,
+  "neuron_ablation": null
+}

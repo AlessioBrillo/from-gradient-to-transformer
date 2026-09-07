@@ -211,6 +211,42 @@ operator runs `wandb login` or the row closes with one dated reason),
 2/6/7/8 GATED with MP-88 kill-dates (see the MP-88 roadmap).
 Universal override stands.
 
+### MP-89 Session 0 intake + retune harness (2026-09-07)
+
+MP-88 stamped Row 1 RETUNE from the completed 2k manifest and opened
+Row 2 as the retune A/B. MP-89 executes it: Session-0 harness landed
+test-first (`tests/test_exp6_retune.py`, 6 RED then 6/6 GREEN — offset
+plus reweight flags, collision-free range validation, loud overflow
+errors; whole exp6 suite 24/24, ruff clean, offset end-to-end proven
+with Fourier firing on the offset slice). Frozen A/B invocation:
+`--seed 0 --steps 500 --warmup-steps 100 --checkpoint-every 500
+--save-model` with `--vocab-offset 2048` (Arm A, dedicated range
+[2048, 2161) disjoint from induction [0, 2048)) and
+`--modular-weight 5.0 --induction-weight 0.5` (Arm B, 10x relative
+boost for the 1-token vs 127-token supervision mismatch), each on its
+probe manifest (`results/probe_capstone_ab_{control,offset,reweight}.json`;
+`make reproduce-retune-*`). Intermediate validation now logs per-task
+loss/accuracy (the mixed mean hid the MP-88 dissociation — fixed at
+source, not just in reading). Baseline re-verified live: 217 tests
+pass pre-change, ruff clean, blocking mypy clean, `verify-claims` at
+0. Row 2 OPEN (A/B running, verdict at Session 1); Rows 3/4 PENDING;
+Row 5 PENDING to Session 2; Rows 6/7/8 GATED with MP-89 kill-dates
+(see the MP-89 roadmap). No 20k-by-3 launch before the A/B verdict.
+Universal override stands.
+
+### MP-89 Session 1 — A/B verdict (2026-09-07)
+
+Three 500-step probe manifests collected. Single score: modular
+accuracy off chance (1/113 ≈ 0.00885). Results: Control 0.0062,
+Offset 0.0060, Reweight 0.0065 — **all below chance**. Neither
+vocab-offset nor curriculum reweight moves modular off chance in 500
+steps. Induction stays near zero (0.0005) in all arms. K-comp: control
+0.3690, offset 0.1728, reweight 0.3048. Verdict: **NO-MOVE**. No
+retuned 2k launch; the "v20 is the record" memo path taken. Row 2
+stamped VERDICT-NO-MOVE with this note; Rows 3/4 PENDING; Row 5
+PENDING to Session 2; Rows 6/7/8 GATED. `verify-claims` at 0.
+Universal override stands.
+
 ---
 
 ## Sign-Off

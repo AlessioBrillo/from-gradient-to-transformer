@@ -13,6 +13,32 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-09-07 — Micro-Phase 89, Session 0: retune harness test-first, A/B launched
+
+- **Studied**: MP-88 verdict plus the two standing hypotheses behind my
+  below-chance modular (0.0047 < 1/113): shared-embedding overlap
+  (modular ids `0..P-1` collide with induction ids, `pad_id 113` is a
+  real induction token) and the 1.0/1.0 curriculum (modular supervises
+  1 token at `logits[:, 1]`, induction 127 LM tokens). Baseline
+  re-verified live with no numbers inherited: 217 tests pass, `ruff
+  check src/ tests/` clean, blocking `mypy --strict` clean,
+  `verify-claims` at 0, nine manifests on disk.
+- **Built**: Retune harness test-first (`tests/test_exp6_retune.py`: 6
+  RED, then 6/6 GREEN — `--vocab-offset` relocates modular ids to a
+  dedicated range with loud `ValueError` on overflow/overlap,
+  `--modular-weight/--induction-weight` turn curriculum knobs only,
+  whole exp6 suite 24/24, offset end-to-end trains with Fourier on the
+  offset slice). Per-task val logging fixed at source (mixed mean no
+  longer hides modular movement). `make reproduce-retune-*` frozen
+  (500 steps, seed 0, warmup 100, probe manifests) and A/B launched in
+  background (control/offset-2048/reweight-5.0-0.5). Wrote
+  [[89_micro-phase-89-from-retune-to-signal|MP-89 · From RETUNE to
+  Signal]] (Sessions 0–6, zero new candidates), the ADR-0028 MP-89 stamp,
+  and home wiring.
+- **Open question**: Does either 500-step arm move modular off chance —
+  interference (offset fixes it) or schedule (reweight fixes it) —
+  answered by probe manifests at Session 1, not by argument.
+
 ## 2026-09-07 — Micro-Phase 88, Session 0: Row 1 verdict RETUNE — 2k
 shakedown complete, resume guardrail landed test-first
 

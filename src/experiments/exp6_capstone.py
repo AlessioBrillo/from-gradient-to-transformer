@@ -62,8 +62,16 @@ def make_modular_addition_data(
     train_fraction: float,
     seq_len: int,
     seed: int = 42,
+    vocab_offset: int = 0,
 ) -> tuple[TensorDataset, TensorDataset]:
-    """Generate modular addition task (a + b mod P) padded to seq_len."""
+    """Generate modular addition task (a + b mod P) padded to seq_len.
+
+    With ``vocab_offset == 0`` (frozen control) ids are ``0..P-1`` with
+    ``pad_id == modulus`` — the MP-88 collision regime. With
+    ``vocab_offset > 0`` (retune Arm A) ids relocate to the dedicated
+    range ``[offset, offset+P)`` with pad at ``offset+P``, disjoint
+    from induction ids ``[0, induction_vocab)``.
+    """
     rng = np.random.default_rng(seed)
 
     all_pairs = [(a, b) for a in range(modulus) for b in range(modulus)]
@@ -74,12 +82,12 @@ def make_modular_addition_data(
     val_pairs = all_pairs[split_idx:]
 
     def _to_tensor(pairs: list) -> torch.Tensor:
-        a = torch.tensor([p[0] for p in pairs], dtype=torch.long)
-        b = torch.tensor([p[1] for p in pairs], dtype=torch.long)
-        target = (a + b) % modulus
+        a = torch.tensor([p[0] for p in pairs], dtype=torch.long) + vocab_offset
+        b = torch.tensor([p[1] for p in pairs], dtype=torch.long) + vocab_offset
+        target = (a - vocab_offset + b - vocab_offset) % modulus
         # Create sequences of length seq_len: [a, b, pad, pad, ...]
         # Target is only at position 1 (after b), rest are ignored via loss masking
-        pad_id = modulus  # vocab_size - 1
+        pad_id = vocab_offset + modulus  # dedicated pad, no induction collision
         x = torch.full((len(pairs), seq_len), pad_id, dtype=torch.long)
         x[:, 0] = a
         x[:, 1] = b
@@ -195,6 +203,22 @@ def make_mixed_dataloaders(
     train_cfg = cfg["training"]
 
     seq_len = ind_cfg["seq_len"]
+    vocab_offset = int(mod_cfg.get("vocab_offset", 0))
+    model_vocab_size = (
+        ind_cfg["vocab_size"] + mod_cfg["modulus"] + 10
+    )
+    if vocab_offset < 0 or vocab_offset + mod_cfg["modulus"] + 1 > model_vocab_size:
+        raise ValueError(
+            f"vocab offset {vocab_offset} with modulus {mod_cfg['modulus']} "
+            f"does not fit in vocab_size {model_vocab_size} — "
+            "refusing to silently wrap ids."
+        )
+    if vocab_offset != 0 and vocab_offset < ind_cfg["vocab_size"]:
+        raise ValueError(
+            f"vocab offset {vocab_offset} overlaps induction ids "
+            f"[0, {ind_cfg['vocab_size']}) — use 0 (control) or "
+            f">= induction vocab_size (dedicated range)."
+        )
 
     # Modular addition data (padded to induction seq_len)
     mod_train, mod_val = make_modular_addition_data(
@@ -202,6 +226,7 @@ def make_mixed_dataloaders(
         train_fraction=mod_cfg["train_fraction"],
         seq_len=seq_len,
         seed=seed,
+        vocab_offset=vocab_offset,
     )
 
     # Induction data
@@ -618,8 +643,10 @@ def train_single_seed(
             # Instrumentation checkpoints
             if step % inst_cfg["fourier_every"] == 0:
                 # Fourier analysis on modular addition embeddings
+                _mod_offset = int(cfg["task"]["modular"].get("vocab_offset", 0))
+                _mod_P = cfg["task"]["modular"]["modulus"]
                 mod_embeddings = model.embed.weight[
-                    : cfg["task"]["modular"]["modulus"]
+                    _mod_offset : _mod_offset + _mod_P
                 ]
                 fourier_result = fourier_decomposition(
                     mod_embeddings, cfg["task"]["modular"]["modulus"]
@@ -697,9 +724,13 @@ def train_single_seed(
             if step % 1000 == 0:
                 model.eval()
                 with torch.no_grad():
-                    # Quick val pass - handle RoundRobinDataLoader batches
-                    val_losses = []
-                    val_accs = []
+                    # Quick val pass - handle RoundRobinDataLoader batches.
+                    # Per-task split: the mixed mean hides modular movement
+                    # (MP-88 dissociation), so log mod/ind separately.
+                    mod_losses: list[float] = []
+                    mod_accs: list[float] = []
+                    ind_losses: list[float] = []
+                    ind_accs: list[float] = []
                     for batch in val_loader:
                         vx, vy, vmod_target, vtask_id = batch
                         vx = vx.to(DEVICE)
@@ -716,25 +747,38 @@ def train_single_seed(
                                 vlogits[:, 1, :].argmax(-1)
                                 == vmod_target.to(DEVICE)
                             ).float().mean()
+                            mod_losses.append(vloss.item())
+                            mod_accs.append(vacc.item())
                         else:
                             # Induction: standard LM loss
                             vloss = F.cross_entropy(
                                 vlogits.view(-1, vlogits.size(-1)), vy.view(-1)
                             )
                             vacc = (vlogits.argmax(-1) == vy).float().mean()
+                            ind_losses.append(vloss.item())
+                            ind_accs.append(vacc.item())
 
-                        val_losses.append(vloss.item())
-                        val_accs.append(vacc.item())
-
+                    _mod_loss = float(np.mean(mod_losses)) if mod_losses else float("nan")
+                    _mod_acc = float(np.mean(mod_accs)) if mod_accs else float("nan")
+                    _ind_loss = float(np.mean(ind_losses)) if ind_losses else float("nan")
+                    _ind_acc = float(np.mean(ind_accs)) if ind_accs else float("nan")
+                    _all_losses = mod_losses + ind_losses
+                    _all_accs = mod_accs + ind_accs
                     logger.info(
-                        f"Step {step}: Val Loss = {np.mean(val_losses):.4f}, "
-                        f"Val Acc = {np.mean(val_accs):.4f}"
+                        f"Step {step}: Val Loss = {np.mean(_all_losses):.4f}, "
+                        f"Val Acc = {np.mean(_all_accs):.4f} "
+                        f"(mod loss {_mod_loss:.4f} acc {_mod_acc:.4f} | "
+                        f"ind loss {_ind_loss:.4f} acc {_ind_acc:.4f})"
                     )
                     # Log validation metrics to W&B
                     if wandb_run and log_wandb_metrics:
                         log_wandb_metrics(wandb_run, {
-                            f"seed_{seed}/val_loss": float(np.mean(val_losses)),
-                            f"seed_{seed}/val_acc": float(np.mean(val_accs)),
+                            f"seed_{seed}/val_loss": float(np.mean(_all_losses)),
+                            f"seed_{seed}/val_acc": float(np.mean(_all_accs)),
+                            f"seed_{seed}/val_modular_loss": _mod_loss,
+                            f"seed_{seed}/val_modular_acc": _mod_acc,
+                            f"seed_{seed}/val_induction_loss": _ind_loss,
+                            f"seed_{seed}/val_induction_acc": _ind_acc,
                         }, step=step)
                 model.train()
 
@@ -744,11 +788,13 @@ def train_single_seed(
     model.eval()
     with torch.no_grad():
         # Modular addition eval - use the padded data format
+        _final_offset = int(cfg["task"]["modular"].get("vocab_offset", 0))
         mod_train, mod_val = make_modular_addition_data(
             cfg["task"]["modular"]["modulus"],
             cfg["task"]["modular"]["train_fraction"],
             seq_len=cfg["task"]["induction"]["seq_len"],
             seed=seed,
+            vocab_offset=_final_offset,
         )
         mod_val_loader = DataLoader(mod_val, batch_size=train_cfg["batch_size"])
 
@@ -786,8 +832,9 @@ def train_single_seed(
         ind_acc = ind_correct / ind_total if ind_total > 0 else 0.0
 
         # Final Fourier analysis
+        _final_P = cfg["task"]["modular"]["modulus"]
         mod_embeddings = model.embed.weight[
-            : cfg["task"]["modular"]["modulus"]
+            _final_offset : _final_offset + _final_P
         ]
         fourier_result = fourier_decomposition(
             mod_embeddings, cfg["task"]["modular"]["modulus"]
@@ -869,6 +916,28 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--wandb-entity", type=str, help="W&B entity/username")
     parser.add_argument("--quick", action="store_true", help="Quick mode for testing")
     parser.add_argument(
+        "--vocab-offset",
+        type=int,
+        default=None,
+        help=(
+            "Dedicated id range for modular tokens (retune Arm A). "
+            "0 or omitted = frozen control (0..P-1). Use >= induction "
+            "vocab_size for a collision-free range."
+        ),
+    )
+    parser.add_argument(
+        "--modular-weight",
+        type=float,
+        default=None,
+        help="Curriculum override for modular loss scaling (retune Arm B).",
+    )
+    parser.add_argument(
+        "--induction-weight",
+        type=float,
+        default=None,
+        help="Curriculum override for induction loss scaling (retune Arm B).",
+    )
+    parser.add_argument(
         "--manifest-path",
         type=str,
         default=None,
@@ -930,6 +999,15 @@ def main() -> None:
 
     if args.warmup_steps is not None:
         cfg["training"]["warmup_steps"] = args.warmup_steps
+
+    if args.vocab_offset is not None:
+        cfg["task"]["modular"]["vocab_offset"] = args.vocab_offset
+
+    if args.modular_weight is not None:
+        cfg["training"]["modular_weight"] = args.modular_weight
+
+    if args.induction_weight is not None:
+        cfg["training"]["induction_weight"] = args.induction_weight
 
     # W&B setup
     wandb_run = None
