@@ -317,6 +317,8 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[28_micro-phase-29-the-pos
   I convert stamps into record: the 1-seed × 2k-step exp6 shakedown runs under its frozen invocation, Rows 1 and 5 stamp with dated verdicts, the GPU watch closes or consumes at Session 2, and every public number clicks back to a manifest and a command. Terminus: Session 6 release.
 - [[87_micro-phase-87-from-roadmaps-to-transcripts|MP-87 · From Roadmaps to Transcripts (ACTIVE EXECUTION with Session-1 transcript)]] —
   I break the seven-roadmap Session-0-only stall by merging with a transcript attached: the frozen shakedown crashed at step 500 (Fourier on live weights), I fixed it test-first, validated 550 steps past the boundary, and proved checkpoint-resume. Terminus: Session 6 release.
+- [[88_micro-phase-88-from-transcripts-to-verdicts|MP-88 · From Transcripts to Verdicts (ACTIVE EXECUTION with Row 1 verdict)]] —
+  I stamp Row 1 RETUNE from the completed 2k manifest (induction 0.0005 going to 0.5041, modular flat at 0.0047, Fourier dense at k_99 98.1), I land the resume WARNING test-first, and I execute Sessions 1–6 toward the retune A/B. Terminus: Session 6 release.
 - [[35_micro-phase-36-the-fifth-question|MP-36 · The Fifth Question (pre-registered)]] —
   consumes MP-35's release whatever its rows decided (gated hard: no continuum ledger
   at zero, no phase): the continuum law executes a fifth time under a new ledger
