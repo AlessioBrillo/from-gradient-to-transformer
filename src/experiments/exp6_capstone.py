@@ -533,6 +533,15 @@ def train_single_seed(
             scheduler.load_state_dict(ckpt["scheduler"])
             start_step = ckpt["step"]
             logger.info(f"Resumed seed {seed} from step {start_step}")
+        else:
+            logger.warning(
+                f"RESUME: checkpoint {ckpt_path} not found — starting fresh"
+            )
+    elif resume_step > 0:
+        logger.warning(
+            "RESUME: --resume passed without --save-model "
+            "(no checkpoint_dir) — starting fresh"
+        )
 
     # Data
     train_loader, val_loader = make_mixed_dataloaders(cfg, seed)

@@ -18,7 +18,7 @@ consumes: [ADR-0027]
 
 | Row | Candidate | Opens Only If | Window | Kill-Date | Status |
 |-----|-----------|---------------|--------|-----------|--------|
-| 1 | **exp6 shakedown: 1 seed by 2k steps, all instrumentation live** | Always | Session 1–2 | 2026-09-07 | PENDING |
+| 1 | **exp6 shakedown: 1 seed by 2k steps, all instrumentation live** | Always | Session 1–2 | 2026-09-07 | VERDICT-RETUNE 2026-09-07 (see MP-88 intake below) |
 | 2 | **K-comp validation + vocab-offset decision, dated** | Shakedown completes (Row 1) | Session 2–4 | 2026-09-10 | GATED |
 | 3 | **Portfolio repair lock-in: 5 pages clickable** | Always | Session 3 | 2026-09-10 | PENDING |
 | 4 | **RESULTS + progress-log + gate-debt truthing** | Always | Session 3 | 2026-09-10 | PENDING |
@@ -181,6 +181,34 @@ shifted to the MP-87 session clock. Recorded warts: resume is a silent no-op
 without `--save-model` (exp1/exp2 warn; exp6 does not — follow-up, not this
 PR); frozen shakedown measures ~100+ min for 2000 steps (4.26M params), so
 Session 1 runs it in background post-merge.
+Universal override stands.
+
+### MP-88 Session 0 intake + Row 1 verdict (2026-09-07)
+
+MP-87's Session-1 transcript predicted a background 2k run; the run
+completed overnight 2026-09-07 02:00–03:21 UTC (4855 s wall) under the
+frozen invocation — 2000/2000 steps, checkpoints at 500/1000/1500/2000,
+manifest `results/probe_capstone_shakedown.json` (seed 0, git_sha
+db9c4c6, git_dirty false). Verdict RETUNE, stamped from manifest bytes:
+modular accuracy 0.0047 (flat at chance, 1/113 ≈ 0.0088), induction
+accuracy 0.5041 (from 0.0005 at step 550), Fourier k_99 98.1 (dense,
+same regime as the P=113 NO-GROK baseline), max K-comp 0.394
+(detector alive, no head claimed — the 0.3 threshold applies to
+per-head diag+1 mass, not to K-comp). Harness GREEN on every Row 1
+criterion; science RETUNE — joint training viable but imbalanced, so
+the retune A/B (vocab-offset plus curriculum reweight, 500 steps per
+arm, modular movement as single score) opens as Row 2 and no 20k-by-3
+launch opens before it. Session-0 hardening landed alongside: the
+MP-87 silent-resume wart closed test-first (`tests/test_exp6_resume.py`,
+2 RED then 18/18 exp6 GREEN — both no-checkpoint-dir and missing-file
+cases now WARNING with "RESUME ... starting fresh", matching exp1/exp2
+phrasing). Baseline re-verified live: 217 tests pass, ruff clean,
+blocking mypy clean, `verify-claims` at 0, full-tree mypy 201 errors
+exit 1 no crash, wandb 0.28.0 present with login absent (no `~/.netrc`,
+no `WANDB_API_KEY` — Row 5 stays PENDING to Session 2, where the
+operator runs `wandb login` or the row closes with one dated reason),
+`huggingface_hub` absent, no pdflatex/latexmk. Rows 3/4 PENDING, Rows
+2/6/7/8 GATED with MP-88 kill-dates (see the MP-88 roadmap).
 Universal override stands.
 
 ---

@@ -13,6 +13,35 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-09-07 — Micro-Phase 88, Session 0: Row 1 verdict RETUNE — 2k
+shakedown complete, resume guardrail landed test-first
+
+- **Studied**: MP-87 transcript plus the overnight shakedown manifest
+  (`results/probe_capstone_shakedown.json`: seed 0, 2000/2000 steps,
+  4855 s wall, `git_sha db9c4c6` clean, checkpoints 500/1000/1500/2000
+  present). Baseline re-verified live with no numbers inherited: 217
+  tests pass (215 + 2 new), `ruff check src/ tests/` clean, blocking
+  `mypy --strict` clean, full-tree mypy 201 errors exit 1 no crash,
+  `verify-claims` at 0, nine manifests on disk. Toolchains: no
+  pdflatex/latexmk, wandb 0.28.0 present login-absent (no netrc, no env
+  key — Row 5 PENDING to Session 2), `huggingface_hub` absent.
+- **Built**: Row 1 verdict RETUNE stamped from manifest bytes — modular
+  acc 0.0047 (flat at chance) vs induction acc 0.5041 (~1000× rise),
+  Fourier k_99 98.1 dense, max K-comp 0.394 with no head claimed;
+  harness GREEN on every criterion, so the retune A/B (vocab-offset +
+  reweight, 500-step arms) opens as Row 2 and no 20k-by-3 launch opens
+  before it. Closed the MP-87 silent-resume wart test-first
+  (`tests/test_exp6_resume.py`: 2 RED, then 18/18 exp6 GREEN — both
+  silent cases now WARNING "RESUME ... starting fresh", exp1/exp2
+  phrasing). Wrote
+  [[88_micro-phase-88-from-transcripts-to-verdicts|MP-88 · From
+  Transcripts to Verdicts]] (Sessions 0–6, zero new candidates) +
+  [[07_capstone/notes/mp-88-shakedown-verdict|MP-88 shakedown verdict]],
+  the ADR-0028 MP-88 stamp, and home wiring.
+- **Open question**: Does the retune A/B move modular off chance —
+  interference (offset fixes it) or schedule (reweight fixes it) —
+  answered by 500-step arms, not by argument.
+
 ## 2026-09-06 — Micro-Phase 87, Session 0+1: stall broken — step-500 crash, test-first fix, validation + resume proof
 
 - **Studied**: MP-86 intake plus ADR-0028 row states (unchanged: R1/R3/R4/R5 PENDING, rest GATED). Baseline re-verified live with no numbers inherited: 215 tests pass (212 + 3 new), `ruff check src/ tests/` clean, blocking `mypy --strict` clean, full-tree mypy 201 errors exit 1 no crash, `verify-claims` at 0, eight manifests on disk (six flagships + two new probes). Toolchain correction: `wandb` 0.28.0 verified via `uv run` (system-python import fails — command corrected, fact unchanged); `huggingface_hub` absent; no pdflatex/latexmk.
