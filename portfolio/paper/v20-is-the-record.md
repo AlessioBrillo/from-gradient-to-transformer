@@ -17,6 +17,7 @@ consumes: [ADR-0028, 89_micro-phase-89-from-retune-to-signal]
 - Max K-comp: 0.394 (detector alive, no head claimed — 0.3 threshold applies to per-head diag+1 mass, not K-comp)
 
 **MP-89 Retune A/B (500 steps each, seed 0):**
+
 | Arm | Modular Accuracy | Induction Accuracy | Fourier k_99 | Max K-comp | Verdict |
 |-----|------------------|-------------------|--------------|------------|---------|
 | Control | 0.0062 | 0.0005 | 98.18 | 0.3690 | Baseline |

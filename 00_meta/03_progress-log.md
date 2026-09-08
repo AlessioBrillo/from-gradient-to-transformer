@@ -16,7 +16,7 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 ## 2026-09-08 — Micro-Phase 90, Sessions 2–3: W&B verdict, GPU-watch close, portfolio lock-in, gate-debt zero
 
 - **Studied**: MP-89 A/B verdict (NO-MOVE: control 0.0062, offset 0.0060, reweight 0.0065 — all below 1/113 chance). ADR-0028 Row 2 VERDICT-NO-MOVE stamped. W&B login failed (no credentials). MP-74 Colab GPU run 15+ days stale, no manifest. Baseline re-verified live: 223 tests pass, `ruff check src/ tests/` clean, blocking `mypy --strict` clean, `verify-claims` at 0, nine manifests on disk.
-- **Built**: 
+- **Built**:
   - W&B Row 5 closed: `wandb login --verify` → FAIL → CLOSED-WITH-ONE-REASON (credentials not configured). GPU watch → PENDING-EXTERNAL (15+ days, no manifest). Note: `07_capstone/notes/mp-90-wandb-gpu-close.md`.
   - ADR-0028 updated: Row 5 stamped, Rows 3/4 unblocked, Row 6 unblocked (NO-MOVE → "v20 is the record" memo), Row 7 unblocked (Row 1 GREEN), Row 8 unblocked (all prerequisites resolved).
   - Portfolio repair: 5 rung pages verified with manifest tags, `../../figures/` prefixes, real filenames, ≥2 `[[links]]` each. `portfolio/projects/rung-{1..5}/index.md`.
