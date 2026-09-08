@@ -3,7 +3,8 @@
 	reproduce-superposition reproduce-patching reproduce-sae \
 	reproduce-multiseed verify-claims clean paper \
 	reproduce-grokking-probe reproduce-induction-standard reproduce-induction-1layer \
-	reproduce-exp3-geometry commitlint-head
+	reproduce-exp3-geometry commitlint-head \
+	reproduce-retune reproduce-retune-control reproduce-retune-offset reproduce-retune-reweight
 
 # --- Shell ---
 # The recipes are POSIX verbatim (the CI mirror); Windows GNU Make defaults
@@ -139,6 +140,30 @@ reproduce-induction-1layer:
 reproduce-exp3-geometry:
 	@echo "=== Rung 3: pentagon geometry check (5 features -> 2 dims) ==="
 	uv run python -m src.experiments.exp3_superposition --geometry-check
+
+# --- Retune A/B (Micro-Phase 89, Row 2) ---
+# Frozen 500-step arms, seed 0, warmup 100, probe manifests only.
+# Control: exact MP-88 shakedown config at short horizon.
+# Offset (Arm A): modular ids in [2048, 2161), pad 2161 — disjoint from
+#   induction [0, 2048); tests the shared-embedding interference hypothesis.
+# Reweight (Arm B): modular 5.0 / induction 0.5 (10x relative boost) —
+#   modular supervises 1 token vs induction's 127, so 1.0/1.0 lets
+#   induction dominate; tests the schedule hypothesis.
+# Single score: modular accuracy off chance (1/113). No 20k launch before it.
+reproduce-retune: reproduce-retune-control reproduce-retune-offset reproduce-retune-reweight
+	@echo "Done. See results/probe_capstone_ab_*.json"
+
+reproduce-retune-control:
+	@echo "=== Capstone retune A/B: control (500 steps, probe manifest) ==="
+	uv run python -m src.experiments.exp6_capstone --seed 0 --steps 500 --warmup-steps 100 --checkpoint-every 500 --save-model --manifest-path results/probe_capstone_ab_control.json
+
+reproduce-retune-offset:
+	@echo "=== Capstone retune A/B: vocab-offset arm (500 steps) ==="
+	uv run python -m src.experiments.exp6_capstone --seed 0 --steps 500 --warmup-steps 100 --checkpoint-every 500 --save-model --vocab-offset 2048 --manifest-path results/probe_capstone_ab_offset.json
+
+reproduce-retune-reweight:
+	@echo "=== Capstone retune A/B: reweight arm (500 steps) ==="
+	uv run python -m src.experiments.exp6_capstone --seed 0 --steps 500 --warmup-steps 100 --checkpoint-every 500 --save-model --modular-weight 5.0 --induction-weight 0.5 --manifest-path results/probe_capstone_ab_reweight.json
 
 reproduce-induction:
 	@echo "=== Rung 1: Induction heads ==="
