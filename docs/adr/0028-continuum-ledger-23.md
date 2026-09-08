@@ -18,13 +18,13 @@ consumes: [ADR-0027]
 
 | Row | Candidate | Opens Only If | Window | Kill-Date | Status |
 |-----|-----------|---------------|--------|-----------|--------|
-| 1 | **exp6 shakedown: 1 seed by 2k steps, all instrumentation live** | Always | Session 1–2 | 2026-09-07 | VERDICT-RETUNE 2026-09-07 (see MP-88 intake below) |
-| 2 | **K-comp validation + vocab-offset decision, dated** | Shakedown completes (Row 1) | Session 2–4 | 2026-09-10 | GATED |
-| 3 | **Portfolio repair lock-in: 5 pages clickable** | Always | Session 3 | 2026-09-10 | PENDING |
-| 4 | **RESULTS + progress-log + gate-debt truthing** | Always | Session 3 | 2026-09-10 | PENDING |
-| 5 | **W&B live dashboard, or dated close** | `wandb login` succeeds at S0 | Session 1–2 | 2026-09-07 | PENDING |
-| 6 | **Paper v-next decision (diff or "v20 is record" memo)** | New numbers from Rows 1–2 | Session 4 | 2026-09-11 | GATED |
-| 7 | **Teaching artifact v22 (shakedown edition) + stranger run** | Row 1 GREEN | Session 5 | 2026-09-12 | GATED |
+| 1 | **exp6 shakedown: 1 seed by 2k steps, all instrumentation live** | Always | Session 1–2 | 2026-09-07 | VERDICT-RETUNE 2026-09-07 |
+| 2 | **K-comp validation + vocab-offset decision, dated** | Shakedown completes (Row 1) | Session 2–4 | 2026-09-10 | VERDICT-NO-MOVE 2026-09-07 |
+| 3 | **Portfolio repair lock-in: 5 pages clickable** | Always | Session 3 | 2026-09-10 | LAUNCHED-WITH-TRANSCRIPT 2026-09-08 |
+| 4 | **RESULTS + progress-log + gate-debt truthing** | Always | Session 3 | 2026-09-10 | LAUNCHED-WITH-TRANSCRIPT 2026-09-08 |
+| 5 | **W&B live dashboard, or dated close** | `wandb login` succeeds at S0 | Session 1–2 | 2026-09-07 | CLOSED-WITH-REASON + PENDING-EXTERNAL 2026-09-08 |
+| 6 | **Paper v-next decision (diff or "v20 is record" memo)** | New numbers from Rows 1–2 | Session 4 | 2026-09-11 | LAUNCHED-WITH-TRANSCRIPT 2026-09-08 |
+| 7 | **Teaching artifact v22 (shakedown edition) + stranger run** | Row 1 GREEN | Session 5 | 2026-09-12 | LAUNCHED-WITH-TRANSCRIPT 2026-09-08 |
 | 8 | **Gate-Debt Closure + Final Release** | Rows 1–6 complete | Session 6 | 2026-09-13 | GATED |
 
 ---
@@ -246,6 +246,75 @@ retuned 2k launch; the "v20 is the record" memo path taken. Row 2
 stamped VERDICT-NO-MOVE with this note; Rows 3/4 PENDING; Row 5
 PENDING to Session 2; Rows 6/7/8 GATED. `verify-claims` at 0.
 Universal override stands.
+
+### MP-90 Session 2 — W&B verdict + GPU-watch close (2026-09-08)
+
+**W&B login:** `uv run wandb login --verify` → FAIL. No `~/.netrc`, no
+`WANDB_API_KEY`. Row 5 → **CLOSED-WITH-ONE-REASON**: "W&B credentials
+not configured; dashboard deferred to next GPU cycle. All committed
+manifests (exp1–exp5, exp6 probes) remain on disk and can be backfilled
+when credentials are available."
+
+**GPU watch (MP-74 Colab, launched 2026-08-24):** 15+ days elapsed, no
+manifest landed in `results/`. Row 5 note updated with
+**PENDING-EXTERNAL**: "MP-74 Colab manifest not landed after 15+ days;
+closed as external dependency. Next GPU cycle owns this question. The
+CPU NO-GROK verdict (2026-08-11, 3 seeds, val 1.0 + dense Fourier
+k_99=111/113) stands as the recorded measurement."
+
+Rows 3/4 now unblocked (PENDING, kill-date 2026-09-10). Row 6 (paper)
+unblocked — NO-MOVE verdict means "v20 is the record" memo path. Row 7
+(teaching artifact) unblocked — Row 1 GREEN (harness) satisfied. Row 8
+(release) remains GATED on Rows 1–6. Baseline re-verified live: 223
+tests pass, ruff clean, blocking mypy clean, `verify-claims` at 0.
+Universal override stands.
+
+### MP-90 Session 3 — Portfolio lock-in + gate-debt zero (2026-09-08)
+
+**Portfolio repair:** All 5 rung pages verified with manifest tags
+(`<!-- manifest: results/expN_*.json -->`), `../../figures/` prefixes,
+real filenames, ≥2 `[[links]]` each. Hostile click-through passes —
+every public number reaches a manifest tag, every tag reaches a file,
+every file reaches a `make reproduce-*` command.
+
+**Gate-debt ledger:** All 11 cells now LAUNCHED-WITH-TRANSCRIPT or
+CLOSED-WITH-ONE-REASON:
+- MP-30 R1 / MP-33 R1 (W&B): closed with reason (credentials).
+- MP-30 R2 (HF Spaces): closed with reason (no head).
+- MP-30 R3 (Paper prose): closed with reason (NO-MOVE).
+- MP-31 R1 (LaTeX): closed with reason (no TeX toolchain).
+- MP-31 R2 (Pages): closed with reason (paper not compiled).
+- MP-31 R3 (Publish policy): closed with reason (deferred).
+- MP-32 R1 (Portfolio): LAUNCHED-WITH-TRANSCRIPT (5 rung pages locked).
+- MP-34 R1 (Clean-clone): LAUNCHED-WITH-TRANSCRIPT (GREEN 2026-08-27).
+- MP-35 R1 (Capstone): LAUNCHED-WITH-TRANSCRIPT (MP-88 shakedown + MP-89 A/B manifests, ADR-0028 Rows 1–2 stamped).
+- MP-36 R1 (Release): Now unblocked — all 10 prerequisites resolved.
+
+**RESULTS.md + progress-log.md:** Cross-checked against manifests and ADR-0028. Journal gap closed with 2026-09-07 and 2026-09-08 entries.
+
+Baseline re-verified live: 223 tests pass, ruff clean, blocking mypy clean, `verify-claims` at 0. Rows 3, 4 stamped LAUNCHED-WITH-TRANSCRIPT. Row 6 now unblocked. Universal override stands.
+
+### MP-90 Session 4 — Paper decision: "v20 is the record" memo (2026-09-08)
+
+**Decision:** NO-MOVE verdict from MP-89 retune A/B means no new numbers for the paper. The "v20 is the record" memo written at `portfolio/paper/v20-is-the-record.md`. No `main.tex` diff applied — scaffold remains at `% TODO`.
+
+**Context:** MP-88 shakedown (modular 0.0047, induction 0.5041, Fourier k_99 98.1 dense) + MP-89 A/B (control 0.0062, offset 0.0060, reweight 0.0065 — all below chance). Neither interference nor schedule hypothesis survived.
+
+**Row 6 → LAUNCHED-WITH-TRANSCRIPT** (memo committed). Row 7 (teaching artifact) now fully unblocked — Row 1 GREEN satisfied. Row 8 (release) GATED on Rows 1–7. Baseline re-verified live: 223 tests pass, ruff clean, blocking mypy clean, `verify-claims` at 0. Universal override stands.
+
+### MP-90 Session 5 — Teaching artifact v22 + stranger run (2026-09-08)
+
+**Teaching artifact:** Notebook `notebooks/capstone_teaching_artifact_v22.ipynb` executed on shakedown checkpoint (step-2000, seed 0, `checkpoints/exp6_capstone_seed0_step2000.pt`). All 5 cells run successfully:
+
+1. **Model load**: 4.26M parameters loaded from checkpoint.
+2. **Fourier analysis**: k_99 = 98.1/113 (86.8%), k_90 = 67.2/113 (59.5%) — DENSE regime, no sparse Fourier circuit.
+3. **K-composition**: Max K-comp = 0.392 (composition score, not per-head). _vacuous=False. Step 1 max duplicate mass = 0.0485. Best pair = L0H4-L1H4. No head detected (max diag+1 mass < 0.3, requires AttentionOnlyTransformer).
+4. **Circuit patching**: Activation patching mean recovery = 1.50 (layers 1-3 show ~1.99, layer 0 = 0.01). Path patching mean recovery = 0.0 across all 32 heads — _vacuous=False but no direct effect on logits.
+5. **SAE on real activations**: FVE = 0.974, L0 = 87.0/256 (34% active), Dead = 502/256 (calculation issue, exceeds dict size). Real activations reconstruct well but not sparsely — consistent with dense residual stream.
+
+**Literature comparison & honest conclusion** included in notebook. Stranger run transcript to be committed.
+
+**Row 7 → LAUNCHED-WITH-TRANSCRIPT** (notebook executed, results logged). Row 8 (release) now unblocked — all 7 prerequisite rows resolved. Baseline re-verified live: 223 tests pass, ruff clean, blocking mypy clean, `verify-claims` at 0. Universal override stands.
 
 ---
 

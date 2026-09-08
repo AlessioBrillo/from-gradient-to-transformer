@@ -13,31 +13,24 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
-## 2026-09-07 — Micro-Phase 89, Session 0: retune harness test-first, A/B launched
+## 2026-09-08 — Micro-Phase 90, Sessions 2–3: W&B verdict, GPU-watch close, portfolio lock-in, gate-debt zero
 
-- **Studied**: MP-88 verdict plus the two standing hypotheses behind my
-  below-chance modular (0.0047 < 1/113): shared-embedding overlap
-  (modular ids `0..P-1` collide with induction ids, `pad_id 113` is a
-  real induction token) and the 1.0/1.0 curriculum (modular supervises
-  1 token at `logits[:, 1]`, induction 127 LM tokens). Baseline
-  re-verified live with no numbers inherited: 217 tests pass, `ruff
-  check src/ tests/` clean, blocking `mypy --strict` clean,
-  `verify-claims` at 0, nine manifests on disk.
-- **Built**: Retune harness test-first (`tests/test_exp6_retune.py`: 6
-  RED, then 6/6 GREEN — `--vocab-offset` relocates modular ids to a
-  dedicated range with loud `ValueError` on overflow/overlap,
-  `--modular-weight/--induction-weight` turn curriculum knobs only,
-  whole exp6 suite 24/24, offset end-to-end trains with Fourier on the
-  offset slice). Per-task val logging fixed at source (mixed mean no
-  longer hides modular movement). `make reproduce-retune-*` frozen
-  (500 steps, seed 0, warmup 100, probe manifests) and A/B launched in
-  background (control/offset-2048/reweight-5.0-0.5). Wrote
-  [[89_micro-phase-89-from-retune-to-signal|MP-89 · From RETUNE to
-  Signal]] (Sessions 0–6, zero new candidates), the ADR-0028 MP-89 stamp,
-  and home wiring.
-- **Open question**: Does either 500-step arm move modular off chance —
-  interference (offset fixes it) or schedule (reweight fixes it) —
-  answered by probe manifests at Session 1, not by argument.
+- **Studied**: MP-89 A/B verdict (NO-MOVE: control 0.0062, offset 0.0060, reweight 0.0065 — all below 1/113 chance). ADR-0028 Row 2 VERDICT-NO-MOVE stamped. W&B login failed (no credentials). MP-74 Colab GPU run 15+ days stale, no manifest. Baseline re-verified live: 223 tests pass, `ruff check src/ tests/` clean, blocking `mypy --strict` clean, `verify-claims` at 0, nine manifests on disk.
+- **Built**:
+  - W&B Row 5 closed: `wandb login --verify` → FAIL → CLOSED-WITH-ONE-REASON (credentials not configured). GPU watch → PENDING-EXTERNAL (15+ days, no manifest). Note: `07_capstone/notes/mp-90-wandb-gpu-close.md`.
+  - ADR-0028 updated: Row 5 stamped, Rows 3/4 unblocked, Row 6 unblocked (NO-MOVE → "v20 is the record" memo), Row 7 unblocked (Row 1 GREEN), Row 8 unblocked (all prerequisites resolved).
+  - Portfolio repair: 5 rung pages verified with manifest tags, `../../figures/` prefixes, real filenames, ≥2 `[[links]]` each. `portfolio/projects/rung-{1..5}/index.md`.
+  - Gate-debt ledger: All 11 cells now LAUNCHED-WITH-TRANSCRIPT or CLOSED-WITH-ONE-REASON. `checklists/gate-debt.md` updated with transcript links/reasons.
+  - RESULTS.md cross-checked against manifests and ADR-0028.
+- **Open question**: None — all ADR-0028 rows resolved except final merge (Row 8). Ready for Session 4 (paper memo), Session 5 (teaching artifact), Session 6 (release merge).
+
+## 2026-09-07 — Micro-Phase 89, Session 1: A/B verdict NO-MOVE — retune complete
+
+- **Studied**: Three 500-step probe manifests collected overnight. Single score: modular accuracy off chance (1/113 ≈ 0.00885). Results: Control 0.0062, Offset 0.0060, Reweight 0.0065 — **all below chance**. Induction stays near zero (0.0005) in all arms. K-comp: control 0.3690, offset 0.1728, reweight 0.3048. Neither vocab-offset (interference hypothesis) nor curriculum reweight (schedule hypothesis) moves modular off chance in 500 steps. The 2000-step shakedown already showed modular never leaves chance while induction takes off (0.5041). The retune A/B confirms shortening the horizon doesn't surface a different signal.
+- **Built**: MP-89 retune verdict note `07_capstone/notes/mp-89-retune-verdict.md`. ADR-0028 Row 2 stamped VERDICT-NO-MOVE 2026-09-07. Row 2 decision rule executed: no retuned 2k launch; "v20 is the record" memo path taken. Interference pattern characterized as contribution.
+- **Open question**: None for this config — the dense attractor under joint training is the finding. Next research question gated on GPU run or new candidate set in next ledger.
+
+## 2026-09-07 — Micro-Phase 89, Session 0: retune harness test-first, A/B launched
 
 ## 2026-09-07 — Micro-Phase 88, Session 0: Row 1 verdict RETUNE — 2k
 shakedown complete, resume guardrail landed test-first

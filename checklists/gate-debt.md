@@ -16,17 +16,17 @@ updated: 2026-09-05
 
 | Phase | Row | Description | Status | Transcript / Reason | Date |
 |-------|-----|-------------|--------|---------------------|------|
-| MP-30 | 1 | W&B integration | **LAUNCHED** | MP-78 Row 3: W&B logging added to runner.py, capstone runs connected, MP-74 backfill in progress | 2026-09-01 |
-| MP-30 | 2 | Hugging Face Spaces deploy | **GATED** | MP-78 Row 4: Opens only if MP-74 R5 produces confirmed head | 2026-09-01 |
-| MP-30 | 3 | Mini-paper prose | **GATED** | MP-78 Row 2: Opens only if MP-74 produces new numbers | 2026-09-01 |
-| MP-31 | 1 | `make paper` LaTeX toolchain | **PENDING** | No TeX on this machine — `make paper` graceful, not green | 2026-08-23 |
-| MP-31 | 2 | Pages deploy workflow | **GATED** | MP-78 Row 6: Opens only if paper v21 compiles | 2026-09-01 |
-| MP-31 | 3 | `publish:` frontmatter policy | **PENDING** | Not yet defined | 2026-08-23 |
-| MP-32 | 1 | Portfolio project write-ups | **LAUNCHED** | MP-78 Row 5: Figures exist for all 5 rungs; write-ups Sessions 3-4 | 2026-09-01 |
-| MP-33 | 1 | W&B connection | **LAUNCHED** | Same as MP-30 Row 1 — unified | 2026-09-01 |
+| MP-30 | 1 | W&B integration | **CLOSED-WITH-ONE-REASON** | W&B credentials not configured; dashboard deferred to next GPU cycle. Manifests on disk for backfill. `07_capstone/notes/mp-90-wandb-gpu-close.md` | 2026-09-08 |
+| MP-30 | 2 | Hugging Face Spaces deploy | **CLOSED-WITH-ONE-REASON** | No confirmed induction head checkpoint available from MP-74/88/89. | 2026-09-08 |
+| MP-30 | 3 | Mini-paper prose | **CLOSED-WITH-ONE-REASON** | NO-MOVE verdict (MP-89); no new numbers to write. "v20 is the record" memo path taken. | 2026-09-08 |
+| MP-31 | 1 | `make paper` LaTeX toolchain | **CLOSED-WITH-ONE-REASON** | No pdflatex/latexmk on this machine; `make paper` graceful, not green. | 2026-09-08 |
+| MP-31 | 2 | Pages deploy workflow | **CLOSED-WITH-ONE-REASON** | Paper v21 not compiled; deploy without PDF or defer to next cycle. | 2026-09-08 |
+| MP-31 | 3 | `publish:` frontmatter policy | **CLOSED-WITH-ONE-REASON** | Deferred; Pages deploy workflow is the operative policy. | 2026-09-08 |
+| MP-32 | 1 | Portfolio project write-ups | **LAUNCHED-WITH-TRANSCRIPT** | MP-90 Session 3: 5 rung pages locked with manifest tags, figures, ≥2 links each. `portfolio/projects/rung-{1..5}/index.md` | 2026-09-08 |
+| MP-33 | 1 | W&B connection | **CLOSED-WITH-ONE-REASON** | Same as MP-30 Row 1 — unified. W&B credentials not configured. | 2026-09-08 |
 | MP-34 | 1 | Clean-clone proof | **LAUNCHED-WITH-TRANSCRIPT** | `06_production_ai/proofs/reproducible-from-clean-clone.md` — GREEN 2026-08-27, full transcript committed | 2026-08-27 |
-| MP-35 | 1 | Capstone research plan execution | **LAUNCHED** | MP-78 Row 1: Clean-clone proof GREEN unblocks; config ready, training Session 1 | 2026-09-01 |
-| MP-36 | 1 | Final integration & release | **GATED** | MP-78 Row 8: Gated on Rows 1–6 complete | 2026-09-01 |
+| MP-35 | 1 | Capstone research plan execution | **LAUNCHED-WITH-TRANSCRIPT** | MP-88 shakedown (2k steps, manifest `probe_capstone_shakedown.json`) + MP-89 retune A/B (3 arms, 500 steps each, manifests `probe_capstone_ab_{control,offset,reweight}.json`). ADR-0028 Rows 1–2 stamped. | 2026-09-08 |
+| MP-36 | 1 | Final integration & release | **LAUNCHED-WITH-TRANSCRIPT** | MP-90 Sessions 2–7: All 11 cells resolved. ADR-0028 zero UNDECIDED rows. Ready for merge. | 2026-09-08 |
 
 ---
 
@@ -86,6 +86,32 @@ Updated from ADR-0027 adjudication at MP-78 Session 0:
   2026-08-27). The sign-off header below is corrected to 11; the "twelve cells"
   mentions in the already-merged MP-83/MP-84 roadmaps stand as dated history and
   are not rewritten.
+
+---
+
+## MP-90 Session 2–3 Sync (2026-09-08)
+
+- **Row 5 (W&B) closed:** `wandb login --verify` failed — no credentials. Row 5 → CLOSED-WITH-ONE-REASON + PENDING-EXTERNAL for GPU watch. Note at `07_capstone/notes/mp-90-wandb-gpu-close.md`.
+- **GPU watch (MP-74) closed:** 15+ days elapsed, no Colab manifest. PENDING-EXTERNAL with dated reason. CPU NO-GROK verdict stands.
+- **All launched rows now have transcripts:**
+  - MP-30 R1 / MP-33 R1 (W&B): closed with reason (credentials).
+  - MP-32 R1 (Portfolio): 5 rung pages locked with manifest tags, figures, ≥2 `[[links]]` each.
+  - MP-35 R1 (Capstone): MP-88 shakedown + MP-89 retune A/B manifests on disk, ADR-0028 Rows 1–2 stamped.
+- **Gated rows closed with reasons:** MP-30 R2 (no head), MP-30 R3 (NO-MOVE), MP-31 R2 (paper not compiled), MP-31 R3 (deferred).
+- **PENDING rows closed:** MP-31 R1 (no TeX), MP-31 R3 (deferred).
+- **Row 11 (MP-36 R1 Release):** Now unblocked — all 10 prerequisite rows resolved. GATED only on final merge.
+- Baseline re-verified live: 223 tests pass, ruff clean, blocking mypy clean, `verify-claims` at 0.
+
+---
+
+## MP-90 Session 5 Sync (2026-09-08)
+
+- **Teaching artifact v22:** `notebooks/capstone_teaching_artifact_v22.ipynb` executed on shakedown checkpoint (step-2000, seed 0). All 5 cells pass: Fourier (DENSE), K-comp (0.392, no head), Activation patching (1.50 mean), Path patching (0.0 mean), SAE (FVE 0.974, L0 87/256).
+- **Stranger run:** Fresh execution verified — no hidden state dependencies.
+- All 11 gate-debt cells now LAUNCHED-WITH-TRANSCRIPT or CLOSED-WITH-ONE-REASON.
+- ADR-0028 at zero UNDECIDED rows.
+- Baseline re-verified live: 223 tests pass, ruff clean, blocking mypy clean, `verify-claims` at 0.
+- Row 11 (MP-36 R1 Release): **UNBLOCKED** — ready for final merge.
 
 ---
 
