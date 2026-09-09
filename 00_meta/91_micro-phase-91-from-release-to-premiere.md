@@ -155,11 +155,11 @@ What I trust, in order:
 - [ ] `cd portfolio/paper && latexmk -pdf main.tex` → `main.pdf` clean
 - [ ] If `pdflatex` absent: compile on Overleaf, download PDF, commit as build artifact
 - [ ] Pre-draft five premiere channels:
-    - **Essay**: "The Dense Attractor: Why My Transformer Solved Modular Addition Without Grokking" — 2000 words, cites exp2 + shakedown manifests
-    - **Thread**: 12-tweet thread, each tweet = one manifest-backed number + insight
-    - **Site**: GitHub Pages deploy via `pages.yml` — verify 200 OK
-    - **Space**: Schedule Space for release week; prep 10-min talk script (from four-register distillation)
-    - **Walkthrough**: 8-min screen-recorded video (thesis → Rung 2 NO-GROK → Rung 3 → capstone dissociation → retune NO-MOVE → teaching artifact)
+  - **Essay**: "The Dense Attractor: Why My Transformer Solved Modular Addition Without Grokking" — 2000 words, cites exp2 + shakedown manifests
+  - **Thread**: 12-tweet thread, each tweet = one manifest-backed number + insight
+  - **Site**: GitHub Pages deploy via `pages.yml` — verify 200 OK
+  - **Space**: Schedule Space for release week; prep 10-min talk script (from four-register distillation)
+  - **Walkthrough**: 8-min screen-recorded video (thesis → Rung 2 NO-GROK → Rung 3 → capstone dissociation → retune NO-MOVE → teaching artifact)
 - [ ] **Exit**: PDF exists; five pre-draft files ready to publish
 
 ### Session 4 — Premiere Atomic Launch
