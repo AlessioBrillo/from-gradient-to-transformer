@@ -321,6 +321,8 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[28_micro-phase-29-the-pos
   I stamp Row 1 RETUNE from the completed 2k manifest (induction 0.0005 going to 0.5041, modular flat at 0.0047, Fourier dense at k_99 98.1), I land the resume WARNING test-first, and I execute Sessions 1–6 toward the retune A/B. Terminus: Session 6 release.
 - [[89_micro-phase-89-from-retune-to-signal|MP-89 · From RETUNE to Signal (ACTIVE EXECUTION, A/B running)]] —
   I answer the verdict's load-bearing question test-first: the vocab-offset plus curriculum-reweight harness lands with 6 RED-then-GREEN tests, the frozen 500-step control/offset/reweight arms run on probe manifests, and Sessions 1–6 stamp the verdict, the portfolio truthing, and the release. Terminus: Session 6 release.
+- [[91_micro-phase-91-from-release-to-premiere|MP-91 · From Release to Premiere (PLANNING)]] —
+  consumes MP-90's release (ADR-0028 at zero unstamped rows): the mini-paper in prose from manifests only, the teaching artifact v22 (stranger-run on fresh Colab), and the premiere atomic launch (essay, thread, site, Space, walkthrough — five channels, one commit, URL receipts). Terminus: Session 6 release merge.
 - [[35_micro-phase-36-the-fifth-question|MP-36 · The Fifth Question (pre-registered)]] —
   consumes MP-35's release whatever its rows decided (gated hard: no continuum ledger
   at zero, no phase): the continuum law executes a fifth time under a new ledger
