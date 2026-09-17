@@ -41,5 +41,12 @@ export default {
     // body shipped despite the local mirror; force-push blocked on dev
     // (GH006, verified live) so the object cannot be rewritten
     (message) => message.startsWith('docs(meta): add MP-82 roadmap and stamp ADR-0028 session 0'),
+    // MP-90 release commit (2026-09-09) - type "release" not in conventional types,
+    // body lines >200 chars, subject-case violation; already on main via PR #144,
+    // force-push blocked so the object cannot be rewritten
+    (message) => message.startsWith('release(capstone): MP-90 NO-MOVE verdict, portfolio locked, gate-debt zero, teaching artifact v22'),
+    // Local fix commit (2026-09-17) - header >121 chars; force-push blocked on dev
+    // (GH006) so the merge commit a918180 cannot be rewritten
+    (message) => message.startsWith('fix(ci): add MP-90 release commit to commitlint ignores'),
   ],
 };

@@ -13,6 +13,12 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-09-09 — Micro-Phase 91, Session 0: roadmap freeze, candidate set locked, paper v20 scope defined
+
+- **Studied**: MP-90 release state consumed — ADR-0028 at zero unstamped rows (all 8 LAUNCHED or CLOSED-WITH-ONE-REASON), 223 tests pass, `ruff check src/ tests/` clean, blocking `mypy --strict` clean, `verify-claims` at 0, nine manifests on disk (6 flagship + 3 retune probes). Portfolio rung pages locked, gate-debt 11/11 cells resolved. GPU P=113 (MP-74 Row 1) 15+ days stale → PENDING-EXTERNAL. Paper scaffold 100% TODOs.
+- **Built**: MP-91 roadmap `00_meta/91_micro-phase-91-from-release-to-premiere.md` with frozen candidate set (6 rows, zero new candidates), documentation contract, falsifiable exercises, strategic tips. Home wiring updated with MP-91 pointer.
+- **Open question**: None — candidate set frozen at Session 0. Session 1 executes paper prose v20 from manifests only.
+
 ## 2026-09-08 — Micro-Phase 90, Sessions 2–3: W&B verdict, GPU-watch close, portfolio lock-in, gate-debt zero
 
 - **Studied**: MP-89 A/B verdict (NO-MOVE: control 0.0062, offset 0.0060, reweight 0.0065 — all below 1/113 chance). ADR-0028 Row 2 VERDICT-NO-MOVE stamped. W&B login failed (no credentials). MP-74 Colab GPU run 15+ days stale, no manifest. Baseline re-verified live: 223 tests pass, `ruff check src/ tests/` clean, blocking `mypy --strict` clean, `verify-claims` at 0, nine manifests on disk.
