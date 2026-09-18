@@ -42,10 +42,10 @@ Every section written from manifest bytes only; every number carries `<!-- manif
 ## Quality Gates — All Green on `main`
 
 ```bash
-$ uv run pytest -v          # 223 passed in 47s
-$ uv run ruff check src/ tests/  # clean
-$ uv run mypy src/results.py src/experiments/runner.py --strict  # clean
-$ uv run python -m src.results verify  # 0 (all tags check out)
+uv run pytest -v          # 223 passed in 47s
+uv run ruff check src/ tests/  # clean
+uv run mypy src/results.py src/experiments/runner.py --strict  # clean
+uv run python -m src.results verify  # 0 (all tags check out)
 ```
 
 GitHub Actions CI: `lint-commits` ✅, `ci` (ruff, blocking mypy, full-tree mypy, pytest+coverage) ✅
