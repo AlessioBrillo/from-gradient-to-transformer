@@ -26,3 +26,4 @@ jobs:
             !.venv/**/*.md
             !LICENSE
             **/*.md
+          config: .markdownlint.json
