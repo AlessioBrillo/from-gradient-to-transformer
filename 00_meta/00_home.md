@@ -12,9 +12,11 @@ Central map of the vault. Everything starts here.
 The target research contribution: **mechanistic reverse-engineering of a transformer's learned algorithms at micro scale**. The strongest *verified* piece today is Rung 3's superposition phase transition (root-caused and reproduced 2026-08-02 after two prior audits couldn't explain it). Grokking modular addition (the primary flagship) closed its first dated verdict on 2026-08-11 — a **NO-GROK positive-negative**
 (val 1.0 across 3 seeds but Fourier dense, k_99 = 111/113), now the subject of the positive-control and microscope lanes in [[28_micro-phase-29-the-positive-negative|MP-29 · The Positive-Negative]].
 
-See [[portfolio/RESULTS]] for exact per-rung status, [[28_micro-phase-29-the-positive-negative|MP-29 · The Positive-Negative]] for the current roadmap (the NO-GROK verdict earns its proof: positive control, microscope lane to terminus, the dense solution as the contribution — `verify-claims` from 3 to 0), and [[portfolio/README]] for all showcase artifacts.
+**MP-91/92 Release (2026-09-17)**: Paper v20 prose complete from manifests (all sections, every number tagged, `verify-claims=0`). 223 tests green, ruff/mypy clean, ADR-0028 zero unstamped rows. PR #145 merged to `main`. Premiere channels (teaching v22, PDF, 5-channel atomic launch) in progress — Sessions 2–4.
 
-> If you have 30 seconds, read the thesis and the Reproducibility Audit in RESULTS.md. There is no mini-paper yet, but `portfolio/paper/` has a scaffold.
+See [[portfolio/RESULTS]] for exact per-rung status, [[28_micro-phase-29-the-positive-negative|MP-29 · The Positive-Negative]] for the grokking roadmap, [[92_micro-phase-92-release-report|MP-92 Release Report]], and [[portfolio/README]] for all showcase artifacts.
+
+> If you have 30 seconds, read the thesis and the Reproducibility Audit in RESULTS.md. Paper v20 compiles from `portfolio/paper/main.tex` (Overleaf for PDF).
 
 ## Meta
 - [[01_roadmap]] — the complete path, phase by phase
@@ -323,6 +325,8 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[28_micro-phase-29-the-pos
   I answer the verdict's load-bearing question test-first: the vocab-offset plus curriculum-reweight harness lands with 6 RED-then-GREEN tests, the frozen 500-step control/offset/reweight arms run on probe manifests, and Sessions 1–6 stamp the verdict, the portfolio truthing, and the release. Terminus: Session 6 release.
 - [[91_micro-phase-91-from-release-to-premiere|MP-91 · From Release to Premiere (PLANNING)]] —
   consumes MP-90's release (ADR-0028 at zero unstamped rows): the mini-paper in prose from manifests only, the teaching artifact v22 (stranger-run on fresh Colab), and the premiere atomic launch (essay, thread, site, Space, walkthrough — five channels, one commit, URL receipts). Terminus: Session 6 release merge.
+- [[92_micro-phase-92-release-report|MP-92 · Release Report (COMPLETE)]] —
+  MP-91/92 Sessions 1–6 complete: paper v20 prose from manifests (`verify-claims=0`), 223 tests green, ruff/mypy clean, ADR-0028 zero unstamped rows, PR #145 merged to `main`. Premiere channels (teaching v22, PDF, 5-channel atomic launch) in progress — Sessions 2–4.
 - [[35_micro-phase-36-the-fifth-question|MP-36 · The Fifth Question (pre-registered)]] —
   consumes MP-35's release whatever its rows decided (gated hard: no continuum ledger
   at zero, no phase): the continuum law executes a fifth time under a new ledger
