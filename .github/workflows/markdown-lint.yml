@@ -24,6 +24,5 @@ jobs:
             !.github/**/*.md
             !.opencode/**/*.md
             !.venv/**/*.md
-            !00_meta/**/*.md
             !LICENSE
             **/*.md

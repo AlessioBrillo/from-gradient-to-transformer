@@ -1,0 +1,2 @@
+# Ignore 00_meta directory (wiki-links use underscores)
+00_meta/**/*.md
