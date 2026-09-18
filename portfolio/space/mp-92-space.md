@@ -1,6 +1,6 @@
 # MP-92 Twitter Space: 10-Minute Talk Script
 
-**Scheduled for:** Release week (TBD)  
+**Scheduled for:** Release week (TBD)
 **Duration:** 10 minutes + Q&A  
 **Format:** Solo talk from four-register distillation
 
@@ -52,6 +52,7 @@ All registers cite the SAME manifest numbers. Zero drift.
 - Dense attractor stable under both interventions
 
 ### 6:00–7:30 — The Honest Landscape
+
 | Rung | Result | Status |
 |------|--------|--------|
 | 1 Induction | 52.2% fresh batches, 0 heads at 800 epochs | Sub-standard scale |
@@ -107,12 +108,12 @@ A: Full causal access. Ground-truth algorithms. The pipeline (train → instrume
 ## Space Announcement Tweet (Pre-Draft)
 
 > 🎙️ **Twitter Space: The Dense Attractor**
-> 
+>
 > Tomorrow [DATE] at [TIME] — 10 min talk + Q&A on why my from-scratch transformer solves modular addition WITHOUT grokking's sparse circuit.
-> 
+>
 > Paper: [URL_TBD]
 > Repo: github.com/AlessioBrillo/from-gradient-to-transformer
-> 
+>
 > #MechanisticInterpretability
 
 ---

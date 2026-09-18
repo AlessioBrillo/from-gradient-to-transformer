@@ -21,6 +21,7 @@ I built a decoder-only transformer from scratch, trained it on modular addition 
 - **Seeds:** 0, 1, 2 (three independent runs)
 
 ### Results
+
 | Metric | Seed 0 | Seed 1 | Seed 2 | Aggregate |
 |--------|--------|--------|--------|-----------|
 | Final val accuracy | 1.0 | 1.0 | 1.0 | 1.0 ± 0.0 |

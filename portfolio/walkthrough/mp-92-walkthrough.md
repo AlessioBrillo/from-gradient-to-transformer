@@ -1,7 +1,7 @@
 # MP-92 Walkthrough Video: 8-Minute Screen Recording Script
 
-**Target length:** 8 minutes  
-**Format:** Screen recording with voiceover  
+**Target length:** 8 minutes
+**Format:** Screen recording with voiceover
 **Thesis arc:** Rung 2 NO-GROK → Rung 3 phase transition → Capstone dissociation → Retune NO-MOVE → Teaching artifact
 
 ---
@@ -17,7 +17,7 @@
 **Voice:** "Six rungs: induction heads, grokking, superposition, circuit patching, SAE, capstone. Every number backed by a manifest. verify-claims = 0. The pipeline trains from scratch, instruments fully, verifies causally, and reports honestly — especially the negatives."
 
 ### 1:30–3:00 — Rung 2: NO-GROK (The Headline)
-**Visual:** 
+**Visual:**
 - Grokking curve (train/val loss + accuracy)
 - Fourier weights bar chart (dense: 111/113 tall bars)
 - Ablation curve (keep N freqs → accuracy)

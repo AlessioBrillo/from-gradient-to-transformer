@@ -74,6 +74,7 @@ Equiangular geometry = sparse-phase attractor. Root cause of prior non-reproduct
 Bug fix (2026-08-02): prefix must have no repeated tokens (birthday problem).
 
 800-epoch matched comparison:
+
 | | Fixed (reused) | Fresh (resampled) |
 |---|---|---|
 | Val acc | 0.05% (below chance!) | **52.2%** |
@@ -165,7 +166,7 @@ Results: portfolio/RESULTS.md
 
 Every number has a manifest. `verify-claims=0` ✓
 
-#MechanisticInterpretability #Grokking #Transformers
+**#MechanisticInterpretability #Grokking #Transformers**
 
 ---
 
