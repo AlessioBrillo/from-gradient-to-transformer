@@ -15,10 +15,6 @@
 \maketitle
 
 \begin{abstract}
-% TODO: write once Rung 2 (grokking) has a real result -- see
-% 00_meta/03_progress-log.md and portfolio/RESULTS.md for current status.
-% This scaffold exists so the paper's structure is decided before the
-% writing starts, not so the writing starts here.
 I build a decoder-only transformer from scratch, then reverse-engineer the
 algorithms it learns: grokking modular addition with Fourier decomposition,
 induction heads, causal circuit verification via activation and path
@@ -31,71 +27,361 @@ updated version of this record.
 \tableofcontents
 
 \section{Introduction}
-% Thesis, motivation for micro-scale MI, the experiment arc.
-% Source: 07_capstone/research-plan.md, 07_capstone/writeup.md \S1.
 \label{sec:intro}
 
+Mechanistic interpretability (MI) aims to reverse-engineer the algorithms
+implemented by trained neural networks. The dominant approach -- studying
+large language models post-hoc with tools like TransformerLens and
+SAELens -- has produced remarkable insights but carries an unavoidable
+gap: we observe what the model \emph{does}, not how it \emph{learned to do
+it}. This paper takes a complementary approach: train small, fully
+instrumented transformers from scratch on algorithmic tasks where the
+ground-truth algorithm is known, then trace the learning dynamics and
+final circuits with full causal access.
+
+The experimental arc spans six rungs:
+\begin{enumerate}
+  \item \textbf{Induction heads} -- the canonical in-context learning
+    circuit (Olsson et al., 2022), trained on repeated-token sequences.
+  \item \textbf{Grokking modular addition} -- delayed generalization on
+    $a+b \bmod P$ with Fourier reverse-engineering (Nanda et al., 2023).
+  \item \textbf{Toy models of superposition} -- geometric phase transition
+    in a ReLU autoencoder (Elhage et al., 2022).
+  \item \textbf{Circuit verification} -- activation patching and path
+    patching for causal circuit discovery (Wang et al., 2023; Zhang \&
+    Nanda, 2024).
+  \item \textbf{Sparse autoencoders} -- feature extraction on synthetic and
+    real residual-stream activations (Bricken et al., 2023; Cunningham et
+    al., 2024).
+  \item \textbf{Capstone} -- a joint modular-addition + induction
+    transformer with full instrumentation (Fourier, K-composition,
+    patching, SAE).
+\end{enumerate}
+
+Every quantitative claim in this paper is backed by a manifest file in
+\texttt{results/} containing per-seed metrics, aggregate statistics, git
+SHA, environment, and wall-clock time. The \texttt{verify-claims} tool
+enforces this: every number in the text must carry a manifest tag
+(\texttt{\textless{}-- manifest: results/... .json\textgreater{}}), and the
+build fails if any tag points to a missing or mismatched value.
+
 \section{Related Work}
-% The circuits worldview, grokking literature, circuit discovery, SAEs.
-% Source: 07_capstone/research-plan.md "Canonical Literature Map".
 \label{sec:related}
 
+\textbf{The circuits worldview.} Olsson et al. (2022) introduced induction
+heads as the mechanism of in-context learning, launching the transformer
+circuits thread (Anthropic). Wang et al. (2023) demonstrated full circuit
+recovery for indirect object identification in GPT-2 small using
+activation patching.
+
+\textbf{Grokking and mechanistic progress measures.} Power et al. (2022)
+discovered delayed generalization on modular arithmetic. Nanda et al.
+(2023) introduced Fourier progress measures and showed the model learns a
+discrete Fourier transform algorithm. Varma et al. (2023) and Lyu et al.
+(2024) characterized the dense attractor under joint training.
+
+\textbf{Circuit discovery methods.} Activation patching (Wang et al.,
+2023) and path patching (Zhang \& Nanda, 2024) provide causal
+interventions. ACDC (Conmy et al., 2023) automates circuit discovery; not
+reproduced here.
+
+\textbf{Superposition and sparse autoencoders.} Elhage et al. (2022)
+showed features can be superposed in a bottleneck. Bricken et al. (2023)
+and Cunningham et al. (2024) applied SAEs to language model activations.
+
 \section{Grokking Modular Addition}
-% PRIMARY FLAGSHIP. Do not write this section until results/exp2_grokking.json
-% exists -- see 06_production_ai/notes/results-manifests-and-provenance.md.
 \label{sec:grokking}
+<!-- manifest: results/exp2_grokking.json -->
 
 \subsection{Setup}
+We train a 1-layer decoder-only transformer (Nanda et al. configuration:
+$d_\text{model}=128$, $d_\text{mlp}=512$, $n_\text{heads}=4$) on
+$a+b \bmod 113$ with a 30\% train / 70\% validation split by equation
+(holding out random $(a,b)$ pairs, not target classes). Weight decay
+$1.0$ is critical for grokking (Power et al., 2022). Three seeds
+(0, 1, 2) trained to 5000 epochs with checkpointing every 500 epochs.
+
 \subsection{The Grokking Curve}
+All three seeds reach \textbf{validation accuracy 1.0} (perfect
+generalization), at generalization epochs (val acc $>0.9$) of 1048, 1250,
+and 1326 (mean $1208 \pm 117$). Train loss drops smoothly; val loss
+exhibits the classic grokking delay -- staying near the memorization
+plateau until the circuit forms, then collapsing.
+
 \subsection{Fourier Reverse-Engineering}
+The learned embedding matrix decomposes into the discrete Fourier basis.
+The key metric is $k_{99}$: the number of Fourier frequencies needed to
+capture 99\% of the spectral mass. Across all three seeds,
+\textbf{$k_{99} = 111 / 113$} -- the representation is \emph{dense}, not
+sparse. The sparse Fourier algorithm (using $O(\sqrt{P})$ frequencies)
+does not form. Final Fourier sparsity (normalized entropy) is
+$0.079 \pm 0.006$, deep in the dense regime (1.0 = maximally sparse,
+0.0 = maximally dense). $k_{90} = 92.7 \pm 0.9$.
+
 \subsection{Causal Confirmation via Frequency Ablation}
+Ablating all but the top $k$ frequencies: keeping 111/113 frequencies
+preserves 1.0 accuracy; keeping only the top 20 drops accuracy to chance
+(1/113). Conversely, ablating the top 20 frequencies from the full set
+destroys performance. The model \emph{uses} all frequencies -- it
+implements modular addition via a dense Fourier representation, not the
+sparse circuit the grokking literature defines as the phenomenon.
+
+\textbf{Verdict: NO-GROK.} The model solves modular addition perfectly
+(val acc 1.0 across 3 seeds) but without forming the sparse Fourier
+circuit ($k_{99}=111/113$). No run in this repository's history at any
+modulus has produced $k_{99} < P/2$. This negative result is the
+contribution: it falsifies the hypothesis that the frozen protocol
+(cosine LR, weight decay 1.0, unit-sphere embedding renormalization)
+produces the sparse regime at this scale. The positive-control lane
+(MP-29, smaller $P$) and microscope lane (trial 1:
+\texttt{--no-normalize-embeddings} FALSIFIED; trial 2: constant LR;
+trial 3: weight decay $1.5\times$) are documented in
+\texttt{00\_meta/28\_micro-phase-29-the-positive-negative.md}.
 
 \section{Induction Heads}
 \label{sec:induction}
-% Source: results/exp1_induction_heads.json once the standard-scale,
-% multi-seed run exists. See
-% 06_production_ai/exercises/ex-03-induction-task-design.md for the
-% task-design fix this rung needed before the number meant anything.
+<!-- manifest: results/exp1_induction_heads.json -->
+
+\subsection{Task Design Correction}
+The repeated-token generator's prefix must contain no repeated tokens --
+else ``the previous occurrence of the current token'' is ambiguous (birthday
+problem: $V=32$, prefix=32 gave $>99\%$ collision probability). Fixed
+$V=2048$ (standard) / $V=256$ (quick) $\approx 20\text{--}23\%$
+collision. This bug made the task ill-posed for the repository's entire
+history prior to 2026-08-02.
+
+\subsection{Fixed vs. Fresh Batches}
+A matched 800-epoch comparison (identical config, only
+\texttt{--fresh-batches} toggled) revealed a second, independent effect:
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+ & Fixed (reused) & Fresh (resampled) \\
+\midrule
+Final val accuracy & 0.05\% (below chance) & \textbf{52.2\%} \\
+Final val loss & 24.31 (climbing) & 3.65 (flat, tracks train) \\
+Peak diag+1 mass & 0.155 (epoch 99, decays) & 0.145 (epoch 649, rising) \\
+Induction heads detected & 0 / 8 & 0 / 8 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The fixed dataset produces catastrophic overfitting: train loss collapses
+to near-zero while val loss climbs and val accuracy decays \emph{below}
+random chance. Fresh batches yield stable, substantial generalization
+(52.2\%) without a train/val gap, but still no induction heads detected
+(diag+1 mass $< 0.3$ threshold) at this scale. The trajectory is still
+rising at epoch 800 -- standard scale ($d_\text{model}=64$,
+$d_\text{mlp}=256$, $n_\text{heads}=4$, $\text{seq\_len}=64$) with more
+epochs is the credible path to a detected head.
+
+\subsection{Multi-Seed Quick-Scale Manifest}
+Three seeds at quick scale ($V=256$, $\text{seq\_len}=16$,
+$d_\text{model}=24$, 2 layers, 4 heads, 150 epochs, fresh batches):
+val accuracy $0.0047 \pm 0.0012$, peak diag+1 mass $0.177 \pm 0.006$,
+\textbf{0 / 8 induction heads detected} (threshold 0.3).
+
+\subsection{Causal Ablation Validity}
+The 2026-08-01 audit fixed two critical bugs in the ablation
+implementation: (1) hooking \texttt{W\_O} output (already mixed across
+heads) instead of masking before \texttt{W\_O}; (2) measuring
+\texttt{top1 - top2} (confidence) instead of \texttt{logits[answer] -
+logits[counterfactual]} (correctness). Both fixes carry falsification
+tests: ablating all heads must reproduce the no-attention baseline
+exactly; self-patching must be a no-op.
 
 \section{Toy Models of Superposition}
 \label{sec:superposition}
-% Source: results/exp3_superposition.json,
-% 05_llm_engineering/proofs/superposition-setup-validity.md for the
-% architecture-bug reconstruction.
+<!-- manifest: results/exp3_superposition.json -->
+
+\subsection{Root Cause of Prior Non-Reproduction}
+The 2026-07-26 and 2026-08-01 audits observed flat, near-zero ``feature
+recovery'' at all sparsities. The root cause, found 2026-08-02: the
+dataset pre-embedded sparse features into $n_\text{dimensions}$ space with
+a random ground-truth matrix \emph{before} the model saw them. The
+autoencoder was expanding an already-compressed vector -- no bottleneck,
+no interference, nothing for superposition to trade off against.
+
+\subsection{Canonical Architecture (Elhage et al., 2022)}
+Rewritten to the correct setup: sparse features directly in
+$\mathbb{R}^{n_\text{features}}$ (standard basis), encoder compresses
+$n_\text{features} \to n_\text{dimensions}$ with tied weights
+($\text{decoder.weight} = \text{encoder.weight}^\top$), decoder adds
+learned bias $b$ before ReLU. The bias lets the model shift small
+cross-feature interference below the ReLU floor -- this is how
+superposition pays for itself.
+
+\subsection{Phase Transition Reproduced}
+$n_\text{features}=20$, $n_\text{dimensions}=5$, three seeds at
+sparsity $0.01$:
+\begin{itemize}
+  \item Features represented ($\|W_i\| > 0.5$): $19.67 \pm 0.47$ (range
+    19--20 / 20).
+  \item Mean dimensionality per feature: $0.249 \pm 0.001$ (expected
+    $\approx 1/n_\text{dimensions} \times n_\text{avg}$).
+  \item Mean absolute correlation: $0.351 \pm 0.001$.
+\end{itemize}
+
+Sparsity sweep (single seed): features represented rises from 10/20 at
+sparsity 0.5 to 20/20 by sparsity 0.05, holding through 0.002. The drop
+to 16/20 at sparsity 0.001 is a genuine capacity limit (2000 vs 600 epoch
+drill refuted under-training).
+
+\subsection{Geometric Verification: Pentagon Check}
+5 features $\to$ 2 dimensions at sparsity $\le 0.1$: the 5 directions
+sit on a regular pentagon (gaps $70.2\text{--}73.8^\circ$, std
+$\le 1.4^\circ$ vs ideal $72^\circ$; best at sparsity 0.02: gaps
+$71.6\text{--}73.0^\circ$, std $0.5^\circ$). Dense regime (sparsity
+0.2--0.5) is 4/5 represented and off-pentagon (std $22^\circ+$). The
+equiangular geometry is the sparse-phase attractor.
 
 \section{Circuit Verification via Activation and Path Patching}
 \label{sec:patching}
-% Source: results/exp4_circuit_patching.json,
-% 05_llm_engineering/proofs/intervention-validity.md.
+<!-- manifest: results/exp4_circuit_patching.json -->
+
+\subsection{Intervention Validity Fixes}
+The 2026-08-01 audit fixed two bugs: (1) patch site was the MLP input
+(a normalized copy of \texttt{resid\_mid}) -- the residual skip two
+lines later re-reads the unpatched block input, so the patch never
+reached the residual stream; (2) metric was \texttt{top1 - top2}
+(confidence) instead of \texttt{logits[answer] - logits[counterfactual]}
+(correctness). Path patching was added (isolates a single head's direct
+effect on logits via \texttt{W\_O}'s per-head column blocks).
+
+\subsection{Quick Multi-Seed Results}
+Three seeds ($V=64$, $\text{seq\_len}=12$, $d_\text{model}=32$, 2 layers,
+2 heads, 500 epochs): val accuracy $0.489 \pm 0.014$, mean activation
+patching recovery $0.197 \pm 0.007$ (10 layer/position combos).
+\textbf{0 / 4 induction heads detected} (consistent with Rung 1 at
+comparable scale). Because 0 heads detected, head ablation and path
+patching were skipped -- path patching's implementation is validated only
+by unit tests (self-patch is zero, runs and returns expected keys).
+
+\subsection{Interpretation}
+Activation patching finds a real, small, consistent recovery signal
+($\sim 0.20$) even without a detected induction head -- some circuit
+sensitivity exists at these (layer, position) combinations, just not
+concentrated enough in one head to cross the 0.3 detection threshold.
 
 \section{Sparse Autoencoder Feature Dashboard}
 \label{sec:sae}
-% Synthetic baseline vs. real activations from the Rung 1 checkpoint --
-% see src/experiments/exp5_sae_dashboard.py --activations-from.
+<!-- manifest: results/exp5_sae_dashboard.json -->
+
+\subsection{Synthetic Baseline}
+$d_\text{model}=64$, 8$\times$ dictionary (512 features), 300 epochs,
+seed 42: FVE $97.5\%$, L0 $96.6$ ($18.9\%$ of dictionary active), dead
+rate $7.6\%$ (fixed $10^{-4}$ threshold). Reproduces exactly.
+
+\subsection{Real Activations (First Run)}
+Harvested from a trained induction-heads checkpoint via forward hook on
+\texttt{ln\_final} (MP-88 shakedown checkpoint, 2000 steps): FVE
+\textbf{99.97\%}, L0 \textbf{136.25 / 256} (\textbf{53.2\%} active), 0\%
+dead features. Reconstruction MSE $0.125$ (higher than synthetic's
+$0.001$ because the residual stream is wider).
+
+\textbf{Read honestly, not as a win.} The real-activation run reconstructs
+better but far less sparsely than synthetic (53\% vs 19\% active). A
+32-dimensional residual stream from a small, undertrained model (150--300
+epochs, no confirmed induction head) may simply not contain many
+genuinely sparse, disentangled features. This is an informative gap:
+re-running once Rung 1 has a confirmed-head checkpoint is the natural
+next step.
+
+\section{Capstone: Joint Training and Reverse-Engineering}
+\label{sec:capstone}
+<!-- manifest: results/probe_capstone_shakedown.json -->
+<!-- manifest: results/probe_capstone_ab_control.json -->
+<!-- manifest: results/probe_capstone_ab_offset.json -->
+<!-- manifest: results/probe_capstone_ab_reweight.json -->
+
+\subsection{Shakedown: Joint Training Dissociation}
+1 seed, 2000 steps, $d_\text{model}=256$, 4 layers, 8 heads, $P=113$,
+$V_\text{ind}=2048$, $\text{seq\_len}=128$: induction reaches
+\textbf{0.5041 accuracy} while modular stays at \textbf{0.0047} (chance).
+Fourier $k_{99} = 98.1$ (dense). Max K-composition $0.394$ (\texttt{\_vacuous}
+-- no induction batches in the mixed val loader). The dense attractor
+under joint training \emph{is} the contribution: the model finds the
+induction solution while modular addition remains unsolved.
+
+\subsection{Retune A/B: Falsifying Interference and Schedule}
+Two 500-step arms from the shakedown checkpoint:
+\begin{itemize}
+  \item \textbf{Arm A (vocab offset)}: dedicated modular ID range
+    $[2048, 2161)$ disjoint from induction $[0, 2048)$ -- modular acc
+    $0.0060$, induction acc $0.0005$, $k_{99}=98.6$, max K-comp $0.173$.
+  \item \textbf{Arm B (curriculum reweight)}: modular weight $5\times$,
+    induction weight $0.5\times$ -- modular acc $0.0065$, induction acc
+    $0.0005$, $k_{99}=98.1$, max K-comp $0.305$.
+  \item \textbf{Control (frozen)}: modular acc $0.0062$, induction acc
+    $0.0005$, $k_{99}=98.2$, max K-comp $0.369$.
+\end{itemize}
+\textbf{NO-MOVE:} Neither intervention moves modular accuracy off chance.
+The dense attractor is stable under both vocabulary separation and
+curriculum reweighting -- it is not an interference artifact or schedule
+artifact. The joint-training dense solution is the finding.
+
+\subsection{K-Composition Vacuous Flag}
+The mixed validation loader (RoundRobin) does not guarantee induction
+batches; K-composition returns \texttt{\_vacuous: true} when no induction
+signal is seen, preventing vacuous zeros from being plotted as
+measurements. Final K-composition on a pure induction loader remains a
+pending validation.
 
 \section{Limitations}
 \label{sec:limitations}
-% Pre-populated from 07_capstone/research-plan.md's "Honest Caveats" --
-% expand with anything specific this pass found, do not just copy verbatim
-% without checking it still holds.
+
 \begin{itemize}
-  \item Micro-scale models: findings may not transfer to larger (7B+) models.
-  \item Algorithmic tasks (modular addition, repeated tokens) are cleaner
-    than natural language; circuits found here may not be representative
-    of circuits in language models.
-  \item Attribution patching is a linear approximation with known failure
-    modes on large activations (the residual stream); not implemented here
-    -- see the skill tree's Research Skills section.
-  \item Activation patching can mislead via layernorm denominator effects
-    and subspace-projection illusions \citep{makelov2023subspace}.
-  \item SAE interpretability is human-judged and features can be illusory
-    \citep{makelov2023subspace}.
-  \item Single architecture family, single seed distribution (until the
-    multi-seed harness covers every rung) -- no claim of universality.
+  \item \textbf{Micro-scale models:} findings may not transfer to larger
+    (7B+) models. The capstone model is 4.3M parameters.
+  \item \textbf{Algorithmic tasks:} modular addition and repeated tokens
+    are cleaner than natural language; circuits found here may not be
+    representative of circuits in language models.
+  \item \textbf{No induction heads at standard scale:} the fixed-vs-fresh
+    comparison (52.2\% val acc, 800 epochs) is the trustworthy scale for
+    this paper; standard scale ($d_\text{model}=64$, 10k epochs) is a
+    follow-up, not a claim.
+  \item \textbf{No grokking sparse circuit:} NO-GROK is the verdict at
+    all scales tested ($P=11, 17, 29, 59, 67, 97, 113$). GPU verdict at
+    $P=113$ is pending as scale follow-up, not the decision.
+  \item \textbf{SAE on real activations:} 53\% L0 indicates dense
+    reconstruction, not sparse feature extraction. A confirmed-head
+    checkpoint is needed before this means anything conclusive.
+  \item \textbf{Path patching unvalidated against a real head:}
+    implementation is unit-tested only; end-to-end validation requires
+    Rung 1's standard-scale work.
+  \item \textbf{Single architecture family, limited seeds:} multi-seed
+    harness covers Rungs 1--4; Rung 5 synthetic is single-seed; capstone
+    shakedown is single-seed (3 seeds planned, 1 completed).
+  \item \textbf{Attribution patching not implemented:} linear
+    approximation with known failure modes on large activations
+    (Makelov et al., 2023).
+  \item \textbf{Activation patching caveats:} layernorm denominator
+    effects and subspace-projection illusions can mislead (Makelov et
+    al., 2023).
+  \item \textbf{SAE interpretability is human-judged:} features can be
+    illusory (Makelov et al., 2023).
 \end{itemize}
 
 \section{Conclusion}
 \label{sec:conclusion}
+
+This work demonstrates a complete micro-scale MI pipeline: from-scratch
+training, full instrumentation, causal circuit verification, and honest
+negative reporting. The strongest verified result is Rung 3's
+superposition phase transition (root-caused, reproduced, multi-seed
+manifest). The most surprising result is Rung 2's NO-GROK: a model that
+perfectly solves modular addition \emph{without} the sparse Fourier
+circuit the literature defines as grokking. The capstone shakedown
+reveals a dissociation under joint training: induction learns while
+modular does not, and the dense Fourier attractor is robust to both
+vocabulary separation and curriculum reweighting.
+
+The honest negatives are contributions: NO-GROK and NO-MOVE falsify the
+sparse-circuit hypothesis at this scale. The path forward is the
+continuum ledger (ADR-0029): exactly one new research question from
+\{solution-regime phase diagram, scaled R1 induction, SAE on confirmed-head
+checkpoint, ACDC on real circuit\}.
 
 \bibliographystyle{plainnat}
 \bibliography{references}
