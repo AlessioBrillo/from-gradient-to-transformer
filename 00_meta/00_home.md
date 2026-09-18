@@ -323,6 +323,10 @@ See [[portfolio/RESULTS]] for exact per-rung status, [[28_micro-phase-29-the-pos
   I answer the verdict's load-bearing question test-first: the vocab-offset plus curriculum-reweight harness lands with 6 RED-then-GREEN tests, the frozen 500-step control/offset/reweight arms run on probe manifests, and Sessions 1–6 stamp the verdict, the portfolio truthing, and the release. Terminus: Session 6 release.
 - [[91_micro-phase-91-from-release-to-premiere|MP-91 · From Release to Premiere (PLANNING)]] —
   consumes MP-90's release (ADR-0028 at zero unstamped rows): the mini-paper in prose from manifests only, the teaching artifact v22 (stranger-run on fresh Colab), and the premiere atomic launch (essay, thread, site, Space, walkthrough — five channels, one commit, URL receipts). Terminus: Session 6 release merge.
+- [[92_micro-phase-92-release-report|MP-92 · Release Report]] —
+  MP-91 execution arc complete: paper v20 (all sections from manifests), teaching artifact v22 (executed on shakedown checkpoint), five premiere pre-drafts committed (essay, thread, Space, walkthrough, ledger). ADR-0028 at zero unstamped rows, `verify-claims=0`, 223 tests green. Terminus: atomic premiere launch + release merge.
+- [[93_micro-phase-93-phase-diagram|MP-93 · Phase Diagram First (ACTIVE EXECUTION)]] —
+  ADR-0029 opens with exactly one research question (C1: solution-regime phase diagram). C2 (scaled R1 induction), C3 (SAE on head), C4 (ACDC on circuit) closed with dated reasons. Systematic sweep over P, model size, weight decay, LR schedule, embedding renormalization, solo vs joint. Terminus: phase diagram manifest + heatmap + boundary analysis.
 - [[35_micro-phase-36-the-fifth-question|MP-36 · The Fifth Question (pre-registered)]] —
   consumes MP-35's release whatever its rows decided (gated hard: no continuum ledger
   at zero, no phase): the continuum law executes a fifth time under a new ledger
