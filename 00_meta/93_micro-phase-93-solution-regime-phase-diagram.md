@@ -153,12 +153,14 @@ What I trust, in order:
 ### Session 5 — ADR-0030 + Release Prep
 - [ ] Final verify-claims=0, 223 tests pass, ruff clean, blocking mypy clean
 - [ ] ADR-0030: single row from frozen candidate set for next ledger:
+
   | Candidate | Description |
   |-----------|-------------|
   | **C1** | Scaled Rung 1 induction (standard config, GPU, multi-seed) |
   | **C2** | SAE on confirmed-head checkpoint (if C1 produces heads) |
   | **C3** | ACDC on real circuit (if C1+C2 produce verified circuit) |
   | **C4** | Joint training phase diagram at scale (GPU, d_model=512, 8L) |
+
 - [ ] Update `00_meta/00_home.md` with MP-93 pointer
 - [ ] Update `00_meta/03_progress-log.md` with Session 5 entry
 - [ ] **Exit**: release-ready commit on `main`
