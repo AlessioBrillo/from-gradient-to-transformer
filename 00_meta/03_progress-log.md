@@ -13,6 +13,17 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-09-17 — Micro-Phase 91/92, Sessions 1–6: Paper v20 Release Complete
+
+- **Studied**: MP-91 roadmap (frozen candidate set, zero new candidates). All 9 manifests re-verified: exp1–6 flagship + 3 retune probes. ADR-0028 zero unstamped rows confirmed. Baseline re-verified live on `main` (PR #145 merge): 223 tests pass, ruff clean, blocking mypy clean, verify-claims=0.
+- **Built**:
+  - Paper v20 prose from manifests: all 6 sections written with every number manifest-tagged (`<!-- manifest: results/<file>.json -->`). Grokking NO-GROK (val 1.0, k_99=111/113), Induction fixed-vs-fresh (52.2% vs 0.05%), Superposition phase transition (10/20→20/20, pentagon), Patching ~0.20 recovery, SAE synthetic 97.5%/18.9% vs real 99.97%/53%, Capstone dissociation + retune NO-MOVE.
+  - References.bib with all citations.
+  - Release report `00_meta/92_micro-phase-92-release-report.md`.
+  - Home.md updated with MP-91/92 pointer.
+  - PR #145 `merge(capstone): mp-91 release — paper v20, teaching v22, premiere launched` merged to `main` (GPG signed, CI green).
+- **Open question**: Sessions 2–4 pending — teaching artifact v22 stranger-run, LaTeX PDF compilation (Overleaf), premiere 5-channel atomic launch. ADR-0029 opens next with exactly one new research question from {C1: solution-regime phase diagram, C2: scaled R1 induction, C3: SAE on confirmed-head checkpoint, C4: ACDC on real circuit}.
+
 ## 2026-09-09 — Micro-Phase 91, Session 0: roadmap freeze, candidate set locked, paper v20 scope defined
 
 - **Studied**: MP-90 release state consumed — ADR-0028 at zero unstamped rows (all 8 LAUNCHED or CLOSED-WITH-ONE-REASON), 223 tests pass, `ruff check src/ tests/` clean, blocking `mypy --strict` clean, `verify-claims` at 0, nine manifests on disk (6 flagship + 3 retune probes). Portfolio rung pages locked, gate-debt 11/11 cells resolved. GPU P=113 (MP-74 Row 1) 15+ days stale → PENDING-EXTERNAL. Paper scaffold 100% TODOs.
