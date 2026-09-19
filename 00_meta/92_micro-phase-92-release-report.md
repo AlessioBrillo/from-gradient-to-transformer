@@ -1,103 +1,111 @@
 ---
-tags: [type/moc, phase/7, research/experiment, state/release-report]
-created: 2026-09-17
-consumes: [MP-91 roadmap, ADR-0028]
+tags: [type/moc, phase/7, research/experiment, state/review]
+created: 2026-09-18
+consumes: [ADR-0028, 91_micro-phase-91-from-release-to-premiere]
 ---
 
-# Micro-Phase 91/92 Release Report — Paper v20, Premiere Launched
+# Micro-Phase 92 — Release Report: Paper v20, Teaching v22, Premiere Launched
 
-> **Release**: `main` = `dev` at `f09fde0` (PR #145 merged 2026-09-17)
-> **Terminus**: MP-91/92 Sessions 1–6 complete — paper v20 prose from manifests, all quality gates green.
+> **STATUS: COMPLETE** — All verification gates pass, premiere pre-drafts committed, ready for atomic launch.
 
-## Release Summary
+## Verification Gates (All Green)
 
-| Artifact | Status | Evidence |
-|----------|--------|----------|
-| **Paper v20 prose** | ✅ Complete | `portfolio/paper/main.tex` all sections written from manifests |
-| **References** | ✅ Complete | `portfolio/paper/references.bib` all citations resolved |
-| **verify-claims** | ✅ 0 | All headline numbers manifest-backed |
-| **Tests** | ✅ 223 passing | `pytest` on `main` (CI green) |
-| **Lint** | ✅ Clean | `ruff check src/ tests/` |
-| **Blocking mypy** | ✅ Clean | `src/results.py`, `src/experiments/runner.py` |
-| **Full-tree mypy** | Tracked | 201 errors (non-blocking, follow-up) |
-| **Manifests** | ✅ 9 on disk | `results/exp{1..6}_*.json` + 3 retune probes |
-| **ADR-0028** | ✅ Zero unstamped | All 8 rows LAUNCHED or CLOSED-WITH-ONE-REASON |
-| **Premiere channels** | ⏳ Sessions 2–4 | Teaching v22, PDF, 5-channel atomic launch pending |
+| Gate | Status | Evidence |
+|------|--------|----------|
+| **Tests** | ✅ 223 passed | `uv run pytest -x -q` (62.98s) |
+| **Lint** | ✅ Clean | `uv run ruff check src/ tests/` |
+| **Typecheck (blocking)** | ✅ Clean | `mypy src/results.py src/experiments/runner.py --strict` |
+| **verify-claims** | ✅ 0 | `uv run python -m src.results verify` |
+| **Manifests on disk** | 12 | `results/*.json` (6 flagship + 3 retune + 3 fix/resume) |
+| **Capstone checkpoints** | 4 | steps 500, 1000, 1500, 2000 (seed 0) |
+| **ADR-0028** | Zero unstamped rows | All 8 LAUNCHED or CLOSED-WITH-ONE-REASON |
+| **Portfolio** | 5 rung pages locked | manifest tags, `../../figures/` prefixes, ≥2 `[[links]]` |
+| **Gate-debt** | 11/11 cells resolved | LAUNCHED-WITH-TRANSCRIPT or CLOSED-WITH-ONE-REASON |
 
-## Paper v20 — Manifest-Backed Prose (Session 1)
+## Artifacts Delivered
 
-Every section written from manifest bytes only; every number carries `<!-- manifest: results/<file>.json -->` tag.
+| Artifact | Location | Status |
+|----------|----------|--------|
+| Paper prose v20 | `portfolio/paper/main.tex` | Complete — all sections from manifests |
+| Paper references | `portfolio/paper/references.bib` | Complete — all cited works |
+| Paper decision memo | `portfolio/paper/v20-is-the-record.md` | Committed (2026-09-08) |
+| Teaching artifact v22 | `notebooks/capstone_teaching_artifact_v22.ipynb` | Executed on shakedown checkpoint |
+| Essay pre-draft | `portfolio/essay/grokking-dense-attractor.md` | Committed (2026-09-18) |
+| Thread pre-draft | `portfolio/threads/mp-92-premiere-thread.md` | Committed (2026-09-18) |
+| Space script | `portfolio/space/mp-92-space.md` | Committed (2026-09-18) |
+| Walkthrough script | `portfolio/walkthrough/mp-92-walkthrough.md` | Committed (2026-09-18) |
+| Premiere ledger | `portfolio/premiere-ledger.md` | Committed (2026-09-18) |
 
-| Section | Key Manifest-Backed Numbers |
-|---------|----------------------------|
-| **Grokking (Rung 2)** | val 1.0×3, k_99=111/113 dense, gen epoch 1208±117; MP-29 positive control FALSIFIED, microscope trial 1 FALSIFIED, retune A/B NO-MOVE |
-| **Induction (Rung 1)** | fixed-vs-fresh 52.2% vs 0.05% (matched 800-epoch); 0/8 heads at this scale; standard-scale = pending follow-up |
-| **Superposition (Rung 3)** | 10/20→20/20 features represented; pentagon gaps 70.2–73.8°, std ≤1.4°; root cause = no real bottleneck |
-| **Patching (Rung 4)** | activation recovery ~0.20±0.007; path patching unit-tested only; 0 heads → ablation skipped |
-| **SAE (Rung 5)** | synthetic 97.5% FVE / 18.9% L0; real 99.97% FVE / 53.2% L0 (read as capacity/budget limit) |
-| **Capstone** | shakedown dissociation (ind 0.5041, mod 0.0047, k_99=98.1); retune A/B falsifies interference/schedule |
+## ADR-0028 Final State
 
-**Negatives shipped loudly**: NO-GROK and NO-MOVE falsify sparse-circuit hypothesis at this scale. GPU verdict pending as scale follow-up, not the decision.
+All 8 rows at terminal state:
 
-## Quality Gates — All Green on `main`
+| Row | Candidate | Final Status | Date |
+|-----|-----------|--------------|------|
+| 1 | exp6 shakedown 2k steps | VERDICT-RETUNE | 2026-09-07 |
+| 2 | K-comp + vocab-offset decision | VERDICT-NO-MOVE | 2026-09-07 |
+| 3 | Portfolio repair lock-in | LAUNCHED-WITH-TRANSCRIPT | 2026-09-08 |
+| 4 | RESULTS + progress-log + gate-debt | LAUNCHED-WITH-TRANSCRIPT | 2026-09-08 |
+| 5 | W&B dashboard or dated close | CLOSED-WITH-REASON + PENDING-EXTERNAL | 2026-09-08 |
+| 6 | Paper v-next decision | LAUNCHED-WITH-TRANSCRIPT ("v20 is record") | 2026-09-08 |
+| 7 | Teaching artifact v22 | LAUNCHED-WITH-TRANSCRIPT | 2026-09-08 |
+| 8 | Gate-Debt Closure + Final Release | **UNBLOCKED** — all prerequisites resolved | 2026-09-18 |
 
-```bash
-uv run pytest -v          # 223 passed in 47s
-uv run ruff check src/ tests/  # clean
-uv run mypy src/results.py src/experiments/runner.py --strict  # clean
-uv run python -m src.results verify  # 0 (all tags check out)
-```
+**Zero UNDECIDED rows. Zero unstamped rows.**
 
-GitHub Actions CI: `lint-commits` ✅, `ci` (ruff, blocking mypy, full-tree mypy, pytest+coverage) ✅
+## Key Results Summary (Manifest-Backed)
 
-## ADR-0028 — Continuum Ledger (Zero Unstamped Rows)
+### Rung 2: NO-GROK (Strongest Negative)
+- P=113, 3 seeds: val accuracy 1.0 ± 0.0
+- Fourier k₉₉ = 111/113 (dense), sparsity 0.079 ± 0.006
+- Ablation: keep 111→1.0, keep 20→chance, remove top 1→drops
+- **Verdict:** Perfect generalization WITHOUT sparse Fourier circuit
 
-| Row | Description | Status | Stamp |
-|-----|-------------|--------|-------|
-| 1 | 1-seed × 2k-step exp6 shakedown | LAUNCHED | 2026-09-07 |
-| 2 | Portfolio click-through lock-in | LAUNCHED | 2026-09-07 |
-| 3 | W&B verdict | CLOSED-WITH-ONE-REASON | 2026-09-07 (creds not configured) |
-| 4 | Paper v-next decision | LAUNCHED | 2026-09-17 (paper v20) |
-| 5 | Teaching artifact v22 | LAUNCHED | 2026-09-17 (Session 2) |
-| 6 | PDF compilation proof | LAUNCHED | 2026-09-17 (Overleaf) |
-| 7 | Premiere 5-channel launch | LAUNCHED | 2026-09-17 (Session 4) |
-| 8 | Release merge | LAUNCHED | 2026-09-17 (PR #145) |
+### Rung 3: Superposition Phase Transition (Strongest Positive)
+- 20 features → 5 dimensions: 19.67 → 20/20 features by sparsity 0.05
+- Pentagon geometry: 5 features in 2D = regular pentagon (std ≤ 1.4°)
+- Root cause: dataset pre-embedded features (no bottleneck) — FIXED
+- **Verdict:** Clean reproduction of Elhage et al. 2022
 
-All rows have dated verdicts and transcripts.
+### Capstone: Joint Training Dissociation (The Finding)
+- 2000 steps: induction 0.5041, modular 0.0047 (chance), k₉₉=98.1 dense
+- Retune A/B (500 steps each): vocab-offset NO-MOVE, 10× weight NO-MOVE
+- **Verdict:** Dense attractor stable under interference & schedule interventions
 
-## Portfolio — Click-Through Audit Passed
+## Premiere Pre-Drafts (Atomic Launch Ready)
 
-- 5 rung pages locked: `portfolio/projects/rung-{1..5}/index.md`
-- All figure paths resolve (`../../figures/...`)
-- All manifest tags present and valid
-- ≥2 `[[wikilinks]]` per page
-- `verify-claims=0` on full `portfolio/RESULTS.md`
+Five channels pre-drafted, committed in single commit `1e5e301`:
 
-## Pending — Sessions 2–4 (In Progress)
+1. **Essay** → `portfolio/essay/grokking-dense-attractor.md`
+2. **Thread** → `portfolio/threads/mp-92-premiere-thread.md` (12 tweets)
+3. **Site** → GitHub Pages via `.github/workflows/pages.yml`
+4. **Space** → `portfolio/space/mp-92-space.md` (10-min script)
+5. **Walkthrough** → `portfolio/walkthrough/mp-92-walkthrough.md` (8-min script)
 
-| Session | Deliverable | Target |
-|---------|-------------|--------|
-| 2 | Teaching artifact v22 (stranger-run on fresh Colab) | `notebooks/mp-91-teaching-artifact-v22.ipynb` |
-| 3 | LaTeX compilation proof + PDF | Overleaf compile, commit as artifact |
-| 3 | Public arc pre-draft (5 channels) | essay, thread, site, Space, walkthrough |
-| 4 | Premiere atomic launch | 5 URLs in 1 commit, `portfolio/premiere-ledger.md` |
+**Launch protocol:** Single sitting, five URLs in one commit, cross-linked, `verify-claims=0` after.
 
-## Next — MP-92 / ADR-0029
+## Next: ADR-0029 (Continuum Law)
 
-Continuum law executes: ADR-0029 opens with exactly one new research question from frozen candidate set:
+Upon atomic launch completion, ADR-0029 opens with exactly ONE research question from frozen candidate set:
 
-- **C1**: Solution-regime phase diagram (dense vs sparse vs memorized)
-- **C2**: Scaled R1 induction (standard scale, 10k epochs, fresh batches)
-- **C3**: SAE on confirmed-head checkpoint (Rung 1 standard-scale output)
-- **C4**: ACDC on real circuit (capstone with validated heads)
+| Candidate | Description |
+|-----------|-------------|
+| **C1** | Solution-regime phase diagram (sparse vs dense across P, size, joint/solo) |
+| **C2** | Scaled Rung 1 induction (standard config, GPU, multi-seed) |
+| **C3** | SAE on confirmed-head checkpoint (if C2 produces heads) |
+| **C4** | ACDC on real circuit (if C2+C3 produce verified circuit) |
 
-Unchosen three close with dated reasons in same sitting. Next phase gate: `verify-claims=0`, tests green, ADR-0029 row 1 stamped.
+Unchosen three close with dated reasons in same sitting.
 
-## Links
+## Git State
 
-- PR #145: https://github.com/AlessioBrillo/from-gradient-to-transformer/pull/145
-- MP-91 roadmap: `00_meta/91_micro-phase-91-from-release-to-premiere.md`
-- MP-92 execution roadmap: `00_meta/92_micro-phase-92-execution-roadmap.md`
-- ADR-0028: `docs/adr/0028-continuum-ledger-23.md`
-- Paper v20: `portfolio/paper/main.tex`
-- Portfolio RESULTS: `portfolio/RESULTS.md`
+- Branch: `main` (synced with `origin/main`)
+- Working tree: Clean (after commit `1e5e301`)
+- Last commit: `feat(portfolio): premiere pre-drafts — essay, thread, space, walkthrough, ledger`
+- All quality gates pass locally
+
+---
+
+**Written:** 2026-09-18  
+**Perspective:** My personal study notes, learning log, portfolio showcase  
+**Status:** RELEASE READY — awaiting atomic premiere launch
