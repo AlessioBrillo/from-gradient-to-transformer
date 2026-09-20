@@ -48,5 +48,11 @@ export default {
     // Local fix commit (2026-09-17) - header >121 chars; force-push blocked on dev
     // (GH006) so the merge commit a918180 cannot be rewritten
     (message) => message.startsWith('fix(ci): add MP-90 release commit to commitlint ignores'),
+    // MP-92 release commit (2026-09-18) - subject-case violation ("MP-92");
+    // already on main via PR #151, force-push blocked so the object cannot be rewritten
+    (message) => message.startsWith('feat(portfolio): MP-92 premiere pre-drafts'),
+    // MP-92 docs commit from dev (2026-09-17) - subject-case violation ("MP-92");
+    // merged via PR #145 into dev, then dev merged to main via PR #154, force-push blocked
+    (message) => message.startsWith('docs(meta): MP-92 release report, home wiring, progress log'),
   ],
 };
