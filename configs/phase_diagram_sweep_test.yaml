@@ -1,0 +1,35 @@
+# Phase Diagram Sweep Configuration - TEST MODE
+# Minimal test with 2 cells × 3 seeds, fast epochs
+
+cells:
+  # Quick test cell
+  - cell_id: "test_p11_wd10"
+    modulus: 11
+    d_model: 64
+    n_layers: 1
+    n_heads: 2
+    d_mlp: 256
+    weight_decay: 1.0
+    mode: "solo"
+  
+  # Quick positive control
+  - cell_id: "test_p59_wd10"
+    modulus: 59
+    d_model: 128
+    n_layers: 1
+    n_heads: 4
+    d_mlp: 512
+    weight_decay: 1.0
+    mode: "solo"
+
+# Fixed hyperparameters
+train_fraction: 0.3
+lr: 0.001
+batch_size: 128
+warmup_steps: 100
+checkpoint_every: 500
+base_seed: 42
+
+# FAST epochs for testing
+epochs: 100
+epochs_small_p: 100

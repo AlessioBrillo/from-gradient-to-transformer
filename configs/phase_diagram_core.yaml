@@ -1,0 +1,191 @@
+# Phase Diagram Core Sweep - Key cells for phase boundary
+# Focus on positive control + boundary cells
+
+cells:
+  # === Positive Control (MUST RUN FIRST - validates sparse regime exists) ===
+  - cell_id: "p59_wd10"
+    modulus: 59
+    d_model: 128
+    n_layers: 1
+    n_heads: 4
+    d_mlp: 512
+    weight_decay: 1.0
+    mode: "solo"
+
+  # === P-sweep at Nanda config (WD=1.0) ===
+  - cell_id: "p11_wd10"
+    modulus: 11
+    d_model: 128
+    n_layers: 1
+    n_heads: 4
+    d_mlp: 512
+    weight_decay: 1.0
+    mode: "solo"
+  
+  - cell_id: "p17_wd10"
+    modulus: 17
+    d_model: 128
+    n_layers: 1
+    n_heads: 4
+    d_mlp: 512
+    weight_decay: 1.0
+    mode: "solo"
+  
+  - cell_id: "p29_wd10"
+    modulus: 29
+    d_model: 128
+    n_layers: 1
+    n_heads: 4
+    d_mlp: 512
+    weight_decay: 1.0
+    mode: "solo"
+  
+  - cell_id: "p67_wd10"
+    modulus: 67
+    d_model: 128
+    n_layers: 1
+    n_heads: 4
+    d_mlp: 512
+    weight_decay: 1.0
+    mode: "solo"
+  
+  - cell_id: "p97_wd10"
+    modulus: 97
+    d_model: 128
+    n_layers: 1
+    n_heads: 4
+    d_mlp: 512
+    weight_decay: 1.0
+    mode: "solo"
+  
+  - cell_id: "p113_wd10"
+    modulus: 113
+    d_model: 128
+    n_layers: 1
+    n_heads: 4
+    d_mlp: 512
+    weight_decay: 1.0
+    mode: "solo"
+
+  # === WD sweep at P=113 (flagship) ===
+  - cell_id: "p113_wd01"
+    modulus: 113
+    d_model: 128
+    n_layers: 1
+    n_heads: 4
+    d_mlp: 512
+    weight_decay: 0.1
+    mode: "solo"
+  
+  - cell_id: "p113_wd05"
+    modulus: 113
+    d_model: 128
+    n_layers: 1
+    n_heads: 4
+    d_mlp: 512
+    weight_decay: 0.5
+    mode: "solo"
+  
+  - cell_id: "p113_wd15"
+    modulus: 113
+    d_model: 128
+    n_layers: 1
+    n_heads: 4
+    d_mlp: 512
+    weight_decay: 1.5
+    mode: "solo"
+  
+  - cell_id: "p113_wd20"
+    modulus: 113
+    d_model: 128
+    n_layers: 1
+    n_heads: 4
+    d_mlp: 512
+    weight_decay: 2.0
+    mode: "solo"
+
+  # === Model-size sweep at P=59 ===
+  - cell_id: "p59_dm64_l1"
+    modulus: 59
+    d_model: 64
+    n_layers: 1
+    n_heads: 4
+    d_mlp: 256
+    weight_decay: 1.0
+    mode: "solo"
+  
+  - cell_id: "p59_dm256_l1"
+    modulus: 59
+    d_model: 256
+    n_layers: 1
+    n_heads: 8
+    d_mlp: 1024
+    weight_decay: 1.0
+    mode: "solo"
+  
+  - cell_id: "p59_dm128_l2"
+    modulus: 59
+    d_model: 128
+    n_layers: 2
+    n_heads: 4
+    d_mlp: 512
+    weight_decay: 1.0
+    mode: "solo"
+
+  # === Joint mode at validated dissociation config ===
+  - cell_id: "p113_joint_wd01"
+    modulus: 113
+    d_model: 256
+    n_layers: 4
+    n_heads: 8
+    d_mlp: 1024
+    weight_decay: 0.1
+    mode: "joint"
+  
+  - cell_id: "p113_joint_wd05"
+    modulus: 113
+    d_model: 256
+    n_layers: 4
+    n_heads: 8
+    d_mlp: 1024
+    weight_decay: 0.5
+    mode: "joint"
+  
+  - cell_id: "p113_joint_wd10"
+    modulus: 113
+    d_model: 256
+    n_layers: 4
+    n_heads: 8
+    d_mlp: 1024
+    weight_decay: 1.0
+    mode: "joint"
+  
+  - cell_id: "p113_joint_wd15"
+    modulus: 113
+    d_model: 256
+    n_layers: 4
+    n_heads: 8
+    d_mlp: 1024
+    weight_decay: 1.5
+    mode: "joint"
+  
+  - cell_id: "p113_joint_wd20"
+    modulus: 113
+    d_model: 256
+    n_layers: 4
+    n_heads: 8
+    d_mlp: 1024
+    weight_decay: 2.0
+    mode: "joint"
+
+# Fixed hyperparameters
+train_fraction: 0.3
+lr: 0.001
+batch_size: 128
+warmup_steps: 100
+checkpoint_every: 500
+base_seed: 42
+
+# Epochs: 5000 for P<=59 (where grokking is faster), 2000 for P>59
+epochs: 2000
+epochs_small_p: 5000
