@@ -465,6 +465,44 @@ recorded Rung-5 pending item.
 
 ---
 
+## Rung 6 — Solution-Regime Phase Diagram: When Does Grokking Occur?
+
+<!-- manifest: portfolio/phase_diagram_manifest.json -->
+
+**Question**: Across what ranges of modulus P, model size, weight decay, and training mode (solo vs joint) does the sparse Fourier circuit emerge vs. the dense attractor?
+
+**Status**: [~] Sweep in progress (MP-93). Positive control (P=59, WD=1.0, standard Nanda config) running at 5000 epochs × 3 seeds. Core sweep (18 cells × 3 seeds, 2000 epochs) running in parallel. Target: phase diagram heatmap with theoretical boundary characterization.
+
+**Scientific Framing**: The NO-GROK negative (P=113, val 1.0, k₉₉=111/113 dense) and the capstone dissociation (induction learns, modular doesn't, both dense) suggest a **phase diagram** where:
+- Sparse Fourier circuit exists only in specific regime (P, model size, weight decay, LR schedule, solo vs joint)
+- Dense attractor is the default for this protocol (cosine LR, wd=1.0, embedding renormalization)
+- Joint training shifts the boundary — modular never reaches sparse regime even with dedicated embeddings
+
+**Protocol**: Systematic sweep over control parameters:
+1. **Modulus P**: 11, 17, 29, 59, 67, 97, 113 (existing) + 131, 173 (new)
+2. **Model size**: d_model ∈ {64, 128, 256, 512}, n_layers ∈ {1, 2, 4}
+3. **Weight decay**: 0.1, 0.5, 1.0, 1.5, 2.0
+4. **LR schedule**: cosine vs constant vs linear decay
+5. **Embedding renormalization**: on vs off (microscope trial 1)
+6. **Training mode**: solo modular vs joint modular+induction
+
+**Measurements per Run**:
+- Final val accuracy
+- Generalization epoch (first epoch > 0.9 val acc)
+- Fourier k₉₉ / P ratio (sparse if < 0.5)
+- Fourier sparsity (normalized entropy)
+- Fourier ablation: accuracy vs k kept
+
+**Success Criteria**: Phase diagram produced as heatmap: P × model_size × wd × schedule → sparse/dense classification. Boundary characterized analytically (theory) and empirically (sweep). At least 3 seeds per cell for statistics.
+
+**Deliverables**:
+- `portfolio/phase_diagram_manifest.json` manifest with all cell measurements
+- `portfolio/figures/phase_diagram_heatmap.png` — sparse/dense phase map
+- `portfolio/figures/phase_boundary_analysis.png` — theory vs empirical boundary
+- Paper section: "When Does Grokking Occur? A Phase Diagram"
+
+---
+
 ## Phase Gate Progress
 
 | Phase | Status | Gate proof |

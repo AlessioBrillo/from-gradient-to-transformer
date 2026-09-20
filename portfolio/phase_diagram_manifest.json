@@ -1,0 +1,174 @@
+{
+  "experiment": "phase_diagram",
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "args": {
+    "cells": [
+      {
+        "cell_id": "test_p11_wd10",
+        "modulus": 11,
+        "d_model": 64,
+        "n_layers": 1,
+        "n_heads": 2,
+        "d_mlp": 256,
+        "weight_decay": 1.0,
+        "mode": "solo"
+      },
+      {
+        "cell_id": "test_p59_wd10",
+        "modulus": 59,
+        "d_model": 128,
+        "n_layers": 1,
+        "n_heads": 4,
+        "d_mlp": 512,
+        "weight_decay": 1.0,
+        "mode": "solo"
+      }
+    ],
+    "train_fraction": 0.3,
+    "lr": 0.001,
+    "batch_size": 128,
+    "warmup_steps": 100,
+    "checkpoint_every": 500,
+    "base_seed": 42,
+    "epochs": 100,
+    "epochs_small_p": 100
+  },
+  "per_seed_metrics": [],
+  "aggregate": {},
+  "wall_clock_seconds": 35.23399999999674,
+  "git_sha": "73a2c3c",
+  "git_dirty": false,
+  "device": "cpu",
+  "torch_version": "2.12.1+cpu",
+  "numpy_version": "1.26.4",
+  "python_version": "3.12.12",
+  "n_parameters": null,
+  "created_at": "2026-09-20T09:21:23+00:00",
+  "notes": "Phase diagram sweep test manifest",
+  "cells": {
+    "test_p11_wd10": {
+      "cell_id": "test_p11_wd10",
+      "modulus": 11,
+      "d_model": 64,
+      "n_layers": 1,
+      "n_heads": 2,
+      "d_mlp": 256,
+      "weight_decay": 1.0,
+      "mode": "solo",
+      "seeds": [
+        42,
+        43,
+        44
+      ],
+      "wall_clock_seconds": 3.25,
+      "final_val_acc": {
+        "mean": 0.00392156862745098,
+        "std": 0.005545935538718019,
+        "min": 0.0,
+        "max": 0.011764705882352941,
+        "n": 3.0
+      },
+      "generalization_epoch": {
+        "mean": -1.0,
+        "std": 0.0,
+        "min": -1.0,
+        "max": -1.0,
+        "n": 3.0
+      },
+      "final_fourier_sparsity": {
+        "mean": 0.0006409486134847006,
+        "std": 0.0001955937980059723,
+        "min": 0.0003662109375,
+        "max": 0.0008061528205871582,
+        "n": 3.0
+      },
+      "k_90_percent": {
+        "mean": 10.0,
+        "std": 0.0,
+        "min": 10.0,
+        "max": 10.0,
+        "n": 3.0
+      },
+      "k_99_percent": {
+        "mean": 11.0,
+        "std": 0.0,
+        "min": 11.0,
+        "max": 11.0,
+        "n": 3.0
+      },
+      "total_mass_top_k": {
+        "mean": 1.0,
+        "std": 0.0,
+        "min": 1.0,
+        "max": 1.0,
+        "n": 3.0
+      },
+      "final_induction_acc": null,
+      "final_kcomp": null
+    },
+    "test_p59_wd10": {
+      "cell_id": "test_p59_wd10",
+      "modulus": 59,
+      "d_model": 128,
+      "n_layers": 1,
+      "n_heads": 4,
+      "d_mlp": 512,
+      "weight_decay": 1.0,
+      "mode": "solo",
+      "seeds": [
+        42,
+        43,
+        44
+      ],
+      "wall_clock_seconds": 31.812000000005355,
+      "final_val_acc": {
+        "mean": 0.0001367801942278758,
+        "std": 0.00019343640574108806,
+        "min": 0.0,
+        "max": 0.0004103405826836274,
+        "n": 3.0
+      },
+      "generalization_epoch": {
+        "mean": -1.0,
+        "std": 0.0,
+        "min": -1.0,
+        "max": -1.0,
+        "n": 3.0
+      },
+      "final_fourier_sparsity": {
+        "mean": 0.0006252328554789225,
+        "std": 0.00012384529809330737,
+        "min": 0.00045490264892578125,
+        "max": 0.0007457137107849121,
+        "n": 3.0
+      },
+      "k_90_percent": {
+        "mean": 53.0,
+        "std": 0.0,
+        "min": 53.0,
+        "max": 53.0,
+        "n": 3.0
+      },
+      "k_99_percent": {
+        "mean": 59.0,
+        "std": 0.0,
+        "min": 59.0,
+        "max": 59.0,
+        "n": 3.0
+      },
+      "total_mass_top_k": {
+        "mean": 0.3614134192466736,
+        "std": 0.00223662876535728,
+        "min": 0.3582550883293152,
+        "max": 0.3631424903869629,
+        "n": 3.0
+      },
+      "final_induction_acc": null,
+      "final_kcomp": null
+    }
+  }
+}
