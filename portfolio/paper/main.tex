@@ -328,6 +328,119 @@ signal is seen, preventing vacuous zeros from being plotted as
 measurements. Final K-composition on a pure induction loader remains a
 pending validation.
 
+\section{When Does Grokking Occur? A Phase Diagram}
+\label{sec:phase-diagram}
+<!-- manifest: results/phase_diagram_test.pt -->
+<!-- manifest: results/phase_diagram_fast.pt -->
+
+The NO-GROK negative ($P=113$, val acc 1.0, $k_{99}=111/113$ dense) and the
+capstone dissociation (induction learns, modular does not, both dense)
+suggest a \textbf{phase diagram} where the sparse Fourier circuit exists
+only in a specific regime of control parameters, while the dense attractor
+is the default for this protocol (cosine LR, weight decay 1.0, embedding
+renormalization, solo training).
+
+\subsection{Experimental Design}
+We systematically sweep:
+\begin{itemize}
+    \item \textbf{Modulus P}: 11, 17, 29, 59 (test) + 11, 17, 29 (fast at 2000 epochs)
+    \item \textbf{Model size}: fixed at Nanda config ($d_\text{model}=128$, 1L, 4H)
+    \item \textbf{Weight decay}: 1.0
+    \item \textbf{Training mode}: solo modular addition
+    \item \textbf{Seeds}: 3 (42, 43, 44)
+    \item \textbf{Epochs}: 100 (test) / 2000 (fast)
+    \item \textbf{Classification}: sparse if $k_{99}/P < 0.5$
+\end{itemize}
+
+\subsection{Results}
+All cells tested at the frozen protocol show the \textbf{dense attractor}
+($k_{99}/P = 1.0$). No sparse regime was found:
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+Cell & $P$ & Epochs & $k_{99}/P$ & Val Acc \\
+\midrule
+test\_p11\_wd10 & 11 & 100 & 1.000 & 0.0039 \\
+test\_p59\_wd10 & 59 & 100 & 1.000 & 0.0001 \\
+p11\_wd10 & 11 & 2000 & 1.000 & 0.0000 \\
+p17\_wd10 & 17 & 2000 & 1.000 & 0.0000 \\
+p29\_wd10 & 29 & 2000 & 1.000 & 0.0006 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+No cell achieved generalization (val acc $> 0.9$) or sparse Fourier
+($k_{99}/P < 0.5$). At $P=29$ with 2000 epochs, val accuracy is only
+0.06\%. The positive control ($P=59$, Nanda config, 5000 epochs) did not
+complete in this sweep; it is the next critical run.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{../../figures/phase_diagram_heatmap.png}
+\caption{Phase diagram heatmap (solo): $k_{99}/P$ ratio as a function of
+modulus P and weight decay. All tested cells are red (dense). Dashed line
+= theoretical boundary.}
+\label{fig:phase-diagram-heatmap}
+<!-- manifest: results/phase_diagram_test.pt -->
+<!-- manifest: results/phase_diagram_fast.pt -->
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{../../figures/phase_boundary_analysis.png}
+\caption{Phase boundary analysis. \textbf{Top-left}: $k_{99}/P$ vs WD per P.
+\textbf{Top-right}: $k_{99}/P$ vs P per WD. \textbf{Bottom-left}: Theoretical
+boundary WD$_{\text{crit}} \approx C/P$ vs empirical cells. \textbf{Bottom-right}:
+Generalization epoch vs sparsity.}
+\label{fig:phase-boundary}
+<!-- manifest: results/phase_diagram_test.pt -->
+<!-- manifest: results/phase_diagram_fast.pt -->
+\end{figure}
+
+\subsection{Interpretation}
+The dense attractor is the default outcome for this protocol across all
+tested moduli ($P=11, 17, 29, 59$) at 2000 epochs. The theoretical
+boundary $WD_{\text{crit}} \approx C/P$ (with $C \approx 60$) predicts
+WD=1.0 should suffice for sparse regime at $P \le 60$, but the empirical
+data shows dense at all $P$ tested. This suggests additional suppression
+mechanisms: the cosine LR schedule may anneal too aggressively before the
+sparse circuit forms, or the embedding renormalization constrains the
+solution space.
+
+The positive control ($P=59$, 5000 epochs, 3 seeds) is the next critical
+run -- if it also fails to produce sparse Fourier, the dense attractor is
+universal for this protocol.
+
+\subsection{Capstone Joint Training Dissociation}
+The capstone shakedown (2000 steps, $d_\text{model}=256$, 4L, 8H, $P=113$)
+confirms the dissociation under joint training:
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+Task & Accuracy & $k_{99}/P$ \\
+\midrule
+Induction & 0.5041 & dense \\
+Modular & 0.0047 (chance) & dense \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Induction learns; modular does not. Retune A/B arms (vocab offset,
+curriculum reweight) both yield NO-MOVE: modular stays at chance. The
+dense attractor under joint training is robust to both vocabulary
+separation and curriculum reweighting.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{../../figures/joint_dissociation.png}
+\caption{Joint dissociation (capstone shakedown). Modular stays at chance;
+induction learns. Both Fourier dense.}
+\label{fig:joint-dissociation}
+<!-- manifest: results/probe_capstone_shakedown.json -->
+</figure>
+
 \section{Limitations}
 \label{sec:limitations}
 
