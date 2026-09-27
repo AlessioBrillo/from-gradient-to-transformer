@@ -1,0 +1,114 @@
+{
+  "experiment": "exp2_grokking",
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "args": {
+    "seed": 42,
+    "modulus": 59,
+    "train_fraction": 0.3,
+    "d_model": 128,
+    "d_mlp": 512,
+    "n_heads": 4,
+    "epochs": 5000,
+    "lr": 0.001,
+    "weight_decay": 1.0,
+    "batch_size": 128,
+    "quick": false,
+    "probe": false,
+    "micro": false,
+    "no_normalize_embeddings": false,
+    "schedule": "cosine",
+    "progress_interval": 10,
+    "checkpoint_dir": "checkpoints",
+    "checkpoint_every": 500,
+    "resume": true,
+    "resume_from": null,
+    "wandb": false,
+    "save_model": false,
+    "manifest_path": "results/phase_diagram_positive_control.json"
+  },
+  "per_seed_metrics": [
+    {
+      "final_val_acc": 1.0,
+      "generalization_epoch": 1699.0,
+      "final_fourier_sparsity": 0.10258430242538452,
+      "k_90_percent": 46.0,
+      "k_99_percent": 58.0,
+      "total_mass_top_k": 0.6889567375183105
+    },
+    {
+      "final_val_acc": 0.9995896594173164,
+      "generalization_epoch": 1934.0,
+      "final_fourier_sparsity": 0.09707891941070557,
+      "k_90_percent": 46.0,
+      "k_99_percent": 58.0,
+      "total_mass_top_k": 0.6856487989425659
+    },
+    {
+      "final_val_acc": 1.0,
+      "generalization_epoch": 1739.0,
+      "final_fourier_sparsity": 0.12036967277526855,
+      "k_90_percent": 45.0,
+      "k_99_percent": 58.0,
+      "total_mass_top_k": 0.7153563499450684
+    }
+  ],
+  "aggregate": {
+    "final_fourier_sparsity": {
+      "mean": 0.10667763153711955,
+      "std": 0.009939191968664877,
+      "min": 0.09707891941070557,
+      "max": 0.12036967277526855,
+      "n": 3.0
+    },
+    "k_99_percent": {
+      "mean": 58.0,
+      "std": 0.0,
+      "min": 58.0,
+      "max": 58.0,
+      "n": 3.0
+    },
+    "k_90_percent": {
+      "mean": 45.666666666666664,
+      "std": 0.4714045207910317,
+      "min": 45.0,
+      "max": 46.0,
+      "n": 3.0
+    },
+    "generalization_epoch": {
+      "mean": 1790.6666666666667,
+      "std": 102.65909062956328,
+      "min": 1699.0,
+      "max": 1934.0,
+      "n": 3.0
+    },
+    "total_mass_top_k": {
+      "mean": 0.6966539621353149,
+      "std": 0.013293359162755786,
+      "min": 0.6856487989425659,
+      "max": 0.7153563499450684,
+      "n": 3.0
+    },
+    "final_val_acc": {
+      "mean": 0.9998632198057722,
+      "std": 0.00019343640574109053,
+      "min": 0.9995896594173164,
+      "max": 1.0,
+      "n": 3.0
+    }
+  },
+  "wall_clock_seconds": 1684.8816795999992,
+  "git_sha": "36b5a58",
+  "git_dirty": false,
+  "device": "cpu",
+  "torch_version": "2.12.1+cpu",
+  "numpy_version": "2.5.0",
+  "python_version": "3.14.7",
+  "n_parameters": 212736,
+  "created_at": "2026-09-27T14:36:09+00:00",
+  "notes": null,
+  "neuron_ablation": null
+}
