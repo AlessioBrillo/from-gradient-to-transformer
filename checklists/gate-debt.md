@@ -1,7 +1,7 @@
 ---
 tags: [checklist, gate-debt, phase/6, phase/7]
 created: 2026-08-24
-updated: 2026-09-05
+updated: 2026-09-27
 ---
 
 # Gate-Debt Ledger — MP-30 through MP-36 Row Closures
@@ -112,6 +112,17 @@ Updated from ADR-0027 adjudication at MP-78 Session 0:
 - ADR-0028 at zero UNDECIDED rows.
 - Baseline re-verified live: 223 tests pass, ruff clean, blocking mypy clean, `verify-claims` at 0.
 - Row 11 (MP-36 R1 Release): **UNBLOCKED** — ready for final merge.
+
+---
+
+## MP-94 Session 1 Sync (2026-09-27)
+
+- **Positive control executed:** P=59, standard Nanda config (d_model=128, d_mlp=512, n_heads=4, wd=1.0, cosine LR, embed renorm, 5000 epochs, 3 seeds)
+- **Result: NO-GROK** — val acc 1.0 all seeds, Fourier dense (k_99=58/59) all seeds
+- **Manifest:** `results/phase_diagram_positive_control.json` (git_sha 0c6b68e, clean tree)
+- **Notes:** `07_capstone/notes/mp-94-positive-control-results.md`
+- **Implication:** Phase boundary (if it exists) is NOT at standard config; core sweep (MP-94 Session 2) must explore WD, LR schedule, model size, renorm dimensions
+- Baseline re-verified live: 223 tests pass, ruff clean, blocking mypy clean, `verify-claims` at 0.
 
 ---
 
