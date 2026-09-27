@@ -54,5 +54,12 @@ export default {
     // MP-92 docs commit from dev (2026-09-17) - subject-case violation ("MP-92");
     // merged via PR #145 into dev, then dev merged to main via PR #154, force-push blocked
     (message) => message.startsWith('docs(meta): MP-92 release report, home wiring, progress log'),
+    // MP-93 phase diagram sweep infrastructure (2026-09-26) - subject-case violation ("MP-93");
+    // already on dev, force-push blocked on dev so the object cannot be rewritten
+    (message) => message.startsWith('feat(phase-diary): MP-93 phase diagram sweep infrastructure'),
+    // MP-94 Session 1 positive control NO-GROK at P=59 (2026-09-27) - subject-case violation ("MP-94", "NO-GROK");
+    // already on dev via PR #159, force-push blocked on dev so the object cannot be rewritten
+    (message) => message.startsWith('feat(phase7): MP-94 Session 1 - positive control NO-GROK at P=59'),
+    (message) => message.startsWith('docs(gate-debt): MP-94 Session 1 sync - positive control NO-GROK at P=59'),
   ],
 };
