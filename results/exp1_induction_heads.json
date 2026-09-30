@@ -19,27 +19,39 @@
     "num_train": 256,
     "no_train": false,
     "quick": false,
+    "standard": false,
     "wandb": false,
     "save_model": false,
-    "fresh_batches": true
+    "fresh_batches": true,
+    "checkpoint_dir": "checkpoints",
+    "checkpoint_every": 0,
+    "resume": false,
+    "resume_from": null,
+    "save_manifest": false
   },
   "per_seed_metrics": [
     {
       "final_val_acc": 0.00390625,
       "total_induction_heads": 0.0,
-      "peak_diag1_mass": 0.1855633370578289,
+      "peak_diag1_mass": 0.185563325881958,
+      "k_composition_score": 0.12173834443092346,
+      "l0_duplicate_head_mass": 0.18558883666992188,
       "mean_ablation_drop": 0.0
     },
     {
       "final_val_acc": 0.006315104166666667,
       "total_induction_heads": 0.0,
-      "peak_diag1_mass": 0.1717129983007908,
+      "peak_diag1_mass": 0.17171300947666168,
+      "k_composition_score": 0.248091459274292,
+      "l0_duplicate_head_mass": 0.14900334179401398,
       "mean_ablation_drop": 0.0
     },
     {
       "final_val_acc": 0.0037760416666666667,
       "total_induction_heads": 0.0,
-      "peak_diag1_mass": 0.1722513549029827,
+      "peak_diag1_mass": 0.172251358628273,
+      "k_composition_score": 0.14521028101444244,
+      "l0_duplicate_head_mass": 0.1616082638502121,
       "mean_ablation_drop": 0.0
     }
   ],
@@ -51,18 +63,11 @@
       "max": 0.0,
       "n": 3.0
     },
-    "peak_diag1_mass": {
-      "mean": 0.1765092300872008,
-      "std": 0.006405991816753187,
-      "min": 0.1717129983007908,
-      "max": 0.1855633370578289,
-      "n": 3.0
-    },
-    "total_induction_heads": {
-      "mean": 0.0,
-      "std": 0.0,
-      "min": 0.0,
-      "max": 0.0,
+    "k_composition_score": {
+      "mean": 0.17168002823988596,
+      "std": 0.054874177571905505,
+      "min": 0.12173834443092346,
+      "max": 0.248091459274292,
       "n": 3.0
     },
     "final_val_acc": {
@@ -71,15 +76,38 @@
       "min": 0.0037760416666666667,
       "max": 0.006315104166666667,
       "n": 3.0
+    },
+    "l0_duplicate_head_mass": {
+      "mean": 0.16540014743804932,
+      "std": 0.015174724482651027,
+      "min": 0.14900334179401398,
+      "max": 0.18558883666992188,
+      "n": 3.0
+    },
+    "peak_diag1_mass": {
+      "mean": 0.17650923132896423,
+      "std": 0.006405982936972478,
+      "min": 0.17171300947666168,
+      "max": 0.185563325881958,
+      "n": 3.0
+    },
+    "total_induction_heads": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 3.0
     }
   },
-  "wall_clock_seconds": 55.45306468899798,
-  "git_sha": "092cb92",
+  "wall_clock_seconds": 85.18004750000182,
+  "git_sha": "66901b6",
   "git_dirty": false,
   "device": "cpu",
-  "torch_version": "2.12.1+cu130",
-  "numpy_version": "2.5.0",
-  "python_version": "3.12.12",
+  "torch_version": "2.14.0+cpu",
+  "numpy_version": "2.5.3",
+  "python_version": "3.14.7",
   "n_parameters": 17424,
-  "created_at": "2026-08-05T21:37:19+00:00"
+  "created_at": "2026-09-30T04:24:27+00:00",
+  "notes": null,
+  "neuron_ablation": null
 }

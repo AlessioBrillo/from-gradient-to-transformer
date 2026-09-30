@@ -325,7 +325,9 @@ def train_model(
     decay_params = []
     no_decay_params = []
     for name, param in model.named_parameters():
-        if "embed" in name or "ln" in name or "pos_embed" in name:
+        # Nanda et al. apply weight decay to ALL parameters including embeddings
+        # Exclude only LayerNorm parameters (standard practice)
+        if "ln" in name:
             no_decay_params.append(param)
         else:
             decay_params.append(param)
