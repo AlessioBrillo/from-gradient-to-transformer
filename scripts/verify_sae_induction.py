@@ -13,7 +13,7 @@ import torch
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.experiments.exp5_sae_dashboard import (  # noqa: E402
-    SparseAutoencoder as SAE,
+    SparseAutoencoder,
     harvest_activations_from_checkpoint,
 )
 
@@ -30,7 +30,7 @@ def verify() -> None:
         CHECKPOINT, num_samples=100, vocab_size=256, seq_len=24,
         d_model=32, n_layers=2, n_heads=4, seed=42,
     )
-    sae = SAE(d_model=32, n_features=512)
+    sae = SparseAutoencoder(d_model=32, n_features=512)
     sae.load_state_dict(torch.load(SAE_PATH, weights_only=True))
     sae.eval()
     with torch.no_grad():
