@@ -71,7 +71,7 @@ that fits this machine's CPU budget. What it found:
   a small, undertrained 32-dimensional residual stream being easy to reconstruct densely
   than with the SAE finding genuinely sparse, interpretable features — see Rung 5 below.
   **Smoke check (2026-10-03)**: `scripts/verify_sae_induction.py` on a local SAE saw max
-  activation ~9.5 and L0 ~250/512 (~49% active). This is not evidence of induction features;
+  activation ~8.1 and L0 ~250/512 (~49% active). This is not evidence of induction features;
   it is consistent with the dense-reconstruction reading above. See
   [execution log](../07_capstone/execution-log.md).
 - **Also this pass**: fixed a CI/local dev mismatch where `python-version: '3.11'` was

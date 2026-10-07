@@ -12,7 +12,7 @@ consumes: [ADR-0027, configs/capstone.yaml]
 (see [RESULTS](../portfolio/RESULTS.md) and
 [Rung 1 induction heads](../portfolio/projects/rung-1-induction-heads/index.md)).
 - SAE: local `sae_model.pt` (d_model=32, n_features=512), not written by `exp5_sae_dashboard.py`.
-- Observed (author's machine, not CI-reproducible): max activation ~9.5, L0 ~250/512.
+- Observed (author's machine, not CI-reproducible): max activation ~8.1, L0 ~250/512.
 - Status: smoke check only. It is not an induction-circuit test (no induction-position
   filter, no baseline); a dense L0 of ~250/512 supports the "dense reconstruction" reading.
 
