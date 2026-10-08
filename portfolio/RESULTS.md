@@ -13,10 +13,32 @@ smoke tests (`make reproduce-quick`) and a full-scale mode (`make reproduce`).
 
 ## Honesty Ledger
 
-Three audits have now caught real bugs in this repository's causal claims and evidence
+Four audits have now caught real bugs in this repository's causal claims and evidence
 base. All entries stay here — the point of this section is to make it easy to see the
 trend (are correctness problems getting caught faster, or accumulating?), not to keep only
 the latest one.
+
+### 2026-10-08 — Integrity pass: a paper section written ahead of its data
+
+`verify-claims` reported 0 problems while `portfolio/paper/` contained a phase-diagram
+section with claims that no manifest backed. Root cause: the checker only read RESULTS.md
+and only tested that a tagged path *existed*. Found by reading the paper, not by running it:
+
+- `grokking_phase_diagram_section.tex` asserted "sparse at P=11, 17, 29", a fitted boundary
+  `C≈60` and a model-size sweep; the only manifest behind it
+  (`portfolio/phase_diagram_manifest.json`) was a 100-epoch test run with
+  `aggregate: {}` and validation accuracy ≈ 0.004.
+- `main.tex` tagged `results/phase_diagram_*.pt` (gitignored, not even JSON) and included
+  figures from `../../figures/` (gitignored), so the paper could not be built from a clone.
+  Its `<!-- manifest -->` tags were HTML comments inside LaTeX (typeset as text), and one
+  figure was closed with an HTML `</figure>`.
+
+**Fixes**: `verify_claims` now also checks the `.tex` sources; a manifest tag must resolve to
+a git-tracked `.json` with a non-empty aggregate; every `\includegraphics` target must exist
+and be tracked; LaTeX tags use `% manifest: …`. All falsified by tests that fail on the old
+code (`tests/test_results.py::TestVerifyClaimsPaperAndManifestQuality`). The unsupported
+section, its 3 figures and the test manifest were deleted rather than caveated, as with
+Rung 6 ACDC on 2026-08-01.
 
 ### 2026-08-02 — Micro-Phase 8, the Evidence Pass: correct-but-unmeasured code gets measured
 
@@ -469,41 +491,16 @@ recorded Rung-5 pending item.
 
 ---
 
-## Rung 6 — Solution-Regime Phase Diagram: When Does Grokking Occur?
+## Open Question — Solution-Regime Phase Diagram (reopened after audit)
 
-<!-- manifest: portfolio/phase_diagram_manifest.json -->
-
-**Question**: Across what ranges of modulus P, model size, weight decay, and training mode (solo vs joint) does the sparse Fourier circuit emerge vs. the dense attractor?
-
-**Status**: [~] Sweep in progress (MP-93). Positive control (P=59, WD=1.0, standard Nanda config) running at 5000 epochs × 3 seeds. Core sweep (18 cells × 3 seeds, 2000 epochs) running in parallel. Target: phase diagram heatmap with theoretical boundary characterization.
-
-**Scientific Framing**: The NO-GROK negative (P=113, val 1.0, k₉₉=111/113 dense) and the capstone dissociation (induction learns, modular doesn't, both dense) suggest a **phase diagram** where:
-- Sparse Fourier circuit exists only in specific regime (P, model size, weight decay, LR schedule, solo vs joint)
-- Dense attractor is the default for this protocol (cosine LR, wd=1.0, embedding renormalization)
-- Joint training shifts the boundary — modular never reaches sparse regime even with dedicated embeddings
-
-**Protocol**: Systematic sweep over control parameters:
-1. **Modulus P**: 11, 17, 29, 59, 67, 97, 113 (existing) + 131, 173 (new)
-2. **Model size**: d_model ∈ {64, 128, 256, 512}, n_layers ∈ {1, 2, 4}
-3. **Weight decay**: 0.1, 0.5, 1.0, 1.5, 2.0
-4. **LR schedule**: cosine vs constant vs linear decay
-5. **Embedding renormalization**: on vs off (microscope trial 1)
-6. **Training mode**: solo modular vs joint modular+induction
-
-**Measurements per Run**:
-- Final val accuracy
-- Generalization epoch (first epoch > 0.9 val acc)
-- Fourier k₉₉ / P ratio (sparse if < 0.5)
-- Fourier sparsity (normalized entropy)
-- Fourier ablation: accuracy vs k kept
-
-**Success Criteria**: Phase diagram produced as heatmap: P × model_size × wd × schedule → sparse/dense classification. Boundary characterized analytically (theory) and empirically (sweep). At least 3 seeds per cell for statistics.
-
-**Deliverables**:
-- `portfolio/phase_diagram_manifest.json` manifest with all cell measurements
-- `portfolio/figures/phase_diagram_heatmap.png` — sparse/dense phase map
-- `portfolio/figures/phase_boundary_analysis.png` — theory vs empirical boundary
-- Paper section: "When Does Grokking Occur? A Phase Diagram"
+**Status**: [ ] No claim. The earlier draft of this section and the paper's phase-diagram
+section were removed on 2026-10-08 (see the Honesty Ledger): they rested on a 100-epoch
+test manifest with an empty aggregate and on 2000-epoch cells whose models had not
+generalized (val accuracy 0.06% at P=29), so "dense" there measured under-training, not a
+solution regime. The question is reopened only after the Rung 2 metric and protocol audit
+(Fourier-sparsity metric falsified against a synthetic sparse embedding; Nanda-faithful
+full-batch protocol as the positive control). No numbers, figures or manifest are cited
+here until that audit has produced them.
 
 ---
 
