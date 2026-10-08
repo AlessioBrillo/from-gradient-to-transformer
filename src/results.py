@@ -36,6 +36,7 @@ import os
 import platform
 import re
 import subprocess
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -44,9 +45,14 @@ from typing import Any
 import numpy as np
 import torch
 
-MANIFEST_TAG_RE = re.compile(r"<!--\s*manifest:\s*(\S+)\s*-->")
+# Markdown/HTML form for RESULTS.md, or a LaTeX `% manifest: path` comment line
+# for .tex (an HTML comment inside LaTeX would be typeset as text).
+MANIFEST_TAG_RE = re.compile(
+    r"<!--\s*manifest:\s*(\S+)\s*-->|^[ \t]*%[ \t]*manifest:[ \t]*(\S+)[ \t]*$", re.MULTILINE
+)
 FIGURE_CITATION_RE = re.compile(r"`([^`]*figures/[^`]*\.png)`")
 SECTION_HEADING_RE = re.compile(r"^##\s+(.*)$", re.MULTILINE)
+INCLUDEGRAPHICS_RE = re.compile(r"\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}")
 
 
 def git_provenance() -> tuple[str, bool]:
@@ -189,8 +195,11 @@ def _json_safe(value: Any) -> Any:
 # ---------------------------------------------------------------------------
 # Claims verification
 # ---------------------------------------------------------------------------
-def verify_claims(results_dir: Path, claims_file: Path) -> list[str]:
-    """Cross-check results/*.json manifests against portfolio/RESULTS.md.
+def verify_claims(
+    results_dir: Path, claims_file: Path, paper_files: Sequence[Path] = ()
+) -> list[str]:
+    """Cross-check results/*.json manifests against portfolio/RESULTS.md and,
+    when given, the LaTeX sources in `paper_files` (same tag/figure contract).
 
     Four independent checks:
     1. Every manifest on disk is internally consistent (well-formed, seed
@@ -245,18 +254,13 @@ def verify_claims(results_dir: Path, claims_file: Path) -> list[str]:
 
     if claims_file.exists():
         text = claims_file.read_text(encoding="utf-8")
-        tagged = MANIFEST_TAG_RE.findall(text)
+        tagged = _manifest_tags(text)
         if not tagged:
             problems.append(
                 f"{claims_file}: no <!-- manifest: ... --> tags found — "
                 "none of its numbers are traceable to a manifest."
             )
-        for rel in tagged:
-            candidate = Path(rel)
-            if not candidate.exists():
-                problems.append(
-                    f"{claims_file}: manifest tag references missing file '{rel}'"
-                )
+        problems.extend(_check_cited_manifests(claims_file, tagged))
 
         # Every figure RESULTS.md cites must exist on disk AND be tracked by
         # git — "the file is on my machine" is not evidence a reviewer can
@@ -294,6 +298,77 @@ def verify_claims(results_dir: Path, claims_file: Path) -> list[str]:
     else:
         problems.append(f"{claims_file}: file not found")
 
+    for tex in paper_files:
+        problems.extend(_verify_paper(tex))
+
+    return problems
+
+
+def _manifest_tags(text: str) -> list[str]:
+    return [a or b for a, b in MANIFEST_TAG_RE.findall(text)]
+
+
+def _check_cited_manifests(source: Path, tagged: list[str]) -> list[str]:
+    """A manifest tag is only evidence if it points at a tracked .json file
+    with a non-empty aggregate: a gitignored .pt, a file only on this disk, or
+    an empty-aggregate test run can all satisfy `Path.exists()` and still back
+    nothing (integrity pass 2026-10)."""
+    problems: list[str] = []
+    for rel in sorted(set(tagged)):
+        candidate = Path(rel)
+        if not candidate.exists():
+            problems.append(f"{source}: manifest tag references missing file '{rel}'")
+        elif candidate.suffix != ".json":
+            problems.append(
+                f"{source}: manifest tag '{rel}' must be a tracked .json manifest, "
+                f"not '{candidate.suffix}'."
+            )
+        elif not _git_tracked(candidate):
+            problems.append(
+                f"{source}: manifest '{rel}' is not tracked by git — invisible to "
+                "anyone who clones the repo."
+            )
+        else:
+            try:
+                data = json.loads(candidate.read_text(encoding="utf-8"))
+            except ValueError as e:
+                problems.append(f"{source}: manifest '{rel}' is not valid JSON ({e})")
+                continue
+            if not data.get("aggregate"):
+                problems.append(
+                    f"{source}: manifest '{rel}' has an empty aggregate — it cannot "
+                    "back any number."
+                )
+    return problems
+
+
+def _verify_paper(tex: Path) -> list[str]:
+    """Same contract as RESULTS.md for a LaTeX source: at least one manifest
+    tag, every tag valid, and every \\includegraphics target present and
+    git-tracked (resolved relative to the .tex file, like LaTeX does)."""
+    if not tex.exists():
+        return [f"{tex}: file not found"]
+    text = tex.read_text(encoding="utf-8")
+    problems: list[str] = []
+    tagged = _manifest_tags(text)
+    if not tagged:
+        problems.append(
+            f"{tex}: no <!-- manifest: ... --> tags found — none of its numbers "
+            "are traceable to a manifest."
+        )
+    problems.extend(_check_cited_manifests(tex, tagged))
+    for ref in sorted(set(INCLUDEGRAPHICS_RE.findall(text))):
+        base = tex.parent / ref
+        # LaTeX lets the extension be omitted.
+        options = [base] if base.suffix else [base.with_suffix(s) for s in (".png", ".pdf")]
+        fig = next((p for p in options if p.exists()), None)
+        if fig is None:
+            problems.append(f"{tex}: includes figure '{ref}' which does not exist on disk.")
+        elif not _git_tracked(fig):
+            problems.append(
+                f"{tex}: includes figure '{ref}' which is not tracked by git — "
+                "the paper cannot be built from a clean clone."
+            )
     return problems
 
 
@@ -312,10 +387,13 @@ def _main() -> None:
         "--claims-file", type=Path, default=Path("portfolio/RESULTS.md")
     )
 
+    verify_p.add_argument("--paper-dir", type=Path, default=Path("portfolio/paper"))
+
     args = parser.parse_args()
 
     if args.command == "verify":
-        problems = verify_claims(args.results_dir, args.claims_file)
+        paper_files = sorted(args.paper_dir.glob("*.tex")) if args.paper_dir.exists() else []
+        problems = verify_claims(args.results_dir, args.claims_file, paper_files)
         if problems:
             print(f"verify-claims: {len(problems)} problem(s) found:")
             for p in problems:

@@ -6,6 +6,8 @@ phase: 1
 rung: 2
 ---
 
+> **2026-10-08 - verdict under audit.** The NO-GROK / dense-Fourier claim was measured with an L1-mass `k_99` that classifies a noisy sparse embedding as dense (pinned by `tests/test_grokking.py::TestFourierEnergySparsity`), under a protocol that departs from Nanda et al. Do not cite it until the energy-metric rerun (`notebooks/kaggle_grokking_p113.ipynb`) is recorded. See the Honesty Ledger in `portfolio/RESULTS.md`.
+
 **Problem**: Train a 1-layer transformer on modular addition (a + b mod P) and observe delayed generalization (grokking). Reverse-engineer the learned algorithm via Fourier decomposition of embeddings: the canonical solution implements addition via discrete Fourier transforms and trigonometric identities.
 
 **Methodology**:

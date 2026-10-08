@@ -5,6 +5,8 @@ created: 2026-08-11
 
 # Grokking Verdict — P=113 (ADR-0003 row 1) — 2026-08-11
 
+> **2026-10-08 - verdict under audit.** The NO-GROK / dense-Fourier claim was measured with an L1-mass `k_99` that classifies a noisy sparse embedding as dense (pinned by `tests/test_grokking.py::TestFourierEnergySparsity`), under a protocol that departs from Nanda et al. Do not cite it until the energy-metric rerun (`notebooks/kaggle_grokking_p113.ipynb`) is recorded. See the Honesty Ledger in `portfolio/RESULTS.md`.
+
 ## The frozen criteria (ADR-0003, 2026-08-06, never edited)
 
 Grok = val acc ≥ 0.95 sustained ≥ 5 checkpoints **AND** Fourier frequency

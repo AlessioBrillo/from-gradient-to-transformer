@@ -1,5 +1,7 @@
 # MP-92 Walkthrough Video: 8-Minute Screen Recording Script
 
+> **2026-10-08 - verdict under audit.** The NO-GROK / dense-Fourier claim was measured with an L1-mass `k_99` that classifies a noisy sparse embedding as dense (pinned by `tests/test_grokking.py::TestFourierEnergySparsity`), under a protocol that departs from Nanda et al. Do not cite it until the energy-metric rerun (`notebooks/kaggle_grokking_p113.ipynb`) is recorded. See the Honesty Ledger in `portfolio/RESULTS.md`. **Draft: do not post the NO-GROK claim.**
+
 **Target length:** 8 minutes
 **Format:** Screen recording with voiceover
 **Thesis arc:** Rung 2 NO-GROK → Rung 3 phase transition → Capstone dissociation → Retune NO-MOVE → Teaching artifact

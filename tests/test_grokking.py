@@ -1,15 +1,23 @@
 """Smoke tests for the grokking experiment (Rung 2, flagship)."""
 
 import numpy as np
+import pytest
 import torch
 
 from src.experiments.exp2_grokking import (
+    FullBatchLoader,
     OneLayerTransformer,
     analyze_fourier_sparsity,
+    apply_protocol,
+    build_parser,
     compute_progress_measures,
     fourier_decompose_embeddings,
+    fourier_energy_sparsity,
     fourier_sparsity_progress,
+    make_loaders,
+    make_lr_scheduler,
     make_modular_addition_data,
+    run_single_seed,
     weight_norm_progress,
 )
 
@@ -427,3 +435,164 @@ class TestLRSchedule:
             opt.step()
             sched.step()
         assert sched.get_last_lr()[0] < first
+
+
+class TestFourierEnergySparsity:
+    """The L1-mass k_99 metric called a clean 5-frequency embedding with 1%
+    noise 'dense' (k_99 = 77/113): 99% of an L1 total is unreachable once
+    noise is spread over every bin. The energy metric must see through noise
+    and must not double-count the (k, P-k) conjugate pair."""
+
+    P = 113
+
+    def _embedding(self, keys: list[int], noise: float, dc: float = 0.0) -> torch.Tensor:
+        rng = np.random.default_rng(0)
+        n = np.arange(self.P)
+        cols = []
+        for k in keys:
+            cols += [np.cos(2 * np.pi * k * n / self.P), np.sin(2 * np.pi * k * n / self.P)]
+        mix = rng.normal(size=(len(cols), 64))
+        emb = np.stack(cols, 1) @ mix
+        emb = emb / np.linalg.norm(emb)
+        emb = emb + noise * rng.normal(size=emb.shape) / np.sqrt(emb.size) + dc
+        return torch.tensor(emb, dtype=torch.float32)
+
+    def test_noisy_sparse_embedding_is_sparse(self) -> None:
+        for noise in (0.0, 0.05, 0.1):
+            out = fourier_energy_sparsity(self._embedding([3, 17, 31, 44, 52], noise), self.P)
+            assert out["k_energy_90"] <= 5, f"noise={noise}: {out}"
+            assert out["is_sparse"] is True
+
+    def test_legacy_l1_k99_calls_a_noisy_sparse_embedding_dense(self) -> None:
+        """Documents why `analyze_fourier_sparsity` cannot back a verdict.
+        If this starts failing the legacy metric was fixed: update RESULTS.md."""
+        emb = self._embedding([3, 17, 31, 44, 52], noise=0.01)
+        legacy = analyze_fourier_sparsity(fourier_decompose_embeddings(emb, self.P))
+        assert legacy["k_99_percent"] >= self.P * 0.5  # "dense"
+        assert fourier_energy_sparsity(emb, self.P)["is_sparse"] is True
+
+    def test_random_embedding_is_dense(self) -> None:
+        emb = torch.randn(self.P, 64)
+        out = fourier_energy_sparsity(emb, self.P)
+        assert out["k_energy_90"] / out["n_freq"] > 0.7
+        assert out["is_sparse"] is False
+
+    def test_conjugate_pair_counts_once(self) -> None:
+        out = fourier_energy_sparsity(self._embedding([7], 0.0), self.P)
+        assert out["k_energy_99"] == 1
+        assert out["n_freq"] == (self.P - 1) // 2
+
+    def test_dc_offset_is_ignored(self) -> None:
+        out = fourier_energy_sparsity(self._embedding([3, 17], 0.0, dc=5.0), self.P)
+        assert out["k_energy_99"] == 2
+
+    def test_top_frequencies_identify_the_planted_keys(self) -> None:
+        keys = [3, 17, 31]
+        out = fourier_energy_sparsity(self._embedding(keys, 0.05), self.P)
+        assert sorted(out["top_frequencies"][:3]) == keys
+
+
+class TestNandaProtocol:
+    """`--protocol nanda`: the original full-batch recipe (Nanda et al. 2023)
+    as the positive control the repo protocol never had. The repo protocol
+    clips gradients, renormalizes embeddings every step, uses LayerNorm and
+    minibatches, and its multi-seed path silently ignored two of those flags."""
+
+    @staticmethod
+    def _args(*extra: str):
+        argv = ["--modulus", "7", "--epochs", "2", "--d-model", "16", "--d-mlp", "32",
+                "--n-heads", "2", *extra]
+        args = build_parser().parse_args(argv)
+        apply_protocol(args)
+        return args
+
+    def test_repo_protocol_keeps_legacy_defaults(self) -> None:
+        args = self._args()
+        assert args.grad_clip == 1.0 and args.beta2 == 0.999
+        assert args.warmup_epochs == 0 and not args.full_batch and not args.no_layernorm
+
+    def test_nanda_protocol_sets_faithful_settings(self) -> None:
+        args = self._args("--protocol", "nanda")
+        assert args.no_normalize_embeddings and args.no_layernorm and args.full_batch
+        assert args.grad_clip == 0.0 and args.beta2 == 0.98
+        assert args.schedule == "constant" and args.warmup_epochs == 10
+
+    def test_no_layernorm_model_has_no_ln_parameters(self) -> None:
+        model = OneLayerTransformer(d_model=16, d_mlp=32, n_heads=2, modulus=7, use_layernorm=False)
+        assert not any(n.startswith("ln") for n, _ in model.named_parameters())
+        logits, _ = model(torch.randint(0, 7, (4, 2)))
+        assert logits.shape == (4, 7) and torch.isfinite(logits).all()
+
+    def test_constant_schedule_with_linear_warmup(self) -> None:
+        opt = torch.optim.SGD([torch.nn.Parameter(torch.zeros(1))], lr=1e-3)
+        sched = make_lr_scheduler(
+            opt, "constant", epochs=100, schedule_epochs=None, warmup_epochs=10
+        )
+        lrs = []
+        for _ in range(14):
+            lrs.append(opt.param_groups[0]["lr"])
+            opt.step()
+            sched.step()
+        assert lrs[0] == pytest.approx(1e-4)
+        assert lrs[9] == pytest.approx(1e-3)
+        assert lrs[13] == pytest.approx(1e-3)
+        assert all(a <= b + 1e-12 for a, b in zip(lrs, lrs[1:]))
+
+    def test_grad_clip_none_never_calls_clip(self, monkeypatch) -> None:
+        from torch.utils.data import DataLoader
+
+        from src.experiments.exp2_grokking import train_model
+
+        def _boom(*a, **k):
+            raise AssertionError("clip_grad_norm_ called with grad_clip=None")
+
+        monkeypatch.setattr(torch.nn.utils, "clip_grad_norm_", _boom)
+        model = OneLayerTransformer(d_model=16, d_mlp=32, n_heads=2, modulus=7, use_layernorm=False)
+        x = torch.randint(0, 7, (32, 2))
+        loader = DataLoader(list(zip(x, (x[:, 0] + x[:, 1]) % 7)), batch_size=32)
+        hist = train_model(
+            model=model, train_loader=loader, val_loader=loader, epochs=3, lr=1e-3,
+            weight_decay=1.0, seed=0, grad_clip=None, betas=(0.9, 0.98), warmup_epochs=2,
+            schedule="constant",
+        )
+        assert len(hist["val_acc"]) == 3
+
+    def test_multi_seed_path_honours_flags_and_reports_energy_metrics(self, monkeypatch) -> None:
+        captured: dict = {}
+
+        def _fake_train(model, **kwargs):
+            captured["model"], captured["kwargs"] = model, kwargs
+            return {"val_acc": [0.5], "fourier_sparsity": [0.1]}
+
+        monkeypatch.setattr("src.experiments.exp2_grokking.train_model", _fake_train)
+        args = self._args("--protocol", "nanda")
+        out = run_single_seed(0, args)
+        assert captured["kwargs"]["schedule"] == "constant"
+        assert captured["kwargs"]["grad_clip"] is None
+        assert captured["kwargs"]["betas"] == (0.9, 0.98)
+        assert captured["kwargs"]["warmup_epochs"] == 10
+        assert captured["model"].normalize_embed is False
+        assert isinstance(captured["model"].ln_final, torch.nn.Identity)
+        for key in ("k_energy_90", "k_energy_99", "frac_energy_top5", "energy_sparse"):
+            assert key in out
+
+
+class TestFullBatchLoader:
+    """The full-batch loader hands back the dataset's tensors untouched, so a
+    GPU step is not dominated by per-sample DataLoader collation."""
+
+    def test_yields_whole_dataset_exactly_once(self) -> None:
+        train, _ = make_modular_addition_data(modulus=11, train_fraction=0.5, seed=0)
+        loader = FullBatchLoader(train)
+        batches = list(loader)
+        assert len(loader) == 1 and len(batches) == 1
+        x, y = batches[0]
+        assert torch.equal(x, train.tensors[0]) and torch.equal(y, train.tensors[1])
+
+    def test_nanda_protocol_uses_it_and_can_be_iterated_repeatedly(self) -> None:
+        args = TestNandaProtocol._args("--protocol", "nanda")
+        train, val = make_modular_addition_data(modulus=7, train_fraction=0.5, seed=0)
+        tl, vl = make_loaders(args, train, val)
+        assert isinstance(tl, FullBatchLoader) and isinstance(vl, FullBatchLoader)
+        assert next(iter(tl))[0].shape[0] == len(train)
+        assert next(iter(tl))[0].shape[0] == len(train)  # re-iterable every epoch

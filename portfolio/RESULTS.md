@@ -13,10 +13,44 @@ smoke tests (`make reproduce-quick`) and a full-scale mode (`make reproduce`).
 
 ## Honesty Ledger
 
-Three audits have now caught real bugs in this repository's causal claims and evidence
+Four audits have now caught real bugs in this repository's causal claims and evidence
 base. All entries stay here — the point of this section is to make it easy to see the
 trend (are correctness problems getting caught faster, or accumulating?), not to keep only
 the latest one.
+
+### 2026-10-08 — Integrity pass: a paper section written ahead of its data
+
+`verify-claims` reported 0 problems while `portfolio/paper/` contained a phase-diagram
+section with claims that no manifest backed. Root cause: the checker only read RESULTS.md
+and only tested that a tagged path *existed*. Found by reading the paper, not by running it:
+
+- `grokking_phase_diagram_section.tex` asserted "sparse at P=11, 17, 29", a fitted boundary
+  `C≈60` and a model-size sweep; the only manifest behind it
+  (`portfolio/phase_diagram_manifest.json`) was a 100-epoch test run with
+  `aggregate: {}` and validation accuracy ≈ 0.004.
+- `main.tex` tagged `results/phase_diagram_*.pt` (gitignored, not even JSON) and included
+  figures from `../../figures/` (gitignored), so the paper could not be built from a clone.
+  Its `<!-- manifest -->` tags were HTML comments inside LaTeX (typeset as text), and one
+  figure was closed with an HTML `</figure>`.
+
+**Rung 2's Fourier metric (found the same day).** `analyze_fourier_sparsity` takes `k_99` as the
+number of frequencies holding 99% of the *L1* mass. L1 mass is dominated by noise spread over every
+bin, so a clean 5-frequency embedding with 1% additive noise is called dense
+(`tests/test_grokking.py::TestFourierEnergySparsity` pins this); `k_99 = 111/113` therefore could
+not tell a sparse circuit from a dense one. The protocol also differs from Nanda et al. in five ways
+(minibatches, gradient clipping, per-step embedding renormalization, LayerNorm, default Adam betas),
+and `run_single_seed` silently ignored `--no-normalize-embeddings` and `--schedule`. Small-modulus
+cells were also untrained: the budget was counted in epochs, and at P=29 an epoch is 2 steps. The
+P=113 checkpoints no longer exist, so the verdict is re-run, not re-analysed: `--protocol nanda`
+plus the new `fourier_energy_sparsity`, jobs in `notebooks/kaggle_grokking_p113.ipynb` (GPU; ~0.6
+s/step on the author's CPU). Until it lands, Rung 2 carries no dense/sparse claim.
+
+**Fixes**: `verify_claims` now also checks the `.tex` sources; a manifest tag must resolve to
+a git-tracked `.json` with a non-empty aggregate; every `\includegraphics` target must exist
+and be tracked; LaTeX tags use `% manifest: …`. All falsified by tests that fail on the old
+code (`tests/test_results.py::TestVerifyClaimsPaperAndManifestQuality`). The unsupported
+section, its 3 figures and the test manifest were deleted rather than caveated, as with
+Rung 6 ACDC on 2026-08-01.
 
 ### 2026-08-02 — Micro-Phase 8, the Evidence Pass: correct-but-unmeasured code gets measured
 
@@ -239,6 +273,8 @@ per epoch) and `--seeds` (multi-seed manifest) added 2026-08-02.
 ## Rung 2 — Grokking Modular Addition (Primary Flagship — NO-GROK positive-negative, 2026-08-11)
 
 <!-- manifest: results/exp2_grokking.json -->
+
+> **2026-10-08 - verdict under audit.** The NO-GROK / dense-Fourier claim was measured with an L1-mass `k_99` that classifies a noisy sparse embedding as dense (pinned by `tests/test_grokking.py::TestFourierEnergySparsity`), under a protocol that departs from Nanda et al. Do not cite it until the energy-metric rerun (`notebooks/kaggle_grokking_p113.ipynb`) is recorded. See the Honesty Ledger in `portfolio/RESULTS.md`.
 
 **Question**: Can I reproduce the grokking phase transition on modular addition (a+b mod P) and reverse-engineer the discrete Fourier transform algorithm the model learns?
 
@@ -469,41 +505,16 @@ recorded Rung-5 pending item.
 
 ---
 
-## Rung 6 — Solution-Regime Phase Diagram: When Does Grokking Occur?
+## Open Question — Solution-Regime Phase Diagram (reopened after audit)
 
-<!-- manifest: portfolio/phase_diagram_manifest.json -->
-
-**Question**: Across what ranges of modulus P, model size, weight decay, and training mode (solo vs joint) does the sparse Fourier circuit emerge vs. the dense attractor?
-
-**Status**: [~] Sweep in progress (MP-93). Positive control (P=59, WD=1.0, standard Nanda config) running at 5000 epochs × 3 seeds. Core sweep (18 cells × 3 seeds, 2000 epochs) running in parallel. Target: phase diagram heatmap with theoretical boundary characterization.
-
-**Scientific Framing**: The NO-GROK negative (P=113, val 1.0, k₉₉=111/113 dense) and the capstone dissociation (induction learns, modular doesn't, both dense) suggest a **phase diagram** where:
-- Sparse Fourier circuit exists only in specific regime (P, model size, weight decay, LR schedule, solo vs joint)
-- Dense attractor is the default for this protocol (cosine LR, wd=1.0, embedding renormalization)
-- Joint training shifts the boundary — modular never reaches sparse regime even with dedicated embeddings
-
-**Protocol**: Systematic sweep over control parameters:
-1. **Modulus P**: 11, 17, 29, 59, 67, 97, 113 (existing) + 131, 173 (new)
-2. **Model size**: d_model ∈ {64, 128, 256, 512}, n_layers ∈ {1, 2, 4}
-3. **Weight decay**: 0.1, 0.5, 1.0, 1.5, 2.0
-4. **LR schedule**: cosine vs constant vs linear decay
-5. **Embedding renormalization**: on vs off (microscope trial 1)
-6. **Training mode**: solo modular vs joint modular+induction
-
-**Measurements per Run**:
-- Final val accuracy
-- Generalization epoch (first epoch > 0.9 val acc)
-- Fourier k₉₉ / P ratio (sparse if < 0.5)
-- Fourier sparsity (normalized entropy)
-- Fourier ablation: accuracy vs k kept
-
-**Success Criteria**: Phase diagram produced as heatmap: P × model_size × wd × schedule → sparse/dense classification. Boundary characterized analytically (theory) and empirically (sweep). At least 3 seeds per cell for statistics.
-
-**Deliverables**:
-- `portfolio/phase_diagram_manifest.json` manifest with all cell measurements
-- `portfolio/figures/phase_diagram_heatmap.png` — sparse/dense phase map
-- `portfolio/figures/phase_boundary_analysis.png` — theory vs empirical boundary
-- Paper section: "When Does Grokking Occur? A Phase Diagram"
+**Status**: [ ] No claim. The earlier draft of this section and the paper's phase-diagram
+section were removed on 2026-10-08 (see the Honesty Ledger): they rested on a 100-epoch
+test manifest with an empty aggregate and on 2000-epoch cells whose models had not
+generalized (val accuracy 0.06% at P=29), so "dense" there measured under-training, not a
+solution regime. The question is reopened only after the Rung 2 metric and protocol audit
+(Fourier-sparsity metric falsified against a synthetic sparse embedding; Nanda-faithful
+full-batch protocol as the positive control). No numbers, figures or manifest are cited
+here until that audit has produced them.
 
 ---
 
@@ -524,7 +535,7 @@ recorded Rung-5 pending item.
 | Rung | Status | Key Result |
 |------|--------|------------|
 | 1 — Induction Heads (fallback flagship) | ⚠️ Task design fixed, memorization confirmed, no head yet | Fresh-batches: 52.2% val acc vs. fixed dataset's 0.05% (matched 800-epoch comparison); 0/8 heads either way at this scale |
-| 2 — Grokking (primary flagship) | ✅ Decided 2026-08-11: NO-GROK positive-negative | P=113 CPU 3-seed: val accuracy 1.0 all seeds, Fourier dense (k_99 = 111/113); no run in repo history ever sparse; GPU verdict pending as scale follow-up, not the decision |
+| 2 — Grokking (primary flagship) | ⚠️ NO-GROK 2026-08-11, **under audit 2026-10-08** (metric) | P=113 CPU 3-seed: val accuracy 1.0 all seeds, Fourier dense (k_99 = 111/113); no run in repo history ever sparse; GPU verdict pending as scale follow-up, not the decision |
 | 3 — Superposition | ✅ Phase transition confirmed | Root cause found (no real bottleneck); rewritten, reproduces cleanly: 10/20 → 20/20 features represented |
 | 4 — Circuit Patching | ⚠️ Fixed 2026-08-01, quick multi-seed re-run 2026-08-02 | See Rung 4 above for the current numbers; path patching still only unit-tested, no real head to validate against yet |
 | 5 — SAE Dashboard | ✅ Synthetic reproduced; ⚠️ real-activation upgrade shipped | Real: 99.97% FVE but 53% L0 (dense, not sparse) — informative gap, not yet a clean win |
@@ -537,4 +548,4 @@ better checkpoint (one with a confirmed induction head) before the sparsity gap 
 anything conclusive. (3) Rung 1's fixed-vs-fresh comparison — a real, large, matched effect,
 though at a scale still well below standard. (4) Rung 4's quick multi-seed re-run — internal
 consistency confirmed (activation patching runs cleanly, matches Rung 1's "0 heads" finding)
-but path patching remains unvalidated against a real head. (5) Rung 2 — the NO-GROK negative is trustworthy (val 1.0 + dense Fourier, 3 seeds, dated 2026-08-11); what is still open is whether any scale/hardware produces the sparse regime, not whether the flagship was measured.
+but path patching remains unvalidated against a real head. (5) Rung 2 — val accuracy 1.0 on 3 seeds is measured; the *dense* label is **not** trusted until the energy-metric rerun lands (the L1-mass `k_99` behind it misclassifies noisy sparse embeddings as dense, and the protocol departs from Nanda et al.).

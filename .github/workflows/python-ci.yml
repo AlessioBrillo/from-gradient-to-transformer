@@ -97,3 +97,6 @@ jobs:
 
       - name: Test (pytest + coverage)
         run: uv run pytest -v --tb=short --cov=src --cov-report=term-missing
+
+      - name: Verify claims (every public number traces to a tracked manifest)
+        run: uv run python -m src.results verify

@@ -105,6 +105,12 @@ class TestResultsManifest:
 
 
 class TestVerifyClaims:
+    @pytest.fixture(autouse=True)
+    def _all_tracked(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """tmp_path files are never in the git index; default to 'tracked' and
+        let the tests that exercise the untracked branch override it."""
+        monkeypatch.setattr("src.results._git_tracked", lambda p: True)
+
     def _write_manifest(self, results_dir: Path, name: str, dirty: bool = False) -> Path:
         manifest = ResultsManifest.from_run(
             experiment=name,
@@ -326,3 +332,127 @@ class TestGitTracked:
         untracked = tmp_path / "not_in_the_repo.png"
         untracked.write_bytes(b"")
         assert _git_tracked(untracked) is False
+
+
+class TestVerifyClaimsPaperAndManifestQuality:
+    """verify-claims must see the LaTeX paper and reject manifests that cannot
+    back a claim (integrity pass 2026-10: a paper section cited gitignored .pt
+    files and a 100-epoch test manifest with an empty aggregate)."""
+
+    @pytest.fixture(autouse=True)
+    def _all_tracked(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr("src.results._git_tracked", lambda p: True)
+
+    def _setup(self, tmp_path: Path) -> tuple[Path, Path, Path]:
+        results_dir = tmp_path / "results"
+        results_dir.mkdir()
+        manifest = ResultsManifest.from_run(
+            experiment="exp_a",
+            seeds=[0],
+            args={},
+            per_seed_metrics=[{"m": 1.0}],
+            aggregate={"m": {"mean": 1.0, "std": 0.0, "min": 1.0, "max": 1.0, "n": 1}},
+            wall_clock_seconds=1.0,
+            device="cpu",
+        )
+        manifest.git_dirty = False
+        manifest_path = results_dir / "exp_a.json"
+        manifest.save(manifest_path)
+        claims = tmp_path / "RESULTS.md"
+        claims.write_text(f"# R\n\n<!-- manifest: {manifest_path.as_posix()} -->\n")
+        return results_dir, claims, manifest_path
+
+    def test_paper_with_valid_tag_and_tracked_figure_is_clean(self, tmp_path: Path) -> None:
+        results_dir, claims, manifest_path = self._setup(tmp_path)
+        fig = tmp_path / "fig.png"
+        fig.write_bytes(b"")
+        tex = tmp_path / "main.tex"
+        tex.write_text(
+            f"<!-- manifest: {manifest_path.as_posix()} -->\n"
+            r"\includegraphics{fig.png}" "\n"
+        )
+        assert verify_claims(results_dir, claims, paper_files=[tex]) == []
+
+    def test_paper_tag_pointing_at_pt_file_is_a_problem(self, tmp_path: Path) -> None:
+        results_dir, claims, _ = self._setup(tmp_path)
+        pt = tmp_path / "phase_diagram.pt"
+        pt.write_bytes(b"")
+        tex = tmp_path / "main.tex"
+        tex.write_text(f"<!-- manifest: {pt.as_posix()} -->\n")
+        problems = verify_claims(results_dir, claims, paper_files=[tex])
+        assert any("tracked .json manifest" in p for p in problems)
+
+    def test_paper_tag_pointing_at_missing_file_is_a_problem(self, tmp_path: Path) -> None:
+        results_dir, claims, _ = self._setup(tmp_path)
+        tex = tmp_path / "main.tex"
+        tex.write_text("<!-- manifest: results/nope.json -->\n")
+        problems = verify_claims(results_dir, claims, paper_files=[tex])
+        assert any("missing file" in p for p in problems)
+
+    def test_paper_figure_untracked_is_a_problem(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        results_dir, claims, manifest_path = self._setup(tmp_path)
+        fig = tmp_path / "fig.png"
+        fig.write_bytes(b"")
+        tex = tmp_path / "main.tex"
+        tex.write_text(
+            f"<!-- manifest: {manifest_path.as_posix()} -->\n"
+            r"\includegraphics{fig.png}" "\n"
+        )
+        monkeypatch.setattr(
+            "src.results._git_tracked", lambda p: Path(p).suffix != ".png"
+        )
+        problems = verify_claims(results_dir, claims, paper_files=[tex])
+        assert any("not tracked by git" in p for p in problems)
+
+    def test_paper_figure_missing_is_a_problem(self, tmp_path: Path) -> None:
+        results_dir, claims, manifest_path = self._setup(tmp_path)
+        tex = tmp_path / "main.tex"
+        tex.write_text(
+            f"<!-- manifest: {manifest_path.as_posix()} -->\n"
+            r"\includegraphics[width=1\textwidth]{../../figures/ghost.png}" "\n"
+        )
+        problems = verify_claims(results_dir, claims, paper_files=[tex])
+        assert any("does not exist on disk" in p for p in problems)
+
+    def test_cited_manifest_with_empty_aggregate_is_a_problem(self, tmp_path: Path) -> None:
+        results_dir, claims, manifest_path = self._setup(tmp_path)
+        data = json.loads(manifest_path.read_text())
+        data["aggregate"] = {}
+        manifest_path.write_text(json.dumps(data))
+        problems = verify_claims(results_dir, claims)
+        assert any("empty aggregate" in p for p in problems)
+
+    def test_cited_manifest_untracked_is_a_problem(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        results_dir, claims, _ = self._setup(tmp_path)
+        monkeypatch.setattr("src.results._git_tracked", lambda p: False)
+        problems = verify_claims(results_dir, claims)
+        assert any("not tracked by git" in p for p in problems)
+
+    def test_cited_non_json_in_claims_file_is_a_problem(self, tmp_path: Path) -> None:
+        results_dir, claims, manifest_path = self._setup(tmp_path)
+        pt = tmp_path / "x.pt"
+        pt.write_bytes(b"")
+        claims.write_text(
+            f"<!-- manifest: {manifest_path.as_posix()} -->\n<!-- manifest: {pt.as_posix()} -->\n"
+        )
+        problems = verify_claims(results_dir, claims)
+        assert any("tracked .json manifest" in p for p in problems)
+
+    def test_latex_percent_comment_tag_is_recognised(self, tmp_path: Path) -> None:
+        results_dir, claims, manifest_path = self._setup(tmp_path)
+        tex = tmp_path / "main.tex"
+        tex.write_text(f"\\section{{A}}\n% manifest: {manifest_path.as_posix()}\n")
+        assert verify_claims(results_dir, claims, paper_files=[tex]) == []
+
+    def test_latex_percent_comment_tag_to_pt_is_still_a_problem(self, tmp_path: Path) -> None:
+        results_dir, claims, _ = self._setup(tmp_path)
+        pt = tmp_path / "x.pt"
+        pt.write_bytes(b"")
+        tex = tmp_path / "main.tex"
+        tex.write_text(f"% manifest: {pt.as_posix()}\n")
+        problems = verify_claims(results_dir, claims, paper_files=[tex])
+        assert any("tracked .json manifest" in p for p in problems)

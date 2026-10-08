@@ -91,7 +91,7 @@ and Cunningham et al. (2024) applied SAEs to language model activations.
 
 \section{Grokking Modular Addition}
 \label{sec:grokking}
-<!-- manifest: results/exp2_grokking.json -->
+% manifest: results/exp2_grokking.json
 
 \subsection{Setup}
 We train a 1-layer decoder-only transformer (Nanda et al. configuration:
@@ -126,9 +126,10 @@ destroys performance. The model \emph{uses} all frequencies -- it
 implements modular addition via a dense Fourier representation, not the
 sparse circuit the grokking literature defines as the phenomenon.
 
-\textbf{Verdict: NO-GROK.} The model solves modular addition perfectly
+\textbf{Provisional verdict: NO-GROK (under audit, Section~\ref{sec:phase-diagram}).} The model solves modular addition perfectly
 (val acc 1.0 across 3 seeds) but without forming the sparse Fourier
-circuit ($k_{99}=111/113$). No run in this repository's history at any
+circuit ($k_{99}=111/113$). Under this L1-mass metric, which noise spread over all bins
+inflates, no run in this repository's history at any
 modulus has produced $k_{99} < P/2$. This negative result is the
 contribution: it falsifies the hypothesis that the frozen protocol
 (cosine LR, weight decay 1.0, unit-sphere embedding renormalization)
@@ -140,7 +141,7 @@ trial 3: weight decay $1.5\times$) are documented in
 
 \section{Induction Heads}
 \label{sec:induction}
-<!-- manifest: results/exp1_induction_heads.json -->
+% manifest: results/exp1_induction_heads.json
 
 \subsection{Task Design Correction}
 The repeated-token generator's prefix must contain no repeated tokens --
@@ -193,7 +194,7 @@ exactly; self-patching must be a no-op.
 
 \section{Toy Models of Superposition}
 \label{sec:superposition}
-<!-- manifest: results/exp3_superposition.json -->
+% manifest: results/exp3_superposition.json
 
 \subsection{Root Cause of Prior Non-Reproduction}
 The 2026-07-26 and 2026-08-01 audits observed flat, near-zero ``feature
@@ -238,7 +239,7 @@ equiangular geometry is the sparse-phase attractor.
 
 \section{Circuit Verification via Activation and Path Patching}
 \label{sec:patching}
-<!-- manifest: results/exp4_circuit_patching.json -->
+% manifest: results/exp4_circuit_patching.json
 
 \subsection{Intervention Validity Fixes}
 The 2026-08-01 audit fixed two bugs: (1) patch site was the MLP input
@@ -266,7 +267,7 @@ concentrated enough in one head to cross the 0.3 detection threshold.
 
 \section{Sparse Autoencoder Feature Dashboard}
 \label{sec:sae}
-<!-- manifest: results/exp5_sae_dashboard.json -->
+% manifest: results/exp5_sae_dashboard.json
 
 \subsection{Synthetic Baseline}
 $d_\text{model}=64$, 8$\times$ dictionary (512 features), 300 epochs,
@@ -290,10 +291,10 @@ next step.
 
 \section{Capstone: Joint Training and Reverse-Engineering}
 \label{sec:capstone}
-<!-- manifest: results/probe_capstone_shakedown.json -->
-<!-- manifest: results/probe_capstone_ab_control.json -->
-<!-- manifest: results/probe_capstone_ab_offset.json -->
-<!-- manifest: results/probe_capstone_ab_reweight.json -->
+% manifest: results/probe_capstone_shakedown.json
+% manifest: results/probe_capstone_ab_control.json
+% manifest: results/probe_capstone_ab_offset.json
+% manifest: results/probe_capstone_ab_reweight.json
 
 \subsection{Shakedown: Joint Training Dissociation}
 1 seed, 2000 steps, $d_\text{model}=256$, 4 layers, 8 heads, $P=113$,
@@ -328,89 +329,24 @@ signal is seen, preventing vacuous zeros from being plotted as
 measurements. Final K-composition on a pure induction loader remains a
 pending validation.
 
-\section{When Does Grokking Occur? A Phase Diagram}
+\section{Solution Regime: Dense vs. Sparse Fourier Circuit (Under Audit)}
 \label{sec:phase-diagram}
-<!-- manifest: results/phase_diagram_test.pt -->
-<!-- manifest: results/phase_diagram_fast.pt -->
+% manifest: results/exp2_grokking.json
 
-The NO-GROK negative ($P=113$, val acc 1.0, $k_{99}=111/113$ dense) and the
-capstone dissociation (induction learns, modular does not, both dense)
-suggest a \textbf{phase diagram} where the sparse Fourier circuit exists
-only in a specific regime of control parameters, while the dense attractor
-is the default for this protocol (cosine LR, weight decay 1.0, embedding
-renormalization, solo training).
+An earlier draft of this section reported a phase diagram of sparse versus
+dense Fourier solutions. It was removed on 2026-10-08: its cells came from
+100- and 2000-epoch smoke runs in which the models had not generalized
+(validation accuracy at most 0.06\% at $P=29$), so the reported
+``dense'' labels measured under-training rather than a solution regime. No
+phase-diagram claim is made in this version.
 
-\subsection{Experimental Design}
-We systematically sweep:
-\begin{itemize}
-    \item \textbf{Modulus P}: 11, 17, 29, 59 (test) + 11, 17, 29 (fast at 2000 epochs)
-    \item \textbf{Model size}: fixed at Nanda config ($d_\text{model}=128$, 1L, 4H)
-    \item \textbf{Weight decay}: 1.0
-    \item \textbf{Training mode}: solo modular addition
-    \item \textbf{Seeds}: 3 (42, 43, 44)
-    \item \textbf{Epochs}: 100 (test) / 2000 (fast)
-    \item \textbf{Classification}: sparse if $k_{99}/P < 0.5$
-\end{itemize}
+The Fourier-sparsity metric and the training protocol behind the $P=113$
+NO-GROK verdict are being audited against Nanda et al.\ (2023): the metric
+is falsified against a synthetic sparse embedding, and the protocol is
+re-run with the original full-batch recipe before any boundary claim is
+reopened. The audit and its outcome are recorded in the Honesty Ledger of
+\texttt{portfolio/RESULTS.md}.
 
-\subsection{Results}
-All cells tested at the frozen protocol show the \textbf{dense attractor}
-($k_{99}/P = 1.0$). No sparse regime was found:
-
-\begin{center}
-\begin{tabular}{lcccc}
-\toprule
-Cell & $P$ & Epochs & $k_{99}/P$ & Val Acc \\
-\midrule
-test\_p11\_wd10 & 11 & 100 & 1.000 & 0.0039 \\
-test\_p59\_wd10 & 59 & 100 & 1.000 & 0.0001 \\
-p11\_wd10 & 11 & 2000 & 1.000 & 0.0000 \\
-p17\_wd10 & 17 & 2000 & 1.000 & 0.0000 \\
-p29\_wd10 & 29 & 2000 & 1.000 & 0.0006 \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-No cell achieved generalization (val acc $> 0.9$) or sparse Fourier
-($k_{99}/P < 0.5$). At $P=29$ with 2000 epochs, val accuracy is only
-0.06\%. The positive control ($P=59$, Nanda config, 5000 epochs) did not
-complete in this sweep; it is the next critical run.
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.95\textwidth]{../../figures/phase_diagram_heatmap.png}
-\caption{Phase diagram heatmap (solo): $k_{99}/P$ ratio as a function of
-modulus P and weight decay. All tested cells are red (dense). Dashed line
-= theoretical boundary.}
-\label{fig:phase-diagram-heatmap}
-<!-- manifest: results/phase_diagram_test.pt -->
-<!-- manifest: results/phase_diagram_fast.pt -->
-\end{figure}
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.95\textwidth]{../../figures/phase_boundary_analysis.png}
-\caption{Phase boundary analysis. \textbf{Top-left}: $k_{99}/P$ vs WD per P.
-\textbf{Top-right}: $k_{99}/P$ vs P per WD. \textbf{Bottom-left}: Theoretical
-boundary WD$_{\text{crit}} \approx C/P$ vs empirical cells. \textbf{Bottom-right}:
-Generalization epoch vs sparsity.}
-\label{fig:phase-boundary}
-<!-- manifest: results/phase_diagram_test.pt -->
-<!-- manifest: results/phase_diagram_fast.pt -->
-\end{figure}
-
-\subsection{Interpretation}
-The dense attractor is the default outcome for this protocol across all
-tested moduli ($P=11, 17, 29, 59$) at 2000 epochs. The theoretical
-boundary $WD_{\text{crit}} \approx C/P$ (with $C \approx 60$) predicts
-WD=1.0 should suffice for sparse regime at $P \le 60$, but the empirical
-data shows dense at all $P$ tested. This suggests additional suppression
-mechanisms: the cosine LR schedule may anneal too aggressively before the
-sparse circuit forms, or the embedding renormalization constrains the
-solution space.
-
-The positive control ($P=59$, 5000 epochs, 3 seeds) is the next critical
-run -- if it also fails to produce sparse Fourier, the dense attractor is
-universal for this protocol.
 
 \subsection{Capstone Joint Training Dissociation}
 The capstone shakedown (2000 steps, $d_\text{model}=256$, 4L, 8H, $P=113$)
@@ -434,12 +370,12 @@ separation and curriculum reweighting.
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.95\textwidth]{../../figures/joint_dissociation.png}
+\includegraphics[width=0.95\textwidth]{../figures/joint_dissociation.png}
 \caption{Joint dissociation (capstone shakedown). Modular stays at chance;
 induction learns. Both Fourier dense.}
 \label{fig:joint-dissociation}
-<!-- manifest: results/probe_capstone_shakedown.json -->
-</figure>
+% manifest: results/probe_capstone_shakedown.json
+\end{figure}
 
 \section{Limitations}
 \label{sec:limitations}
@@ -454,9 +390,10 @@ induction learns. Both Fourier dense.}
     comparison (52.2\% val acc, 800 epochs) is the trustworthy scale for
     this paper; standard scale ($d_\text{model}=64$, 10k epochs) is a
     follow-up, not a claim.
-  \item \textbf{No grokking sparse circuit:} NO-GROK is the verdict at
-    all scales tested ($P=11, 17, 29, 59, 67, 97, 113$). GPU verdict at
-    $P=113$ is pending as scale follow-up, not the decision.
+  \item \textbf{No grokking sparse circuit:} NO-GROK was measured with an
+    L1-mass Fourier metric later shown to call noisy sparse embeddings
+    dense, under a protocol that departs from Nanda et al., and several
+    small-modulus runs had not generalized. The verdict is under audit.
   \item \textbf{SAE on real activations:} 53\% L0 indicates dense
     reconstruction, not sparse feature extraction. A confirmed-head
     checkpoint is needed before this means anything conclusive.
@@ -483,15 +420,17 @@ This work demonstrates a complete micro-scale MI pipeline: from-scratch
 training, full instrumentation, causal circuit verification, and honest
 negative reporting. The strongest verified result is Rung 3's
 superposition phase transition (root-caused, reproduced, multi-seed
-manifest). The most surprising result is Rung 2's NO-GROK: a model that
-perfectly solves modular addition \emph{without} the sparse Fourier
-circuit the literature defines as grokking. The capstone shakedown
+manifest). The most surprising provisional result is Rung 2's NO-GROK (under
+audit): a model that solves modular addition perfectly, labelled
+\emph{without} the sparse Fourier circuit by a metric that is being
+re-examined. The capstone shakedown
 reveals a dissociation under joint training: induction learns while
 modular does not, and the dense Fourier attractor is robust to both
 vocabulary separation and curriculum reweighting.
 
-The honest negatives are contributions: NO-GROK and NO-MOVE falsify the
-sparse-circuit hypothesis at this scale. The path forward is the
+The honest negatives are contributions: NO-MOVE falsifies two
+explanations of the joint-training dissociation at this scale; NO-GROK
+is provisional pending the audit. The path forward is the
 continuum ledger (ADR-0029): exactly one new research question from
 \{solution-regime phase diagram, scaled R1 induction, SAE on confirmed-head
 checkpoint, ACDC on real circuit\}.
