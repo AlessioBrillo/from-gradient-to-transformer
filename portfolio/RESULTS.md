@@ -33,6 +33,18 @@ and only tested that a tagged path *existed*. Found by reading the paper, not by
   Its `<!-- manifest -->` tags were HTML comments inside LaTeX (typeset as text), and one
   figure was closed with an HTML `</figure>`.
 
+**Rung 2's Fourier metric (found the same day).** `analyze_fourier_sparsity` takes `k_99` as the
+number of frequencies holding 99% of the *L1* mass. L1 mass is dominated by noise spread over every
+bin, so a clean 5-frequency embedding with 1% additive noise is called dense
+(`tests/test_grokking.py::TestFourierEnergySparsity` pins this); `k_99 = 111/113` therefore could
+not tell a sparse circuit from a dense one. The protocol also differs from Nanda et al. in five ways
+(minibatches, gradient clipping, per-step embedding renormalization, LayerNorm, default Adam betas),
+and `run_single_seed` silently ignored `--no-normalize-embeddings` and `--schedule`. Small-modulus
+cells were also untrained: the budget was counted in epochs, and at P=29 an epoch is 2 steps. The
+P=113 checkpoints no longer exist, so the verdict is re-run, not re-analysed: `--protocol nanda`
+plus the new `fourier_energy_sparsity`, jobs in `notebooks/kaggle_grokking_p113.ipynb` (GPU; ~0.6
+s/step on the author's CPU). Until it lands, Rung 2 carries no dense/sparse claim.
+
 **Fixes**: `verify_claims` now also checks the `.tex` sources; a manifest tag must resolve to
 a git-tracked `.json` with a non-empty aggregate; every `\includegraphics` target must exist
 and be tracked; LaTeX tags use `% manifest: …`. All falsified by tests that fail on the old
@@ -261,6 +273,8 @@ per epoch) and `--seeds` (multi-seed manifest) added 2026-08-02.
 ## Rung 2 — Grokking Modular Addition (Primary Flagship — NO-GROK positive-negative, 2026-08-11)
 
 <!-- manifest: results/exp2_grokking.json -->
+
+> **2026-10-08 - verdict under audit.** The NO-GROK / dense-Fourier claim was measured with an L1-mass `k_99` that classifies a noisy sparse embedding as dense (pinned by `tests/test_grokking.py::TestFourierEnergySparsity`), under a protocol that departs from Nanda et al. Do not cite it until the energy-metric rerun (`notebooks/kaggle_grokking_p113.ipynb`) is recorded. See the Honesty Ledger in `portfolio/RESULTS.md`.
 
 **Question**: Can I reproduce the grokking phase transition on modular addition (a+b mod P) and reverse-engineer the discrete Fourier transform algorithm the model learns?
 
@@ -521,7 +535,7 @@ here until that audit has produced them.
 | Rung | Status | Key Result |
 |------|--------|------------|
 | 1 — Induction Heads (fallback flagship) | ⚠️ Task design fixed, memorization confirmed, no head yet | Fresh-batches: 52.2% val acc vs. fixed dataset's 0.05% (matched 800-epoch comparison); 0/8 heads either way at this scale |
-| 2 — Grokking (primary flagship) | ✅ Decided 2026-08-11: NO-GROK positive-negative | P=113 CPU 3-seed: val accuracy 1.0 all seeds, Fourier dense (k_99 = 111/113); no run in repo history ever sparse; GPU verdict pending as scale follow-up, not the decision |
+| 2 — Grokking (primary flagship) | ⚠️ NO-GROK 2026-08-11, **under audit 2026-10-08** (metric) | P=113 CPU 3-seed: val accuracy 1.0 all seeds, Fourier dense (k_99 = 111/113); no run in repo history ever sparse; GPU verdict pending as scale follow-up, not the decision |
 | 3 — Superposition | ✅ Phase transition confirmed | Root cause found (no real bottleneck); rewritten, reproduces cleanly: 10/20 → 20/20 features represented |
 | 4 — Circuit Patching | ⚠️ Fixed 2026-08-01, quick multi-seed re-run 2026-08-02 | See Rung 4 above for the current numbers; path patching still only unit-tested, no real head to validate against yet |
 | 5 — SAE Dashboard | ✅ Synthetic reproduced; ⚠️ real-activation upgrade shipped | Real: 99.97% FVE but 53% L0 (dense, not sparse) — informative gap, not yet a clean win |
@@ -534,4 +548,4 @@ better checkpoint (one with a confirmed induction head) before the sparsity gap 
 anything conclusive. (3) Rung 1's fixed-vs-fresh comparison — a real, large, matched effect,
 though at a scale still well below standard. (4) Rung 4's quick multi-seed re-run — internal
 consistency confirmed (activation patching runs cleanly, matches Rung 1's "0 heads" finding)
-but path patching remains unvalidated against a real head. (5) Rung 2 — the NO-GROK negative is trustworthy (val 1.0 + dense Fourier, 3 seeds, dated 2026-08-11); what is still open is whether any scale/hardware produces the sparse regime, not whether the flagship was measured.
+but path patching remains unvalidated against a real head. (5) Rung 2 — val accuracy 1.0 on 3 seeds is measured; the *dense* label is **not** trusted until the energy-metric rerun lands (the L1-mass `k_99` behind it misclassifies noisy sparse embeddings as dense, and the protocol departs from Nanda et al.).

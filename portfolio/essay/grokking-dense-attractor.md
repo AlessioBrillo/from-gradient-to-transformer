@@ -1,5 +1,7 @@
 # The Dense Attractor: Why My Transformer Solved Modular Addition Without Grokking
 
+> **2026-10-08 - verdict under audit.** The NO-GROK / dense-Fourier claim was measured with an L1-mass `k_99` that classifies a noisy sparse embedding as dense (pinned by `tests/test_grokking.py::TestFourierEnergySparsity`), under a protocol that departs from Nanda et al. Do not cite it until the energy-metric rerun (`notebooks/kaggle_grokking_p113.ipynb`) is recorded. See the Honesty Ledger in `portfolio/RESULTS.md`.
+
 **Published:** 2026-09-18 | **Author:** Alessio Brillo | **Repo:** [from-gradient-to-transformer](https://github.com/AlessioBrillo/from-gradient-to-transformer)
 
 ---

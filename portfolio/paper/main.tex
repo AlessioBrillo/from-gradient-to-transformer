@@ -126,9 +126,10 @@ destroys performance. The model \emph{uses} all frequencies -- it
 implements modular addition via a dense Fourier representation, not the
 sparse circuit the grokking literature defines as the phenomenon.
 
-\textbf{Verdict: NO-GROK.} The model solves modular addition perfectly
+\textbf{Provisional verdict: NO-GROK (under audit, Section~\ref{sec:phase-diagram}).} The model solves modular addition perfectly
 (val acc 1.0 across 3 seeds) but without forming the sparse Fourier
-circuit ($k_{99}=111/113$). No run in this repository's history at any
+circuit ($k_{99}=111/113$). Under this L1-mass metric, which noise spread over all bins
+inflates, no run in this repository's history at any
 modulus has produced $k_{99} < P/2$. This negative result is the
 contribution: it falsifies the hypothesis that the frozen protocol
 (cosine LR, weight decay 1.0, unit-sphere embedding renormalization)
@@ -389,9 +390,10 @@ induction learns. Both Fourier dense.}
     comparison (52.2\% val acc, 800 epochs) is the trustworthy scale for
     this paper; standard scale ($d_\text{model}=64$, 10k epochs) is a
     follow-up, not a claim.
-  \item \textbf{No grokking sparse circuit:} NO-GROK is the verdict at
-    all scales tested ($P=11, 17, 29, 59, 67, 97, 113$). GPU verdict at
-    $P=113$ is pending as scale follow-up, not the decision.
+  \item \textbf{No grokking sparse circuit:} NO-GROK was measured with an
+    L1-mass Fourier metric later shown to call noisy sparse embeddings
+    dense, under a protocol that departs from Nanda et al., and several
+    small-modulus runs had not generalized. The verdict is under audit.
   \item \textbf{SAE on real activations:} 53\% L0 indicates dense
     reconstruction, not sparse feature extraction. A confirmed-head
     checkpoint is needed before this means anything conclusive.
@@ -418,15 +420,17 @@ This work demonstrates a complete micro-scale MI pipeline: from-scratch
 training, full instrumentation, causal circuit verification, and honest
 negative reporting. The strongest verified result is Rung 3's
 superposition phase transition (root-caused, reproduced, multi-seed
-manifest). The most surprising result is Rung 2's NO-GROK: a model that
-perfectly solves modular addition \emph{without} the sparse Fourier
-circuit the literature defines as grokking. The capstone shakedown
+manifest). The most surprising provisional result is Rung 2's NO-GROK (under
+audit): a model that solves modular addition perfectly, labelled
+\emph{without} the sparse Fourier circuit by a metric that is being
+re-examined. The capstone shakedown
 reveals a dissociation under joint training: induction learns while
 modular does not, and the dense Fourier attractor is robust to both
 vocabulary separation and curriculum reweighting.
 
-The honest negatives are contributions: NO-GROK and NO-MOVE falsify the
-sparse-circuit hypothesis at this scale. The path forward is the
+The honest negatives are contributions: NO-MOVE falsifies two
+explanations of the joint-training dissociation at this scale; NO-GROK
+is provisional pending the audit. The path forward is the
 continuum ledger (ADR-0029): exactly one new research question from
 \{solution-regime phase diagram, scaled R1 induction, SAE on confirmed-head
 checkpoint, ACDC on real circuit\}.

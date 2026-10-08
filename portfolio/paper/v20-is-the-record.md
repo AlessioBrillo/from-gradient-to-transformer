@@ -6,6 +6,8 @@ consumes: [ADR-0028, 89_micro-phase-89-from-retune-to-signal]
 
 # v20 is the Record — Paper Decision Memo (MP-90 Session 4)
 
+**2026-10-08 - verdict under audit.** The NO-GROK / dense-Fourier claim was measured with an L1-mass `k_99` that classifies a noisy sparse embedding as dense (pinned by `tests/test_grokking.py::TestFourierEnergySparsity`), under a protocol that departs from Nanda et al. Do not cite it until the energy-metric rerun (`notebooks/kaggle_grokking_p113.ipynb`) is recorded. See the Honesty Ledger in `portfolio/RESULTS.md`.
+
 > **Decision**: NO-MOVE verdict from MP-89 retune A/B means no new numbers for the paper. The "v20 is the record" memo is written here as the paper decision artifact. No `main.tex` diff is applied.
 
 ## Context
