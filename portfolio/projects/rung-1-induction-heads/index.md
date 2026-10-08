@@ -29,9 +29,9 @@ Matched fixed-vs-fresh-batches comparison (800 epochs, identical config): fresh 
 - 0/8 heads in the matched 800-epoch comparison; 10k epoch run pending to find emergence boundary
 
 **Links**:
-- [[portfolio/RESULTS]] — my honesty ledger and per-rung numbers
-- [[07_capstone/research-plan]] — where this rung sits in the experiment ladder
-- [[04_nlp_and_transformers/notes/induction-heads]] — my full fixed-vs-fresh writeup
+- [RESULTS](../../RESULTS.md) — my honesty ledger and per-rung numbers
+- [research-plan](../../../07_capstone/research-plan.md) — where this rung sits in the experiment ladder
+- [induction-heads](../../../04_nlp_and_transformers/notes/induction-heads.md) — my full fixed-vs-fresh writeup
 
 **Next Steps**:
 - Complete 10k epoch run and document emergence boundary

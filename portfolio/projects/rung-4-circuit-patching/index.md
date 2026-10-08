@@ -31,9 +31,9 @@ Head-ablation figure struck: ablation is skipped whenever 0 heads are detected, 
 - No real circuit discovery yet — infrastructure ready, awaiting real heads
 
 **Links**:
-- [[portfolio/RESULTS]] — my honesty ledger and per-rung numbers
-- [[07_capstone/research-plan]] — where this rung sits in the experiment ladder
-- [[05_llm_engineering/proofs/intervention-validity]] — my patch-site and metric fix reconstruction
+- [RESULTS](../../RESULTS.md) — my honesty ledger and per-rung numbers
+- [research-plan](../../../07_capstone/research-plan.md) — where this rung sits in the experiment ladder
+- [intervention-validity](../../../05_llm_engineering/proofs/intervention-validity.md) — my patch-site and metric fix reconstruction
 
 **Next Steps**:
 - Run on first confirmed head checkpoint from Rung 1

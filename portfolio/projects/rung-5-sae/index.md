@@ -31,9 +31,9 @@ Real-activation figures struck: the numbers came from a run whose plots were nev
 - Dictionary size (256) may be too small for real model capacity
 
 **Links**:
-- [[portfolio/RESULTS]] — my honesty ledger and per-rung numbers
-- [[07_capstone/research-plan]] — where this rung sits in the experiment ladder
-- [[02_classical_ml/proofs/trees-ensembles-pca]] — PCA as the conceptual ancestor of SAEs
+- [RESULTS](../../RESULTS.md) — my honesty ledger and per-rung numbers
+- [research-plan](../../../07_capstone/research-plan.md) — where this rung sits in the experiment ladder
+- [trees-ensembles-pca](../../../02_classical_ml/proofs/trees-ensembles-pca.md) — PCA as the conceptual ancestor of SAEs
 
 **Next Steps**:
 - SAE on first confirmed head checkpoint (gated on Rung 1)

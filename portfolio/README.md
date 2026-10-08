@@ -8,16 +8,16 @@ Research showcase for `from-gradient-to-transformer`. The verified headline find
 superposition: the phase transition (10/20 → 20/20 features represented as sparsity drops,
 with a regular pentagon geometry in the sparse regime) is root-caused, reproduced, and backed
 by a multi-seed manifest. Grokking modular addition with Fourier reverse-engineering is the
-primary flagship target but is **not yet verified** — see [[portfolio/RESULTS]] for exact
+primary flagship target but is **not yet verified** — see [RESULTS](RESULTS.md) for exact
 status per rung.
 
 | Artifact | Link |
 |----------|------|
-| Headline results | [[portfolio/RESULTS]] |
-| Research plan | [[07_capstone/research-plan]] |
-| Mini-paper (LaTeX PDF) | not yet written — LaTeX scaffold at `portfolio/paper/main.tex` (compile with `make paper`, or on Overleaf) |
-| Model card | [[portfolio/model-card]] |
+| Headline results | [RESULTS](RESULTS.md) |
+| Research plan | [research-plan](../07_capstone/research-plan.md) |
+| Mini-paper | LaTeX source at [`paper/main.tex`](paper/main.tex); the PDF is not built yet (`make paper`, or on Overleaf) |
+| Model card | [model-card](model-card.md) |
 | Interactive demo (SAE feature browser) | not built yet (needs real, not synthetic, activations) |
 | Experiment tracking | not set up yet |
 | Code (experiments) | `src/experiments/` |
-| Code (capstone models) | `src/models/decoder_only_transformer.py` — `07_capstone/src/` is empty; see [[07_capstone/_MOC]] |
+| Code (capstone models) | `src/models/decoder_only_transformer.py` — `07_capstone/src/` is empty; see [_MOC](../07_capstone/_MOC.md) |
