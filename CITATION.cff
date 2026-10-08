@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use this code or its results, please cite it as below."
+title: "From Gradient to Transformer to Circuit"
+abstract: >-
+  Training small decoder-only transformers and reverse-engineering what they
+  learn: superposition geometry, induction heads, grokking on modular addition,
+  activation/path patching and sparse autoencoders, with every public number
+  traced to a committed run manifest.
+type: software
+authors:
+  - family-names: Brillo
+    given-names: Alessio
+repository-code: "https://github.com/AlessioBrillo/from-gradient-to-transformer"
+url: "https://alessiobrillo.github.io/from-gradient-to-transformer/"
+license: MIT
+keywords:
+  - mechanistic interpretability
+  - transformers
+  - grokking
+  - superposition
+  - sparse autoencoders

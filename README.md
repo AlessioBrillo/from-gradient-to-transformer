@@ -11,25 +11,37 @@
 
 ## Headline Result
 
-**Induction heads emerging causally in a 2-layer attention-only transformer**, with their
-role verified by activation patching, path patching, and head ablation on
-`src/models/decoder_only_transformer.py`. This is the fallback flagship, and currently the
-strongest result with re-verified code: **grokking on modular addition is the primary
-flagship but is not yet reproduced** — see `portfolio/RESULTS.md` for exactly what is and
-isn't confirmed, and why. A validity pass on 2026-08-01 found and fixed real bugs in three
-of five rungs' causal claims (wrong ablation site, wrong patch site, an internal metric
-that silently disagreed with its own detection threshold); read the Honesty Ledger in
-`portfolio/RESULTS.md` before citing any specific number from this repository.
+**Superposition geometry (Rung 3).** In a toy ReLU autoencoder with a real bottleneck, the
+number of represented features rises from 10/20 to 20/20 as sparsity drops, and in the sparse
+regime five features settle on a regular pentagon in two dimensions. The setup was
+root-caused, reproduced and backed by a multi-seed manifest.
+
+It is the only rung that is fully reproduced. The others are reported as measured, negatives
+included:
+
+| Rung | Where it stands |
+|------|-----------------|
+| 1 Induction heads | No head detected at any scale run (0/8). A matched fixed-vs-fresh-batches comparison is the one solid finding (52.2% vs 0.05% validation accuracy). |
+| 2 Grokking | Validation accuracy 1.0, but the dense-vs-sparse Fourier verdict is **under audit**: the metric behind it misclassifies noisy sparse embeddings (2026-10-08). The re-run needs a GPU. |
+| 4 Circuit patching | Activation patching runs cleanly; path patching is only unit-tested because there is no head to target. |
+| 5 SAE | Synthetic data reproduces; on real activations reconstruction is good but dense (53% of features active). |
+| Phase diagram | Removed: it had no data behind it. Reopened after the Rung 2 audit. |
+
+Read the Honesty Ledger in [`portfolio/RESULTS.md`](portfolio/RESULTS.md) before citing any
+number from this repository: four audits have found real bugs in earlier claims, and the repo
+keeps them visible. `make verify-claims` (run in CI) fails if a public number has no committed
+manifest behind it.
+
+**Live site:** <https://alessiobrillo.github.io/from-gradient-to-transformer/>
 
 ```bash
+git clone https://github.com/AlessioBrillo/from-gradient-to-transformer
 cd from-gradient-to-transformer
 uv sync && make reproduce-quick  # smoke-test every rung in a few minutes
 uv sync && make reproduce        # full-scale run, hours
 ```
 
-*Primary experiment (unreproduced):* `src/experiments/exp2_grokking.py` · *Strongest
-verified result:* `src/experiments/exp1_induction_heads.py` +
-`src/experiments/exp4_circuit_patching.py`
+---
 
 ---
 
@@ -62,7 +74,7 @@ Rung 6 (automated circuit discovery vs. hand-found circuit) was descoped on 2026
 placeholder implementation simulated the comparison with random draws instead of running
 ACDC. See `07_capstone/research-plan.md` for the record.
 
-★ — **Primary flagship (not yet reproduced).** See [[portfolio/RESULTS]] for the full table.
+★ — **Primary flagship (not yet reproduced).** See [RESULTS](portfolio/RESULTS.md) for the full table.
 
 ---
 
@@ -99,10 +111,10 @@ NN_name/
 - [x] **Phase 3 — Deep Learning** (micrograd, training dynamics, grokking, RNN/CNN breadth)
 - [x] **Phase 4 — NLP & Transformers** (LOAD-BEARING for MI — QK/OV circuits, induction heads, activation patching, logit lens, TransformerLens)
 - [x] **Phase 5 — LLM Engineering** (model instrumentation: hooks, deterministic inference, activation harvesting, circuit datasets)
-- [ ] **Phase 6 — Production AI** (reframed: reproducible research infra)
-- [~] **Phase 7 — Capstone: train + reverse-engineer** (model built, experiments implemented, results for rungs 1-5)
+- [~] **Phase 6 — Production AI** (reframed: reproducible research infra — pinned env, manifests, `verify-claims` in CI; W&B and the compiled paper PDF are still open)
+- [~] **Phase 7 — Capstone: train + reverse-engineer** (model built, rungs 1-5 implemented; the 20k-step capstone run and the Rung 2 re-run are pending a GPU)
 
-See [[00_meta/03_progress-log]] for the dated journal and [[00_meta/02_skill-tree]] for the complete skill tree.
+See [03_progress-log](00_meta/03_progress-log.md) for the dated journal and [02_skill-tree](00_meta/02_skill-tree.md) for the complete skill tree.
 
 ---
 
@@ -121,7 +133,13 @@ uv sync
 obsidian .
 ```
 
-Writing conventions, tags, and naming: [[00_meta/04_conventions]].
+Writing conventions, tags, and naming: [04_conventions](00_meta/04_conventions.md).
+
+---
+
+## Citation
+
+See [`CITATION.cff`](CITATION.cff) (GitHub's "Cite this repository" button).
 
 ---
 

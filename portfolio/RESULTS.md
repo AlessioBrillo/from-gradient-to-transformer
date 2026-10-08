@@ -59,7 +59,7 @@ correct and almost entirely **unmeasured**: Rung 2 had never run, Rungs 1 and 4 
 post-fix standard-scale numbers, Rung 3 had never reproduced, Rung 5 was real only on
 synthetic data. This pass built a multi-seed provenance harness
 (`src/experiments/runner.py`, `src/results.py`, `make verify-claims` —
-[[06_production_ai/notes/results-manifests-and-provenance]]) and pointed it at every rung
+[results-manifests-and-provenance](../06_production_ai/notes/results-manifests-and-provenance.md)) and pointed it at every rung
 that fits this machine's CPU budget. What it found:
 
 - **Rung 3's root cause, finally found.** The 2026-07-26 and 2026-08-01 audits both
@@ -71,9 +71,9 @@ that fits this machine's CPU budget. What it found:
   `n_dimensions < n_features` bottleneck, decoder bias, ground-truth-free metrics); the
   phase transition now reproduces cleanly and immediately: **10/20 → 20/20 features
   represented as sparsity drops from 0.5 to 0.01.** See
-  [[05_llm_engineering/proofs/superposition-setup-validity]] for the full reconstruction
+  [superposition-setup-validity](../05_llm_engineering/proofs/superposition-setup-validity.md) for the full reconstruction
   with the diagnostic numbers that found it, and
-  [[06_production_ai/exercises/ex-01-falsify-your-own-metric]] for why the *old* metric
+  [ex-01-falsify-your-own-metric](../06_production_ai/exercises/ex-01-falsify-your-own-metric.md) for why the *old* metric
   couldn't have told the difference between broken and working even if the architecture
   had been right.
 - **Rung 1's task design was ill-posed for its entire history.** The repeated-token
@@ -81,7 +81,7 @@ that fits this machine's CPU budget. What it found:
   token" is ambiguous). The pre-existing `vocab_size=32`/prefix-length-32 default gave a
   **>99.99%** chance of a repeated token in the prefix — a birthday-problem calculation, not
   a guess (`prefix_duplicate_probability()`,
-  [[06_production_ai/exercises/ex-03-induction-task-design]]). Fixed (`vocab_size=2048`
+  [ex-03-induction-task-design](../06_production_ai/exercises/ex-03-induction-task-design.md)). Fixed (`vocab_size=2048`
   standard / `256` quick, ~20-23% collision). Fixing it alone did **not** produce induction
   heads at quick scale (`diag1_mass` peaked at 0.125, still below the 0.3 threshold) — a
   second, independent question this pass also built the tooling to test.
@@ -93,7 +93,7 @@ that fits this machine's CPU budget. What it found:
   condition crossed the induction-head detection threshold within this (still sub-standard)
   budget, but the fresh-batches trajectory was still improving at epoch 800 while the fixed
   condition was actively regressing. See
-  [[04_nlp_and_transformers/notes/induction-heads]] for the full table.
+  [induction-heads](../04_nlp_and_transformers/notes/induction-heads.md) for the full table.
 - **SAE on real activations, for the first time.** `exp5_sae_dashboard.py --activations-from`
   now harvests genuine residual-stream activations from a trained induction-heads
   checkpoint via a forward hook on `ln_final`, instead of only ever training on
@@ -138,7 +138,7 @@ names said:
 | 4 | A plotted metric was on the wrong scale | `exp1_induction_heads.py`, `compute_attention_entropy()` | `diag1_mass` summed per-head signal across heads instead of taking the max — a `[0, n_heads]`-scale number plotted against a per-head `0.3` threshold. Root cause of the 2026-07-26 "mass ≈ 1.0 but 0 heads detected" discrepancy: never the same unit. |
 
 **Fixes applied**, all with falsification tests that would have failed against the old code
-(see [[05_llm_engineering/proofs/intervention-validity]] for the full reconstruction):
+(see [intervention-validity](../05_llm_engineering/proofs/intervention-validity.md) for the full reconstruction):
 - `causal_ablation()` now uses a `head_mask` applied *before* `W_O`, matching the approach
   `exp4_circuit_patching.py` already had right for its own head ablation. Falsified with:
   ablating every head in every block must reproduce the model's no-attention baseline
@@ -244,7 +244,7 @@ currently confirmed; the fixed/fresh comparison below is the only trustworthy sc
 | Induction heads detected (>0.3 threshold) | **0 / 8**, all 3 seeds |
 
 **Fixed-vs-fresh-batches, matched 800-epoch comparison** (see
-[[04_nlp_and_transformers/notes/induction-heads]] for the full writeup): identical config
+[induction-heads](../04_nlp_and_transformers/notes/induction-heads.md) for the full writeup): identical config
 (`vocab_size=2048, seq_len=24, d_model=32, num_train=1024`), only `--fresh-batches` toggled.
 
 | | Fixed (reused every epoch) | Fresh (resampled every epoch) |
@@ -279,7 +279,7 @@ per epoch) and `--seeds` (multi-seed manifest) added 2026-08-02.
 **Question**: Can I reproduce the grokking phase transition on modular addition (a+b mod P) and reverse-engineer the discrete Fourier transform algorithm the model learns?
 
 **Status**: [x] Decided 2026-08-11 — **NO-GROK, a positive-negative** (full analysis:
-[[06_production_ai/notes/grokking-verdict-p113]]). The train/val split bug that made
+[grokking-verdict-p113](../06_production_ai/notes/grokking-verdict-p113.md)). The train/val split bug that made
 this structurally unreachable was fixed 2026-07-26; the fixed split makes the task
 well-posed. The full P=113 run — three seeds to 5000/5000 epochs under the frozen
 protocol (ADR-0003 row 1) on this machine's CPU — reached **val accuracy 1.0 across
@@ -287,7 +287,7 @@ all three seeds**, but the Fourier representation stayed **dense (k_99 = 111/113
 the model solved modular addition *without* forming the sparse circuit the protocol
 defines as grokking. The pipeline, checkpoint machinery and multi-seed manifest all
 worked; the phenomenon did not appear. That negative is now the center of MP-29
-([[00_meta/28_micro-phase-29-the-positive-negative]]): a small-P positive control
+([28_micro-phase-29-the-positive-negative](../00_meta/28_micro-phase-29-the-positive-negative.md)): a small-P positive control
 (P=59/67/97, in flight), a ≤3-trial microscope lane on the frozen protocol
 (trial 1 `--no-normalize-embeddings` FALSIFIED 2026-08-13 — the dense solution
 persists without renormalization, and the run underperformed the baseline:
@@ -339,7 +339,7 @@ P=113 seed-0 checkpoint 2026-08-13 (the manifest's provenance receipts this).
 **Status**: [x] Phase transition reproduced 2026-08-02, after finding the actual root
 cause of the 2026-07-26/2026-08-01 flat-recovery observations: the architecture had no
 real bottleneck (see Honesty Ledger and
-[[05_llm_engineering/proofs/superposition-setup-validity]]). Rewritten to the canonical
+[superposition-setup-validity](../05_llm_engineering/proofs/superposition-setup-validity.md)). Rewritten to the canonical
 Elhage et al. setup; the transition reproduces on the first run, cleanly, with no tuning.
 
 | Sparsity | Features represented | Mean dimensionality | Mean \|corr\| |
@@ -527,7 +527,7 @@ here until that audit has produced them.
 | 3 — Deep Learning | ✅ Complete | gradient-flow-and-architectures |
 | 4 — NLP & Transformers | ✅ Complete | circuit-analysis-complete |
 | 5 — LLM Engineering | [~] Instrumentation done (hooks, determinism, harvesting, circuit datasets proven; nnsight pending) | — |
-| 6 — Production AI | [~] Reproducibility harness built (multi-seed + manifests + `verify-claims` + figure-provenance gate 2026-08-07, kill drill + bit-identical checkpoint/resume, CI/mypy fixed, paper scaffold + `make paper` added) — W&B, Hugging Face Spaces, and the mini-paper prose are still open | [[06_production_ai/proofs/reproducible-from-clean-clone]] (GREEN 2026-08-27, transcript committed) |
+| 6 — Production AI | [~] Reproducibility harness built (multi-seed + manifests + `verify-claims` + figure-provenance gate 2026-08-07, kill drill + bit-identical checkpoint/resume, CI/mypy fixed, paper scaffold + `make paper` added) — W&B, Hugging Face Spaces, and the mini-paper prose are still open | [reproducible-from-clean-clone](../06_production_ai/proofs/reproducible-from-clean-clone.md) (GREEN 2026-08-27, transcript committed) |
 | 7 — Capstone | [~] Research plan written | — |
 
 ## Summary

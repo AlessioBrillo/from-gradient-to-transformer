@@ -109,4 +109,4 @@ The next research question will be chosen via the continuum ledger (ADR-0029): e
 
 ---
 
-*This essay is part of the MP-92 premiere atomic launch. Companion thread: [Twitter/X thread](URL_TBD). Walkthrough video: [8-min walkthrough](URL_TBD). Space recording: [Space link](URL_TBD). Portfolio site: [GitHub Pages](URL_TBD).*
+*Code, run manifests and the full results ledger: [repository](https://github.com/AlessioBrillo/from-gradient-to-transformer) · [live site](https://alessiobrillo.github.io/from-gradient-to-transformer/) · [RESULTS](../RESULTS.md).*

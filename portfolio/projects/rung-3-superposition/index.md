@@ -31,9 +31,9 @@ Phase transition reproduced: 10/20 features represented at sparsity 0.5, rising 
 - Pentagon geometry is a property of the *sparse phase*, not universal
 
 **Links**:
-- [[portfolio/RESULTS]] — my honesty ledger and per-rung numbers
-- [[07_capstone/research-plan]] — where this rung sits in the experiment ladder
-- [[05_llm_engineering/proofs/superposition-setup-validity]] — my root-cause reconstruction (the missing bottleneck)
+- [RESULTS](../../RESULTS.md) — my honesty ledger and per-rung numbers
+- [research-plan](../../../07_capstone/research-plan.md) — where this rung sits in the experiment ladder
+- [superposition-setup-validity](../../../05_llm_engineering/proofs/superposition-setup-validity.md) — my root-cause reconstruction (the missing bottleneck)
 
 **Next Steps**:
 - SAE on real activations from confirmed induction head checkpoint (Rung 5)
