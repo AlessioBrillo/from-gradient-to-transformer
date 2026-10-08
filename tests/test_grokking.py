@@ -463,6 +463,14 @@ class TestFourierEnergySparsity:
             assert out["k_energy_90"] <= 5, f"noise={noise}: {out}"
             assert out["is_sparse"] is True
 
+    def test_legacy_l1_k99_calls_a_noisy_sparse_embedding_dense(self) -> None:
+        """Documents why `analyze_fourier_sparsity` cannot back a verdict.
+        If this starts failing the legacy metric was fixed: update RESULTS.md."""
+        emb = self._embedding([3, 17, 31, 44, 52], noise=0.01)
+        legacy = analyze_fourier_sparsity(fourier_decompose_embeddings(emb, self.P))
+        assert legacy["k_99_percent"] >= self.P * 0.5  # "dense"
+        assert fourier_energy_sparsity(emb, self.P)["is_sparse"] is True
+
     def test_random_embedding_is_dense(self) -> None:
         emb = torch.randn(self.P, 64)
         out = fourier_energy_sparsity(emb, self.P)
