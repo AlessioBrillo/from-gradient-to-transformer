@@ -13,6 +13,7 @@ Usage:
 """
 
 import math
+from typing import Callable, Tuple
 
 try:
     from graphviz import Digraph
@@ -25,10 +26,16 @@ except ImportError:
 class Value:
     """A scalar value with automatic differentiation support."""
 
-    def __init__(self, data: float, _children: tuple = (), _op: str = "", label: str = "") -> None:
+    def __init__(
+        self,
+        data: float,
+        _children: Tuple["Value", ...] = (),
+        _op: str = "",
+        label: str = "",
+    ) -> None:
         self.data = data
         self.grad = 0.0
-        self._backward = lambda: None
+        self._backward: Callable[[], None] = lambda: None
         self._prev = set(_children)
         self._op = _op
         self.label = label
