@@ -21,8 +21,9 @@ Output:
 import argparse
 import logging
 import math
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -123,6 +124,7 @@ class OneLayerTransformer(nn.Module):
         modulus: int,
         max_positions: int = 2,
         normalize_embed: bool = True,
+        use_layernorm: bool = True,
     ) -> None:
         super().__init__()
         assert d_model % n_heads == 0
@@ -131,24 +133,30 @@ class OneLayerTransformer(nn.Module):
         self.n_heads = n_heads
         self.modulus = modulus
         self.normalize_embed = normalize_embed
+        # Nanda et al.'s grokking model has no LayerNorm; Identity keeps the
+        # attribute names (ln1/ln2/ln_final) so downstream analysis code works.
+        self.use_layernorm = use_layernorm
+
+        def _ln() -> nn.Module:
+            return nn.LayerNorm(d_model) if use_layernorm else nn.Identity()
 
         self.embed = nn.Embedding(modulus, d_model)
         self.pos_embed = nn.Embedding(max_positions, d_model)
 
         # Attention
-        self.ln1 = nn.LayerNorm(d_model)
+        self.ln1 = _ln()
         self.W_Q = nn.Linear(d_model, d_model, bias=False)
         self.W_K = nn.Linear(d_model, d_model, bias=False)
         self.W_V = nn.Linear(d_model, d_model, bias=False)
         self.W_O = nn.Linear(d_model, d_model, bias=False)
 
         # MLP
-        self.ln2 = nn.LayerNorm(d_model)
+        self.ln2 = _ln()
         self.W_in = nn.Linear(d_model, d_mlp, bias=False)
         self.W_out = nn.Linear(d_mlp, d_model, bias=False)
 
         # Unembed
-        self.ln_final = nn.LayerNorm(d_model)
+        self.ln_final = _ln()
         self.unembed = nn.Linear(d_model, modulus, bias=False)
 
     def normalize_embeddings(self) -> None:
@@ -241,6 +249,7 @@ def make_lr_scheduler(
     schedule: str,
     epochs: int,
     schedule_epochs: Optional[int],
+    warmup_epochs: int = 0,
 ) -> torch.optim.lr_scheduler.LRScheduler:
     """Build the LR scheduler for the frozen grokking protocol.
 
@@ -252,6 +261,11 @@ def make_lr_scheduler(
     horizon (`schedule_epochs`, defaulting to `epochs`).
     """
     if schedule == "constant":
+        if warmup_epochs > 0:
+            # Nanda et al.: linear warmup over the first steps, then flat.
+            return torch.optim.lr_scheduler.LambdaLR(
+                optimizer, lambda e: min(1.0, (e + 1) / warmup_epochs)
+            )
         return torch.optim.lr_scheduler.ConstantLR(optimizer, factor=1.0)
     return torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer, T_max=schedule_epochs if schedule_epochs is not None else epochs
@@ -273,8 +287,15 @@ def train_model(
     resume_from: Optional[str] = None,
     schedule_epochs: Optional[int] = None,
     schedule: str = "cosine",
+    betas: tuple[float, float] = (0.9, 0.999),
+    grad_clip: Optional[float] = 1.0,
+    warmup_epochs: int = 0,
 ) -> dict:
     """Train and return history with progress measures.
+
+    `betas`, `grad_clip` (None = no clipping) and `warmup_epochs` default to
+    the repo protocol; the Nanda et al. recipe is betas=(0.9, 0.98), no
+    clipping and a short linear warmup (see `apply_protocol`).
 
     If use_wandb is True, logs metrics to Weights & Biases.
     Falls back gracefully if wandb is not installed or not logged in.
@@ -337,8 +358,9 @@ def train_model(
             {"params": no_decay_params, "weight_decay": 0.0},
         ],
         lr=lr,
+        betas=betas,
     )
-    scheduler = make_lr_scheduler(optimizer, schedule, epochs, schedule_epochs)
+    scheduler = make_lr_scheduler(optimizer, schedule, epochs, schedule_epochs, warmup_epochs)
     criterion = nn.CrossEntropyLoss()
 
     history = {
@@ -399,7 +421,8 @@ def train_model(
             logits, _ = model(x)
             loss = criterion(logits, y)
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            if grad_clip is not None:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
             optimizer.step()
             model.normalize_embeddings()
 
@@ -573,6 +596,56 @@ def analyze_fourier_sparsity(fourier_result: dict, top_k: int = 10) -> dict:
         "k_99_percent": k_99,
         "top_frequencies": top_freqs.tolist(),
         "total_mass_top_k": cumulative[top_k - 1] if top_k <= len(cumulative) else 1.0,
+    }
+
+
+def fourier_energy_sparsity(
+    embed_weight: torch.Tensor, modulus: int, sparse_threshold: float = 0.25
+) -> dict:
+    """Noise-robust Fourier sparsity of the token embedding.
+
+    Replaces the L1-mass ``k_99`` of `analyze_fourier_sparsity` for the
+    sparse/dense verdict. That metric needs 99% of an L1 total, which is
+    dominated by noise spread over every bin: a clean 5-frequency embedding
+    with 1% additive noise scores k_99 = 77/113 ("dense"), so a trained network
+    could never have scored "sparse". Here each frequency's *energy* (squared
+    norm summed over embedding dims) is used, the conjugate pair (k, P-k) is
+    folded into one frequency, and the constant (DC) term is excluded.
+
+    ``is_sparse`` means 90% of the non-DC energy sits in fewer than
+    ``sparse_threshold`` of the folded frequencies. The 0.25 default is a
+    convention (a random embedding needs ~0.9; Nanda et al.'s P=113 network
+    uses ~5 of 56 = 0.09), not a derived boundary.
+    """
+    emb = embed_weight.detach().float().cpu()
+    power = (torch.fft.rfft(emb, dim=0).abs() ** 2).sum(dim=1)  # bins 0..P//2
+    n_pairs = (modulus - 1) // 2
+    energy = 2.0 * power[1 : n_pairs + 1]  # k and P-k carry equal energy
+    if modulus % 2 == 0:  # Nyquist bin has no conjugate partner
+        energy = torch.cat([energy, power[modulus // 2 : modulus // 2 + 1]])
+    n_freq = int(energy.numel())
+    total = float(energy.sum())
+    if total <= 0.0:
+        return {
+            "k_energy_90": n_freq, "k_energy_95": n_freq, "k_energy_99": n_freq,
+            "n_freq": n_freq, "frac_energy_top5": 0.0, "top_frequencies": [],
+            "energy_per_freq": energy.numpy(), "is_sparse": False,
+        }
+    order = torch.argsort(energy, descending=True)
+    cum = (energy[order].cumsum(0) / total).numpy()
+
+    def _k(q: float) -> int:
+        return int(np.searchsorted(cum, q - 1e-9) + 1)
+
+    return {
+        "k_energy_90": _k(0.90),
+        "k_energy_95": _k(0.95),
+        "k_energy_99": _k(0.99),
+        "n_freq": n_freq,
+        "frac_energy_top5": float(cum[min(4, n_freq - 1)]),
+        "top_frequencies": (order[:10] + 1).tolist(),  # frequency k, 1-indexed
+        "energy_per_freq": energy.numpy(),
+        "is_sparse": bool(_k(0.90) / n_freq < sparse_threshold),
     }
 
 
@@ -1020,15 +1093,9 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         train_fraction=args.train_fraction,
         seed=seed,
     )
-    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
+    train_loader, val_loader = make_loaders(args, train_dataset, val_dataset)
 
-    model = OneLayerTransformer(
-        d_model=args.d_model,
-        d_mlp=args.d_mlp,
-        n_heads=args.n_heads,
-        modulus=modulus,
-    )
+    model = build_model(args)
 
     run_resume_from = None
     if getattr(args, "resume", False) and getattr(args, "checkpoint_every", 0) > 0:
@@ -1049,10 +1116,14 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         checkpoint_dir=args.checkpoint_dir if args.checkpoint_every > 0 else None,
         checkpoint_every=args.checkpoint_every,
         resume_from=run_resume_from,
+        **optimization_kwargs(args),
     )
 
-    fourier_result = fourier_decompose_embeddings(model.embed.weight.data.detach().cpu(), modulus)
-    sparsity = analyze_fourier_sparsity(fourier_result, top_k=20)
+    fourier_embed = model.embed.weight.data.detach().cpu()
+    sparsity = analyze_fourier_sparsity(
+        fourier_decompose_embeddings(fourier_embed, modulus), top_k=20
+    )
+    energy = fourier_energy_sparsity(fourier_embed, modulus)
 
     final_val_acc = history["val_acc"][-1]
     generalization_epoch = next((i for i, acc in enumerate(history["val_acc"]) if acc > 0.9), -1)
@@ -1064,6 +1135,85 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         "k_90_percent": float(sparsity["k_90_percent"]),
         "k_99_percent": float(sparsity["k_99_percent"]),
         "total_mass_top_k": float(sparsity["total_mass_top_k"]),
+        "k_energy_90": float(energy["k_energy_90"]),
+        "k_energy_99": float(energy["k_energy_99"]),
+        "frac_energy_top5": float(energy["frac_energy_top5"]),
+        "energy_sparse": float(energy["is_sparse"]),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Protocol presets and shared construction (main() and run_single_seed())
+# ---------------------------------------------------------------------------
+# Nanda et al. (ICLR 2023): full-batch AdamW(lr 1e-3, betas 0.9/0.98, wd 1.0),
+# constant LR after a short warmup, no LayerNorm, no gradient clipping, no
+# embedding renormalization. Deviations that remain: the model reads the
+# answer at the second operand (no '=' token) and the train/val split is
+# seeded per run. One "epoch" is one optimizer step when full-batch, so the
+# training budget is stated in steps, not in passes over a tiny dataset.
+NANDA_PROTOCOL: dict[str, Any] = {
+    "no_normalize_embeddings": True,
+    "no_layernorm": True,
+    "grad_clip": 0.0,
+    "beta2": 0.98,
+    "schedule": "constant",
+    "warmup_epochs": 10,
+    "full_batch": True,
+}
+
+
+def apply_protocol(args: argparse.Namespace) -> None:
+    """Overwrite `args` with the preset's values. `repo` is a no-op."""
+    if args.protocol == "nanda":
+        for key, value in NANDA_PROTOCOL.items():
+            setattr(args, key, value)
+
+
+def build_model(args: argparse.Namespace) -> OneLayerTransformer:
+    return OneLayerTransformer(
+        d_model=args.d_model,
+        d_mlp=args.d_mlp,
+        n_heads=args.n_heads,
+        modulus=args.modulus,
+        normalize_embed=not args.no_normalize_embeddings,
+        use_layernorm=not args.no_layernorm,
+    )
+
+
+class FullBatchLoader:
+    """The whole dataset as a single batch per iteration, with no per-sample
+    Python collation. Measured on CPU it changes nothing (a P=113 step is
+    compute-bound there, ~0.6-0.9 s); it matters on GPU, where a step takes
+    milliseconds and a DataLoader over 3.8k samples would dominate it."""
+
+    def __init__(self, dataset: TensorDataset) -> None:
+        self.dataset = dataset
+
+    def __iter__(self) -> Iterator[tuple[torch.Tensor, ...]]:
+        yield self.dataset.tensors
+
+    def __len__(self) -> int:
+        return 1
+
+
+def make_loaders(
+    args: argparse.Namespace, train_dataset: TensorDataset, val_dataset: TensorDataset
+) -> tuple[Any, Any]:
+    if args.full_batch:
+        return FullBatchLoader(train_dataset), FullBatchLoader(val_dataset)
+    return (
+        DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True),
+        DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False),
+    )
+
+
+def optimization_kwargs(args: argparse.Namespace) -> dict[str, Any]:
+    """train_model() keyword arguments that encode the protocol."""
+    return {
+        "schedule": args.schedule,
+        "betas": (0.9, args.beta2),
+        "grad_clip": args.grad_clip if args.grad_clip > 0 else None,
+        "warmup_epochs": args.warmup_epochs,
     }
 
 
@@ -1125,6 +1275,30 @@ def build_parser() -> argparse.ArgumentParser:
             "at the base value, testing whether the late annealing locks in "
             "the dense solution)."
         ),
+    )
+    parser.add_argument(
+        "--protocol",
+        choices=["repo", "nanda"],
+        default="repo",
+        help=(
+            "'repo' (default, unchanged) or 'nanda': the original full-batch "
+            "recipe - no LayerNorm, no embedding renorm, no grad clipping, "
+            "betas (0.9, 0.98), constant LR with 10-step warmup. Overrides the "
+            "individual flags below."
+        ),
+    )
+    parser.add_argument("--no-layernorm", action="store_true", help="Replace LayerNorm by Identity")
+    parser.add_argument(
+        "--grad-clip", type=float, default=1.0, help="Max grad norm; 0 disables clipping"
+    )
+    parser.add_argument("--beta2", type=float, default=0.999, help="AdamW beta2")
+    parser.add_argument(
+        "--warmup-epochs", type=int, default=0, help="Linear LR warmup (constant schedule only)"
+    )
+    parser.add_argument(
+        "--full-batch",
+        action="store_true",
+        help="One optimizer step per epoch on the whole train set",
     )
     parser.add_argument(
         "--progress-interval",
@@ -1191,6 +1365,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     FIGURES_DIR.mkdir(exist_ok=True)
     args = build_parser().parse_args()
+    apply_protocol(args)
 
     logging.basicConfig(
         level=logging.INFO,
@@ -1236,9 +1411,7 @@ def main() -> None:
             "(skipping plots/model-save)"
         )
         result = run_seeds(lambda s: run_single_seed(s, args), seeds)
-        probe_model = OneLayerTransformer(
-            d_model=args.d_model, d_mlp=args.d_mlp, n_heads=args.n_heads, modulus=modulus
-        )
+        probe_model = build_model(args)
         manifest = ResultsManifest.from_run(
             experiment="exp2_grokking",
             seeds=seeds,
@@ -1266,21 +1439,14 @@ def main() -> None:
         train_fraction=args.train_fraction,
         seed=args.seed,
     )
-    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
+    train_loader, val_loader = make_loaders(args, train_dataset, val_dataset)
     logger.info(
         f"Data: train={len(train_dataset)} ({args.train_fraction:.0%}), "
         f"val={len(val_dataset)} ({1 - args.train_fraction:.0%})"
     )
 
     # Model
-    model = OneLayerTransformer(
-        d_model=args.d_model,
-        d_mlp=args.d_mlp,
-        n_heads=args.n_heads,
-        modulus=modulus,
-        normalize_embed=not args.no_normalize_embeddings,
-    )
+    model = build_model(args)
     n_params = sum(p.numel() for p in model.parameters())
     logger.info(f"Model parameters: {n_params:,}")
 
@@ -1302,7 +1468,7 @@ def main() -> None:
         checkpoint_dir=args.checkpoint_dir if args.checkpoint_every > 0 else None,
         checkpoint_every=args.checkpoint_every,
         resume_from=run_resume_from,
-        schedule=args.schedule,
+        **optimization_kwargs(args),
     )
 
     # Fourier analysis
@@ -1370,12 +1536,16 @@ def main() -> None:
         f"Fourier frequencies used: {sparsity['k_99_percent']} / {modulus} "
         f"({sparsity['k_99_percent'] / modulus:.1%})"
     )
-    if sparsity["k_99_percent"] < modulus * 0.5:
-        logger.info("✓ CONFIRMED: Model uses sparse Fourier representation")
+    energy = fourier_energy_sparsity(model.embed.weight.data.detach().cpu(), modulus)
+    logger.info(
+        f"Energy metric: {energy['k_energy_90']} / {energy['n_freq']} folded frequencies hold "
+        f"90% of the embedding energy (top-5 hold {energy['frac_energy_top5']:.1%}); "
+        f"key frequencies {energy['top_frequencies'][:6]}"
+    )
+    if energy["is_sparse"]:
+        logger.info("Model uses a sparse Fourier representation (energy metric)")
     else:
-        logger.warning(
-            "Fourier representation is dense. Try increasing weight decay or training longer."
-        )
+        logger.warning("Fourier representation is dense under the energy metric.")
 
 
 if __name__ == "__main__":
