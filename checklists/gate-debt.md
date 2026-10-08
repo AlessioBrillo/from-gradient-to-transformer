@@ -6,6 +6,9 @@ updated: 2026-09-27
 
 # Gate-Debt Ledger — MP-30 through MP-36 Row Closures
 
+> **ARCHIVED 2026-10-08** ([ADR-0031](../docs/adr/0031-closure.md)). Kept as history of the MP-30 to MP-36
+> closures. Open work is tracked in GitHub Issues under the `v1.0` milestone.
+
 **Protocol**: Re-verify all MP-30–MP-36 row closures with transcripts. Each cell: LAUNCHED-with-transcript or CLOSED-with-one-reason. A claimed closure without its transcript stays open and blocks Session 8. This file's absence, if still absent, recorded with a date.
 
 **Session 1 (Initial) — 2026-08-24**: Initial audit. **Session 7**: Re-verification. **MP-78 Session 0**: Status sync from ADR-0027 adjudication.

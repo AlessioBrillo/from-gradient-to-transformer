@@ -2,7 +2,7 @@
 adr: 0027
 title: Capstone Integration & Publication — Micro-Phase 78 (Twenty-Second Continuum Ledger)
 date: 2026-09-01
-status: OPEN
+status: CLOSED (see ADR-0031)
 phase: 7
 tags: [type/ledger, phase/7, research/experiment]
 consumes: [ADR-0024]

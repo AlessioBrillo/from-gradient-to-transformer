@@ -2,7 +2,7 @@
 adr: 0023
 title: GPU Unblock and Cascade Execution — Micro-Phase 70
 date: 2026-08-21
-status: OPEN
+status: CLOSED (see ADR-0031)
 tags: [phase/7, research/experiment, plan]
 ---
 

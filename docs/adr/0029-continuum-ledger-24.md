@@ -2,7 +2,7 @@
 adr: 0029
 title: Phase Diagram First — Micro-Phase 93 (Twenty-Fourth Continuum Ledger)
 date: 2026-09-18
-status: OPEN
+status: CLOSED (see ADR-0031)
 phase: 7
 tags: [type/ledger, phase/7, research/experiment]
 consumes: [ADR-0028]

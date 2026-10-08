@@ -2,7 +2,7 @@
 adr: 0028
 title: Shakedown Then Showcase — Micro-Phase 80 (Twenty-Third Continuum Ledger)
 date: 2026-09-05
-status: OPEN
+status: CLOSED (see ADR-0031)
 phase: 7
 tags: [type/ledger, phase/7, research/experiment]
 consumes: [ADR-0027]

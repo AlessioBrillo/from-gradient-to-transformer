@@ -2,7 +2,7 @@
 adr: 0025
 title: GPU Unblock and Cascade Execution — Micro-Phase 72 (Twenty-First Continuum Ledger)
 date: 2026-08-22
-status: OPEN
+status: CLOSED (see ADR-0031)
 tags: [phase/7, research/experiment, plan]
 ---
 

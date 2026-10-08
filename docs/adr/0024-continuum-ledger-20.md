@@ -2,7 +2,7 @@
 adr: 0024
 title: Continuum Ledger — Twentieth Execution (MP-71/MP-74)
 date: 2026-08-23
-status: OPEN
+status: CLOSED (see ADR-0031)
 phase: 7
 tags: [type/ledger, phase/7, research/experiment]
 consumes: [ADR-0023]
