@@ -59,20 +59,15 @@ jobs:
         run: |
           uv run python -m src.results verify
 
-      - name: Build portfolio (copy figures, ensure structure)
-        run: |
-          # Ensure portfolio/figures exists and copy generated figures
-          mkdir -p portfolio/figures
-          # Copy figures from figures/ to portfolio/figures/ for deployment
-          cp -r figures/* portfolio/figures/ 2>/dev/null || true
-          # Verify portfolio structure
-          ls -la portfolio/
-          ls -la portfolio/projects/
+      - name: Build site (README + portfolio -> static HTML)
+        # Curated figures come from the committed portfolio/figures/; the
+        # quick-mode figures generated above are scratch and must not replace them.
+        run: uv run python scripts/build_site.py --out _site
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: portfolio
+          path: _site
 
   deploy:
     needs: build
