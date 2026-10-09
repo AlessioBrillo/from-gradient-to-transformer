@@ -2,10 +2,10 @@
 
 import re
 from collections import Counter
-from typing import List
+from typing import Dict, List, Tuple
 
 
-def _merge(ids: List[int], pair: tuple, idx: int) -> List[int]:
+def _merge(ids: List[int], pair: tuple[int, int], idx: int) -> List[int]:
     new_ids = []
     i = 0
     while i < len(ids):
@@ -30,7 +30,7 @@ class BPETokenizer:
 
     def __init__(self, vocab_size: int = 256):
         self.vocab_size = vocab_size
-        self.merges: dict[tuple, int] = {}
+        self.merges: Dict[Tuple[int, int], int] = {}
         self.vocab: dict[int, bytes] = {}
         self.pattern = r"""'(?:[sdmt]|ll|ve|re)| ?\w+| ?\S+"""
         self._special_tokens: dict[str, int] = {}
@@ -45,7 +45,7 @@ class BPETokenizer:
         return re.findall(self.pattern, text)
 
     def train(self, texts: List[str]) -> "BPETokenizer":
-        word_freqs: Counter = Counter()
+        word_freqs: Counter[str] = Counter()
         for text in texts:
             for chunk in self._get_chunks(text):
                 word_freqs[chunk] += 1
@@ -56,7 +56,7 @@ class BPETokenizer:
         splits = {word: self._bytes_to_ids(word) for word in word_freqs}
 
         for i in range(num_merges):
-            stats: Counter = Counter()
+            stats: Counter[Tuple[int, int]] = Counter()
             for word, ids in splits.items():
                 freq = word_freqs[word]
                 pairs = Counter((ids[j], ids[j + 1]) for j in range(len(ids) - 1))
