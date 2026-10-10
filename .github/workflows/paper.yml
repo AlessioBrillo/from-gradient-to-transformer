@@ -1,0 +1,32 @@
+name: Compile LaTeX Paper
+
+on:
+  push:
+    branches: [main, dev]
+    paths:
+      - 'portfolio/paper/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'portfolio/paper/**'
+  workflow_dispatch:
+
+jobs:
+  build-paper:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Compile LaTeX document
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: main.tex
+          working_directory: portfolio/paper
+          latexmk_use_lualatex: true
+
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-paper-pdf
+          path: portfolio/paper/main.pdf
