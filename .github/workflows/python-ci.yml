@@ -23,9 +23,9 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
         # Matches uv.lock's resolved interpreter (3.12.12) and
@@ -42,7 +42,7 @@ jobs:
 
       - name: Cache virtualenv
         id: cache
-        uses: actions/cache@v6
+        uses: actions/cache@v4
         with:
           path: .venv
           key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}

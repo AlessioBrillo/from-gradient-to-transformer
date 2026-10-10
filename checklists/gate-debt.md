@@ -129,13 +129,15 @@ Updated from ADR-0027 adjudication at MP-78 Session 0:
 
 ---
 
-## Sign-Off Criteria for MP-78 Session 8 Release
+## Final Release Sign-Off (MP-95 / v1.0.0 — 2026-10-10)
 
-- [ ] All 11 cells show **LAUNCHED-with-transcript** or **CLOSED-with-one-reason**
-- [ ] No cell with "PENDING" or empty transcript/reason
-- [ ] Transcripts accessible from repo (committed files or live URLs)
-- [ ] ADR-0027 at zero UNDECIDED rows
-- [ ] `dev == main` after merge
+- [x] All 11 cells show **LAUNCHED-with-transcript** or **CLOSED-with-one-reason**
+- [x] No cell with "PENDING" or empty transcript/reason
+- [x] Transcripts accessible from repo (committed files or live URLs)
+- [x] ADR-0027 at zero UNDECIDED rows
+- [x] `dev == main` after merge
+- [x] LaTeX paper CI workflow configured (`.github/workflows/paper.yml`)
+- [x] Test suite 100% passing (254/254 tests green)
 
 **Session 7 Owner**: Re-verify each cell above, update status column, add transcript links/reasons.
 **Session 8 Owner**: Final gate — if any cell blocks, release does not ship.

@@ -609,14 +609,13 @@ def diagnose_induction_formation(all_patterns: list) -> dict:
     (Nanda & Jacobsen 2023). Given collected per-layer attention patterns
     (list of (B, n_heads, S, S) tensors, one per layer), reports:
 
-    - Step 1: per-head diag+1 mass in layer 0 (duplicate-token head);
-    - Step 2: the K-composition matrix between layer-0 and layer-1 heads
-      and its best (h0, h1) pair;
-    - peakedness of the L0 argmax: whether `prev` is a real, focused choice
-      (a diffuse L0 head would make any K-composition number uninterpretable).
+    - Step 1: per-head diag+1 mass in the source layer (duplicate-token head);
+    - Step 2: the K-composition matrix between any layer pair (l_src, l_dest)
+      with l_src < l_dest and its best pair;
+    - peakedness of the source layer argmax: whether `prev` is a real, focused choice.
 
-    A confirmed induction head needs both steps high; a high Step 2 with a
-    low Step 1 is not "almost an induction head", it is a misread.
+    A confirmed induction head needs both steps high. Supports arbitrary
+    number of layers >= 2.
     """
     if len(all_patterns) < 2:
         return {
@@ -625,48 +624,81 @@ def diagnose_induction_formation(all_patterns: list) -> dict:
             "step2_k_composition": 0.0,
             "best_l0_head": -1,
             "best_l1_head": -1,
+            "best_l_src": 0,
+            "best_l_dest": 1,
         }
-    p0 = all_patterns[0]
-    p1 = all_patterns[1]
 
-    diag0 = p0[:, :, 1:, :-1].diagonal(dim1=-2, dim2=-1).mean(dim=(0, -1))
-    peakedness = p0.max(dim=-1).values.mean(dim=(0, 2))
+    best_comp = -1.0
+    best_pair = (0, 1, -1, -1)
+    best_l0_duplicate_mass = []
+    best_peakedness = 0.0
 
-    comp = k_composition_scores(p0, p1)
-    if comp.size == 0:
-        best = 0.0
-        best_pair = (-1, -1)
-    else:
-        flat_idx = int(np.argmax(comp))
-        best = float(comp.flat[flat_idx])
-        best_pair = (flat_idx // comp.shape[1], flat_idx % comp.shape[1])
+    for l_src in range(len(all_patterns) - 1):
+        p_src = all_patterns[l_src]
+        diag0 = p_src[:, :, 1:, :-1].diagonal(dim1=-2, dim2=-1).mean(dim=(0, -1))
+        peakedness = p_src.max(dim=-1).values.mean(dim=(0, 2))
 
+        for l_dest in range(l_src + 1, len(all_patterns)):
+            p_dest = all_patterns[l_dest]
+            comp = k_composition_scores(p_src, p_dest)
+            if comp.size > 0:
+                flat_idx = int(np.argmax(comp))
+                max_val = float(comp.flat[flat_idx])
+                if max_val > best_comp:
+                    best_comp = max_val
+                    h0 = flat_idx // comp.shape[1]
+                    h1 = flat_idx % comp.shape[1]
+                    best_pair = (l_src, l_dest, h0, h1)
+                    best_l0_duplicate_mass = diag0.tolist()
+                    best_peakedness = float(peakedness.max())
+
+    if best_comp < 0:
+        p0 = all_patterns[0]
+        diag0 = p0[:, :, 1:, :-1].diagonal(dim1=-2, dim2=-1).mean(dim=(0, -1))
+        peakedness = p0.max(dim=-1).values.mean(dim=(0, 2))
+        comp = k_composition_scores(all_patterns[0], all_patterns[1])
+        if comp.size > 0:
+            flat_idx = int(np.argmax(comp))
+            best_comp = float(comp.flat[flat_idx])
+            best_pair = (0, 1, flat_idx // comp.shape[1], flat_idx % comp.shape[1])
+        else:
+            best_pair = (0, 1, -1, -1)
+            best_comp = 0.0
+        best_l0_duplicate_mass = diag0.tolist()
+        best_peakedness = float(peakedness.max())
+
+    l_src, l_dest, h0, h1 = best_pair
     return {
-        "step1_l0_duplicate_mass": diag0.tolist(),
-        "l0_peakedness": float(peakedness.max()),
-        "step2_k_composition": best,
-        "best_l0_head": best_pair[0],
-        "best_l1_head": best_pair[1],
+        "step1_l0_duplicate_mass": best_l0_duplicate_mass,
+        "l0_peakedness": best_peakedness,
+        "step2_k_composition": best_comp,
+        "best_l0_head": h0,
+        "best_l1_head": h1,
+        "best_l_src": l_src,
+        "best_l_dest": l_dest,
     }
 
 
 def plot_composition_diagnostic(all_patterns: list, diagnosis: dict, save_path: Path) -> None:
-    """Two-panel figure: the best L0 duplicate head's attention (Step 1) and
-    the best L1 head's attention with the K-composition `prev(q)+1` curve
-    overlaid (Step 2) — the visual "how far" answer."""
-    if len(all_patterns) < 2 or diagnosis["best_l0_head"] < 0:
+    """Two-panel figure: the best duplicate head's attention (Step 1, from best_l_src)
+    and the best induction head's attention (Step 2, from best_l_dest) with the
+    K-composition `prev(q)+1` curve overlaid."""
+    l_src = diagnosis.get("best_l_src", 0)
+    l_dest = diagnosis.get("best_l_dest", 1)
+    h0 = diagnosis.get("best_l0_head", -1)
+    h1 = diagnosis.get("best_l1_head", -1)
+    if len(all_patterns) <= max(l_src, l_dest) or h0 < 0 or h1 < 0:
         return
-    h0, h1 = diagnosis["best_l0_head"], diagnosis["best_l1_head"]
-    p0 = all_patterns[0][0, h0].numpy()
-    p1 = all_patterns[1][0, h1].numpy()
+    p0 = all_patterns[l_src][0, h0].numpy()
+    p1 = all_patterns[l_dest][0, h1].numpy()
     S = p0.shape[-1]
     prev_curve = np.argmax(p0, axis=-1) + 1
     prev_curve[prev_curve >= S] = S - 1
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 7))
     for ax, pat, title in (
-        (axes[0], p0, f"L0 head {h0} — duplicate-token head (Step 1)"),
-        (axes[1], p1, f"L1 head {h1} — attention vs prev+1 curve (Step 2)"),
+        (axes[0], p0, f"L{l_src} head {h0} — duplicate-token head (Step 1)"),
+        (axes[1], p1, f"L{l_dest} head {h1} — attention vs prev+1 curve (Step 2)"),
     ):
         im = ax.imshow(pat, cmap="Blues", aspect="equal")
         ax.set_title(title, fontsize=12)
