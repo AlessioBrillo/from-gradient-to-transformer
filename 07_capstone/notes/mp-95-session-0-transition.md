@@ -6,7 +6,7 @@ created: 2026-10-09
 # Micro-Phase 95: Session 0 — Transition from 94
 
 ## Context
-Micro-Phase 94 concluded with a comprehensive phase diagram characterizing the "dense attractor" regime in Grokking. 
+Micro-Phase 94 concluded with a comprehensive phase diagram characterizing the "dense attractor" regime in Grokking.
 
 ## Transition
 We move from a systematic exploration of the dense attractor regime (MP-94) to a targeted scaling effort in Rung 1 (Induction Heads in a 4L/256 model) (MP-95).

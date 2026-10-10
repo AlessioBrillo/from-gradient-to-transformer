@@ -680,9 +680,9 @@ def diagnose_induction_formation(all_patterns: list) -> dict:
 
 
 def plot_composition_diagnostic(all_patterns: list, diagnosis: dict, save_path: Path) -> None:
-    """Two-panel figure: the best duplicate head's attention (Step 1, from best_l_src) and
-    the best induction head's attention (Step 2, from best_l_dest) with the K-composition `prev(q)+1` curve
-    overlaid."""
+    """Two-panel figure: the best duplicate head's attention (Step 1, from best_l_src)
+    and the best induction head's attention (Step 2, from best_l_dest) with the
+    K-composition `prev(q)+1` curve overlaid."""
     l_src = diagnosis.get("best_l_src", 0)
     l_dest = diagnosis.get("best_l_dest", 1)
     h0 = diagnosis.get("best_l0_head", -1)
