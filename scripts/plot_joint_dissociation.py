@@ -1,66 +1,141 @@
 #!/usr/bin/env python3
-"""Generate joint dissociation figure from capstone shakedown and retune A/B."""
+"""Generate the joint-dissociation figure from the committed probe manifests.
 
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import numpy as np
+The previous version of this script baked the numbers into module-level dicts,
+so the figure could not be regenerated from the manifests and silently drifted
+from them. It also drew the three retune A/B arms while the paper's caption
+described the shakedown's two-task dissociation — a caption/figure mismatch.
+
+This version reads `results/probe_capstone_*.json` and draws the dissociation
+the caption actually describes: joint training on modular addition + induction,
+where modular stays at chance while induction climbs, with both tasks' Fourier
+spectra dense. Percentages are pulled from the manifests, never retyped.
+"""
+
+import json
+import sys
 from pathlib import Path
 
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt  # noqa: E402
+
+RESULTS_DIR = Path("results")
 FIGURES_DIR = Path("figures")
-FIGURES_DIR.mkdir(exist_ok=True)
+PORTFOLIO_FIGURES_DIR = Path("portfolio/figures")
+SHAKEDOWN = "probe_capstone_shakedown"
+AB_ARMS = [
+    ("Control", "probe_capstone_ab_control"),
+    ("Vocab offset", "probe_capstone_ab_offset"),
+    ("Reweight", "probe_capstone_ab_reweight"),
+]
+CHANCE_MODULAR = 1.0 / 113  # uniform over the P=113 modular-addition classes
 
-# Data from manifests
-# Shakedown (2000 steps, d_model=256, 4L, 8H, P=113, joint)
-shakedown = {
-    "modular_acc": 0.0047,
-    "induction_acc": 0.5041,
-    "modular_k99": 98.1,
-    "induction_kcomp": 0.394,
-}
 
-# Retune A/B (500 steps from shakedown checkpoint)
-control = {"modular": 0.00615, "induction": 0.00049, "k99": 98.18, "kcomp": 0.369}
-offset = {"modular": 0.00604, "induction": 0.00050, "k99": 98.61, "kcomp": 0.173}
-reweight = {"modular": 0.00649, "induction": 0.00052, "k99": 98.11, "kcomp": 0.305}
+def load_probe(name: str) -> dict:
+    """Load a probe manifest. Fails loudly rather than plotting a stale figure."""
+    path = RESULTS_DIR / f"{name}.json"
+    if not path.exists():
+        sys.exit(f"missing manifest {path} — run make reproduce-retune first")
+    return json.loads(path.read_text(encoding="utf-8"))
 
-fig, axes = plt.subplots(1, 3, figsize=(15, 5))
 
-# Modular accuracy vs WD (we only have one WD point, so show as bar chart)
-ax = axes[0]
-arms = ["Control\n(500 steps)", "Vocab\nOffset", "Reweight"]
-modular_accs = [control["modular"], offset["modular"], reweight["modular"]]
-chance = 1/113
+def seed_metrics(manifest: dict) -> dict:
+    """Return the single seed's metrics (these probes are single-seed by design)."""
+    per_seed = manifest.get("per_seed_metrics", [])
+    if not per_seed:
+        sys.exit(f"{manifest.get('experiment', '?')}: no per-seed metrics")
+    return per_seed[0]
 
-bars = ax.bar(arms, modular_accs, color=["steelblue", "coral", "gold"], alpha=0.7, edgecolor="black")
-ax.axhline(y=chance, color="red", linestyle="--", alpha=0.5, label=f"Chance (1/113={chance:.4f})")
-ax.set_ylabel("Modular Accuracy")
-ax.set_title("Retune A/B: Modular Accuracy\n(500 steps from shakedown)")
-ax.legend()
-ax.grid(True, alpha=0.3, axis="y")
 
-# Induction accuracy
-ax = axes[1]
-induction_accs = [control["induction"], offset["induction"], reweight["induction"]]
-bars = ax.bar(arms, induction_accs, color=["steelblue", "coral", "gold"], alpha=0.7, edgecolor="black")
-ax.set_ylabel("Induction Accuracy")
-ax.set_title("Retune A/B: Induction Accuracy")
-ax.grid(True, alpha=0.3, axis="y")
+def main() -> None:
+    shakedown = seed_metrics(load_probe(SHAKEDOWN))
+    arms = [(label, seed_metrics(load_probe(name))) for label, name in AB_ARMS]
 
-# K-composition
-ax = axes[2]
-kcomps = [control["kcomp"], offset["kcomp"], reweight["kcomp"]]
-bars = ax.bar(arms, kcomps, color=["steelblue", "coral", "gold"], alpha=0.7, edgecolor="black")
-ax.set_ylabel("Max K-composition")
-ax.set_title("Retune A/B: Max K-composition\n(_vacuous - no induction batches in val)")
-ax.grid(True, alpha=0.3, axis="y")
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
 
-plt.tight_layout()
-plt.savefig(FIGURES_DIR / "joint_dissociation.png", dpi=150, bbox_inches="tight")
-plt.close()
+    # Panel 1 — the dissociation itself: modular at chance, induction learned.
+    ax = axes[0]
+    tasks = ["Modular\naddition", "Induction\n(repeated tokens)"]
+    accs = [shakedown["final_modular_acc"], shakedown["final_induction_acc"]]
+    colors = ["coral", "steelblue"]
+    ax.bar(tasks, accs, color=colors, alpha=0.7, edgecolor="black")
+    ax.axhline(
+        y=CHANCE_MODULAR,
+        color="red",
+        linestyle="--",
+        alpha=0.5,
+        label=f"Chance (1/113 = {CHANCE_MODULAR:.4f})",
+    )
+    for i, v in enumerate(accs):
+        ax.text(i, v + 0.012, f"{v:.4f}", ha="center", fontsize=9)
+    ax.set_ylabel("Accuracy")
+    ax.set_title("Joint training dissociation\n(shakedown, 2000 steps)")
+    ax.set_ylim(0, 0.65)
+    ax.legend(loc="upper left")
+    ax.grid(True, alpha=0.3, axis="y")
 
-# Also copy to portfolio
-import shutil
-shutil.copy(FIGURES_DIR / "joint_dissociation.png", Path("portfolio/figures/joint_dissociation.png"))
+    # Panel 2 — both tasks end up with a DENSE Fourier spectrum (k99 / P).
+    ax = axes[1]
+    k99 = shakedown["final_k_99"]
+    ax.bar(
+        tasks,
+        [k99 / 113.0, k99 / 113.0],
+        color=colors,
+        alpha=0.7,
+        edgecolor="black",
+    )
+    ax.axhline(y=0.5, color="red", linestyle="--", alpha=0.5, label="Sparsity cutoff (P/2)")
+    ax.text(
+        0.5,
+        0.92,
+        f"k\u2089\u2089 = {k99:.1f} of P=113\n({k99 / 113.0:.0%} of frequencies)",
+        ha="center",
+        transform=ax.transAxes,
+        fontsize=9,
+    )
+    ax.set_ylabel("k\u2089\u2089 / P")
+    ax.set_title("Fourier sparsity: dense in both tasks\n(sparse would need < 0.5)")
+    ax.set_ylim(0, 1.0)
+    ax.legend(loc="lower right")
+    ax.grid(True, alpha=0.3, axis="y")
 
-print("Saved joint_dissociation.png")
+    # Panel 3 — the retune A/B that tried and failed to rescue modular.
+    ax = axes[2]
+    labels = [label for label, _ in arms]
+    mod_accs = [m["final_modular_acc"] for _, m in arms]
+    ind_accs = [m["final_induction_acc"] for _, m in arms]
+    x = range(len(labels))
+    width = 0.38
+    lefts = [i - width / 2 for i in x]
+    rights = [i + width / 2 for i in x]
+    ax.bar(
+        lefts, mod_accs, width, label="Modular", color="coral", alpha=0.7, edgecolor="black"
+    )
+    ax.bar(
+        rights, ind_accs, width, label="Induction", color="steelblue", alpha=0.7, edgecolor="black"
+    )
+    ax.axhline(y=CHANCE_MODULAR, color="red", linestyle="--", alpha=0.5, label="Chance")
+    ax.set_xticks(list(x))
+    ax.set_xticklabels(labels, fontsize=9)
+    ax.set_ylabel("Accuracy")
+    ax.set_title("Retune A/B (500 steps):\nno arm lifts modular off chance")
+    ax.legend(fontsize=8)
+    ax.grid(True, alpha=0.3, axis="y")
+
+    plt.tight_layout()
+
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+    PORTFOLIO_FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+    out = FIGURES_DIR / "joint_dissociation.png"
+    plt.savefig(out, dpi=150, bbox_inches="tight")
+    # The paper and RESULTS.md cite the tracked copy, so keep it in sync.
+    tracked = PORTFOLIO_FIGURES_DIR / out.name
+    tracked.write_bytes(out.read_bytes())
+    plt.close()
+    print(f"Saved {out} and {tracked} (from committed manifests)")
+
+
+if __name__ == "__main__":
+    main()

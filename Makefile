@@ -4,6 +4,7 @@
 	reproduce-multiseed verify-claims clean paper figures vault-check \
 	reproduce-grokking-probe reproduce-induction-standard reproduce-induction-1layer \
 	reproduce-exp3-geometry commitlint-head \
+	neuron-ablation \
 	reproduce-retune reproduce-retune-control reproduce-retune-offset reproduce-retune-reweight
 
 # --- Shell ---
@@ -114,6 +115,21 @@ commitlint-head:
 # reproduce-quick for a fast smoke pass.
 reproduce: reproduce-induction reproduce-grokking reproduce-superposition reproduce-patching reproduce-sae
 	@echo "Done. See figures/ and portfolio/RESULTS.md"
+
+# Rung 2 neuron-ablation characterization (dense-solution evidence). This lives
+# in src/experiments/neuron_ablation.py, which is unit-tested and reuses exp2's
+# data/model builders.
+#
+# A second, standalone scripts/neuron_ablation.py used to duplicate this. It was
+# deleted on 2026-10-11: it called make_modular_addition_data(P=...) (wrong
+# kwarg), treated model(x) as logits when forward() returns a tuple, ablated
+# W_out rows instead of neurons, called an undefined fourier_ablation, and looked
+# for checkpoints that this repo never writes. Nothing referenced it except twelve
+# historical micro-phase roadmaps promising figures/exp2_neuron_ablation.png —
+# which this target is what actually produces.
+neuron-ablation:
+	@echo "=== Rung 2: neuron vs Fourier ablation on dense grokking checkpoints ==="
+	uv run python -m src.experiments.neuron_ablation --checkpoints-dir figures --output-dir figures
 
 reproduce-quick:
 	@echo "=== Smoke-testing all rungs in --quick mode ==="

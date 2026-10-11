@@ -210,9 +210,11 @@ class TestDecoderOnlyTransformer:
             seq = prompt.clone()
             for _ in range(n_new):
                 logits, _ = model(seq)
-                seq = torch.cat([seq, logits[:, -1].argmax(dim=-1, keepdim=True)], dim=1)
+                next_tok = logits[:, -1].argmax(dim=-1, keepdim=True)
+                seq = torch.cat([seq, next_tok], dim=1)
 
-        assert torch.equal(gen, seq), f"generate() diverged from the greedy walk: {gen.tolist()} vs {seq.tolist()}"
+        msg = f"generate() diverged: {gen.tolist()} vs {seq.tolist()}"
+        assert torch.equal(gen, seq), msg
 
     def test_rope_position_advances_with_cache(self) -> None:
         """RoPE must see the true absolute position during incremental decoding.

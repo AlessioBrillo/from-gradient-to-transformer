@@ -35,15 +35,19 @@ def main():
     parser.add_argument("--repo-url", default="https://github.com/AlessioBrillo/from-gradient-to-transformer.git",
                         help="Repository URL to clone")
     parser.add_argument("--branch", default="dev", help="Branch to clone")
-    parser.add_argument("--output", type=Path, default=Path("06_production_ai/proofs/reproducible-from-clean-clone.md"),
-                        help="Output transcript file")
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path("06_production_ai/proofs/reproducible-from-clean-clone.md"),
+        help="Output transcript file",
+    )
     args = parser.parse_args()
 
     output_path = args.output
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(output_path, "w") as log_file:
-        print(f"# Clean-Clone Reproducibility Proof Transcript", file=log_file)
+        print("# Clean-Clone Reproducibility Proof Transcript", file=log_file)
         print(f"**Date**: {time.strftime('%Y-%m-%d %H:%M:%S')}", file=log_file)
         print(f"**Repo**: {args.repo_url} (branch: {args.branch})", file=log_file)
         print(f"**Host**: {__import__('platform').node()}", file=log_file)
@@ -59,8 +63,18 @@ def main():
             print("## Step 1: Fresh Clone", file=log_file)
             print("```bash", file=log_file)
             rc, out, err = run_cmd(
-                ["git", "clone", "--branch", args.branch, "--depth", "1", args.repo_url, str(clone_dir)],
-                Path(tmpdir), log_file
+                [
+                    "git",
+                    "clone",
+                    "--branch",
+                    args.branch,
+                    "--depth",
+                    "1",
+                    args.repo_url,
+                    str(clone_dir),
+                ],
+                Path(tmpdir),
+                log_file,
             )
             print("```", file=log_file)
             if rc != 0:
