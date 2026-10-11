@@ -138,7 +138,16 @@ reproduce-quick:
 	uv run python -m src.experiments.exp3_superposition --quick
 	uv run python -m src.experiments.exp4_circuit_patching --quick
 	uv run python -m src.experiments.exp5_sae_dashboard --quick
+	uv run python -m src.experiments.exp6_capstone --quick
 	@echo "Done."
+
+# The teaching artifact runs itself end to end from a fresh clone: it trains
+# its own tiny joint model on CPU, so it depends on no checkpoint. Executed by
+# tests/test_teaching_artifact.py on every CI run — a notebook that CI never
+# executes is a notebook that rots, which is what happened to v22.
+reproduce-notebook:
+	@echo "=== Executing the capstone teaching artifact ==="
+	uv run pytest tests/test_teaching_artifact.py -v
 
 reproduce-grokking:
 	@echo "=== Rung 2: Grokking modular addition (FLAGSHIP) ==="

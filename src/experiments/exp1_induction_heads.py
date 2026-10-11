@@ -274,6 +274,45 @@ def evaluate(model: nn.Module, loader: DataLoader) -> tuple[float, float]:
 # with exp2); see its docstring for the RNG continuity contract.
 
 
+def _attention_patterns(model: nn.Module, x: torch.Tensor) -> Optional[list[torch.Tensor]]:
+    """Per-layer attention probabilities, for either model protocol in this repo.
+
+    `AttentionOnlyTransformer` (exp1's own class) takes `record_attn=True` and
+    returns `(logits, [probs_per_layer])`. The shared
+    `DecoderOnlyTransformer` takes `return_cache=True` and returns
+    `(logits, cache)` with the same tensors under
+    `blocks.{i}.attn.attn_probs`.
+
+    Both helpers below used to call `model(x, record_attn=True)` directly,
+    which raises `TypeError: unexpected keyword argument 'record_attn'` on the
+    shared model — latent until the teaching artifact tried to run the exp1
+    detector against a capstone checkpoint, which is the whole point of the
+    Rung 1 -> 4 -> 5 cascade.
+    """
+    model.eval()
+    if hasattr(model, "blocks"):
+        try:
+            _, cache = model(x, return_cache=True)
+        except TypeError:
+            return None
+        if cache is None:
+            return None
+        n_layers = len(model.blocks)
+        out = []
+        for i in range(n_layers):
+            key = f"blocks.{i}.attn.attn_probs"
+            if key not in cache:
+                return None
+            out.append(cache[key])
+        return out
+
+    if hasattr(model, "forward") and "record_attn" in model.forward.__code__.co_varnames:
+        _, attn_records = model(x, record_attn=True)
+        return attn_records
+
+    return None
+
+
 def compute_attention_entropy(model: nn.Module, loader: DataLoader) -> dict:
     """Compute per-layer attention entropy and diagonal+1 mass.
 
@@ -300,7 +339,7 @@ def compute_attention_entropy(model: nn.Module, loader: DataLoader) -> dict:
     with torch.no_grad():
         for x, _ in loader:
             x = x.to(DEVICE)
-            _, attn_records = model(x, record_attn=True)
+            attn_records = _attention_patterns(model, x)
             if attn_records is None:
                 break
             for l, probs in enumerate(attn_records):
@@ -527,7 +566,7 @@ def analyze_induction_heads(model: nn.Module, loader: DataLoader) -> tuple[list,
     with torch.no_grad():
         for x, _ in loader:
             x = x.to(DEVICE)
-            _, attn_records = model(x, record_attn=True)
+            attn_records = _attention_patterns(model, x)
             if attn_records is not None:
                 for layer_idx, pattern in enumerate(attn_records):
                     per_layer_patterns[layer_idx].append(pattern.cpu())

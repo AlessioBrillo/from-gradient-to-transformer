@@ -46,6 +46,12 @@ dev = [
     "ruff>=0.4",
     "mypy>=1.10",
     "markdown>=3.5",
+    # Executes notebooks/capstone_teaching_artifact_v23.ipynb from CI. Without
+    # it a teaching artifact can only be validated by hand, which is how the
+    # previous version rotted until all five of its code cells called APIs
+    # that no longer existed.
+    "nbclient>=0.10",
+    "nbformat>=5.10",
 ]
 notebook = [
     "jupyter>=1.0",

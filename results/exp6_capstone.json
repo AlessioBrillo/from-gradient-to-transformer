@@ -53,7 +53,7 @@
       1,
       2
     ],
-    "checkpoint_every": 1000,
+    "checkpoint_every": 50,
     "wandb_project": "from-gradient-to-transformer-capstone",
     "wandb_entity": null,
     "wandb_tags": [
@@ -72,27 +72,41 @@
   "per_seed_metrics": [
     {
       "final_modular_acc": 0.0,
-      "final_induction_acc": 0.004032258064516129,
-      "final_k_90": 10.65625,
-      "final_k_99": 15.296875,
-      "final_max_kcomp": 0.0,
+      "final_induction_acc": 0.003780241935483871,
+      "final_k_90": 10.671875,
+      "final_k_99": 15.3125,
+      "final_max_kcomp": 0.07630802690982819,
       "total_steps": 100,
       "model_params": 134848
     }
   ],
   "aggregate": {
-    "final_induction_acc": {
-      "mean": 0.004032258064516129,
+    "model_params": {
+      "mean": 134848.0,
       "std": 0.0,
-      "min": 0.004032258064516129,
-      "max": 0.004032258064516129,
+      "min": 134848.0,
+      "max": 134848.0,
       "n": 1.0
     },
-    "total_steps": {
-      "mean": 100.0,
+    "final_induction_acc": {
+      "mean": 0.003780241935483871,
       "std": 0.0,
-      "min": 100.0,
-      "max": 100.0,
+      "min": 0.003780241935483871,
+      "max": 0.003780241935483871,
+      "n": 1.0
+    },
+    "final_k_90": {
+      "mean": 10.671875,
+      "std": 0.0,
+      "min": 10.671875,
+      "max": 10.671875,
+      "n": 1.0
+    },
+    "final_k_99": {
+      "mean": 15.3125,
+      "std": 0.0,
+      "min": 15.3125,
+      "max": 15.3125,
       "n": 1.0
     },
     "final_modular_acc": {
@@ -102,44 +116,30 @@
       "max": 0.0,
       "n": 1.0
     },
-    "final_k_90": {
-      "mean": 10.65625,
+    "total_steps": {
+      "mean": 100.0,
       "std": 0.0,
-      "min": 10.65625,
-      "max": 10.65625,
-      "n": 1.0
-    },
-    "model_params": {
-      "mean": 134848.0,
-      "std": 0.0,
-      "min": 134848.0,
-      "max": 134848.0,
+      "min": 100.0,
+      "max": 100.0,
       "n": 1.0
     },
     "final_max_kcomp": {
-      "mean": 0.0,
+      "mean": 0.07630802690982819,
       "std": 0.0,
-      "min": 0.0,
-      "max": 0.0,
-      "n": 1.0
-    },
-    "final_k_99": {
-      "mean": 15.296875,
-      "std": 0.0,
-      "min": 15.296875,
-      "max": 15.296875,
+      "min": 0.07630802690982819,
+      "max": 0.07630802690982819,
       "n": 1.0
     }
   },
-  "wall_clock_seconds": 6.31278823699995,
-  "git_sha": "c9f9df1",
-  "git_dirty": false,
+  "wall_clock_seconds": 8.9111230999697,
+  "git_sha": "28f8310",
+  "git_dirty": true,
   "device": "cpu",
-  "torch_version": "2.12.1+cu130",
+  "torch_version": "2.12.1+cpu",
   "numpy_version": "2.5.0",
-  "python_version": "3.12.12",
+  "python_version": "3.14.7",
   "n_parameters": 134848,
-  "created_at": "2026-09-04T08:40:06+00:00",
+  "created_at": "2026-10-11T19:20:47+00:00",
   "notes": null,
   "neuron_ablation": null
 }

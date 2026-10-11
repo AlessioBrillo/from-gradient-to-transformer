@@ -806,6 +806,8 @@ dependencies = [
 dev = [
     { name = "markdown" },
     { name = "mypy" },
+    { name = "nbclient" },
+    { name = "nbformat" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
@@ -822,6 +824,8 @@ requires-dist = [
     { name = "markdown", marker = "extra == 'dev'", specifier = ">=3.5" },
     { name = "matplotlib", specifier = ">=3.8" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
+    { name = "nbclient", marker = "extra == 'dev'", specifier = ">=0.10" },
+    { name = "nbformat", marker = "extra == 'dev'", specifier = ">=5.10" },
     { name = "numpy", specifier = ">=1.26" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
