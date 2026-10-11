@@ -17,6 +17,8 @@ Contract pinned here: both cases log a WARNING containing "RESUME" and
 import logging
 from pathlib import Path
 
+import pytest
+
 from src.experiments.exp6_capstone import train_single_seed
 
 
@@ -59,6 +61,33 @@ def _tiny_cfg(steps: int = 4) -> dict:
         # established tests/test_exp6_capstone.py pattern).
         "checkpoint_every": 2,
     }
+
+
+def test_checkpoint_every_zero_is_a_noop_not_a_crash(tmp_path: Path) -> None:
+    """checkpoint_every: 0 must disable checkpointing, not divide by zero.
+
+    The training loop evaluates `step % cfg["checkpoint_every"]`
+    unconditionally, so a config with `checkpoint_every: 0` — or a caller that
+    reuses a zero to mean "never" — raised ZeroDivisionError on step 0, after
+    the model and data were already built. Zero is the natural Python sentinel
+    for "no period", so honour it: skip checkpointing entirely and say so once.
+    """
+    cfg = _tiny_cfg()
+    cfg["checkpoint_every"] = 0
+
+    metrics = train_single_seed(cfg, seed=0, checkpoint_dir=tmp_path)
+
+    assert isinstance(metrics, dict)
+    assert list(tmp_path.glob("*.pt")) == [], "no checkpoint should be written"
+
+
+def test_checkpoint_every_negative_is_rejected(tmp_path: Path) -> None:
+    """A negative checkpoint period is a config error, not a silent skip."""
+    cfg = _tiny_cfg()
+    cfg["checkpoint_every"] = -1
+
+    with pytest.raises(ValueError, match="checkpoint_every"):
+        train_single_seed(cfg, seed=0, checkpoint_dir=tmp_path)
 
 
 def test_resume_without_checkpoint_dir_warns_and_starts_fresh(

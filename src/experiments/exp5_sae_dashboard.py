@@ -2,17 +2,25 @@
 """Rung 5 — Sparse autoencoder feature dashboard.
 
 Trains an SAE on activations from a small transformer's residual stream.
-Evaluates feature interpretability via sparsity/reconstruction tradeoff,
-dead feature analysis, and builds a browsable feature dashboard.
+Evaluates feature interpretability via sparsity/reconstruction tradeoff and
+dead feature analysis.
 
 Usage:
     python -m src.experiments.exp5_sae_dashboard --seed 42
+    # real activations instead of synthetic:
+    python -m src.experiments.exp5_sae_dashboard --activations-from <ckpt.pt> \
+        --source-d-model 32 --seeds 0,1,2
 
 Output:
     - figures/exp5_sparsity_tradeoff.png
     - figures/exp5_feature_histogram.png
-    - Console: SAE metrics (L0, loss recovered, dead feature rate)
-    - (optional) Interactive feature dashboard via sae-vis
+    - results/exp5_sae_dashboard.json (manifest)
+    - Console: SAE metrics (L0, FVE, dead/never-fires rates)
+
+The docstring used to promise an "interactive feature dashboard via sae-vis"
+and advise SAELens; both were dropped as dead dependencies on 2026-08-01
+(see pyproject.toml) and neither was ever implemented here. What this module
+produces is the analysis plus the figures above.
 """
 
 import argparse
@@ -553,6 +561,15 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         "l0_sparsity": feature_analysis["l0_sparsity"],
         "dead_rate": feature_analysis["dead_rate"],
         "never_fires_rate": feature_analysis["never_fires_rate"],
+        # Reported by the seed that actually built the SAE. main() used to build
+        # a throwaway SparseAutoencoder(args.d_model, args.n_features) purely to
+        # call count_parameters on it — and with --activations-from the real
+        # dimension comes from the source checkpoint, not from --d-model, so
+        # that probe reported the parameter count of an SAE that was never
+        # trained. The multi-seed manifest then carried a number that described
+        # a different model than the one that produced the metrics.
+        "n_parameters": count_parameters(sae),
+        "d_model": float(d_model),
     }
 
 
@@ -676,9 +693,12 @@ def main() -> None:
             f"(activations_from={args.activations_from}, skipping plots)"
         )
         result = run_seeds(lambda s: run_single_seed(s, args), seeds)
-        probe_model = SparseAutoencoder(
-            d_model=args.d_model, n_features=args.n_features
-        )
+        # Parameter count comes from the seeds themselves (see run_single_seed),
+        # not from a throwaway probe: with --activations-from the real d_model is
+        # the source checkpoint's, not --d-model.
+        probe_params = [
+            m.get("n_parameters") for m in result.per_seed.values() if "n_parameters" in m
+        ]
         manifest = ResultsManifest.from_run(
             experiment="exp5_sae_dashboard",
             seeds=seeds,
@@ -687,7 +707,7 @@ def main() -> None:
             aggregate=result.aggregate,
             wall_clock_seconds=result.wall_clock_seconds,
             device=str(DEVICE),
-            n_parameters=count_parameters(probe_model),
+            n_parameters=int(probe_params[0]) if probe_params else None,
         )
         manifest_path = Path("results") / "exp5_sae_dashboard.json"
         manifest.save(manifest_path)
@@ -786,16 +806,24 @@ def main() -> None:
     )
 
     # Interpret results
+    # Interpret results. These are independent diagnostics, not an if/elif/else
+    # chain: with the old `elif`, a good-FVE SAE that also had a high dead rate
+    # was reported only as a failure and its variance capture was never stated
+    # — and the "Next steps" shopping list below fired even for a perfectly
+    # good SAE.
     if feature_analysis["dead_rate"] > 0.5:
         logger.warning(
             f"High dead feature rate ({feature_analysis['dead_rate']:.1%}). "
             "Try: lower l1_coeff, larger batch size, or BatchTopK variant."
         )
-    elif reconstruction["fve"] > 0.9:
-        logger.info("✓ SAE captures >90% of activation variance.")
+    else:
+        logger.info(f"✓ Dead feature rate healthy ({feature_analysis['dead_rate']:.1%}).")
+
+    if reconstruction["fve"] > 0.9:
+        logger.info(f"✓ SAE captures {reconstruction['fve']:.1%} of activation variance.")
     else:
         logger.info(
-            f"SAE captures {reconstruction['fve']:.1%} of variance. "
+            f"SAE captures only {reconstruction['fve']:.1%} of variance. "
             "Try increasing n_features or training longer."
         )
 
@@ -803,11 +831,10 @@ def main() -> None:
         logger.info("✓ SAE achieves good sparsity (L0 < 10% of dict size).")
 
     logger.info("")
-    logger.info("Next steps for a production-quality feature dashboard:")
-    logger.info("  1. Use SAELens for integrated training + visualization")
-    logger.info("  2. Train on real transformer activations (not synthetic)")
-    logger.info("  3. Generate top-activating examples per feature")
-    logger.info("  4. Deploy interactive dashboard via sae-vis + HF Spaces")
+    logger.info(
+        "Next steps for a production-quality dashboard live in "
+        "portfolio/RESULTS.md (Rung 5) and the v1.0 milestone, not in the run log."
+    )
 
 
 if __name__ == "__main__":
