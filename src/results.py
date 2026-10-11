@@ -173,6 +173,35 @@ class ResultsManifest:
         return cls(**data)
 
 
+def resolve_manifest_path(
+    experiment: str,
+    default: Path,
+    override: str | None = None,
+    quick: bool = False,
+) -> Path:
+    """Where a run's manifest goes, so a smoke run can never pass for the record.
+
+    `--quick` is a reduced config for fast iteration, not the canonical run.
+    Six experiment `main()`s wrote straight to
+    `results/<experiment>.json` regardless of mode, so
+    `python -m src.experiments.exp6_capstone --quick` silently overwrote the
+    tracked manifest for the canonical run — replacing its git sha, device,
+    torch and python versions with the smoke run's, while
+    `portfolio/RESULTS.md` still cited that file as the record. This is
+    precisely the "documentation ahead of its evidence" failure the manifest
+    system exists to prevent, arriving from the other direction.
+
+    Quick runs therefore land in `results/probe_<experiment>_quick.json`, which
+    is untracked-by-convention scratch. An explicit `--manifest-path` always
+    wins: the retune A/B arms already use it deliberately.
+    """
+    if override:
+        return Path(override)
+    if quick:
+        return Path("results") / f"probe_{experiment}_quick.json"
+    return default
+
+
 def _is_json_safe(value: Any) -> bool:
     return isinstance(value, (str, int, float, bool, type(None), list, dict))
 

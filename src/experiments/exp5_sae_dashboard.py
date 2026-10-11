@@ -36,7 +36,7 @@ from tqdm import tqdm
 
 from src.experiments.runner import parse_seeds, run_seeds
 from src.reproducibility import set_seed
-from src.results import ResultsManifest, count_parameters
+from src.results import ResultsManifest, count_parameters, resolve_manifest_path
 
 logger = logging.getLogger(__name__)
 
@@ -709,7 +709,12 @@ def main() -> None:
             device=str(DEVICE),
             n_parameters=int(probe_params[0]) if probe_params else None,
         )
-        manifest_path = Path("results") / "exp5_sae_dashboard.json"
+        manifest_path = resolve_manifest_path(
+            "exp5_sae_dashboard",
+            Path("results") / "exp5_sae_dashboard.json",
+            args.manifest_path,
+            args.quick,
+        )
         manifest.save(manifest_path)
         logger.info(f"Saved multi-seed manifest to {manifest_path}")
         for key in result.aggregate:

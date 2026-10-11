@@ -971,15 +971,24 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def resolve_manifest_path(manifest_override: str | None, cfg: dict) -> Path:
+def resolve_manifest_path(manifest_override: str | None, cfg: dict, quick: bool = False) -> Path:
     """Resolve the manifest path without touching the flagship by accident.
 
     Shakedowns and probes MUST pass --manifest-path; the flagship path is
     only used when the override is None. Extracted so the contract is
     unit-testable without running training.
+
+    `--quick` is a reduced config, not the canonical run, so it lands in
+    `results/probe_exp6_capstone_quick.json` instead. This mirrors
+    `src.results.resolve_manifest_path`, which exists because a `--quick` run
+    once overwrote `results/exp6_capstone.json` in place and replaced the
+    tracked run's git sha, device and interpreter versions with its own while
+    RESULTS.md still cited that file as the record.
     """
     if manifest_override:
         return Path(manifest_override)
+    if quick:
+        return RESULTS_DIR / "probe_exp6_capstone_quick.json"
     return RESULTS_DIR / cfg["output"]["manifest_name"]
 
 
@@ -1078,7 +1087,7 @@ def main() -> None:
         device=str(DEVICE),
         n_parameters=aggregate.per_seed[0].get("model_params") if aggregate.per_seed else None,
     )
-    manifest_path = resolve_manifest_path(args.manifest_path, cfg)
+    manifest_path = resolve_manifest_path(args.manifest_path, cfg, quick=args.quick)
     manifest.save(manifest_path)
     logger.info(f"Saved manifest to {manifest_path}")
 
