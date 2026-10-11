@@ -124,19 +124,29 @@ class Attention(nn.Module):
         B, S, D = x.shape
 
         Q = self.W_Q(x).view(B, S, self.n_heads, self.d_head).transpose(1, 2)
-        K = self.W_K(x).view(B, S, self.n_heads, self.d_head).transpose(1, 2)
-        V = self.W_V(x).view(B, S, self.n_heads, self.d_head).transpose(1, 2)
+        K_this_step = self.W_K(x).view(B, S, self.n_heads, self.d_head).transpose(1, 2)
+        V_this_step = self.W_V(x).view(B, S, self.n_heads, self.d_head).transpose(1, 2)
 
         Q = self.rope(Q, position_ids)
-        K = self.rope(K, position_ids)
+        K_this_step = self.rope(K_this_step, position_ids)
 
         if past_kv is not None:
             past_K, past_V = past_kv
-            K = torch.cat([past_K, K], dim=2)
-            V = torch.cat([past_V, V], dim=2)
+            K = torch.cat([past_K, K_this_step], dim=2)
+            V = torch.cat([past_V, V_this_step], dim=2)
+        else:
+            K, V = K_this_step, V_this_step
 
         attn_scores = Q @ K.transpose(-2, -1) / (self.d_head**0.5)
-        attn_scores = attn_scores + self.causal_mask[:, :, :S, : K.size(2)]
+        # The causal mask must be sliced at the query's absolute position, not
+        # at row 0. With a KV cache the query is a single token at absolute
+        # position `offset`, so slicing `[:, :, :S, :]` would take row 0 and let
+        # the decoded token attend only to position 0 — silently collapsing
+        # generation to a function of the first token. `position_ids` starts at
+        # the cached length (see DecoderOnlyTransformer.forward), so its first
+        # entry *is* the offset.
+        offset = int(position_ids[0, 0].item()) if position_ids.numel() else 0
+        attn_scores = attn_scores + self.causal_mask[:, :, offset : offset + S, : K.size(2)]
         attn_probs = attn_scores.softmax(dim=-1)
         attn_probs = self.dropout(attn_probs)
 
@@ -151,8 +161,16 @@ class Attention(nn.Module):
 
         if cache is not None:
             cache[f"{cache_prefix}.Q"] = Q.detach().cpu()
+            # `.K`/`.V` are the FULL sequence (past + this step), which is what
+            # circuit analysis wants. They are therefore useless for growing a
+            # KV cache: concatenating past + cache[".K"] would double the cache
+            # every step, which is exactly what the old generate() did. The
+            # pre-concatenation tensors for this step alone live in `.K_new` /
+            # `.V_new`; those are what `_extend_past_kv` consumes.
             cache[f"{cache_prefix}.K"] = K.detach().cpu()
             cache[f"{cache_prefix}.V"] = V.detach().cpu()
+            cache[f"{cache_prefix}.K_new"] = K_this_step.detach().cpu()
+            cache[f"{cache_prefix}.V_new"] = V_this_step.detach().cpu()
             cache[f"{cache_prefix}.attn_probs"] = attn_probs.detach().cpu()
             cache[f"{cache_prefix}.attn_out"] = attn_out.detach().cpu()
 
@@ -302,7 +320,22 @@ class DecoderOnlyTransformer(nn.Module):
         B, S = x.shape
         device = x.device
 
-        position_ids = torch.arange(S, device=device).unsqueeze(0).expand(B, -1)
+        # RoPE position offset. During incremental (KV-cached) decoding `x`
+        # holds only the newest token, so S == 1 and a bare `arange(S)` would
+        # rotary-encode every decoded token at position 0 — destroying the
+        # relative-position property that RoPE exists for, and making the
+        # cached path silently disagree with the full forward pass. Continue
+        # from the length already in the cache instead.
+        past_len = 0
+        if past_kv is not None:
+            for layer_kv in past_kv:
+                if layer_kv is not None:
+                    past_len = layer_kv[0].size(2)
+                    break
+
+        position_ids = (
+            torch.arange(past_len, past_len + S, device=device).unsqueeze(0).expand(B, -1)
+        )
 
         h = self.embed(x)
 
@@ -330,6 +363,44 @@ class DecoderOnlyTransformer(nn.Module):
 
         return logits, cache
 
+    @staticmethod
+    def _extend_past_kv(
+        past_kv: list[Optional[tuple[torch.Tensor, torch.Tensor]]],
+        cache: Optional[dict],
+        device: torch.device,
+    ) -> list[Optional[tuple[torch.Tensor, torch.Tensor]]]:
+        """Merge the newest token's K/V out of the hook cache into `past_kv`.
+
+        `forward(return_cache=True)` puts this step's K and V in
+        `blocks.{i}.attn.K_new` / `.V_new` — the *pre-concatenation* tensors for
+        this step alone. `blocks.{i}.attn.K` / `.V` hold the full sequence
+        (past + this step) for circuit analysis, and must not be used here:
+        concatenating them onto `past_kv` double-counts the cached prefix.
+
+        The cache is on CPU (it is a diagnostic artifact), so it is moved back
+        onto `device` before being concatenated.
+        """
+        if cache is None:
+            return past_kv
+        new_past: list[Optional[tuple[torch.Tensor, torch.Tensor]]] = []
+        for i, existing in enumerate(past_kv):
+            prefix = f"blocks.{i}.attn"
+            if f"{prefix}.K_new" not in cache:
+                new_past.append(existing)
+                continue
+            new_k = cache[f"{prefix}.K_new"].to(device)
+            new_v = cache[f"{prefix}.V_new"].to(device)
+            if existing is not None:
+                new_past.append(
+                    (
+                        torch.cat([existing[0], new_k], dim=2),
+                        torch.cat([existing[1], new_v], dim=2),
+                    )
+                )
+            else:
+                new_past.append((new_k, new_v))
+        return new_past
+
     @torch.no_grad()
     def generate(
         self,
@@ -338,42 +409,52 @@ class DecoderOnlyTransformer(nn.Module):
         temperature: float = 1.0,
         top_k: Optional[int] = None,
     ) -> torch.Tensor:
+        """Autoregressive generation with a KV cache.
+
+        The prompt is prefilled in one forward pass, then each new token is
+        decoded with a single-token forward against the cache. This matches a
+        full forward pass over the growing sequence, token for token — see
+        `TestDecoderOnlyTransformer.test_kv_cache_semantics` and
+        `test_generate_sees_the_whole_prompt`, which both failed against the
+        previous implementation.
+        """
         self.eval()
         generated = input_ids.clone()
+        out = []
+        # Allocated up front so the single-token-prompt path (which never
+        # prefills) has a well-defined cache to attend against.
         past_kv: list[Optional[tuple[torch.Tensor, torch.Tensor]]] = [None] * self.n_layers
 
-        for _ in range(max_new_tokens):
-            if generated.size(1) > self.max_seq_len:
-                generated = generated[:, -self.max_seq_len :]
-
-            logits, cache = self(generated[:, -1:], past_kv=past_kv, return_cache=True)
-
-            if cache is not None:
-                for i in range(self.n_layers):
-                    prefix = f"blocks.{i}.attn"
-                    if f"{prefix}.K" in cache and f"{prefix}.V" in cache:
-                        new_k = cache[f"{prefix}.K"]
-                        new_v = cache[f"{prefix}.V"]
-                        if past_kv[i] is not None:
-                            past_k = past_kv[i][0]
-                            past_v = past_kv[i][1]
-                            past_k = torch.cat([past_k, new_k.to(past_k.device)], dim=2)
-                            past_v = torch.cat([past_v, new_v.to(past_v.device)], dim=2)
-                            past_kv[i] = (past_k, past_v)
-                        else:
-                            past_kv[i] = (
-                                new_k.to(device=generated.device),
-                                new_v.to(device=generated.device),
-                            )
-
+        def sample_from(logits: torch.Tensor) -> torch.Tensor:
             next_token_logits = logits[:, -1, :] / temperature
-
             if top_k is not None:
                 top_k_values, _ = torch.topk(next_token_logits, top_k, dim=-1)
                 next_token_logits[next_token_logits < top_k_values[:, -1:]] = float("-inf")
-
             probs = torch.softmax(next_token_logits, dim=-1)
-            next_token = torch.multinomial(probs, num_samples=1)
+            return torch.multinomial(probs, num_samples=1)
+
+        for _ in range(max_new_tokens):
+            # Keep the context window bounded. Truncating invalidates the
+            # cache, so drop it and re-prefill from the truncated prefix.
+            if generated.size(1) > self.max_seq_len:
+                generated = generated[:, -self.max_seq_len :]
+                past_kv: list[Optional[tuple[torch.Tensor, torch.Tensor]]] = [None] * self.n_layers
+                logits, cache = self(generated, return_cache=True)
+                past_kv = self._extend_past_kv(past_kv, cache, generated.device)
+            else:
+                # Prefill on the first step; a pure single-token step afterwards.
+                if not out and generated.size(1) > 1:
+                    past_kv = [None] * self.n_layers
+                    logits, cache = self(generated, return_cache=True)
+                    past_kv = self._extend_past_kv(past_kv, cache, generated.device)
+                else:
+                    logits, cache = self(
+                        generated[:, -1:], past_kv=past_kv, return_cache=True
+                    )
+                    past_kv = self._extend_past_kv(past_kv, cache, generated.device)
+
+            next_token = sample_from(logits)
+            out.append(next_token)
             generated = torch.cat([generated, next_token], dim=-1)
 
         return generated
