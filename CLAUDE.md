@@ -10,18 +10,21 @@ Obsidian vault + mechanistic interpretability research codebase: from gradient d
   - types: feat | fix | docs | refactor | test | chore
   - scopes: meta | phase1..7 | ci | portfolio | templates | scripts | research | infra | paper | grokking | induction-heads | superposition | circuit-patching | sae
 - **CI must pass before merging dev -> main. Never bypass failed checks.**
-- Every note links at least 2 other notes. No orphan notes.
+- Every note links at least 2 other notes. No orphan notes. Enforced by `make vault-check`.
 - Tags: `#phase/N`, `#type/lesson|exercise|proof|moc`, `#state/review|consolidated`, `#question`, `#research/experiment`
+- Never cite a public number that has no committed manifest behind it. `make verify-claims` enforces this in CI.
 
 ## Layout
 - `00_meta/` — home, roadmap, skill-tree, conventions, glossary, progress-log, obsidian-setup
 - `01..06_*/notes/ exercises/ proofs/` — phase content (each has `_MOC.md` + `checklist.md`)
 - `07_capstone/` — capstone: train + reverse-engineer a decoder-only transformer
-- `src/` — shared research code (experiments, reproducibility, circuits, SAE)
+- `src/` — shared research code (experiments, reproducibility, manifests, models)
 - `tests/` — unit tests (pytest) including per-experiment smoke tests
-- `figures/` — programmatically generated figures for the paper
-- `portfolio/` — RESULTS.md, mini-paper (LaTeX), model card
+- `figures/` — programmatically generated figures (scratch; gitignored)
+- `portfolio/figures/` — the curated, tracked figure set (a build product: `make figures`)
+- `portfolio/` — RESULTS.md (Honesty Ledger), mini-paper (LaTeX), model card
 - `checklists/` — reproducibility checklist, datasets
+- `CONTEXT.md` — domain map, vocabulary, rung→module map. **Read it first.**
 - `scripts/new_note.sh` — create notes from templates
 - `templates/` — note.md, exercise.md, proof.md, project.md, paper-note.md
 
@@ -33,7 +36,7 @@ bash scripts/new_note.sh <phase> <kind> "<Title>"
 # kind: notes | exercises | proofs | projects
 
 pytest              # run all tests
-ruff check src/     # lint
+make lint           # lint src/ tests/ scripts/ (all three)
 uv sync             # sync pinned environment
 
 # Experiment-specific reproducibility
@@ -41,7 +44,18 @@ make reproduce              # regenerate all figures and tables
 make reproduce-grokking     # Rung 2: grokking modular addition (FLAGSHIP)
 make reproduce-induction    # Rung 1: induction heads
 make reproduce-sae          # Rung 5: SAE feature dashboard
+make figures                # rebuild portfolio/figures/ from the manifests
+make verify-claims          # every public number traces to a tracked manifest
+make vault-check            # note link/orphan + tag-schema gate
+make ci-check               # local mirror of .github/workflows/python-ci.yml
 ```
+
+Everything runs from the repo root: `FIGURES_DIR`, `RESULTS_DIR` and
+`CHECKPOINTS_DIR` are CWD-relative by design. Run experiments as
+`uv run python -m src.experiments.<module>`.
+
+This is **not** a distributable package — `pyproject.toml` has no
+`[build-system]` and the code is used in place via `uv run`.
 
 ## Skills
 - `study-session` — full study workflow (research, create note/exercise/proof, update skill-tree, commit)

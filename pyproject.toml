@@ -1,6 +1,6 @@
 [project]
 name = "from-gradient-to-transformer"
-version = "0.2.0"
+version = "1.1.0.dev0"
 description = "From gradient descent to mechanistic interpretability: train small transformers and reverse-engineer their internals."
 authors = [{ name = "Alessio Brillo" }]
 license = { text = "MIT" }
@@ -12,7 +12,23 @@ dependencies = [
     "wandb>=0.17",
     "matplotlib>=3.8",
     "tqdm>=4.66",
+    # Declared explicitly rather than leaned on transitively: exp6_capstone.py
+    # and scripts/phase_diagram_sweep.py import yaml directly. It used to work
+    # only because wandb happens to depend on PyYAML.
+    "pyyaml>=6.0",
 ]
+
+# ---------------------------------------------------------------------------
+# No [build-system] table, deliberately.
+#
+# This is a research codebase used in place (`uv run python -m
+# src.experiments.exp2_grokking`), not a distributable package. A stale
+# `src/from_gradient_to_transformer.egg-info/` from an old editable install
+# used to live in the tree and was removed on 2026-10-11: the current
+# pyproject.toml cannot produce it, because there is no package mapping for the
+# flat `src/` layout. If this ever becomes installable, add
+# [tool.setuptools] package-dir / packages then — not before.
+# ---------------------------------------------------------------------------
 
 # Dropped 2026-08-01: transformer-lens, sae-lens, circuitsvis, einops,
 # seaborn, datasets, accelerate were all pinned but never imported anywhere
@@ -50,6 +66,11 @@ select = ["E", "F", "I", "N", "W"]
 "src/models/*.py" = ["N803", "N806", "E741"]  # X, U, Vt, w are standard ML notation
 "src/evaluation/*.py" = ["N803", "N806"]  # X is standard ML notation
 "src/data/*.py" = ["N803", "N806"]  # X is standard ML notation
+# scripts/ is linted on the same terms as src/ since 2026-10-11 (it was
+# silently out of scope, which let a real NameError ship in
+# scripts/neuron_ablation.py). plot_* and *_sweep legitimately rebind the
+# pandas/matplotlib single-letter convention and build hardcoded demo dicts.
+"scripts/*.py" = ["E402"]  # plotting scripts do work at import time
 
 [tool.mypy]
 # Matches the interpreter uv.lock actually resolves to (3.12.12), not the
@@ -67,3 +88,20 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+
+[tool.coverage.report]
+# Ratchet: the floor is the current measured value, and it only goes up.
+# Before this existed there was no threshold anywhere, so coverage could fall
+# indefinitely without CI noticing. Measured 2026-10-11 — raise via PR.
+fail_under = 55
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
