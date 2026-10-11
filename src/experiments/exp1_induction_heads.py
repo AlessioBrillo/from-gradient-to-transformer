@@ -694,7 +694,6 @@ def plot_composition_diagnostic(all_patterns: list, diagnosis: dict, save_path: 
     S = p0.shape[-1]
     prev_curve = np.argmax(p0, axis=-1) + 1
     prev_curve[prev_curve >= S] = S - 1
-
     fig, axes = plt.subplots(1, 2, figsize=(14, 7))
     for ax, pat, title in (
         (axes[0], p0, f"L{l_src} head {h0} — duplicate-token head (Step 1)"),
@@ -714,8 +713,12 @@ def plot_composition_diagnostic(all_patterns: list, diagnosis: dict, save_path: 
         label="prev(q) + 1 (K-composition target)",
     )
     axes[1].legend(fontsize=9)
+    # Use the layer the detector actually found, not a hardcoded "L0".
+    # diagnose_induction_formation() explicitly supports best_l_src >= 1 for
+    # deeper models, but the old title overwrote the correct one with "L0",
+    # mislabelling every multi-layer diagnosis.
     axes[0].set_title(
-        f"L0 head {h0} — duplicate-token head (Step 1)\n"
+        f"L{l_src} head {h0} — duplicate-token head (Step 1)\n"
         f"diag+1 mass: {diagnosis['step1_l0_duplicate_mass'][h0]:.3f}",
         fontsize=12,
     )
