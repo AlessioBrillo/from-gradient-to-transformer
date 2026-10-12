@@ -1127,6 +1127,22 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument("--wandb", action="store_true", help="Log metrics to Weights & Biases")
+    parser.add_argument(
+        "--scale",
+        type=str,
+        choices=["standard", "large"],
+        default=None,
+        help=(
+            "Named config preset. 'standard' is the Micro-Phase 10 canonical "
+            "config (identical to --standard). 'large' is the scaled GPU "
+            "config: vocab_size=2048, seq_len=128, d_model=256, 4 layers, "
+            "8 heads, epochs=1500, num_train=16384, fresh-batches on — the "
+            "scale the standard-scale run is meant to de-risk. This replaces "
+            "the closed PR #164 'exp7' wrapper: exp1 already had every knob "
+            "exp7 hardcoded, so the preset lives here instead of in a second "
+            "module that could drift."
+        ),
+    )
     parser.add_argument("--save-model", action="store_true", help="Save trained model")
     parser.add_argument(
         "--fresh-batches",
@@ -1211,16 +1227,15 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main() -> None:
-    FIGURES_DIR.mkdir(exist_ok=True)
-    parser = build_parser()
-    args = parser.parse_args()
+def apply_config_presets(args: argparse.Namespace) -> None:
+    """Resolve the named config presets (--quick / --standard / --scale).
 
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s | %(levelname)s | %(message)s",
-    )
-
+    Extracted from main() so the preset matrix is directly testable: every
+    preset is a pinned config, and a silent preset regression would otherwise
+    only appear as a mysterious run with the wrong shape. `--scale` resolves
+    first — `--scale standard` must select the same config `--standard`
+    does, not set a flag the `--standard` check has already passed.
+    """
     if args.quick:
         args.vocab_size = 256
         args.seq_len = 24
@@ -1231,6 +1246,14 @@ def main() -> None:
         args.num_train = 1024
         args.batch_size = 32
         logger.info("QUICK MODE: reduced config for fast iteration")
+
+    if args.scale == "standard":
+        args.standard = True
+    elif args.scale == "large" and args.standard:
+        raise SystemExit(
+            "--standard and --scale large select different configs; "
+            "pass only --scale large (or only --standard)."
+        )
 
     if args.standard:
         args.vocab_size = 2048
@@ -1255,6 +1278,45 @@ def main() -> None:
             f"// stateful: checkpointing every {args.checkpoint_every} epochs, "
             "model + manifest saved"
         )
+
+    if args.scale == "large":
+        # The scaled GPU config. PR #164 shipped this as a separate exp7
+        # module with a hardcoded args namespace; the repo's rule that
+        # Rungs 1/4/5 share ONE config made that a drift risk, so the preset
+        # lives here and everything else (resume, manifest routing, seeds)
+        # is inherited.
+        args.vocab_size = 2048
+        args.seq_len = 128
+        args.d_model = 256
+        args.n_layers = 4
+        args.n_heads = 8
+        args.epochs = 1500
+        args.num_train = 16384
+        args.batch_size = 128
+        args.fresh_batches = True
+        if args.checkpoint_every == 0:
+            args.checkpoint_every = 500
+        args.save_model = True
+        args.save_manifest = True
+        logger.info(
+            "SCALE=large: vocab=2048, seq=128, d_model=256, 4 layers, 8 heads, "
+            "fresh-batches, epochs=1500 "
+            f"// stateful: checkpointing every {args.checkpoint_every} epochs, "
+            "model + manifest saved"
+        )
+
+
+def main() -> None:
+    FIGURES_DIR.mkdir(exist_ok=True)
+    parser = build_parser()
+    args = parser.parse_args()
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s | %(levelname)s | %(message)s",
+    )
+
+    apply_config_presets(args)
 
     logger.info(f"Device: {DEVICE}")
     logger.info(f"Arguments: {vars(args)}")
