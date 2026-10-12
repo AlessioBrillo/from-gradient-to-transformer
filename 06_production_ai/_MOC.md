@@ -13,6 +13,7 @@ Index and links for this phase. Detailed topics/resources/exercises: see [[00_me
 - [[06_production_ai/notes/results-manifests-and-provenance|Results Manifests and Provenance]] — the `results/*.json` contract: seeds, args, git SHA, device, wall clock.
 - [[06_production_ai/notes/figure-provenance-and-evidence-gates|Figure Provenance and Evidence Gates]] — a figure must be tracked and cited, not merely present on disk.
 - [[06_production_ai/notes/checkpoint-resume-durability|Checkpoint Resume Durability]] — the kill-drill requirement: resume must be bit-identical.
+- [[06_production_ai/notes/descope-register|Descope Register]] — every Phase 5/6/7 breadth item, with a dated reason for why it is out of scope.
 - [[06_production_ai/notes/gpu-colab-execution-protocol|GPU Colab Execution Protocol]] — the P=113 3-seed run that has never executed on GPU.
 
 > **Five capstone-research notes live in [[07_capstone/_MOC|the Phase 7 MOC]], not here.**
