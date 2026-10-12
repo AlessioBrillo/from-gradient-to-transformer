@@ -273,7 +273,7 @@ Universal override stands.
 
 **Portfolio repair:** All 5 rung pages verified with manifest tags
 (`<!-- manifest: results/expN_*.json -->`), `../../figures/` prefixes,
-real filenames, ≥2 `[[links]]` each. Hostile click-through passes —
+real filenames, ≥2 outbound wikilinks each. Hostile click-through passes —
 every public number reaches a manifest tag, every tag reaches a file,
 every file reaches a `make reproduce-*` command.
 

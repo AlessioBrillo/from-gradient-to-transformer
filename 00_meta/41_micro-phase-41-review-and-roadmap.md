@@ -549,9 +549,9 @@ documentation I will write, and where:
   row the terminal state executes.
 - [[06_production_ai/notes/results-manifests-and-provenance]] — the manifest
   machinery every public number cites.
-- [[06_production_ai/notes/dense-solutions-modular-addition]] ·
-  [[06_production_ai/notes/positive-control-protocol]] ·
-  [[06_production_ai/notes/microscope-trial-table]] — the science C37–C40
+- [[07_capstone/notes/dense-solutions-modular-addition]] ·
+  [[07_capstone/notes/positive-control-protocol]] ·
+  [[07_capstone/notes/microscope-trial-table]] — the science C37–C40
   adjudicate over, whose pending verdicts are the intake.
 - [[00_meta/03-progress-log]] — the dated journal this review will be
   answered in, session by session.

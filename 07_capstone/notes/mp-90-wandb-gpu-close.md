@@ -1,5 +1,5 @@
 ---
-tags: [phase/7, research/experiment, type/note]
+tags: [phase/7, research/experiment, type/lesson, state/review]
 created: 2026-09-08
 consumes: [ADR-0028, 89_micro-phase-89-from-retune-to-signal]
 ---
@@ -45,3 +45,9 @@ Row 3 (portfolio repair) and Row 4 (RESULTS + progress-log + gate-debt truthing)
 **Written:** 2026-09-08
 **Perspective:** Personal study notes, learning log, portfolio showcase
 **Status:** Session 2 complete — Row 5 stamped
+
+## See also
+- [[06_production_ai/notes/gpu-colab-execution-protocol|GPU Colab Execution Protocol]] — the run whose watch this note closes.
+- [[07_capstone/notes/microscope-trial-table|Microscope Trial Table]] — the pre-registered trials schedule that W&B was supposed to track.
+- [[07_capstone/notes/mp-94-positive-control-results|MP-94 Positive Control Results]] — the manifest-backed run that eventually replaced the missing GPU manifest.
+- [[06_production_ai/notes/results-manifests-and-provenance|Results Manifests and Provenance]] — why a missing manifest, not a missing dashboard, was the blocking problem.

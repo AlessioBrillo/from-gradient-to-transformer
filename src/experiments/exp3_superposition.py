@@ -49,7 +49,7 @@ from tqdm import tqdm
 
 from src.experiments.runner import parse_seeds, run_seeds
 from src.reproducibility import set_seed
-from src.results import ResultsManifest, count_parameters
+from src.results import ResultsManifest, count_parameters, resolve_manifest_path
 
 logger = logging.getLogger(__name__)
 
@@ -515,7 +515,12 @@ def main() -> None:
             device=str(DEVICE),
             n_parameters=count_parameters(probe_model),
         )
-        manifest_path = Path("results") / "exp3_superposition.json"
+        manifest_path = resolve_manifest_path(
+            "exp3_superposition",
+            Path("results") / "exp3_superposition.json",
+            args.manifest_path,
+            args.quick,
+        )
         manifest.save(manifest_path)
         logger.info(f"Saved multi-seed manifest to {manifest_path}")
         for key in result.aggregate:

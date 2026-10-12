@@ -1,5 +1,5 @@
 ---
-tags: [phase/7, capstone, execution/log]
+tags: [phase/7, capstone, execution/log, state/review]
 created: 2026-09-01
 updated: 2026-10-08
 consumes: [ADR-0027, configs/capstone.yaml]

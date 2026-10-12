@@ -10,8 +10,8 @@ created: 2026-08-12
 The P=113 flagship closed NO-GROK: three seeds reached val 1.0 but kept a
 dense Fourier representation (k_99 = 111/113 of 113 frequencies). If the
 microscope lane and the positive control
-([[06_production_ai/notes/microscope-trial-table]],
-[[06_production_ai/notes/positive-control-protocol]]) cannot produce a sparse
+([[07_capstone/notes/microscope-trial-table]],
+[[07_capstone/notes/positive-control-protocol]]) cannot produce a sparse
 solution anywhere in the harness, the dense solution is not a footnote to the
 negative — it is the algorithm this model actually learned, and it becomes
 the phase's headline contribution: *"grokking modular addition at P=113 was
@@ -33,7 +33,7 @@ science either way.
   frequencies and specific phase structure. My run found a generalizing
   solution in the dense regime — accuracy alone cannot distinguish the two,
   which is exactly why the frozen criterion is conjunctive
-  ([[06_production_ai/notes/grokking-verdict-p113]]).
+  ([[07_capstone/notes/grokking-verdict-p113]]).
 
 ## The study plan (Session 3, pre-registered questions)
 
@@ -80,10 +80,10 @@ science either way.
 
 - [[00_meta/28_micro-phase-29-the-positive-negative]] — the roadmap whose
   Session 3 executes this study.
-- [[06_production_ai/notes/grokking-verdict-p113]] — the verdict note this
+- [[07_capstone/notes/grokking-verdict-p113]] — the verdict note this
   study extends; checkpoints and figures indexed there.
-- [[06_production_ai/notes/microscope-trial-table]] ·
-  [[06_production_ai/notes/positive-control-protocol]] — the lanes that
+- [[07_capstone/notes/microscope-trial-table]] ·
+  [[07_capstone/notes/positive-control-protocol]] — the lanes that
   decide whether this study is headline or comparison.
 - [[06_production_ai/notes/results-manifests-and-provenance]] — the manifest
   machinery every number cites.

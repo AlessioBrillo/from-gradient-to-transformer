@@ -3,25 +3,28 @@
 
 Trains a decoder-only transformer on TWO tasks simultaneously:
 1. Modular Addition (P=113) — Grokking / Fourier reverse-engineering
-2. Induction Heads (repeated random tokens) — K-composition / circuit discovery
+2. Induction Heads (repeated random tokens) — K-composition diagnostic
 
-Reverse-engineers the learned algorithms via:
-- Fourier decomposition of modular addition embeddings
+Reverse-engineering performed here:
+- Fourier decomposition of the modular-addition embeddings
 - K-composition diagnostic for induction heads
-- Activation patching / path patching for circuit discovery
-- SAE feature extraction on real activations
 
 Usage:
     python -m src.experiments.exp6_capstone --config configs/capstone.yaml --seeds 0,1,2
+    # or a short probe arm (no figures written, probe manifest only):
+    python -m src.experiments.exp6_capstone --seed 0 --steps 500 --warmup-steps 100 \
+        --manifest-path results/probe_capstone_ab_control.json
 
 Output:
-    - figures/exp6_modular_curve.png
-    - figures/exp6_fourier_spectrum.png
-    - figures/exp6_induction_kcomp.png
-    - figures/exp6_circuit_patching.png
-    - figures/exp6_sae_features.png
-    - results/exp6_capstone.json (manifest)
-    - checkpoints/exp6_capstone_seed{0,1,2}_step{1000,2000,...}.pt
+    - results/<manifest>.json (manifest; filename from the config or --manifest-path)
+    - checkpoints/exp6_capstone_seed{N}_step{M}.pt (when checkpoint_every > 0)
+    - Console: per-task accuracy, Fourier k90/k99, K-composition
+
+Deliberately NOT implemented here, despite an earlier version of this
+docstring promising it: SAE feature extraction (that is `exp5_sae_dashboard`)
+and activation/path patching (`exp4_circuit_patching`). The capstone trains
+the shared model; the interpretability tools stay in their own modules and are
+run against its checkpoints. No figure files are written by this module.
 """
 
 import argparse
@@ -516,6 +519,24 @@ def train_single_seed(
     model_cfg = cfg["model"]
     inst_cfg = cfg["instrumentation"]
 
+    # Checkpoint period. 0 is the natural "never" sentinel, and the loop used
+    # to evaluate `step % cfg["checkpoint_every"]` unconditionally, so a config
+    # with 0 raised ZeroDivisionError on step 0 — after the model, optimizer
+    # and data loaders had already been built, i.e. after all the setup cost.
+    # A negative period is a config typo, not a silent skip.
+    checkpoint_every = cfg.get("checkpoint_every", 0)
+    if checkpoint_every < 0:
+        raise ValueError(
+            f"checkpoint_every must be >= 0 (0 disables checkpointing), got {checkpoint_every}"
+        )
+    if checkpoint_every == 0:
+        logger.info("checkpoint_every=0 — checkpointing disabled for this run.")
+
+    # Evaluation cadence. This used to be a bare `step % 1000`, so any run
+    # shorter than 1000 steps (--quick, and every probe arm) never evaluated at
+    # all and reported its initial, pre-training metrics as final.
+    eval_every = max(1, int(train_cfg.get("eval_every", min(1000, train_cfg["steps"]))))
+
     # Create model
     model = DecoderOnlyTransformer(
         vocab_size=cfg["task"]["induction"]["vocab_size"]
@@ -696,7 +717,7 @@ def train_single_seed(
             # step-based with no epoch history — so save directly, atomically
             # (tmp + replace) so a kill mid-save keeps the previous valid
             # checkpoint, per the repo's kill-drill durability standard.
-            if step % cfg["checkpoint_every"] == 0:
+            if checkpoint_every and step % checkpoint_every == 0:
                 if checkpoint_dir:
                     ckpt_path = checkpoint_dir / f"exp6_capstone_seed{seed}_step{step}.pt"
                     tmp_path = ckpt_path.with_suffix(".tmp")
@@ -721,7 +742,7 @@ def train_single_seed(
                         )
 
             # Evaluation
-            if step % 1000 == 0:
+            if step % eval_every == 0:
                 model.eval()
                 with torch.no_grad():
                     # Quick val pass - handle RoundRobinDataLoader batches.
@@ -950,15 +971,24 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def resolve_manifest_path(manifest_override: str | None, cfg: dict) -> Path:
+def resolve_manifest_path(manifest_override: str | None, cfg: dict, quick: bool = False) -> Path:
     """Resolve the manifest path without touching the flagship by accident.
 
     Shakedowns and probes MUST pass --manifest-path; the flagship path is
     only used when the override is None. Extracted so the contract is
     unit-testable without running training.
+
+    `--quick` is a reduced config, not the canonical run, so it lands in
+    `results/probe_exp6_capstone_quick.json` instead. This mirrors
+    `src.results.resolve_manifest_path`, which exists because a `--quick` run
+    once overwrote `results/exp6_capstone.json` in place and replaced the
+    tracked run's git sha, device and interpreter versions with its own while
+    RESULTS.md still cited that file as the record.
     """
     if manifest_override:
         return Path(manifest_override)
+    if quick:
+        return RESULTS_DIR / "probe_exp6_capstone_quick.json"
     return RESULTS_DIR / cfg["output"]["manifest_name"]
 
 
@@ -1057,7 +1087,7 @@ def main() -> None:
         device=str(DEVICE),
         n_parameters=aggregate.per_seed[0].get("model_params") if aggregate.per_seed else None,
     )
-    manifest_path = resolve_manifest_path(args.manifest_path, cfg)
+    manifest_path = resolve_manifest_path(args.manifest_path, cfg, quick=args.quick)
     manifest.save(manifest_path)
     logger.info(f"Saved manifest to {manifest_path}")
 

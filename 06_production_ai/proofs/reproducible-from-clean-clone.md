@@ -119,3 +119,9 @@ All figures and manifests generated in the clean clone match the committed artif
 **Recorded**: 2026-08-27
 **Executor**: Automated clean-clone protocol
 **Commit**: ea90829 (dev branch, up to date with origin/dev)
+
+## See also
+- [[06_production_ai/notes/results-manifests-and-provenance|Results Manifests and Provenance]] — the `verify-claims` gate this proof runs end to end.
+- [[06_production_ai/proofs/kill-drill-checkpoint-resume|Kill-Drill: Checkpoint Resume]] — the other durability proof: resuming mid-run must be bit-identical.
+- [[06_production_ai/notes/figure-provenance-and-evidence-gates|Figure Provenance and Evidence Gates]] — why a figure must be tracked, not just present on disk.
+- [[04_nlp_and_transformers/proofs/circuit-analysis-complete|Circuit Analysis Complete]] — the Phase 4 gate this clean-clone proof underpins.

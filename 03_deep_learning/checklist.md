@@ -1,5 +1,5 @@
 ---
-tags: [checklist, phase/3]
+tags: [type/moc, phase/3, state/consolidated]
 ---
 
 # Checklist — Phase 3 · Deep Learning

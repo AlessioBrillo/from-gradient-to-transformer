@@ -37,7 +37,7 @@ Neuron-ablation figure struck: the numbers live in `results/exp2_grokking.json` 
 **Links**:
 - [RESULTS](../../RESULTS.md) — my honesty ledger and per-rung numbers
 - [research-plan](../../../07_capstone/research-plan.md) — where this flagship sits in the experiment ladder
-- [grokking-verdict-p113](../../../06_production_ai/notes/grokking-verdict-p113.md) — my full NO-GROK verdict analysis
+- [grokking-verdict-p113](../../../07_capstone/notes/grokking-verdict-p113.md) — my full NO-GROK verdict analysis
 
 **Next Steps**:
 - Characterize dense attractor mathematically (Varma et al. 2023 circuit efficiency)

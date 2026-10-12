@@ -1,4 +1,10 @@
-# Exercise 04 — Gradient Boosting and Naive Bayes
+---
+title: "Ex 04 Gradient Boosting And Naive Bayes"
+tags: [type/exercise, phase/2, state/consolidated]
+created: 2026-10-11
+---
+
+## Exercise 04 — Gradient Boosting and Naive Bayes
 
 ## Objective
 Implement gradient boosting manually, train XGBoost/LightGBM, and compare against Naive Bayes on text data. Understand when each method works and why.
@@ -35,3 +41,8 @@ For gradient boosting:
 
 ### MI Forward Link
 Write 2-3 sentences on how gradient boosting's residual correction parallels the iterative refinement of attention head outputs in the residual stream.
+
+## See also
+- [[02_classical_ml/notes/gradient-boosting|Gradient Boosting]] — the lesson whose from-scratch booster (residual fitting plus shrinkage) is exactly what Task 2 implements.
+- [[02_classical_ml/notes/naive-bayes|Naive Bayes]] — covers the variant table and the "independent evidence still ranks correctly" argument behind the 20 Newsgroups comparison.
+- [[02_classical_ml/notes/bias-variance-and-evaluation|Bias/Variance and Evaluation]] — the learning-rate and max_depth sweeps in Task 4 are a bias/variance analysis of boosting regularization.

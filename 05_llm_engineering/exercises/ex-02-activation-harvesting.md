@@ -1,5 +1,5 @@
 ---
-tags: [type/exercise, phase/5]
+tags: [type/exercise, phase/5, state/review]
 skill: Model Instrumentation — activation harvesting at scale
 created: 2026-07-08
 ---
@@ -64,3 +64,8 @@ print(f"MLP layer 0 average firing rate: {sum(rates)/len(rates):.2%}")
 
 ## Linked skill
 - [[00_meta/02_skill-tree]] → Model Instrumentation: Activation harvesting at scale
+
+## See also
+- [[05_llm_engineering/proofs/determinism-necessity|Determinism Is Necessary]] — the seeding requirement this exercise verifies by re-harvesting and comparing bit-exactly
+- [[04_nlp_and_transformers/notes/activation-patching|Activation Patching]] — the downstream method that replays harvested activations as the donor (counterfactual) source
+- [[06_production_ai/notes/results-manifests-and-provenance|Results Manifests and Provenance]] — where a harvest's seeds, layer and prompt set must be recorded for its numbers to be reproducible

@@ -13,20 +13,17 @@ import argparse
 import logging
 import math
 import subprocess
-import sys
 import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-import numpy as np
 import torch
 import yaml
 
-from src.experiments.runner import parse_seeds, run_seeds
+from src.experiments.runner import run_seeds
 from src.reproducibility import set_seed
-from src.results import ResultsManifest, count_parameters
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +95,23 @@ class CellResult:
         return cls(**d)
 
 
+def _git_short_sha() -> str:
+    """Short HEAD sha, or "unknown" when this is not a git checkout.
+
+    Guards the sweep against being run from an exported tarball, where every
+    git command fails and the manifest would otherwise lose its provenance.
+    """
+    try:
+        return (
+            subprocess.check_output(
+                ["git", "rev-parse", "--short", "HEAD"], text=True, stderr=subprocess.DEVNULL
+            )
+            .strip()
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError, OSError):
+        return "unknown"
+
+
 def load_existing_manifest(manifest_path: Path) -> dict[str, CellResult] | None:
     """Load existing phase diagram manifest if it exists."""
     if not manifest_path.exists():
@@ -112,7 +126,9 @@ def load_existing_manifest(manifest_path: Path) -> dict[str, CellResult] | None:
         return None
 
 
-def save_manifest(manifest_path: Path, cells: dict[str, CellResult], metadata: dict[str, Any]) -> None:
+def save_manifest(
+    manifest_path: Path, cells: dict[str, CellResult], metadata: dict[str, Any]
+) -> None:
     """Save phase diagram manifest with provenance."""
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
     data = {
@@ -124,21 +140,24 @@ def save_manifest(manifest_path: Path, cells: dict[str, CellResult], metadata: d
 
 
 # Import experiment functions
+from tqdm import tqdm
+
 from src.experiments.exp2_grokking import (
     OneLayerTransformer,
+    analyze_fourier_sparsity,
+    fourier_decompose_embeddings,
     make_modular_addition_data,
     train_model,
-    fourier_decompose_embeddings,
-    analyze_fourier_sparsity,
 )
 from src.experiments.exp6_capstone import (
     DecoderOnlyTransformer,
-    make_mixed_dataloaders,
     compute_k_composition_scores,
-    make_modular_addition_data as make_capstone_modular_data,
+    make_mixed_dataloaders,
     make_repeated_token_data,
 )
-from tqdm import tqdm
+from src.experiments.exp6_capstone import (
+    make_modular_addition_data as make_capstone_modular_data,
+)
 
 
 def run_solo_cell(cell: SweepCell) -> CellResult:
@@ -208,6 +227,12 @@ def run_solo_cell(cell: SweepCell) -> CellResult:
     seeds = [cell.seed, cell.seed + 1, cell.seed + 2]
     result = run_seeds(run_single_seed, seeds)
 
+    # A seed that crashed or diverged can leave a metric absent from the
+    # aggregate; fall back to an explicit zero triple rather than a KeyError
+    # that would take the whole sweep down after hours of compute.
+    def agg(key: str) -> dict[str, float]:
+        return result.aggregate.get(key, {"mean": 0.0, "std": 0.0, "min": 0.0, "max": 0.0, "n": 0})
+
     return CellResult(
         cell_id=cell.cell_id,
         modulus=cell.modulus,
@@ -219,12 +244,12 @@ def run_solo_cell(cell: SweepCell) -> CellResult:
         mode="solo",
         seeds=seeds,
         wall_clock_seconds=result.wall_clock_seconds,
-        final_val_acc=result.aggregate.get("final_val_acc", {"mean": 0, "std": 0, "min": 0, "max": 0, "n": 3}),
-        generalization_epoch=result.aggregate.get("generalization_epoch", {"mean": 0, "std": 0, "min": 0, "max": 0, "n": 3}),
-        final_fourier_sparsity=result.aggregate.get("final_fourier_sparsity", {"mean": 0, "std": 0, "min": 0, "max": 0, "n": 3}),
-        k_90_percent=result.aggregate.get("k_90_percent", {"mean": 0, "std": 0, "min": 0, "max": 0, "n": 3}),
-        k_99_percent=result.aggregate.get("k_99_percent", {"mean": 0, "std": 0, "min": 0, "max": 0, "n": 3}),
-        total_mass_top_k=result.aggregate.get("total_mass_top_k", {"mean": 0, "std": 0, "min": 0, "max": 0, "n": 3}),
+        final_val_acc=agg("final_val_acc"),
+        generalization_epoch=agg("generalization_epoch"),
+        final_fourier_sparsity=agg("final_fourier_sparsity"),
+        k_90_percent=agg("k_90_percent"),
+        k_99_percent=agg("k_99_percent"),
+        total_mass_top_k=agg("total_mass_top_k"),
     )
 
 
@@ -334,13 +359,11 @@ def run_joint_cell(cell: SweepCell) -> CellResult:
                             vlogits, _ = model(vx)
 
                             if vtask_id == 0:
-                                vacc = (
+                                mod_correct += (
                                     vlogits[:, 1, :].argmax(-1) == vmod_target.to(DEVICE)
-                                ).float().mean()
-                                mod_correct += (vlogits[:, 1, :].argmax(-1) == vmod_target.to(DEVICE)).sum().item()
+                                ).sum().item()
                                 mod_total += vmod_target.numel()
                             else:
-                                vacc = (vlogits.argmax(-1) == vy).float().mean()
                                 ind_correct += (vlogits.argmax(-1) == vy).sum().item()
                                 ind_total += vy.numel()
 
@@ -374,7 +397,12 @@ def run_joint_cell(cell: SweepCell) -> CellResult:
 
             # Induction
             ind_train, ind_val = make_repeated_token_data(
-                vocab_size=2048, seq_len=seq_len, num_train=8192, num_val=1024, prefix_ratio=0.5, seed=seed + 1000
+                vocab_size=2048,
+                seq_len=seq_len,
+                num_train=8192,
+                num_val=1024,
+                prefix_ratio=0.5,
+                seed=seed + 1000,
             )
             ind_val_loader = torch.utils.data.DataLoader(ind_val, batch_size=cell.batch_size)
 
@@ -391,7 +419,9 @@ def run_joint_cell(cell: SweepCell) -> CellResult:
 
             # Fourier on modular embeddings
             mod_embeddings = model.embed.weight[:cell.modulus]
-            fourier_result = fourier_decompose_embeddings(mod_embeddings.detach().cpu(), cell.modulus)
+            fourier_result = fourier_decompose_embeddings(
+                mod_embeddings.detach().cpu(), cell.modulus
+            )
             sparsity = analyze_fourier_sparsity(fourier_result, top_k=20)
 
             # K-composition
@@ -401,7 +431,9 @@ def run_joint_cell(cell: SweepCell) -> CellResult:
 
         return {
             "final_val_acc": float(mod_acc),
-            "generalization_epoch": float(next((i for i, acc in enumerate(mod_accs) if acc > 0.9), -1) * 500),
+            "generalization_epoch": float(
+                next((i for i, acc in enumerate(mod_accs) if acc > 0.9), -1) * 500
+            ),
             "final_fourier_sparsity": float(sparsity["k_99_percent"] / cell.modulus),
             "k_90_percent": float(sparsity["k_90_percent"]),
             "k_99_percent": float(sparsity["k_99_percent"]),
@@ -412,6 +444,12 @@ def run_joint_cell(cell: SweepCell) -> CellResult:
 
     seeds = [cell.seed, cell.seed + 1, cell.seed + 2]
     result = run_seeds(run_single_seed, seeds)
+
+    # A seed that crashed or diverged can leave a metric absent from the
+    # aggregate; fall back to an explicit zero triple rather than a KeyError
+    # that would take the whole sweep down after hours of compute.
+    def agg(key: str) -> dict[str, float]:
+        return result.aggregate.get(key, {"mean": 0.0, "std": 0.0, "min": 0.0, "max": 0.0, "n": 0})
 
     return CellResult(
         cell_id=cell.cell_id,
@@ -424,14 +462,14 @@ def run_joint_cell(cell: SweepCell) -> CellResult:
         mode="joint",
         seeds=seeds,
         wall_clock_seconds=result.wall_clock_seconds,
-        final_val_acc=result.aggregate.get("final_val_acc", {"mean": 0, "std": 0, "min": 0, "max": 0, "n": 3}),
-        generalization_epoch=result.aggregate.get("generalization_epoch", {"mean": 0, "std": 0, "min": 0, "max": 0, "n": 3}),
-        final_fourier_sparsity=result.aggregate.get("final_fourier_sparsity", {"mean": 0, "std": 0, "min": 0, "max": 0, "n": 3}),
-        k_90_percent=result.aggregate.get("k_90_percent", {"mean": 0, "std": 0, "min": 0, "max": 0, "n": 3}),
-        k_99_percent=result.aggregate.get("k_99_percent", {"mean": 0, "std": 0, "min": 0, "max": 0, "n": 3}),
-        total_mass_top_k=result.aggregate.get("total_mass_top_k", {"mean": 0, "std": 0, "min": 0, "max": 0, "n": 3}),
-        final_induction_acc=result.aggregate.get("final_induction_acc", {"mean": 0, "std": 0, "min": 0, "max": 0, "n": 3}),
-        final_kcomp=result.aggregate.get("final_max_kcomp", {"mean": 0, "std": 0, "min": 0, "max": 0, "n": 3}),
+        final_val_acc=agg("final_val_acc"),
+        generalization_epoch=agg("generalization_epoch"),
+        final_fourier_sparsity=agg("final_fourier_sparsity"),
+        k_90_percent=agg("k_90_percent"),
+        k_99_percent=agg("k_99_percent"),
+        total_mass_top_k=agg("total_mass_top_k"),
+        final_induction_acc=agg("final_induction_acc"),
+        final_kcomp=agg("final_max_kcomp"),
     )
 
 
@@ -482,7 +520,9 @@ def main():
     parser = argparse.ArgumentParser(description="Phase Diagram Sweep Runner")
     parser.add_argument("--config", type=str, default="configs/phase_diagram_sweep.yaml")
     parser.add_argument("--manifest-path", type=str, default="results/phase_diagram.pt")
-    parser.add_argument("--max-cells", type=int, default=None, help="Limit number of cells (for testing)")
+    parser.add_argument(
+        "--max-cells", type=int, default=None, help="Limit number of cells (for testing)"
+    )
     parser.add_argument("--dry-run", action="store_true", help="Print cells without running")
     parser.add_argument("--resume", action="store_true", help="Resume from existing manifest")
     args = parser.parse_args()
@@ -543,9 +583,7 @@ def main():
             # Save incrementally
             metadata = {
                 "config": config,
-                "git_sha": subprocess.check_output(
-                    ["git", "rev-parse", "--short", "HEAD"], text=True, stderr=subprocess.DEVNULL
-                ).strip() if subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True).returncode == 0 else "unknown",
+                "git_sha": _git_short_sha(),
                 "started_at": datetime.fromtimestamp(start_time, tz=timezone.utc).isoformat(),
                 "updated_at": datetime.now(timezone.utc).isoformat(),
                 "total_cells": len(cells),
@@ -564,7 +602,9 @@ def main():
             # Continue with other cells
 
     total_time = time.monotonic() - start_time
-    logger.info(f"Sweep complete: {len(cells_results)}/{len(cells)} cells in {total_time/60:.1f} min")
+    logger.info(
+        f"Sweep complete: {len(cells_results)}/{len(cells)} cells in {total_time / 60:.1f} min"
+    )
 
     # Final save
     metadata["completed_at"] = datetime.now(timezone.utc).isoformat()

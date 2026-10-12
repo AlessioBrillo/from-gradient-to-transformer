@@ -7,11 +7,24 @@ abstract: >-
   activation/path patching and sparse autoencoders, with every public number
   traced to a committed run manifest.
 type: software
+version: 1.1.0
+date-released: 2026-10-11
 authors:
   - family-names: Brillo
     given-names: Alessio
 repository-code: "https://github.com/AlessioBrillo/from-gradient-to-transformer"
 url: "https://alessiobrillo.github.io/from-gradient-to-transformer/"
+license: MIT
+preferred-citation:
+  type: software
+  title: "From Gradient to Transformer to Circuit"
+  version: 1.1.0
+  date-released: 2026-10-11
+  authors:
+    - family-names: Brillo
+      given-names: Alessio
+  url: "https://alessiobrillo.github.io/from-gradient-to-transformer/"
+  repository-code: "https://github.com/AlessioBrillo/from-gradient-to-transformer"
 license: MIT
 keywords:
   - mechanistic interpretability

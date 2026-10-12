@@ -92,7 +92,7 @@ test -f .github/workflows/pages.yml || echo "MISSING: will create in Session 5"
 
 ## Links
 - [[00_meta/78_micro-phase-78-execution-roadmap]]
-- [[docs/adr/0027-continuum-ledger-21]]
+- [[docs/adr/0027-continuum-ledger-22|ADR-0027]]
 - [[07_capstone/execution-log]]
 
 ## Open questions

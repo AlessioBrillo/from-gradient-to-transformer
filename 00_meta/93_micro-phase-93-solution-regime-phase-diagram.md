@@ -191,7 +191,7 @@ Then the continuum law executes: ADR-0030 opens with exactly one new research qu
 - Portfolio RESULTS — `portfolio/RESULTS.md`
 - Capstone shakedown verdict — `07_capstone/notes/mp-88-shakedown-verdict.md`
 - Retune A/B verdict — `07_capstone/notes/mp-89-retune-verdict.md`
-- Grokking NO-GROK verdict — `06_production_ai/notes/grokking-verdict-p113.md`
+- Grokking NO-GROK verdict — `07_capstone/notes/grokking-verdict-p113.md`
 
 ---
 

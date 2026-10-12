@@ -15,7 +15,7 @@ close the row with one dated reason: *the named suspects were tested and did
 not rescue the run.*
 
 Order and content were re-confirmed by the positive-control scan
-([[06_production_ai/notes/positive-control-protocol]]) — the control gates
+([[07_capstone/notes/positive-control-protocol]]) — the control gates
 the trials, it does not consume the budget.
 
 ## Trial 1 — embedding re-normalization off
@@ -56,16 +56,16 @@ the trials, it does not consume the budget.
   and window (never a revision of the stamped one).
 - Three failures close row 2 `CLOSED (date, named suspects tested, dense at
   P=113 under all three one-change trials)` — and the
-  [[06_production_ai/notes/dense-solutions-modular-addition]] characterization
+  [[07_capstone/notes/dense-solutions-modular-addition]] characterization
   becomes the phase's headline.
 
 ## Links
 
 - [[docs/adr/0003-research-return-ledger]] — row 2, whose budget this table
   spends.
-- [[06_production_ai/notes/grokking-verdict-p113]] — the verdict that names
+- [[07_capstone/notes/grokking-verdict-p113]] — the verdict that names
   the suspects.
-- [[06_production_ai/notes/positive-control-protocol]] — the gate before
+- [[07_capstone/notes/positive-control-protocol]] — the gate before
   this table.
 - [[00_meta/28_micro-phase-29-the-positive-negative]] — Session 2, the
   roadmap that executes it.

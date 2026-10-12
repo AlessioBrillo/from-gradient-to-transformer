@@ -1,5 +1,5 @@
 ---
-tags: [phase/2, note, state/review]
+tags: [phase/2, type/lesson, state/review]
 MI-forward-link: "SVM's maximum-margin intuition maps directly to how attention heads separate features in the residual stream."
 ---
 

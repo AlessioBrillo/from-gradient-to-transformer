@@ -31,6 +31,11 @@ from-gradient-to-transformer-PhD.md
 refactor.md
 paper.md
 
+# Quick-mode manifests: `--quick` is a reduced config, not the canonical run,
+# so src/results.py routes it to results/probe_<experiment>_quick.json instead
+# of the tracked results/<experiment>.json. Scratch by design.
+results/probe_*_quick.json
+
 # CI / Coverage
 .coverage
 .coverage.*

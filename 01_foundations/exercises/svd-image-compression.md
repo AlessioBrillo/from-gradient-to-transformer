@@ -1,5 +1,5 @@
 ---
-tags: [type/exercise, phase/1]
+tags: [type/exercise, phase/1, state/consolidated]
 state: consolidatedskill: singular value decomposition
 created: 2026-06-19
 ---

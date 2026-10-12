@@ -1,5 +1,5 @@
 ---
-tags: [phase/3, note, state/review]
+tags: [phase/3, type/lesson, state/review]
 ---
 
 # Backpropagation from Scratch — Notes

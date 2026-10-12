@@ -1,5 +1,5 @@
 ---
-tags: [type/exercise, phase/6]
+tags: [type/exercise, phase/6, state/review]
 skill: results-manifests
 created: 2026-08-07
 ---

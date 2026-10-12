@@ -1,5 +1,5 @@
 ---
-tags: [type/proof, phase/5]
+tags: [type/proof, phase/5, state/review]
 created: 2026-07-08
 ---
 
@@ -45,3 +45,8 @@ The output differs when block 0 contributes non-trivially to the final predictio
 ## Outcome
 - [x] Passed → check the skill in [[00_meta/02_skill-tree]]
 - [ ] Retry needed (what was missing): ...
+
+## See also
+- [[05_llm_engineering/notes/01-transformer-lens-hooks|TransformerLens Hooks]] — the lesson on `register_forward_hook` that supplies the write path this proof exercises
+- [[04_nlp_and_transformers/proofs/residual-stream-communication-channel|Residual Stream as a Communication Channel]] — why zeroing resid_post at block 0 propagates all the way to the final prediction
+- [[05_llm_engineering/proofs/activation-patching|Activation Patching]] — the same hook machinery used to swap activations between two runs instead of erasing them

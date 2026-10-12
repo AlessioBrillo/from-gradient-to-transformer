@@ -1,5 +1,5 @@
 ---
-tags: [phase/7, capstone, research/experiment, plan]
+tags: [phase/7, capstone, research/experiment, plan, state/review]
 ---
 
 # Research Plan — From Transformer to Circuit

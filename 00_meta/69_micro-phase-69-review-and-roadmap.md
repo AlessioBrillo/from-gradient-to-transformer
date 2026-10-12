@@ -255,7 +255,7 @@ re-verified in this sitting and advanced by the phase shift:
     not the record-keeping: it is *why the dense solution is the structural
     attractor* at P=113 under this harness's inductive biases. The
     characterization study
-    ([[06_production_ai/notes/dense-solutions-modular-addition]]) owns the
+    ([[07_capstone/notes/dense-solutions-modular-addition]]) owns the
     answer; this phase's Study-Lane reading 8 demands the derivation live in
     `src/` as a runnable check, not just in prose, before the claim is called
     a contribution.
@@ -420,7 +420,7 @@ The documentation contract, stated as the reviewer sees it:
   the thirteenth-pass reading.
 - **The dense-attractor derivation** — the mathematical bedrock's runnable
   check in `src/`, green, with the derivation it encodes cited from
-  [[06_production_ai/notes/dense-solutions-modular-addition]].
+  [[07_capstone/notes/dense-solutions-modular-addition]].
 - **The study log** — the twelve readings of Part IV, each with its runnable
   check's dated result, filed at Session −1.
 - **The pre-drafts** — named files in this roadmap's lineage, consumed one
@@ -592,8 +592,8 @@ waiting-window lane's Ex-α22 through Ex-ε22, assigned to Session −1):
 - [[00_meta/03_progress-log|Progress log — the fifty-fifth entry this roadmap's, the 45th–50th gap, this phase's dated decision]]
 - [[00_meta/00_home|Home — where this roadmap is wired as a companion pointer, not a cap row]]
 - [[docs/adr/0003-research-return-ledger|ADR-0003 — the research-return ledger, rows 3–7 (R1 stamp, negatives, paper, graduation proof)]]
-- [[06_production_ai/notes/microscope-trial-table|The microscope trial table — trials 2 and 3 pending]]
-- [[06_production_ai/notes/dense-solutions-modular-addition|Dense solutions in modular addition — the characterized regime]]
-- [[06_production_ai/notes/positive-control-protocol|The positive-control protocol — the ALL-DENSE scan]]
+- [[07_capstone/notes/microscope-trial-table|The microscope trial table — trials 2 and 3 pending]]
+- [[07_capstone/notes/dense-solutions-modular-addition|Dense solutions in modular addition — the characterized regime]]
+- [[07_capstone/notes/positive-control-protocol|The positive-control protocol — the ALL-DENSE scan]]
 - [[portfolio/README|Portfolio README — the stale shelf, MP-69's Session 1 sixth verification]]
 - [[checklists/reproducibility-checklist|The reproducibility checklist — the checklists lane's dated row]]

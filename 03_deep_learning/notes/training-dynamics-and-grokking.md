@@ -1,5 +1,5 @@
 ---
-tags: [phase/3, note, state/review]
+tags: [phase/3, type/lesson, state/review]
 MI-forward-link: "Grokking is the single most important training-dynamics phenomenon for MI: it reveals how circuits form, compete, and consolidate. Understanding optimization is essential for reproducing grokking."
 ---
 

@@ -1,5 +1,5 @@
 ---
-tags: [phase/2, proof, state/review]
+tags: [phase/2, type/proof, state/review]
 ---
 
 # Proof to Myself: Decision Trees, Ensembles, and PCA

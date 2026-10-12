@@ -1,5 +1,5 @@
 ---
-tags: [phase/4, note, state/review, research/experiment]
+tags: [phase/4, type/lesson, state/review, research/experiment]
 MI-core: "Activation patching is the causal intervention tool that lets us test hypotheses about circuit components."
 ---
 

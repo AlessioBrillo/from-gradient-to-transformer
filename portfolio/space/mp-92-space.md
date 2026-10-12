@@ -57,7 +57,7 @@ All registers cite the SAME manifest numbers. Zero drift.
 
 | Rung | Result | Status |
 |------|--------|--------|
-| 1 Induction | 52.2% fresh batches, 0 heads at 800 epochs | Sub-standard scale |
+| 1 Induction | 53.5% fresh batches, 0 heads at 800 epochs | Sub-standard scale |
 | 2 Grokking | val 1.0, k₉₉=111/113 (dense) | **NO-GROK** |
 | 3 Superposition | Phase transition, pentagon ✓ | **REPRODUCED** |
 | 4 Patching | ~0.20 recovery, 0 heads | Real signal, no head |

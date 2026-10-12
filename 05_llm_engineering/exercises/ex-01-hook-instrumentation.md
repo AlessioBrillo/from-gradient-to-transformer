@@ -1,5 +1,5 @@
 ---
-tags: [type/exercise, phase/5]
+tags: [type/exercise, phase/5, state/review]
 skill: Model Instrumentation — hook-based activation capture
 created: 2026-07-08
 ---
@@ -67,3 +67,8 @@ print(f"Captured attn_out shape: {captured[0].shape}")
 
 ## Linked skill
 - [[00_meta/02_skill-tree]] → Model Instrumentation: Hook-based activation capture
+
+## See also
+- [[05_llm_engineering/notes/01-transformer-lens-hooks|TransformerLens Hooks]] — the lesson whose 27 hook-point convention this exercise asserts the cache against
+- [[04_nlp_and_transformers/notes/activation-patching|Activation Patching]] — the causal method that consumes the cache these hook points build
+- [[04_nlp_and_transformers/proofs/residual-stream-communication-channel|Residual Stream as a Communication Channel]] — what the resid_pre / mid / post entries normalised here are actually carrying between blocks

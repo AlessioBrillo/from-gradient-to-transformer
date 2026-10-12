@@ -1,5 +1,5 @@
 ---
-tags: [type/exercise, phase/1]
+tags: [type/exercise, phase/1, state/consolidated]
 state: consolidatedskill: SQL + data pipeline basics
 created: 2026-06-19
 ---
@@ -284,3 +284,8 @@ The CTE pattern (base → behavioral → transactional → flat join) scales to 
 
 ## Linked skill
 - [[00_meta/02_skill-tree]] → item: SQL + data pipeline basics
+
+## See also
+- [[01_foundations/notes/sql-for-data-pipelines|SQL for Data Pipelines]] — the lesson behind these queries: extraction, joins and aggregation performed at the database level
+- [[01_foundations/notes/pandas-for-data-preparation|pandas for Data Preparation]] — the in-Python alternative for the same join / aggregate / feature-engineering steps
+- [[01_foundations/proofs/sql-data-fundamentals|SQL and Data Fundamentals]] — the same schema-and-CTE fundamentals rebuilt from memory as a proof

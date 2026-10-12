@@ -78,15 +78,15 @@ interaction, not with renormalization.
   only P where the harness generalizes, hence the only lane where a change
   can be observed to matter. Trial order re-confirmed with that one-line
   justification; the trial table's budget (≤ 3) is untouched. Reference:
-  [[06_production_ai/notes/microscope-trial-table]].
+  [[07_capstone/notes/microscope-trial-table]].
 
 ## Links
 
 - [[00_meta/28_micro-phase-29-the-positive-negative]] — the roadmap that
   pre-registered this protocol (Session 0–1).
-- [[06_production_ai/notes/grokking-verdict-p113]] — the NO-GROK verdict this
+- [[07_capstone/notes/grokking-verdict-p113]] — the NO-GROK verdict this
   control exists to attribute.
 - [[docs/adr/0003-research-return-ledger]] — the frozen protocol the scan
   inherits; row 2's trial budget it does not consume.
-- [[06_production_ai/notes/microscope-trial-table]] — the trials the control
+- [[07_capstone/notes/microscope-trial-table]] — the trials the control
   gates.

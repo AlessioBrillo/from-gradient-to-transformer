@@ -1,5 +1,5 @@
 ---
-tags: [phase/7, research/experiment, type/note]
+tags: [phase/7, research/experiment, type/lesson, state/review]
 created: 2026-09-27
 consumes: [ADR-0028, 07_capstone/_MOC]
 ---
@@ -57,3 +57,9 @@ Target: Find ANY cell with k_99 < P/2 (sparse regime).
 ## Honesty Ledger Entry
 
 > **2026-09-27 — MP-94 Session 1**: Positive control at P=59 (standard Nanda config, 3 seeds, 5000 epochs) completed. Result: **NO-GROK** — val acc 1.0 all seeds, but Fourier dense (k_99=58/59) all seeds. The sparse Fourier circuit does not emerge under the "standard config" at P=59 in this repository. This matches the P=113 NO-GROK finding. The phase boundary (if it exists) is not at the standard config point.
+
+## See also
+- [[07_capstone/notes/positive-control-protocol|Positive-Control Protocol]] — the protocol this run executed.
+- [[07_capstone/notes/grokking-verdict-p113|Grokking Verdict P=113]] — the P=113 verdict this control was designed to test.
+- [[07_capstone/notes/dense-solutions-modular-addition|Dense Solutions on Modular Addition]] — the characterization the k_99 = 58/59 result feeds.
+- [[07_capstone/notes/mp-89-retune-verdict|MP-89 Retune Verdict]] — the NO-MOVE A/B that pushed the investigation toward this control.

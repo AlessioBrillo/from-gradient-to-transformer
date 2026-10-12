@@ -173,6 +173,35 @@ class ResultsManifest:
         return cls(**data)
 
 
+def resolve_manifest_path(
+    experiment: str,
+    default: Path,
+    override: str | None = None,
+    quick: bool = False,
+) -> Path:
+    """Where a run's manifest goes, so a smoke run can never pass for the record.
+
+    `--quick` is a reduced config for fast iteration, not the canonical run.
+    Six experiment `main()`s wrote straight to
+    `results/<experiment>.json` regardless of mode, so
+    `python -m src.experiments.exp6_capstone --quick` silently overwrote the
+    tracked manifest for the canonical run — replacing its git sha, device,
+    torch and python versions with the smoke run's, while
+    `portfolio/RESULTS.md` still cited that file as the record. This is
+    precisely the "documentation ahead of its evidence" failure the manifest
+    system exists to prevent, arriving from the other direction.
+
+    Quick runs therefore land in `results/probe_<experiment>_quick.json`, which
+    is untracked-by-convention scratch. An explicit `--manifest-path` always
+    wins: the retune A/B arms already use it deliberately.
+    """
+    if override:
+        return Path(override)
+    if quick:
+        return Path("results") / f"probe_{experiment}_quick.json"
+    return default
+
+
 def _is_json_safe(value: Any) -> bool:
     return isinstance(value, (str, int, float, bool, type(None), list, dict))
 
@@ -216,12 +245,27 @@ def verify_claims(
        cites results with no manifest backing them, even when some other
        section elsewhere in the file happens to have a tag.
 
+    Only **git-tracked** manifests are checked. `results/probe_*_quick.json`
+    (where `--quick` runs go, see `resolve_manifest_path`) is deliberately
+    untracked scratch, and a manifest recorded against a dirty tree is only a
+    problem if anyone is supposed to be able to re-derive it. An untracked file
+    is, by construction, not a public claim.
+
     Returns:
         A list of problem descriptions; empty means everything checks out.
     """
     problems: list[str] = []
 
-    manifest_files = sorted(results_dir.glob("*.json")) if results_dir.exists() else []
+    manifest_files = (
+        sorted(results_dir.glob("*.json"))
+        if results_dir.exists()
+        else []
+    )
+    # Drop untracked scratch before checking anything: `--quick` writes
+    # results/probe_<experiment>_quick.json with a necessarily dirty tree (it
+    # runs while the code is being edited), which used to fail this whole
+    # checker for a file no document cites.
+    manifest_files = [p for p in manifest_files if _git_tracked(p)]
     if not manifest_files:
         problems.append(
             f"No manifests found in {results_dir}/ — no headline claim is "

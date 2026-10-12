@@ -1,5 +1,5 @@
 ---
-tags: [phase/4, research/experiment, protocol, induction-heads]
+tags: [phase/4, research/experiment, type/lesson, induction-heads, state/consolidated]
 created: 2026-08-21
 ---
 
@@ -137,3 +137,8 @@ This run unblocks:
 - The `--standard` flag implies `--fresh-batches`, `--checkpoint-every 250`, `--save-model`, `--save-manifest`
 - Checkpointing uses shared `src/experiments/checkpointing.py` with RNG continuity (bit-identical resume verified by tests)
 - Multi-seed manifest format matches `exp2_grokking.json` schema for `verify-claims` compatibility
+
+## See also
+- [[04_nlp_and_transformers/notes/induction-heads|Induction Heads]] — the two-step (duplicate-token, then K-composition) emergence this 10k-epoch run tests against the 0.3 threshold
+- [[07_capstone/notes/grokking-verdict-p113|Grokking Verdict — P=113]] — the precedent for recording an emergence-boundary negative as a dated result rather than a failure
+- [[07_capstone/notes/positive-control-protocol|Positive-Control Protocol]] — the harness → protocol → phenomenon attribution ladder behind these falsification criteria

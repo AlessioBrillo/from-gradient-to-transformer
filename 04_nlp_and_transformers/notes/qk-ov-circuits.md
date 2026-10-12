@@ -1,5 +1,5 @@
 ---
-tags: [phase/4, note, state/review, research/experiment]
+tags: [phase/4, type/lesson, state/review, research/experiment]
 MI-core: "The single most important abstraction in mechanistic interpretability: every attention head computes two separate functions."
 ---
 

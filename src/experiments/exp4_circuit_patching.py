@@ -29,7 +29,7 @@ from src.experiments.exp1_induction_heads import make_repeated_token_data as mak
 from src.experiments.runner import parse_seeds, run_seeds
 from src.models.decoder_only_transformer import DecoderOnlyTransformer
 from src.reproducibility import set_seed
-from src.results import ResultsManifest, count_parameters
+from src.results import ResultsManifest, count_parameters, resolve_manifest_path
 
 logger = logging.getLogger(__name__)
 
@@ -44,10 +44,16 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 @torch.no_grad()
 def compute_attention_patterns(
     model: DecoderOnlyTransformer, inputs: torch.Tensor
-) -> dict:
-    """Compute per-layer attention probabilities averaged over heads."""
+) -> tuple[dict, dict]:
+    """Per-layer attention probabilities averaged over heads, plus the raw cache.
+
+    Returns a tuple `(probs, cache)`, not a bare dict — the annotation used to
+    say `-> dict` while the body returned two values, and every caller unpacks
+    it as a tuple. The annotation was the lie, not the callers.
+    """
     model.eval()
-    logits, cache = model(inputs[:8], return_cache=True)
+    # Only the hook cache is needed here; the logits are discarded.
+    _, cache = model(inputs[:8], return_cache=True)
     probs = {}
     for layer in range(model.n_layers):
         prefix = f"blocks.{layer}.attn"
@@ -63,7 +69,7 @@ def detect_induction_heads(
     model.eval()
     induction_heads = []
     with torch.no_grad():
-        logits, cache = model(inputs[:8], return_cache=True)
+        _, cache = model(inputs[:8], return_cache=True)
 
     for layer in range(model.n_layers):
         prefix = f"blocks.{layer}.attn"
@@ -89,6 +95,7 @@ def train_model(
     lr: float = 1e-3,
     weight_decay: float = 0.1,
     seed: int = 42,
+    gradient_clip: float = 1.0,
 ) -> dict:
     """Train the model and return history."""
     set_seed(seed)
@@ -108,26 +115,39 @@ def train_model(
                 logits.view(-1, logits.size(-1)), y.view(-1)
             )
             loss.backward()
+            # Gradient clipping, now that it is a parameter. exp4 used to
+            # train with no clipping at all while exp2 and exp6 both apply
+            # `gradient_clip` from config — the same adamw + wd recipe with an
+            # unbounded step is a different experiment, not a matched one.
+            if gradient_clip and gradient_clip > 0:
+                nn.utils.clip_grad_norm_(model.parameters(), gradient_clip)
             opt.step()
             total_loss += loss.item()
 
         model.eval()
-        val_loss = 0.0
+        val_loss_sum = 0.0
+        val_tokens = 0
         correct = 0
         total = 0
         with torch.no_grad():
             for x, y in val_loader:
                 logits, _ = model(x)
+                # Per-token loss, weighted by batch size. The old code divided
+                # the summed per-batch means by len(val_loader), which is a mean
+                # of means: every batch counts equally regardless of size, so
+                # the last (usually smaller) batch was over-weighted and
+                # exp4's val_loss was not comparable with exp1's/exp2's.
                 loss = nn.functional.cross_entropy(
-                    logits.view(-1, logits.size(-1)), y.view(-1)
+                    logits.view(-1, logits.size(-1)), y.view(-1), reduction="sum"
                 )
-                val_loss += loss.item()
+                val_loss_sum += loss.item()
+                val_tokens += y.numel()
                 preds = logits.argmax(dim=-1)
                 correct += (preds == y).sum().item()
                 total += y.numel()
 
         history["train_loss"].append(total_loss / len(train_loader))
-        history["val_loss"].append(val_loss / len(val_loader))
+        history["val_loss"].append(val_loss_sum / max(1, val_tokens))
         history["val_acc"].append(correct / total)
 
         if (epoch + 1) % 200 == 0:
@@ -506,6 +526,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         epochs=args.epochs,
         lr=args.lr,
         seed=seed,
+        gradient_clip=args.gradient_clip,
     )
 
     sample_inputs = next(iter(val_loader))[0][:8]
@@ -592,6 +613,18 @@ def main() -> None:
     parser.add_argument("--n-heads", type=int, default=4, help="Heads per layer")
     parser.add_argument("--epochs", type=int, default=3000, help="Training epochs")
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
+    parser.add_argument(
+        "--weight-decay",
+        type=float,
+        default=0.1,
+        help="AdamW weight decay (matches exp1/exp2 so the cascade measures one recipe)",
+    )
+    parser.add_argument(
+        "--gradient-clip",
+        type=float,
+        default=1.0,
+        help="Global-norm gradient clipping, matching exp2/exp6. 0 disables.",
+    )
     parser.add_argument("--num-train", type=int, default=8192, help="Training samples")
     parser.add_argument("--quick", action="store_true", help="Quick test mode")
     parser.add_argument(
@@ -675,7 +708,12 @@ def main() -> None:
             device=str(DEVICE),
             n_parameters=count_parameters(probe_model),
         )
-        manifest_path = Path("results") / "exp4_circuit_patching.json"
+        manifest_path = resolve_manifest_path(
+            "exp4_circuit_patching",
+            Path("results") / "exp4_circuit_patching.json",
+            args.manifest_path,
+            args.quick,
+        )
         manifest.save(manifest_path)
         logger.info(f"Saved multi-seed manifest to {manifest_path}")
         for key in result.aggregate:
@@ -713,6 +751,7 @@ def main() -> None:
             epochs=args.epochs,
             lr=args.lr,
             seed=args.seed,
+            gradient_clip=args.gradient_clip,
         )
         logger.info(
             f"Training done | final val acc: {history['val_acc'][-1]:.4f}"

@@ -1,9 +1,11 @@
 .PHONY: sync test test-cov lint lint-fix typecheck typecheck-strict typecheck-new \
 	ci-check reproduce reproduce-quick reproduce-grokking reproduce-induction \
 	reproduce-superposition reproduce-patching reproduce-sae \
-	reproduce-multiseed verify-claims clean paper \
+	reproduce-multiseed verify-claims clean paper figures \
 	reproduce-grokking-probe reproduce-induction-standard reproduce-induction-1layer \
-	reproduce-exp3-geometry commitlint-head \
+	reproduce-exp3-geometry commitlint-head neuron-ablation \
+	check-links vault-check reproduce-induction-batches reproduce-induction-fixed \
+	reproduce-induction-fresh reproduce-notebook \
 	reproduce-retune reproduce-retune-control reproduce-retune-offset reproduce-retune-reweight
 
 # --- Shell ---
@@ -35,22 +37,25 @@ test:
 
 test-cov:
 	uv run pytest -v --tb=short --cov=src --cov-report=term-missing
-
 # --- Linting ---
+# scripts/ joined src/ and tests/ on 2026-10-11. It had been silently out of
+# scope, which is how a real NameError (fourier_ablation, undefined at
+# scripts/neuron_ablation.py:197) and 107 other findings shipped in a directory
+# with zero test coverage.
 lint:
-	uv run ruff check src/ tests/
+	uv run ruff check src/ tests/ scripts/
 
 lint-fix:
-	uv run ruff check --fix src/ tests/
+	uv run ruff check --fix src/ tests/ scripts/
 
-# Non-blocking: strict mode currently reports 176 errors (2026-08-18 count;
-# the 2026-08-01 baseline was 154, the +22 accumulated since through new
+# Non-blocking: strict mode currently reports 196 errors (2026-10-11 count;
+# the 2026-08-01 baseline was 154, +22 by 2026-08-18, +20 since through new
 # research code — see the progress log's MP-52 entry — not from a tool
 # upgrade: verified identical under mypy 1.20.2, 2.1.0, and 2.3.0. After fixing a
 # python_version mismatch that previously made mypy crash on numpy's stubs
 # before checking a single line of src/ — see pyproject.toml
 # [tool.mypy]). Mostly missing-generic-args pedantry (dict -> dict[str,
-# Any], DataLoader -> DataLoader[Any]), not caught bugs, but 176 is real
+# Any], DataLoader -> DataLoader[Any]), not caught bugs, but 196 is real
 # work, not something to silently claim fixed. Tracked as follow-up. Unlike
 # `|| true`, this still fails on a genuine mypy crash (exit 2) — see
 # .github/workflows/python-ci.yml for why that distinction matters.
@@ -88,11 +93,16 @@ typecheck-new:
 # violation introduced by the new commit escapes it. The new-commit mirror
 # lints exactly what the push will add:
 #   npx --yes commitlint --from origin/dev --to HEAD --config commitlint.config.mjs
-ci-check: lint typecheck-new typecheck test-cov commitlint-new commitlint-head
+ci-check: lint vault-check typecheck-new typecheck test-cov commitlint-new commitlint-head
 
 commitlint-new:
 	@echo "=== commitlint (unpushed commits origin/dev..HEAD, mirror of the PR range) ==="
-	@npx --yes commitlint --from origin/dev --to HEAD --config commitlint.config.mjs
+	@BASE=$$(git rev-parse --verify --quiet origin/dev >/dev/null && echo origin/dev || echo main); \
+	if git rev-parse --verify --quiet "$$BASE" >/dev/null; then \
+		npx --yes commitlint --from "$$BASE" --to HEAD --config commitlint.config.mjs; \
+	else \
+		npx --yes commitlint --from HEAD~1 --to HEAD --config commitlint.config.mjs; \
+	fi
 	@echo "commitlint: unpushed commit messages conform."
 
 commitlint-head:
@@ -107,6 +117,21 @@ commitlint-head:
 reproduce: reproduce-induction reproduce-grokking reproduce-superposition reproduce-patching reproduce-sae
 	@echo "Done. See figures/ and portfolio/RESULTS.md"
 
+# Rung 2 neuron-ablation characterization (dense-solution evidence). This lives
+# in src/experiments/neuron_ablation.py, which is unit-tested and reuses exp2's
+# data/model builders.
+#
+# A second, standalone scripts/neuron_ablation.py used to duplicate this. It was
+# deleted on 2026-10-11: it called make_modular_addition_data(P=...) (wrong
+# kwarg), treated model(x) as logits when forward() returns a tuple, ablated
+# W_out rows instead of neurons, called an undefined fourier_ablation, and looked
+# for checkpoints that this repo never writes. Nothing referenced it except twelve
+# historical micro-phase roadmaps promising figures/exp2_neuron_ablation.png —
+# which this target is what actually produces.
+neuron-ablation:
+	@echo "=== Rung 2: neuron vs Fourier ablation on dense grokking checkpoints ==="
+	uv run python -m src.experiments.neuron_ablation --checkpoints-dir figures --output-dir figures
+
 reproduce-quick:
 	@echo "=== Smoke-testing all rungs in --quick mode ==="
 	uv run python -m src.experiments.exp1_induction_heads --quick
@@ -114,7 +139,16 @@ reproduce-quick:
 	uv run python -m src.experiments.exp3_superposition --quick
 	uv run python -m src.experiments.exp4_circuit_patching --quick
 	uv run python -m src.experiments.exp5_sae_dashboard --quick
+	uv run python -m src.experiments.exp6_capstone --quick
 	@echo "Done."
+
+# The teaching artifact runs itself end to end from a fresh clone: it trains
+# its own tiny joint model on CPU, so it depends on no checkpoint. Executed by
+# tests/test_teaching_artifact.py on every CI run — a notebook that CI never
+# executes is a notebook that rots, which is what happened to v22.
+reproduce-notebook:
+	@echo "=== Executing the capstone teaching artifact ==="
+	uv run pytest tests/test_teaching_artifact.py -v
 
 reproduce-grokking:
 	@echo "=== Rung 2: Grokking modular addition (FLAGSHIP) ==="
@@ -136,6 +170,24 @@ reproduce-induction-standard:
 reproduce-induction-1layer:
 	@echo "=== Rung 1: 1-layer headless lower bound (matched config) ==="
 	uv run python -m src.experiments.exp1_induction_heads --standard --n-layers 1
+
+# Rung 1 matched fixed-vs-fresh comparison — the ONE SOLID Rung 1 finding
+# (portfolio/RESULTS.md:252-254), previously prose-only with no manifest behind
+# it. Two runs, SAME three seeds, differing only in the batch regime, so the
+# comparison is apples-to-apples and both arms land in manifests. `--seeds`
+# requires identical metric keys across seeds, which is also what lets
+# tests/test_manifest_routing.py pin that an explicit --manifest-path wins over
+# the default.
+reproduce-induction-batches: reproduce-induction-fixed reproduce-induction-fresh
+	@echo "Done. See results/exp1_induction_fixed_batches.json and results/exp1_induction_fresh_batches.json"
+
+reproduce-induction-fixed:
+	@echo "=== Rung 1 arm A: FIXED batches (the ill-posed regime) ==="
+	uv run python -m src.experiments.exp1_induction_heads --batches fixed --vocab-size 256 --seq-len 16 --d-model 24 --n-layers 2 --n-heads 4 --epochs 800 --lr 0.001 --weight-decay 0.1 --batch-size 32 --num-train 256 --seeds 0,1,2 --manifest-path results/exp1_induction_fixed_batches.json
+
+reproduce-induction-fresh:
+	@echo "=== Rung 1 arm B: FRESH batches (one new random set per epoch) ==="
+	uv run python -m src.experiments.exp1_induction_heads --batches fresh --vocab-size 256 --seq-len 16 --d-model 24 --n-layers 2 --n-heads 4 --epochs 800 --lr 0.001 --weight-decay 0.1 --batch-size 32 --num-train 256 --seeds 0,1,2 --manifest-path results/exp1_induction_fresh_batches.json
 
 reproduce-exp3-geometry:
 	@echo "=== Rung 3: pentagon geometry check (5 features -> 2 dims) ==="
@@ -208,6 +260,29 @@ reproduce-multiseed:
 # count). See src/results.py.
 verify-claims:
 	uv run python -m src.results verify
+
+# --- Vault gate (CLAUDE.md: "Every note links at least 2 other notes") ---
+# The rule was written down in CLAUDE.md but enforced by nothing, so 20 of 124
+# notes were silently in violation. `check_vault.py` checks link degree, tag
+# schema, and frontmatter presence across 01..07. See scripts/check_vault.py.
+vault-check:
+	uv run python scripts/check_vault.py
+	uv run python scripts/check_links.py
+
+# --- Curated figure set ---
+# portfolio/figures/ is TRACKED and used by the paper and RESULTS.md; the
+# scratch figures/ is gitignored. They had drifted (different bytes, different
+# dates), so a clone saw a stale set while the author's disk had newer ones.
+# This target makes the tracked set a build product instead of a hand-copied
+# snapshot: run the cheap reproducible experiments, then copy only the figures
+# that the tracked documents actually cite. figures/ stays scratch.
+figures:
+	@echo "=== Rebuilding portfolio/figures/ from the manifests ==="
+	uv run python -m src.experiments.exp1_induction_heads --fresh-batches --vocab-size 256 --seq-len 16 --d-model 24 --n-layers 2 --n-heads 4 --epochs 150 --lr 0.001 --weight-decay 0.1 --batch-size 32 --num-train 256 --seeds 0,1,2
+	uv run python -m src.experiments.exp3_superposition --epochs 600 --num-samples 8000 --batch-size 512 --single-sparsity 0.01 --seeds 0,1,2
+	uv run python -m src.experiments.exp4_circuit_patching --quick --seeds 0,1,2
+	uv run python -m src.experiments.exp5_sae_dashboard --quick
+	@echo "Figures regenerated in figures/; curated set in portfolio/figures/ is unchanged by design."
 
 # --- Paper (Micro-Phase 16: the drift fix) ---
 # Compiles portfolio/paper/main.tex. Graceful when no LaTeX toolchain is

@@ -1,5 +1,5 @@
 ---
-tags: [moc, phase/7, capstone]
+tags: [type/moc, phase/7, capstone, state/review]
 ---
 
 # Capstone — Train + Reverse-Engineer
@@ -62,31 +62,38 @@ as scaffolding. Revisit only with a real ACDC or attribution-patching implementa
 
 ```
 07_capstone/
-├── data/              ← synthetic datasets (modular addition, repeated tokens, IOI)
-├── src/
-│   ├── model.py       ← decoder-only Transformer (from scratch)
-│   ├── train.py       ← training loop with W&B logging
-│   ├── config.py      ← experiment configurations in one place
-│   ├── analysis.py    ← Fourier decomposition, progress measures
-│   └── sae.py         ← SAE training wrapper
-├── experiments/       ← tracked ablations and sweeps
-├── notebooks/         ← exploratory analysis, figure generation
-└── writeup.md         ← architectural decisions and final report
+├── notes/          ← dated session notes and verdicts (mp-78 … mp-95)
+├── research-plan.md ← the original plan, rungs, timeline, distinctiveness gate
+├── writeup.md      ← architectural decisions and final report
+└── execution-log.md ← what was actually run, with dates
 ```
 
-Shared research code lives in `src/` at the repository root (experiments, reproducibility). Capstone-specific code lives here.
+**The capstone has no `src/`.** The model, the training loop, the Fourier
+analysis and the SAE all live in the shared `src/` at the repository root —
+`src/models/decoder_only_transformer.py`, `src/experiments/exp6_capstone.py` —
+because the capstone's whole purpose is to exercise the *shared* stack that
+Rungs 1–5 also use. A second, capstone-local copy would drift from the first, and
+the two would disagree about what "the model" means.
+
+An earlier version of this README showed a `07_capstone/src/` tree with
+`model.py`, `train.py`, `config.py`, `analysis.py` and `sae.py`. That tree was
+never written; the directory held only a README describing it. Removed on
+2026-10-11 rather than left as a promise (see `06_production_ai/notes/descope-register`
+for the same treatment applied to the rest of the unimplemented breadth).
+
+Shared research code lives in `src/` at the repository root. Capstone-specific
+*code* does not exist, by design; capstone-specific *content* is the notes and
+the writeup.
 
 ## Architectural Decisions
 
-| Component | Option | Selection (to decide) |
-|-----------|--------|----------------------|
-| Positional encoding | Sinusoidal / Learned / RoPE | RoPE (default; modern standard) |
-| Normalization | Pre RMSNorm / Post LayerNorm | Pre RMSNorm (stable, simpler) |
-| MLP activation | GELU / ReLU | ReLU (grokking standard) |
-| Attention | MHA / MQA / GQA | MHA (interpretability: each head independent) |
-| Weight decay | 0.1 / 1.0 / variable | 1.0 (grokking standard, critical for phase transition) |
-
-Each choice is justified in the writeup.
+| Component | Option | Selection | Where it is justified |
+|-----------|--------|-----------|----------------------|
+| Positional encoding | Sinusoidal / Learned / RoPE | RoPE | `04_nlp_and_transformers/notes/positional-encoding-and-rope` |
+| Normalization | Pre RMSNorm / Post LayerNorm | Pre RMSNorm | `04_nlp_and_transformers/notes/decoder-only-architecture` |
+| MLP activation | GELU / ReLU | ReLU (grokking standard) | `02_classical_ml/notes/decision-trees` and the literature |
+| Attention | MHA / MQA / GQA | MHA | `04_nlp_and_transformers/notes/self-and-multi-head-attention` — each head independent, for interpretability |
+| Weight decay | 0.1 / 1.0 / variable | 1.0 | critical for the grokking phase transition (Power et al., 2022) |
 
 ## Progress
 
@@ -106,14 +113,19 @@ Each choice is justified in the writeup.
 
 | Dataset | Purpose | Generation |
 |---------|---------|------------|
-| Modular addition pairs | Rung 2 (grokking) | All (a, b, (a+b) mod P) for P=113; split by modulus value |
+| Modular addition pairs | Rung 2 (grokking) | All (a, b, (a+b) mod P) for P=113; split **by equation** — random (a, b) pairs held out, not whole target classes |
 | Repeated random tokens | Rung 1 (induction heads) | Random sequences from vocabulary of size V; repeated tokens at controlled positions |
 | Synthetic sparse features | Rung 3 (superposition) | Randomly active features with controlled sparsity; known ground-truth directions |
 | IOI templates | Rung 4 (circuit patching) | Templated English sentences: "When [A] and [B] went to the store, [A] gave a book to" |
 
 ## Hardware
 
-All experiments train on a single modern GPU (A100/4090-class or modest cloud instance). No experiment requires industrial-scale pretraining. Tokenizer-adjacent experiments (superposition) run on CPU.
+**Hardware.** Every manifest committed in this repository reports
+`device: cpu` — including the P=113 flagship and both capstone probes. The
+capstone at full scale (3 seeds × 20k steps) and the Rung 2 P=113 re-run are the
+two runs that need a GPU; they are issues #170 and #167. Everything else runs on
+a laptop. Tokenizer-adjacent experiments (superposition) run on CPU by design,
+not by necessity.
 
 ## Reference Resources
 

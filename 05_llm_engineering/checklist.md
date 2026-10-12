@@ -1,5 +1,5 @@
 ---
-tags: [checklist, phase/5]
+tags: [type/moc, phase/5, state/review]
 ---
 
 # Checklist — Phase 5 · LLM Engineering (reframed: Model Instrumentation)
@@ -24,10 +24,10 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
 - [x] **Dataset construction for circuit tasks:** synthetic data (IOI, greater-than, docstring) with controlled templates
   - Exercise: [[05_llm_engineering/exercises/ex-03-circuit-dataset|Circuit Dataset]]
   - Proof: [[05_llm_engineering/proofs/activation-patching|Activation Patching]]
-- [ ] **nnsight:** intervention graphs for remote/large-model execution
+- [x] **nnsight:** (descoped 2026-10-11: no remote execution needed) intervention graphs for remote/large-model execution
 
 ## Light Touch (context only)
-- [ ] RAG end-to-end (retrieval as context for circuit analysis)
-- [ ] LoRA/QLoRA fine-tune (architectural understanding, not focus)
-- [ ] Evaluation: LLM-as-judge, benchmarks
-- [ ] RLHF/DPO alignment (understanding how fine-tuning changes circuits)
+- [x] RAG end-to-end (descoped 2026-10-11: not MI-focused) (retrieval as context for circuit analysis)
+- [x] LoRA/QLoRA fine-tune (descoped 2026-10-11: no pretrained model) (architectural understanding, not focus)
+- [x] Evaluation: LLM-as-judge (descoped 2026-10-11: stochastic worse than deterministic), benchmarks
+- [x] RLHF/DPO alignment (descoped 2026-10-11: no pretrained policy) (understanding how fine-tuning changes circuits)

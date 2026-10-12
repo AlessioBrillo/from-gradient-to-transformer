@@ -1,5 +1,5 @@
 ---
-tags: [checklist, phase/4]
+tags: [type/moc, phase/4, state/consolidated]
 ---
 
 # Checklist — Phase 4 · NLP & Transformers (LOAD-BEARING for MI)

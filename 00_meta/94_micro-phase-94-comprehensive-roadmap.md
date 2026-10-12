@@ -264,7 +264,7 @@ The teaching artifact (Session 5) forces me to explain the phase diagram to a st
 - Portfolio RESULTS — `portfolio/RESULTS.md`
 - Capstone shakedown verdict — `07_capstone/notes/mp-88-shakedown-verdict.md`
 - Retune A/B verdict — `07_capstone/notes/mp-89-retune-verdict.md`
-- Grokking NO-GROK verdict — `06_production_ai/notes/grokking-verdict-p113.md`
+- Grokking NO-GROK verdict — `07_capstone/notes/grokking-verdict-p113.md`
 - Phase diagram sweep script (to build) — `scripts/phase_diagram_sweep.py`
 - Sweep configs — `configs/phase_diagram_*.yaml`
 
