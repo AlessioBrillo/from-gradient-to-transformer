@@ -1,29 +1,56 @@
 #!/usr/bin/env python3
 """Phase Diagram Sweep Runner for Grokking.
 
-Runs a targeted sweep over modulus P, model size, weight decay, and training mode
-(solo vs joint), collecting per-cell aggregates across 3 seeds. Emits a manifest
-with all cell measurements for phase diagram analysis.
+Runs a targeted sweep over modulus P, model size, weight decay, protocol
+deviations, and training mode (solo vs joint), collecting per-cell aggregates
+across 3 seeds. Emits a working manifest (torch .pt, for resume) and, on
+request, per-cell standard `ResultsManifest` JSON files that the honesty
+system (`make verify-claims`) can cite.
 
 Usage:
     python scripts/phase_diagram_sweep.py --config configs/phase_diagram_sweep.yaml
+    python scripts/phase_diagram_sweep.py --config configs/phase_diagram_sweep_test.yaml \
+        --emit-manifests results/ --dry-run   # prints the cells
+
+Design contract (issue #168): a sweep cell IS an exp2/exp6 run at that
+config, not a re-implementation that can drift from one. The solo path
+delegates to `exp2_grokking.run_single_seed` with an argparse namespace built
+by exp2's own parser + `apply_protocol`, so the Nanda/repo protocol and
+every deviation flag are exp2's code, applied by exp2's code. The joint path
+delegates to `exp6_capstone.train_single_seed` with a config dict built from
+the capstone config schema. `tests/test_phase_diagram_sweep.py` pins the
+parity: the same seed + config must produce identical metrics through either
+entry point.
+
+Budgets are stated in optimizer steps, never epochs. The 2026-10-08 audit
+found small-modulus cells untrained because the budget was counted in epochs
+and at P=29 one epoch is two steps; `SweepCell.epochs_for_steps` converts
+explicitly (identity under full-batch, where one epoch is one step) and is
+itself tested.
 """
 
 import argparse
 import logging
 import math
 import subprocess
+import sys
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field, fields
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import torch
 import yaml
 
-from src.experiments.runner import run_seeds
-from src.reproducibility import set_seed
+# Repo root on sys.path so `python scripts/phase_diagram_sweep.py` works from
+# the root without PYTHONPATH gymnastics (same bootstrap as
+# scripts/verify_sae_induction.py). `python -m scripts.phase_diagram_sweep`
+# works either way.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from src.experiments import exp2_grokking, exp6_capstone  # noqa: E402
+from src.experiments.runner import run_seeds  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -31,10 +58,22 @@ RESULTS_DIR = Path("results")
 CHECKPOINTS_DIR = Path("checkpoints")
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+# Fallback sparse/dense classification when a manifest predates the energy
+# metric (joint cells measured with exp6's L1 k_99; the solo path carries the
+# audited energy metric too). The L1-mass k_99 is the metric the 2026-10-08
+# audit falsified — it calls a noisy sparse embedding dense — so the energy
+# classification wins whenever it is present.
+L1_SPARSE_RATIO = 0.5
+
 
 @dataclass
 class SweepCell:
-    """A single cell in the phase diagram sweep."""
+    """A single cell in the phase diagram sweep.
+
+    Axes that select an exp2 protocol deviation are Optional; None means
+    "inherit from the protocol preset". Everything else is a pinned value.
+    """
+
     cell_id: str
     modulus: int
     d_model: int
@@ -43,25 +82,54 @@ class SweepCell:
     d_mlp: int
     weight_decay: float
     mode: str  # "solo" or "joint"
+    protocol: str = "nanda"  # exp2 preset: "nanda" (full-batch) or "repo"
     train_fraction: float = 0.3
     lr: float = 1e-3
-    epochs: int = 2000
+    steps: int = 2000  # optimizer steps — the only budget unit
     batch_size: int = 128
     warmup_steps: int = 100
-    checkpoint_every: int = 500
+    checkpoint_every: int = 500  # in steps
     seed: int = 42  # base seed, actual seeds = seed + 0,1,2
+    # Protocol deviations (None = inherit the preset's value)
+    schedule: Optional[str] = None
+    normalize_embeddings: Optional[bool] = None
+    layernorm: Optional[bool] = None
+    grad_clip: Optional[float] = None
+    beta2: Optional[float] = None
+    full_batch: Optional[bool] = None
+
+    @property
+    def steps_per_epoch(self) -> int:
+        """Optimizer steps in one epoch at this cell's batch size.
+
+        Under full-batch (the Nanda protocol), one epoch IS one step — the
+        identity. Under minibatch, one epoch is ceil(n_train_pairs /
+        batch_size) steps, which at small moduli is *less than one* batch:
+        that is the audit's "at P=29 an epoch is 2 steps" failure, and why
+        budgets live in steps.
+        """
+        if self.full_batch or self.protocol == "nanda":
+            return 1
+        n_train_pairs = int(self.modulus * self.modulus * self.train_fraction)
+        return max(1, math.ceil(n_train_pairs / self.batch_size))
+
+    def epochs_for_steps(self) -> int:
+        """Epoch count that realizes `steps` optimizer steps."""
+        return max(1, math.ceil(self.steps / self.steps_per_epoch))
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "SweepCell":
-        return cls(**d)
+        known = {f.name for f in fields(cls)}
+        return cls(**{k: v for k, v in d.items() if k in known})
 
 
 @dataclass
 class CellResult:
     """Aggregated results for one cell (3 seeds)."""
+
     cell_id: str
     modulus: int
     d_model: int
@@ -71,28 +139,48 @@ class CellResult:
     weight_decay: float
     mode: str
     seeds: list[int]
-    wall_clock_seconds: float
-    # Aggregate metrics (mean/std/min/max/n)
+    # Aggregate metrics (mean/std/min/max/n). Optional when the measuring
+    # path does not produce them (the joint path has no generalization-epoch
+    # or top-k mass measure): absent, never a fabricated zero.
     final_val_acc: dict[str, float]
-    generalization_epoch: dict[str, float]
+    generalization_epoch: Optional[dict[str, float]]
     final_fourier_sparsity: dict[str, float]
     k_90_percent: dict[str, float]
     k_99_percent: dict[str, float]
-    total_mass_top_k: dict[str, float]
+    total_mass_top_k: Optional[dict[str, float]]
+    # Everything below has a default: optional metrics, then provenance.
     # Joint-specific metrics (if mode == "joint")
-    final_induction_acc: dict[str, float] | None = None
-    final_kcomp: dict[str, float] | None = None
+    final_induction_acc: Optional[dict[str, float]] = None
+    final_kcomp: Optional[dict[str, float]] = None
+    # Energy-metric fields (the audited sparse/dense criterion), solo path only
+    k_energy_90: Optional[dict[str, float]] = None
+    k_energy_99: Optional[dict[str, float]] = None
+    frac_energy_top5: Optional[dict[str, float]] = None
+    energy_sparse: Optional[dict[str, float]] = None
+    # The raw per-seed metric dicts run_seeds produced — kept so an emitted
+    # manifest can carry real per-seed values, not the mean repeated n times.
+    per_seed: list[dict[str, float]] = field(default_factory=list)
+    wall_clock_seconds: float = 0.0
 
     def is_sparse(self) -> bool:
-        """Check if cell shows sparse Fourier regime (k_99 / P < 0.5)."""
-        return self.k_99_percent["mean"] < self.modulus * 0.5
+        """Sparse-regime classification.
+
+        Prefers the energy metric (a clean 5-frequency embedding with 1%
+        noise is correctly called sparse by it; the L1-mass k_99 calls it
+        dense). Falls back to the L1 criterion k_99/P < 0.5 for manifests
+        recorded before the energy metric existed.
+        """
+        if self.energy_sparse is not None and self.energy_sparse.get("n", 0):
+            return self.energy_sparse["mean"] >= 0.5
+        return self.k_99_percent["mean"] < self.modulus * L1_SPARSE_RATIO
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "CellResult":
-        return cls(**d)
+        known = {f.name for f in fields(cls)}
+        return cls(**{k: v for k, v in d.items() if k in known})
 
 
 def _git_short_sha() -> str:
@@ -139,99 +227,177 @@ def save_manifest(
     logger.info(f"Saved sweep manifest to {manifest_path} ({len(cells)} cells)")
 
 
-# Import experiment functions
-from tqdm import tqdm
+# ---------------------------------------------------------------------------
+# Cell -> exp2 / exp6 construction (the parity contract)
+# ---------------------------------------------------------------------------
 
-from src.experiments.exp2_grokking import (
-    OneLayerTransformer,
-    analyze_fourier_sparsity,
-    fourier_decompose_embeddings,
-    make_modular_addition_data,
-    train_model,
-)
-from src.experiments.exp6_capstone import (
-    DecoderOnlyTransformer,
-    compute_k_composition_scores,
-    make_mixed_dataloaders,
-    make_repeated_token_data,
-)
-from src.experiments.exp6_capstone import (
-    make_modular_addition_data as make_capstone_modular_data,
-)
+ZERO_AGG = {"mean": 0.0, "std": 0.0, "min": 0.0, "max": 0.0, "n": 0}
 
 
-def run_solo_cell(cell: SweepCell) -> CellResult:
-    """Run a solo modular addition cell (3 seeds) via exp2_grokking."""
+def exp2_args_for_cell(cell: SweepCell) -> argparse.Namespace:
+    """The argparse namespace exp2 would parse for this cell.
 
-    def run_single_seed(seed: int) -> dict[str, float]:
-        set_seed(seed)
+    Built from exp2's own parser (so no field can be missing), then
+    `apply_protocol` (so the protocol preset is exp2's code), then the cell's
+    explicit deviations. A caller that runs exp2's CLI with the same flags
+    gets bit-identical behavior — that is what the parity test pins.
+    """
+    argv = [
+        "--protocol", str(cell.protocol),
+        "--modulus", str(cell.modulus),
+        "--d-model", str(cell.d_model),
+        "--d-mlp", str(cell.d_mlp),
+        "--n-heads", str(cell.n_heads),
+        "--lr", str(cell.lr),
+        "--weight-decay", str(cell.weight_decay),
+        "--train-fraction", str(cell.train_fraction),
+        "--batch-size", str(cell.batch_size),
+        # Budget in steps: full-batch makes epochs == steps; the minibatch
+        # deviation converts explicitly (tested in tests/test_phase_diagram_sweep.py).
+        "--epochs", str(cell.epochs_for_steps()),
+        "--progress-interval", str(max(1, cell.steps // 4)),
+        "--checkpoint-every", str(max(1, cell.checkpoint_every // cell.steps_per_epoch)),
+    ]
+    if cell.schedule is not None:
+        argv += ["--schedule", str(cell.schedule)]
+    if cell.normalize_embeddings is False:
+        argv += ["--no-normalize-embeddings"]
+    if cell.layernorm is False:
+        argv += ["--no-layernorm"]
+    if cell.grad_clip is not None:
+        argv += ["--grad-clip", str(cell.grad_clip)]
+    if cell.beta2 is not None:
+        argv += ["--beta2", str(cell.beta2)]
+    if cell.full_batch:
+        argv += ["--full-batch"]
 
-        # Data - use the exact same function as exp2_grokking
-        train_dataset, val_dataset = make_modular_addition_data(
-            modulus=cell.modulus,
-            train_fraction=cell.train_fraction,
-            seed=seed,
-        )
-        train_loader = torch.utils.data.DataLoader(
-            train_dataset, batch_size=cell.batch_size, shuffle=True
-        )
-        val_loader = torch.utils.data.DataLoader(
-            val_dataset, batch_size=cell.batch_size, shuffle=False
-        )
+    args = exp2_grokking.build_parser().parse_args(argv)
+    exp2_grokking.apply_protocol(args)
 
-        # Model (Nanda config: 1-layer)
-        model = OneLayerTransformer(
-            d_model=cell.d_model,
-            d_mlp=cell.d_mlp,
-            n_heads=cell.n_heads,
-            modulus=cell.modulus,
-        ).to(DEVICE)
+    # Deviations applied AFTER the preset overwrites: an explicit cell axis
+    # always beats the protocol default. (The argv flags above make the
+    # equivalent CLI invocation self-documenting; these assignments are what
+    # actually win — apply_protocol clobbers parsed values, so every axis
+    # that can re-enable a preset-disabled feature must be re-applied here.)
+    if cell.schedule is not None:
+        args.schedule = cell.schedule
+    if cell.normalize_embeddings is True:
+        args.no_normalize_embeddings = False
+    if cell.layernorm is True:
+        args.no_layernorm = False
+    if cell.grad_clip is not None:
+        args.grad_clip = cell.grad_clip
+    if cell.beta2 is not None:
+        args.beta2 = cell.beta2
+    if cell.full_batch is not None:
+        args.full_batch = cell.full_batch
+    if cell.warmup_steps is not None:
+        # exp2's warmup is counted in epochs; convert so it stays a step count.
+        args.warmup_epochs = max(0, math.ceil(cell.warmup_steps / cell.steps_per_epoch))
+    # Per-cell checkpoint dir: a shared dir would let a later cell's seed-N
+    # rolling checkpoint satisfy an earlier cell's --resume with the wrong
+    # weights.
+    args.checkpoint_dir = str(CHECKPOINTS_DIR / f"sweep_{cell.cell_id}")
+    Path(args.checkpoint_dir).mkdir(parents=True, exist_ok=True)
+    return args
 
-        # Train - use the exact same training function
-        history = train_model(
-            model=model,
-            train_loader=train_loader,
-            val_loader=val_loader,
-            epochs=cell.epochs,
-            lr=cell.lr,
-            weight_decay=cell.weight_decay,
-            seed=seed,
-            use_wandb=False,
-            progress_interval=10,
-            checkpoint_dir=str(CHECKPOINTS_DIR) if cell.checkpoint_every > 0 else None,
-            checkpoint_every=cell.checkpoint_every,
-            resume_from=None,
-            schedule="cosine",
-        )
 
-        # Fourier analysis
-        fourier_result = fourier_decompose_embeddings(
-            model.embed.weight.data.detach().cpu(), cell.modulus
-        )
-        sparsity = analyze_fourier_sparsity(fourier_result, top_k=20)
+def exp6_cfg_for_cell(cell: SweepCell) -> dict[str, Any]:
+    """The capstone config dict exp6 expects for this cell.
 
-        final_val_acc = history["val_acc"][-1]
-        generalization_epoch = next(
-            (i for i, acc in enumerate(history["val_acc"]) if acc > 0.9), -1
-        )
+    Same schema as configs/capstone.yaml, with the cell's axes substituted,
+    so `train_single_seed` runs exactly the config it would run from YAML.
+    """
+    return {
+        "task": {
+            "name": "modular_addition + induction",
+            "modular": {
+                "modulus": cell.modulus,
+                "train_fraction": cell.train_fraction,
+                "vocab_offset": 0,
+            },
+            "induction": {
+                "vocab_size": 2048,
+                "seq_len": 128,
+                "num_train": 8192,
+                "num_val": 1024,
+                "prefix_ratio": 0.5,
+            },
+        },
+        "model": {
+            "d_model": cell.d_model,
+            "n_layers": cell.n_layers,
+            "n_heads": cell.n_heads,
+            "d_mlp": cell.d_mlp,
+            "dropout": 0.1,
+            "rotary_base": 10000,
+            "rmsnorm_eps": 1e-5,
+        },
+        "training": {
+            "steps": cell.steps,
+            "batch_size": cell.batch_size,
+            "lr": cell.lr,
+            "weight_decay": cell.weight_decay,
+            "lr_schedule": "cosine",
+            "warmup_steps": cell.warmup_steps,
+            "gradient_clip": 1.0,
+            "modular_weight": 1.0,
+            "induction_weight": 1.0,
+            "eval_every": max(1, cell.steps // 4),
+        },
+        "instrumentation": {
+            "fourier_every": max(1, cell.steps // 2),
+            "kcomp_every": max(1, cell.steps // 2),
+            "sae_hooks": ["ln_final"],
+        },
+        "checkpoint_every": max(1, cell.checkpoint_every),
+    }
 
-        return {
-            "final_val_acc": float(final_val_acc),
-            "generalization_epoch": float(generalization_epoch),
-            "final_fourier_sparsity": float(history["fourier_sparsity"][-1]),
-            "k_90_percent": float(sparsity["k_90_percent"]),
-            "k_99_percent": float(sparsity["k_99_percent"]),
-            "total_mass_top_k": float(sparsity["total_mass_top_k"]),
-        }
 
-    seeds = [cell.seed, cell.seed + 1, cell.seed + 2]
-    result = run_seeds(run_single_seed, seeds)
+def _latest_exp6_step(checkpoint_dir: Path, seed: int) -> int:
+    """Highest step recorded for a seed's exp6 checkpoints (0 if none).
+
+    exp6 writes one file per checkpoint (`..._step{S}.pt`), not a rolling
+    file, so mid-cell resume across a killed Kaggle session scans for the
+    newest step rather than reloading a single path.
+    """
+    best = 0
+    for path in checkpoint_dir.glob(f"exp6_capstone_seed{seed}_step*.pt"):
+        try:
+            best = max(best, int(path.stem.rsplit("_step", 1)[1]))
+        except (IndexError, ValueError):
+            continue
+    return best
+
+
+# ---------------------------------------------------------------------------
+# Cell runners
+# ---------------------------------------------------------------------------
+
+def run_solo_cell(
+    cell: SweepCell, seeds: Optional[list[int]] = None
+) -> CellResult:
+    """Run a solo modular-addition cell THROUGH exp2.
+
+    The sweep is a protocol ablation over exp2's own flags, so the cell is
+    an exp2 run: same parser, same protocol application, same training loop,
+    same Fourier analysis (including the post-audit energy metric). Before
+    this refactor the sweep re-implemented the loop and silently drifted
+    from every protocol — a sweep cell matched no exp2 run at any config.
+
+    `seeds` defaults to the cell's [base, base+1, base+2]; tests pass a
+    single seed to compare per-seed values against a direct exp2 run.
+    """
+    args = exp2_args_for_cell(cell)
+    if seeds is None:
+        seeds = [cell.seed, cell.seed + 1, cell.seed + 2]
+    result = run_seeds(lambda s: exp2_grokking.run_single_seed(s, args), seeds)
 
     # A seed that crashed or diverged can leave a metric absent from the
     # aggregate; fall back to an explicit zero triple rather than a KeyError
     # that would take the whole sweep down after hours of compute.
     def agg(key: str) -> dict[str, float]:
-        return result.aggregate.get(key, {"mean": 0.0, "std": 0.0, "min": 0.0, "max": 0.0, "n": 0})
+        return result.aggregate.get(key, ZERO_AGG)
 
     return CellResult(
         cell_id=cell.cell_id,
@@ -250,206 +416,55 @@ def run_solo_cell(cell: SweepCell) -> CellResult:
         k_90_percent=agg("k_90_percent"),
         k_99_percent=agg("k_99_percent"),
         total_mass_top_k=agg("total_mass_top_k"),
+        k_energy_90=agg("k_energy_90"),
+        k_energy_99=agg("k_energy_99"),
+        frac_energy_top5=agg("frac_energy_top5"),
+        energy_sparse=agg("energy_sparse"),
+        per_seed=list(result.per_seed),
     )
 
 
-def run_joint_cell(cell: SweepCell) -> CellResult:
-    """Run a joint modular+induction cell (3 seeds) via exp6_capstone."""
+def run_joint_cell(
+    cell: SweepCell, seeds: Optional[list[int]] = None
+) -> CellResult:
+    """Run a joint modular+induction cell THROUGH exp6.
 
-    def run_single_seed(seed: int) -> dict[str, float]:
-        set_seed(seed)
+    exp6's joint loop and instrumentation are the ones the capstone runs;
+    the sweep must not carry a second copy. Note the honest limitation:
+    exp6 measures Fourier sparsity with its L1 k_99 only — the energy metric
+    exists in exp2, not in exp6 — so joint cells classify on the L1
+    criterion until exp6 gains the energy metric (tracked follow-up).
+    """
+    cfg = exp6_cfg_for_cell(cell)
+    if seeds is None:
+        seeds = [cell.seed, cell.seed + 1, cell.seed + 2]
+    checkpoint_dir = CHECKPOINTS_DIR / f"sweep_{cell.cell_id}"
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
-        vocab_size = 2048 + cell.modulus + 10
-        seq_len = 128
-
-        model = DecoderOnlyTransformer(
-            vocab_size=vocab_size,
-            d_model=cell.d_model,
-            n_layers=cell.n_layers,
-            n_heads=cell.n_heads,
-            d_mlp=cell.d_mlp,
-            max_seq_len=seq_len,
-            dropout=0.1,
-        ).to(DEVICE)
-
-        # Data - use the exact same function as exp6_capstone
-        train_loader, val_loader = make_mixed_dataloaders(
-            {
-                "task": {
-                    "modular": {
-                        "modulus": cell.modulus,
-                        "train_fraction": cell.train_fraction,
-                    },
-                    "induction": {
-                        "vocab_size": 2048,
-                        "seq_len": seq_len,
-                        "num_train": 8192,
-                        "num_val": 1024,
-                        "prefix_ratio": 0.5,
-                    },
-                },
-                "training": {
-                    "batch_size": cell.batch_size,
-                },
-            },
-            seed,
+    def run_one(seed: int) -> dict[str, float]:
+        resume_step = _latest_exp6_step(checkpoint_dir, seed)
+        metrics = exp6_capstone.train_single_seed(
+            cfg=cfg,
+            seed=seed,
+            resume_step=resume_step,
+            checkpoint_dir=checkpoint_dir,
         )
-
-        # Optimizer
-        optimizer = torch.optim.AdamW(
-            model.parameters(), lr=cell.lr, weight_decay=cell.weight_decay
-        )
-
-        def lr_lambda(step):
-            if step < cell.warmup_steps:
-                return step / cell.warmup_steps
-            progress = (step - cell.warmup_steps) / (cell.epochs - cell.warmup_steps)
-            return 0.5 * (1 + math.cos(math.pi * progress))
-
-        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
-
-        # Training loop (step-based like exp6_capstone)
-        model.train()
-        step = 0
-        pbar = tqdm(total=cell.epochs, desc=f"Seed {seed}", leave=False)
-
-        mod_accs = []
-        ind_accs = []
-
-        while step < cell.epochs:
-            for batch in train_loader:
-                if step >= cell.epochs:
-                    break
-                x, y, mod_target, task_id = batch
-                x = x.to(DEVICE)
-                y = y.to(DEVICE)
-
-                optimizer.zero_grad()
-                logits, _ = model(x)
-
-                if task_id == 0:
-                    loss = torch.nn.functional.cross_entropy(
-                        logits[:, 1, :], mod_target.to(DEVICE)
-                    )
-                else:
-                    loss = torch.nn.functional.cross_entropy(
-                        logits.view(-1, logits.size(-1)), y.view(-1)
-                    )
-
-                loss.backward()
-                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-                optimizer.step()
-                scheduler.step()
-
-                step += 1
-                pbar.update(1)
-
-                if step % 500 == 0:
-                    # Quick validation
-                    model.eval()
-                    with torch.no_grad():
-                        mod_correct = 0
-                        mod_total = 0
-                        ind_correct = 0
-                        ind_total = 0
-                        for vbatch in val_loader:
-                            vx, vy, vmod_target, vtask_id = vbatch
-                            vx = vx.to(DEVICE)
-                            vy = vy.to(DEVICE)
-                            vlogits, _ = model(vx)
-
-                            if vtask_id == 0:
-                                mod_correct += (
-                                    vlogits[:, 1, :].argmax(-1) == vmod_target.to(DEVICE)
-                                ).sum().item()
-                                mod_total += vmod_target.numel()
-                            else:
-                                ind_correct += (vlogits.argmax(-1) == vy).sum().item()
-                                ind_total += vy.numel()
-
-                        mod_acc = mod_correct / mod_total if mod_total > 0 else 0.0
-                        ind_acc = ind_correct / ind_total if ind_total > 0 else 0.0
-                        mod_accs.append(mod_acc)
-                        ind_accs.append(ind_acc)
-                    model.train()
-
-        pbar.close()
-
-        # Final evaluation
-        model.eval()
-        with torch.no_grad():
-            # Modular - use capstone's data format (seq_len=128)
-            mod_train, mod_val = make_capstone_modular_data(
-                cell.modulus, cell.train_fraction, seq_len=seq_len, seed=seed, vocab_offset=0
-            )
-            mod_val_loader = torch.utils.data.DataLoader(mod_val, batch_size=cell.batch_size)
-
-            mod_correct = 0
-            mod_total = 0
-            for x, y, mod_target in mod_val_loader:
-                x = x.to(DEVICE)
-                mod_target = mod_target.to(DEVICE)
-                logits, _ = model(x)
-                pred = logits[:, 1, :].argmax(-1)
-                mod_correct += (pred == mod_target).sum().item()
-                mod_total += mod_target.numel()
-            mod_acc = mod_correct / mod_total if mod_total > 0 else 0.0
-
-            # Induction
-            ind_train, ind_val = make_repeated_token_data(
-                vocab_size=2048,
-                seq_len=seq_len,
-                num_train=8192,
-                num_val=1024,
-                prefix_ratio=0.5,
-                seed=seed + 1000,
-            )
-            ind_val_loader = torch.utils.data.DataLoader(ind_val, batch_size=cell.batch_size)
-
-            ind_correct = 0
-            ind_total = 0
-            for x, y in ind_val_loader:
-                x = x.to(DEVICE)
-                y = y.to(DEVICE)
-                logits, _ = model(x)
-                pred = logits.argmax(-1)
-                ind_correct += (pred == y).sum().item()
-                ind_total += y.numel()
-            ind_acc = ind_correct / ind_total if ind_total > 0 else 0.0
-
-            # Fourier on modular embeddings
-            mod_embeddings = model.embed.weight[:cell.modulus]
-            fourier_result = fourier_decompose_embeddings(
-                mod_embeddings.detach().cpu(), cell.modulus
-            )
-            sparsity = analyze_fourier_sparsity(fourier_result, top_k=20)
-
-            # K-composition
-            kcomp_scores = compute_k_composition_scores(model, ind_val_loader, num_batches=5)
-            head_scores = [v for k, v in kcomp_scores.items() if not k.startswith("_")]
-            max_kcomp = max(head_scores) if head_scores else 0.0
-
+        # Only what exp6 actually measures. generalization_epoch and
+        # total_mass_top_k have no exp6 equivalent; reporting them as
+        # -1.0 / 0.0 would fabricate measurements, so they stay absent.
         return {
-            "final_val_acc": float(mod_acc),
-            "generalization_epoch": float(
-                next((i for i, acc in enumerate(mod_accs) if acc > 0.9), -1) * 500
-            ),
-            "final_fourier_sparsity": float(sparsity["k_99_percent"] / cell.modulus),
-            "k_90_percent": float(sparsity["k_90_percent"]),
-            "k_99_percent": float(sparsity["k_99_percent"]),
-            "total_mass_top_k": float(sparsity["total_mass_top_k"]),
-            "final_induction_acc": float(ind_acc),
-            "final_max_kcomp": float(max_kcomp),
+            "final_val_acc": float(metrics["final_modular_acc"]),
+            "final_fourier_sparsity": float(metrics["final_k_99"] / cell.modulus),
+            "k_90_percent": float(metrics["final_k_90"]),
+            "k_99_percent": float(metrics["final_k_99"]),
+            "final_induction_acc": float(metrics["final_induction_acc"]),
+            "final_kcomp": float(metrics["final_max_kcomp"]),
         }
 
-    seeds = [cell.seed, cell.seed + 1, cell.seed + 2]
-    result = run_seeds(run_single_seed, seeds)
+    result = run_seeds(run_one, seeds)
 
-    # A seed that crashed or diverged can leave a metric absent from the
-    # aggregate; fall back to an explicit zero triple rather than a KeyError
-    # that would take the whole sweep down after hours of compute.
     def agg(key: str) -> dict[str, float]:
-        return result.aggregate.get(key, {"mean": 0.0, "std": 0.0, "min": 0.0, "max": 0.0, "n": 0})
+        return result.aggregate.get(key, ZERO_AGG)
 
     return CellResult(
         cell_id=cell.cell_id,
@@ -463,13 +478,14 @@ def run_joint_cell(cell: SweepCell) -> CellResult:
         seeds=seeds,
         wall_clock_seconds=result.wall_clock_seconds,
         final_val_acc=agg("final_val_acc"),
-        generalization_epoch=agg("generalization_epoch"),
+        generalization_epoch=None,
         final_fourier_sparsity=agg("final_fourier_sparsity"),
         k_90_percent=agg("k_90_percent"),
         k_99_percent=agg("k_99_percent"),
-        total_mass_top_k=agg("total_mass_top_k"),
+        total_mass_top_k=None,
         final_induction_acc=agg("final_induction_acc"),
-        final_kcomp=agg("final_max_kcomp"),
+        final_kcomp=agg("final_kcomp"),
+        per_seed=list(result.per_seed),
     )
 
 
@@ -484,14 +500,16 @@ def generate_sweep_grid(config: dict) -> list[SweepCell]:
     warmup_steps = config.get("warmup_steps", 100)
     checkpoint_every = config.get("checkpoint_every", 500)
     base_seed = config.get("base_seed", 42)
-    epochs_default = config.get("epochs", 2000)
-    epochs_small_p = config.get("epochs_small_p", 5000)
+    # Budgets in optimizer steps. `steps_small_p` exists because a full-batch
+    # step at P=11 is ~100x cheaper than at P=113; both keys are STEPS, never
+    # epochs — the 2026-10-08 audit's untrained small-P cells came from an
+    # epoch budget at a modulus where an epoch is a fraction of a step.
+    steps_default = config.get("steps", config.get("epochs", 2000))
+    steps_small_p = config.get("steps_small_p", config.get("epochs_small_p", 5000))
 
     for cell_config in config.get("cells", []):
         modulus = cell_config["modulus"]
-
-        # Adjust epochs based on modulus
-        epochs = epochs_small_p if modulus <= 59 else epochs_default
+        steps = steps_small_p if modulus <= 59 else steps_default
 
         cell = SweepCell(
             cell_id=cell_config["cell_id"],
@@ -502,9 +520,10 @@ def generate_sweep_grid(config: dict) -> list[SweepCell]:
             d_mlp=cell_config["d_mlp"],
             weight_decay=cell_config["weight_decay"],
             mode=cell_config["mode"],
+            protocol=cell_config.get("protocol", "nanda"),
             train_fraction=train_fraction,
             lr=lr,
-            epochs=epochs,
+            steps=steps,
             batch_size=batch_size,
             warmup_steps=warmup_steps,
             checkpoint_every=checkpoint_every,
@@ -516,6 +535,61 @@ def generate_sweep_grid(config: dict) -> list[SweepCell]:
     return cells
 
 
+def emit_cell_manifest(cell: SweepCell, result: CellResult, out_dir: Path) -> Path:
+    """Write one cell as a standard ResultsManifest JSON in `out_dir`.
+
+    The .pt sweep manifest is scratch for resume; a number that will be
+    cited publicly needs the standard schema `make verify-claims` can
+    check (seeds, per-seed metrics, aggregate, git provenance — all stamped
+    by ResultsManifest.from_run itself).
+    """
+    from src.results import ResultsManifest
+
+    n_seeds = len(result.seeds)
+    # Only metrics actually measured across all seeds: an aggregate with
+    # n=0 (or n != n_seeds) would violate the manifest contract
+    # verify_claims enforces, and padding it would fabricate a measurement.
+    candidates = {
+        "final_val_acc": result.final_val_acc,
+        "generalization_epoch": result.generalization_epoch,
+        "final_fourier_sparsity": result.final_fourier_sparsity,
+        "k_90_percent": result.k_90_percent,
+        "k_99_percent": result.k_99_percent,
+        "total_mass_top_k": result.total_mass_top_k,
+        "final_induction_acc": result.final_induction_acc,
+        "final_kcomp": result.final_kcomp,
+    }
+    aggregate = {
+        key: stats
+        for key, stats in candidates.items()
+        if stats is not None and int(stats.get("n", 0)) == n_seeds
+    }
+    # Real per-seed values where the run kept them (falling back to the
+    # aggregate mean only for a seed whose dict is missing a key — which
+    # cannot happen for a key in `aggregate`, since run_seeds requires every
+    # seed to report the same keys).
+    per_seed_metrics: list[dict[str, float]] = []
+    for seed_metrics in result.per_seed[:n_seeds]:
+        per_seed_metrics.append(
+            {key: float(seed_metrics.get(key, stats["mean"])) for key, stats in aggregate.items()}
+        )
+    while len(per_seed_metrics) < n_seeds:  # pragma: no cover - defensive
+        per_seed_metrics.append({key: stats["mean"] for key, stats in aggregate.items()})
+    manifest = ResultsManifest.from_run(
+        experiment=f"phase_diagram_{cell.cell_id}",
+        seeds=list(result.seeds),
+        args=cell.to_dict(),
+        per_seed_metrics=per_seed_metrics,
+        aggregate=aggregate,
+        wall_clock_seconds=result.wall_clock_seconds,
+        device=str(DEVICE),
+    )
+    out_path = out_dir / f"phase_diagram_{cell.cell_id}.json"
+    manifest.save(out_path)
+    logger.info(f"Emitted citable manifest {out_path}")
+    return out_path
+
+
 def main():
     parser = argparse.ArgumentParser(description="Phase Diagram Sweep Runner")
     parser.add_argument("--config", type=str, default="configs/phase_diagram_sweep.yaml")
@@ -525,6 +599,12 @@ def main():
     )
     parser.add_argument("--dry-run", action="store_true", help="Print cells without running")
     parser.add_argument("--resume", action="store_true", help="Resume from existing manifest")
+    parser.add_argument(
+        "--emit-manifests",
+        type=str,
+        default=None,
+        help="Directory for per-cell citable ResultsManifest JSON files (e.g. results/)",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -540,13 +620,17 @@ def main():
     cells = generate_sweep_grid(config)
 
     if args.max_cells:
-        cells = cells[:args.max_cells]
+        cells = cells[: args.max_cells]
         logger.info(f"Limited to {args.max_cells} cells")
 
     if args.dry_run:
         for cell in cells:
-            logger.info(f"  {cell.cell_id}: P={cell.modulus}, d_model={cell.d_model}, "
-                       f"n_layers={cell.n_layers}, wd={cell.weight_decay}, mode={cell.mode}")
+            logger.info(
+                f"  {cell.cell_id}: P={cell.modulus}, d_model={cell.d_model}, "
+                f"n_layers={cell.n_layers}, wd={cell.weight_decay}, mode={cell.mode}, "
+                f"protocol={cell.protocol}, steps={cell.steps} "
+                f"(epochs={cell.epochs_for_steps()})"
+            )
         return
 
     # Load existing manifest if resuming
@@ -565,12 +649,17 @@ def main():
     # Run cells
     cells_results = dict(existing) if existing else {}
     start_time = time.monotonic()
-    metadata = {}  # Initialize early
+    metadata: dict[str, Any] = {}  # Initialize early
+    emit_dir = Path(args.emit_manifests) if args.emit_manifests else None
+    if emit_dir is not None:
+        emit_dir.mkdir(parents=True, exist_ok=True)
 
     for i, cell in enumerate(cells_to_run):
-        logger.info(f"[{i+1}/{len(cells_to_run)}] Running {cell.cell_id}: "
-                   f"P={cell.modulus}, d_model={cell.d_model}, "
-                   f"n_layers={cell.n_layers}, wd={cell.weight_decay}, mode={cell.mode}")
+        logger.info(
+            f"[{i+1}/{len(cells_to_run)}] Running {cell.cell_id}: "
+            f"P={cell.modulus}, d_model={cell.d_model}, "
+            f"n_layers={cell.n_layers}, wd={cell.weight_decay}, mode={cell.mode}"
+        )
 
         try:
             if cell.mode == "solo":
@@ -590,14 +679,19 @@ def main():
                 "completed_cells": len(cells_results),
             }
             save_manifest(manifest_path, cells_results, metadata)
+            if emit_dir is not None:
+                emit_cell_manifest(cell, result, emit_dir)
 
-            logger.info(f"  -> val_acc={result.final_val_acc['mean']:.4f}, "
-                       f"k_99/P={result.k_99_percent['mean']/cell.modulus:.3f}, "
-                       f"sparse={result.is_sparse()}")
+            logger.info(
+                f"  -> val_acc={result.final_val_acc['mean']:.4f}, "
+                f"k_99/P={result.k_99_percent['mean']/cell.modulus:.3f}, "
+                f"sparse={result.is_sparse()}"
+            )
 
         except Exception as e:
             logger.error(f"Cell {cell.cell_id} failed: {e}")
             import traceback
+
             traceback.print_exc()
             # Continue with other cells
 

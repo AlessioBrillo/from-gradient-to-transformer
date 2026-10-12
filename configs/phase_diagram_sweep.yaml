@@ -383,6 +383,6 @@ warmup_steps: 100
 checkpoint_every: 500
 base_seed: 42
 
-# Epochs: longer for small P (where grokking is faster)
-epochs: 2000
-epochs_small_p: 5000
+# Budgets in OPTIMIZER STEPS (full-batch protocol: 1 step per epoch).
+steps: 2000
+steps_small_p: 5000

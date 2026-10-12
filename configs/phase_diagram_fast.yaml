@@ -1,8 +1,8 @@
-# Phase Diagram Core Sweep - FAST CELLS ONLY (2000 epochs)
-# Excludes positive control (p59_wd10) which runs 5000 epochs separately
+# Phase Diagram Core Sweep - FAST CELLS ONLY (2000 steps)
+# Excludes positive control (p59_wd10) which runs 5000 steps separately
 
 cells:
-  # === P-sweep at Nanda config (WD=1.0) - 2000 epochs for P>59 ===
+  # === P-sweep at Nanda config (WD=1.0) - 2000 steps for P>59 ===
   - cell_id: "p11_wd10"
     modulus: 11
     d_model: 128
@@ -94,7 +94,7 @@ cells:
     weight_decay: 2.0
     mode: "solo"
 
-  # === Model-size sweep at P=59 (2000 epochs for faster testing) ===
+  # === Model-size sweep at P=59 (2000 steps for faster testing) ===
   - cell_id: "p59_dm64_l1"
     modulus: 59
     d_model: 64
@@ -176,6 +176,6 @@ warmup_steps: 100
 checkpoint_every: 500
 base_seed: 42
 
-# FAST epochs for all cells (2000)
-epochs: 2000
-epochs_small_p: 2000
+# FAST step budget for all cells (2000)
+steps: 2000
+steps_small_p: 2000
