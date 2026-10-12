@@ -71,10 +71,30 @@ jobs:
         run: |
           uv run python -m src.results verify
 
+      - name: Compile the mini-paper (LaTeX)
+        # build_site.py copies portfolio/paper/main.pdf to the site only if it
+        # exists, and the file is not tracked — so before this step the live
+        # site never shipped the paper at all. paper.yml compiles it as a CI
+        # artifact only; the site needs its own build so the PDF always
+        # matches the committed .tex source. Two passes for \bibliography.
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: main.tex
+          working_directory: portfolio/paper
+          latexmk_use_lualatex: true
+          args: -pdf -interaction=nonstopmode -halt-on-error
+
       - name: Build site (README + portfolio -> static HTML)
         # Curated figures come from the committed portfolio/figures/; the
         # quick-mode figures generated above are scratch and must not replace them.
         run: uv run python scripts/build_site.py --out _site
+
+      - name: Verify the site ships the compiled paper
+        # A silent regression here would resurrect the pre-2026-10 state: the
+        # site live without paper.pdf because nobody checked.
+        run: |
+          test -f _site/paper.pdf || { echo "::error::_site/paper.pdf missing — the LaTeX step or the build_site.py copy regressed"; exit 1; }
+          echo "paper.pdf shipped to the site ($(du -h _site/paper.pdf | cut -f1))."
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
