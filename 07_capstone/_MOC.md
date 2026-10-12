@@ -14,6 +14,8 @@ Index and links for the capstone phase. Detailed plan: [[07_capstone/README]].
 - [[07_capstone/notes/mp-90-wandb-gpu-close|MP-90 W&B and GPU-Watch Close]] — the closed-with-one-reason verdicts for W&B and the GPU watch.
 - [[07_capstone/notes/mp-94-positive-control-results|MP-94 Positive Control Results]] — P=59, Nanda config, 3 seeds, k_99 = 58/59: NO-GROK.
 - [[07_capstone/notes/mp-95-session-0-transition|MP-95 Session 0 Transition]] — pivot from the dense-attractor characterisation to scaled Rung 1.
+- [[07_capstone/notes/capstone-gate-honest-negative|Capstone Gate — the honest negative]] — the Phase 7 gate answer: dense mechanism defended with manifests.
+- [[07_capstone/checklist|Capstone checklist]] — phase items and the stamped gate.
 - [[07_capstone/README|Capstone README]] — full pipeline overview, experiment ladder
 - [[07_capstone/writeup]] — mini-paper outline: grokking, circuits, SAE
 

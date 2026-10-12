@@ -34,9 +34,11 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
   two sections (Rung 2 grokking, Rung 5 SAE) have no manifest to tag at all — a real gap,
   not a bug in the check (the gate keeps flagging them until those runs land).
 - [x] **Feature dashboard deployment:** (descoped 2026-10-11: no confirmed head) Hugging Face Spaces for SAE feature browser
-- [~] **Mini-paper workflow:** LaTeX template, `make paper` (added 2026-08-08), citation
+- [x] **Mini-paper workflow:** LaTeX template, `make paper` (added 2026-08-08), citation
   management — `portfolio/paper/main.tex` + `references.bib` scaffold added 2026-08-02;
-  structure only, no prose yet.
+  prose written from manifests in paper v20 (2026-09-17), bibliography wired and guarded
+  in CI (`paper.yml` fails on an unreferenced `references.bib`), and the PDF is compiled
+  into the site deploy (`pages.yml`, 2026-10-12) so the paper actually ships.
 
 ## Light Touch (context)
 - [x] Data versioning (descoped 2026-10-11: all data synthetic, seed-controlled) (DVC / lakeFS) — for large activation datasets
