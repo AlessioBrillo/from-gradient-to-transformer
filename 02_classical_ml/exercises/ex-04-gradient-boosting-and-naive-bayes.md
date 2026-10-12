@@ -4,7 +4,7 @@ tags: [type/exercise, phase/2, state/consolidated]
 created: 2026-10-11
 ---
 
-# Exercise 04 — Gradient Boosting and Naive Bayes
+## Exercise 04 — Gradient Boosting and Naive Bayes
 
 ## Objective
 Implement gradient boosting manually, train XGBoost/LightGBM, and compare against Naive Bayes on text data. Understand when each method works and why.

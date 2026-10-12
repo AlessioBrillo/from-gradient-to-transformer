@@ -4,7 +4,7 @@ tags: [type/exercise, phase/2, state/consolidated]
 created: 2026-10-11
 ---
 
-# Exercise 03 — PCA, Feature Geometry, and the SAE Connection
+## Exercise 03 — PCA, Feature Geometry, and the SAE Connection
 
 ## Objective
 Implement PCA from scratch, understand the geometry of dimensionality reduction, and build the conceptual bridge to sparse autoencoders.

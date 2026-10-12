@@ -95,7 +95,6 @@ the writeup.
 | Attention | MHA / MQA / GQA | MHA | `04_nlp_and_transformers/notes/self-and-multi-head-attention` — each head independent, for interpretability |
 | Weight decay | 0.1 / 1.0 / variable | 1.0 | critical for the grokking phase transition (Power et al., 2022) |
 
-
 ## Progress
 
 - [x] Decoder-only transformer from scratch (`src/models/decoder_only_transformer.py`)
