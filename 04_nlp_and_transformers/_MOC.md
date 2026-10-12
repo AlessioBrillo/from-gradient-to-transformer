@@ -9,6 +9,11 @@ Index and links for this phase. Detailed topics/resources/exercises: see [[00_me
 **This is the most important phase for the MI thesis.** Every concept here directly feeds the capstone. The goal is to learn to *read* transformers: QK/OV circuits, induction heads, logit lens, activation patching.
 
 ## Notes (lessons)
+- [[04_nlp_and_transformers/notes/self-and-multi-head-attention|Self-Attention and Multi-Head Attention]] — scaled dot-product attention, the head split, and the causal mask.
+- [[04_nlp_and_transformers/notes/positional-encoding-and-rope|Positional Encoding and RoPE]] — why relative position, the chunk-vs-interleaved trap, and the KV-cache offset.
+- [[04_nlp_and_transformers/notes/decoder-only-architecture|Decoder-Only Architecture]] — the full stack, `generate()`, and the hook cache every analysis reads.
+- [[04_nlp_and_transformers/notes/attribution-patching|Attribution Patching (AtP)]] — the gradient shortcut: not implemented, and why that is the honest state.
+- [[04_nlp_and_transformers/notes/encoder-only-bert|Encoder-Only Models (BERT)]] — the deliberate gap, and why the MI thesis rules it out.
 - [[04_nlp_and_transformers/notes/induction-extended-run|Induction: Extended Run]] — the 10k-epoch scaled run that failed to produce a head; the standing negative.
 - [[04_nlp_and_transformers/notes/superposition-and-feature-capacity|Superposition and Feature Capacity]] — why more features than dimensions forces non-orthogonal directions (Rung 3's premise).
 - [[04_nlp_and_transformers/notes/qk-ov-circuits|QK/OV Circuit Decomposition — The Central Abstraction]]
