@@ -4,7 +4,7 @@ tags: [type/lesson, phase/4, state/consolidated]
 created: 2026-10-11
 ---
 
-# Positional Encoding and RoPE
+## Positional Encoding and RoPE
 
 ## What it is
 

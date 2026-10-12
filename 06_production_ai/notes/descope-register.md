@@ -5,7 +5,7 @@ created: 2026-10-11
 consumes: [ADR-0031]
 ---
 
-# Descope Register — Phase 5/6/7 Breadth Items
+## Descope Register — Phase 5/6/7 Breadth Items
 
 ## What this is
 

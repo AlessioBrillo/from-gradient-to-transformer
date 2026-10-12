@@ -4,7 +4,7 @@ tags: [type/lesson, phase/4, state/consolidated]
 created: 2026-10-11
 ---
 
-# Encoder-Only Models (BERT) — The Deliberate Gap
+## Encoder-Only Models (BERT) — The Deliberate Gap
 
 ## What it is
 

@@ -4,7 +4,7 @@ tags: [type/lesson, phase/4, state/consolidated]
 created: 2026-10-11
 ---
 
-# Self-Attention and Multi-Head Attention
+## Self-Attention and Multi-Head Attention
 
 ## What it is
 

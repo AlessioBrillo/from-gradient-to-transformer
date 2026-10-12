@@ -4,7 +4,7 @@ tags: [type/lesson, phase/4, state/consolidated]
 created: 2026-10-11
 ---
 
-# Attribution Patching (AtP)
+## Attribution Patching (AtP)
 
 ## What it is
 

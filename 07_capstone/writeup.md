@@ -4,7 +4,7 @@ tags: [type/lesson, phase/7, capstone, writeup, state/consolidated]
 created: 2026-10-11
 ---
 
-# Writeup — Reverse-Engineering a Micro-Transformer
+## Writeup — Reverse-Engineering a Micro-Transformer
 
 **Status: written from the manifests, 2026-10-11.**
 
