@@ -586,9 +586,9 @@ re-derives from a manifest and a command:
   when this draft is promoted from MP-36's release report.
 - [[06_production_ai/notes/results-manifests-and-provenance]] — the manifest
   machinery every public number cites.
-- [[06_production_ai/notes/dense-solutions-modular-addition]] ·
-  [[06_production_ai/notes/positive-control-protocol]] ·
-  [[06_production_ai/notes/microscope-trial-table]] — the science C21–C24
+- [[07_capstone/notes/dense-solutions-modular-addition]] ·
+  [[07_capstone/notes/positive-control-protocol]] ·
+  [[07_capstone/notes/microscope-trial-table]] — the science C21–C24
   adjudicate over (MP-29's S3 characterization note joins them on disk; the
   phase diagram, MP-35's C14 verdict, extends the map).
 - [[07_capstone/research-plan]] — the research plan the paper, the essay and

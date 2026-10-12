@@ -61,3 +61,8 @@ The pipeline mirrors the transformer interpretability workflow: feature extracti
 - Pipeline order matters: leak data if you fit scaler on full dataset before splitting.
 - Simple baselines (NB, LR) reveal whether complex models actually add value.
 - Text data benefits from domain-specific preprocessing (TF-IDF > raw counts).
+
+## See also
+- [[02_classical_ml/notes/naive-bayes|Naive Bayes]] — the text baseline this pipeline starts with, and why its independence assumption survives bag-of-words.
+- [[02_classical_ml/notes/gradient-boosting|Gradient Boosting]] — the XGBoost stage that wins the comparison by capturing bigram interactions the linear baseline cannot.
+- [[02_classical_ml/notes/bias-variance-and-evaluation|Bias/Variance and Evaluation]] — the stratified CV, tuning, ROC-AUC choices and the fit-scaler-before-split leakage trap the reflection calls out.

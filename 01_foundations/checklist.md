@@ -1,5 +1,5 @@
 ---
-tags: [checklist, phase/1, state/consolidated]
+tags: [type/moc, phase/1, state/consolidated]
 state: consolidated
 created: 2026-06-18
 ---

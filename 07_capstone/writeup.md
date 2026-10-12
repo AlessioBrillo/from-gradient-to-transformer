@@ -1,5 +1,5 @@
 ---
-tags: [phase/7, capstone, writeup]
+tags: [phase/7, capstone, writeup, state/review]
 ---
 
 # Writeup — Reverse-Engineering a Micro-Transformer: Grokking, Circuits, and Sparse Features

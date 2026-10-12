@@ -1,5 +1,5 @@
 ---
-tags: [checklist, phase/6]
+tags: [type/moc, phase/6, state/review]
 ---
 
 # Checklist — Phase 6 · Production AI (reframed: Reproducible Research Infra)

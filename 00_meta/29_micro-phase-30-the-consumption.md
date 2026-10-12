@@ -381,8 +381,8 @@ PDF is this phase's ship date, the same one MP-24 always owed.
 - [[00_meta/23_micro-phase-24-the-synthesis]] — the synthesis this phase
   executes on a new clock; its pre-registered decisions are inherited as
   written, its session list re-clocked to MP-29's intake.
-- [[06_production_ai/notes/dense-solutions-modular-addition]] ·
-  [[06_production_ai/notes/grokking-verdict-p113]] · the support notes the
+- [[07_capstone/notes/dense-solutions-modular-addition]] ·
+  [[07_capstone/notes/grokking-verdict-p113]] · the support notes the
   paper's Grokking section cites.
 - [[06_production_ai/notes/results-manifests-and-provenance]] — the manifest
   machinery every number cites, every section opens on.

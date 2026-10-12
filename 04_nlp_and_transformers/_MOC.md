@@ -1,5 +1,5 @@
 ---
-tags: [moc, phase/4]
+tags: [type/moc, phase/4, state/consolidated]
 ---
 
 # Phase 4 · NLP & Transformers — MOC (LOAD-BEARING for MI)
@@ -9,6 +9,8 @@ Index and links for this phase. Detailed topics/resources/exercises: see [[00_me
 **This is the most important phase for the MI thesis.** Every concept here directly feeds the capstone. The goal is to learn to *read* transformers: QK/OV circuits, induction heads, logit lens, activation patching.
 
 ## Notes (lessons)
+- [[04_nlp_and_transformers/notes/induction-extended-run|Induction: Extended Run]] — the 10k-epoch scaled run that failed to produce a head; the standing negative.
+- [[04_nlp_and_transformers/notes/superposition-and-feature-capacity|Superposition and Feature Capacity]] — why more features than dimensions forces non-orthogonal directions (Rung 3's premise).
 - [[04_nlp_and_transformers/notes/qk-ov-circuits|QK/OV Circuit Decomposition — The Central Abstraction]]
 - [[04_nlp_and_transformers/notes/induction-heads|Induction Heads — The Mechanism of In-Context Learning]]
 - [[04_nlp_and_transformers/notes/activation-patching|Activation Patching — Causal Intervention for Circuit Discovery]]

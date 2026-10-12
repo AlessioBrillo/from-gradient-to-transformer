@@ -35,6 +35,11 @@ for m = 1..M:
 ## MI forward link
 Gradient boosting's additive correction of residuals parallels how attention heads iteratively refine representations: each head corrects the residual stream, and the ensemble of heads across layers builds up the final prediction. The "shallow trees + shrinkage" pattern maps to "shallow attention heads + layer norm scaling."
 
+## See also
+- [[02_classical_ml/notes/decision-trees|Decision Trees]] — each boosting round fits a shallow tree to the current residuals, so the tree's inductive bias is what boosting is built from.
+- [[02_classical_ml/notes/bias-variance-and-evaluation|Bias/Variance and Evaluation]] — the shrinkage-vs-tree-count tradeoff and depth limits are bias/variance decisions, not implementation details.
+- [[01_foundations/notes/bayesian-thinking-and-regularization|Bayesian Thinking and Regularization]] — XGBoost's regularized objective is shrinkage plus L2, the same regularization family as weight decay.
+
 ## References
 - Friedman, *Greedy Function Approximation: A Gradient Boosting Machine* (2001)
 - Chen & Guestrin, *XGBoost* (KDD 2016)

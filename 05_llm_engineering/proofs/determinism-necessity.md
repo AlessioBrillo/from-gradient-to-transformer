@@ -1,5 +1,5 @@
 ---
-tags: [type/proof, phase/5]
+tags: [type/proof, phase/5, state/review]
 created: 2026-07-08
 ---
 
@@ -59,3 +59,8 @@ print("Proved: seeded runs produce activations within tolerance")
 ## Outcome
 - [x] Passed → check the skill in [[00_meta/02_skill-tree]]
 - [ ] Retry needed (what was missing): ...
+
+## See also
+- [[05_llm_engineering/notes/02-deterministic-inference|Deterministic Inference]] — the lesson whose seed / eval / deterministic-algorithm pipeline this proof reproduces
+- [[06_production_ai/notes/results-manifests-and-provenance|Results Manifests and Provenance]] — why bit-exact reruns are the precondition for trusting any recorded manifest
+- [[05_llm_engineering/exercises/ex-02-activation-harvesting|Activation Harvesting Exercise]] — the exercise that applies this determinism requirement to a real multi-prompt activation harvest

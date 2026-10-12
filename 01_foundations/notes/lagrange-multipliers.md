@@ -1,5 +1,5 @@
 ---
-tags: [type/lesson, phase/1]
+tags: [type/lesson, phase/1, state/consolidated]
 state: consolidated
 created: 2026-06-19
 ---

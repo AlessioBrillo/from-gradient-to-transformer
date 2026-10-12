@@ -58,7 +58,7 @@ Each reading below has: *the question it must answer*, *the prediction I write b
 - **Primary sources on disk**:
   - `03_deep_learning/notes/training-dynamics-and-grokking.md` — progress measures, phase transitions
   - `04_nlp_and_transformers/notes/superposition-and-feature-capacity.md` — superposition as alternative to sparsity
-  - `06_production_ai/notes/dense-solutions-modular-addition.md` — my running derivation
+  - `07_capstone/notes/dense-solutions-modular-addition.md` — my running derivation
   - `src/experiments/exp2_grokking.py` — `compute_progress_measures`, `analyze_fourier_sparsity`
 - **Prediction to write before drafting**: The dense solution implements addition as a *distributed linear map* in the embedding space. The MLP acts as a learned interpolation table over the cyclic group. Generalization emerges when weight decay forces the embedding matrix into a low-rank circulant structure — not sparse DFT, but *implicit* Fourier via the circulant's eigenbasis. The neuron ablation curve (graceful) vs. Fourier ablation (catastrophic) proves the representation is distributed, not frequency-localized.
 - **Output**: `06_production_ai/notes/dense-attractor-derivation.md` — runnable algebraic derivation with a test in `tests/test_dense_attractor.py`.

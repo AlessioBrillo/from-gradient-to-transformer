@@ -1,5 +1,5 @@
 ---
-tags: [phase/2, note, state/review]
+tags: [phase/2, type/lesson, state/review]
 MI-forward-link: "PCA is the conceptual ancestor of sparse autoencoders. Both decompose data into a sparse, interpretable basis. PCA gives orthogonal components; SAEs give overcomplete, sparse features."
 ---
 
@@ -41,3 +41,8 @@ This is the core conceptual bridge: PCA → sparse dictionary learning → SAEs.
 The residual stream of a transformer is a d_model-dimensional vector space. If features in this space are superposed (Elhage et al. 2022), PCA cannot disentangle them because they're not orthogonal. SAEs solve this by learning an overcomplete, sparse decomposition.
 
 Understanding PCA's limitations = understanding why SAEs exist.
+
+## See also
+- [[01_foundations/notes/singular-value-decomposition|Singular Value Decomposition]] — SVD of the centered data matrix is the numerically stable route to PCA's components and explained variance.
+- [[02_classical_ml/exercises/ex-03-pca-and-feature-geometry|Exercise 03 — PCA, Feature Geometry, and the SAE Connection]] — implements PCA from scratch and works through exactly where its orthogonal-basis assumption breaks.
+- [[02_classical_ml/proofs/trees-ensembles-pca|Decision Trees, Ensembles, and PCA]] — the gate proof that reconstructs PCA via SVD and states the dense-orthogonal vs. sparse-overcomplete limitation.

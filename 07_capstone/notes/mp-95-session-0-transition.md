@@ -1,5 +1,5 @@
 ---
-tags: [type/note, phase/95, state/transition]
+tags: [type/lesson, phase/7, state/transition]
 created: 2026-10-09
 ---
 
@@ -22,3 +22,9 @@ MP-95 focuses on:
 2. Causal verification via activation patching.
 
 Ready for Session 1: Scaled Rung 1 Experiment.
+
+## See also
+- [[07_capstone/notes/mp-94-positive-control-results|MP-94 Positive Control Results]] — the result that closed MP-94 and opened this transition.
+- [[07_capstone/notes/mp-89-retune-verdict|MP-89 Retune Verdict]] — the NO-MOVE A/B verdict that re-prioritised Rung 1.
+- [[04_nlp_and_transformers/notes/induction-heads|Induction Heads]] — the Rung 1 target this phase scales up.
+- [[07_capstone/notes/positive-control-protocol|Positive-Control Protocol]] — the protocol-ablation still gated on the Rung 2 rerun.

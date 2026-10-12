@@ -1,5 +1,5 @@
 ---
-tags: [phase/2, note, state/review]
+tags: [phase/2, type/lesson, state/review]
 MI-forward-link: "The bias/variance tradeoff maps to understanding memorization vs. generalization in grokking. Grokking's three phases correspond to moving from high-variance (memorization) to optimal bias/variance (generalization)."
 ---
 
@@ -41,3 +41,8 @@ The grokking phenomenon is a training-dynamics manifestation of the bias-varianc
 - Phase 3 (cleanup): optimal bias/variance balance through weight decay pruning
 
 This is why weight decay is critical for grokking: it directly penalizes high-variance solutions.
+
+## See also
+- [[01_foundations/notes/bias-variance-decomposition|Bias-Variance Decomposition]] — the derivation of Bias² + Variance + σ² that this note's metrics and learning curves put to work.
+- [[03_deep_learning/notes/training-dynamics-and-grokking|Training Dynamics and Grokking]] — grokking's memorization → circuit-formation → cleanup arc is the bias/variance tradeoff observed inside a single training run.
+- [[02_classical_ml/notes/decision-trees|Decision Trees]] — tree depth is the cleanest worked example of trading bias against variance.

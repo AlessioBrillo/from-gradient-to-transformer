@@ -81,3 +81,8 @@ Features (SAE Latent):
 - Wang et al., *Interpretability in the Wild: a Circuit for IOI in GPT-2 Small* (2023)
 - Bricken et al., *Towards Monosemanticity* (2023)
 - Conmy et al., *Automated Circuit Discovery* (2023)
+
+## See also
+- [[04_nlp_and_transformers/notes/induction-heads|Induction Heads]] — the concrete circuit this eight-step pipeline identifies end to end
+- [[04_nlp_and_transformers/notes/path-patching|Path Patching]] — Step 6's method for isolating one head-to-head edge out of the full patching result
+- [[05_llm_engineering/proofs/intervention-validity|Intervention Validity]] — the site / counterfactual / metric checks that decide whether the Step 5 patching numbers mean anything

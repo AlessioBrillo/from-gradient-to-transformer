@@ -1,5 +1,5 @@
 ---
-tags: [moc, phase/3]
+tags: [type/moc, phase/3, state/consolidated]
 ---
 
 # Phase 3 · Deep Learning — MOC

@@ -1,5 +1,5 @@
 ---
-tags: [type/lesson, phase/2]
+tags: [type/lesson, phase/2, state/consolidated]
 state: review
 created: 2026-07-05
 ---
@@ -44,7 +44,7 @@ A Pipeline is itself an estimator — it can be cross-validated, grid-searched, 
 ## Connections to our codebase
 - [[02_classical_ml/notes/linear-regression|Linear Regression]] — we implement from scratch with the same API
 - [[02_classical_ml/notes/logistic-regression|Logistic Regression]] — same API, from scratch
-- [[02_classical_ml/notes/cross-validation-and-metrics|Cross-Validation]] — reimplements `cross_val_score`
+- [[02_classical_ml/notes/bias-variance-and-evaluation|Bias-Variance and Evaluation]] — the from-scratch counterpart of `cross_val_score` and the metric suite in `src/evaluation/metrics.py`
 
 ## Open questions
 - How does `Pipeline` handle caching of intermediate transforms? (#question)

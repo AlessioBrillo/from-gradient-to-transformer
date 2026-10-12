@@ -1,5 +1,5 @@
 ---
-tags: [moc, phase/5]
+tags: [type/moc, phase/5, state/review]
 ---
 
 # Phase 5 · LLM Engineering — MOC (reframed: Model Instrumentation)
@@ -20,6 +20,8 @@ Index and links for this phase. Detailed topics/resources/exercises: see [[00_me
 - [[05_llm_engineering/exercises/ex-03-circuit-dataset|Synthetic Circuit Dataset Construction]]
 
 ## Proofs to myself
+- [[05_llm_engineering/proofs/intervention-validity|Intervention Validity]] — what an activation must satisfy for a patch to mean anything.
+- [[05_llm_engineering/proofs/superposition-setup-validity|Superposition Setup Validity]] — the root cause of Rung 3's original non-reproduction (no real bottleneck).
 - [[05_llm_engineering/proofs/hook-intervention|Hook Intervention Changes Model Output]]
 - [[05_llm_engineering/proofs/determinism-necessity|Determinism is Necessary for Reproducible Activation Analysis]]
 - [[05_llm_engineering/proofs/activation-patching|Activation Patching Localizes Model Behavior]]

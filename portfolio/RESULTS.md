@@ -279,7 +279,7 @@ per epoch) and `--seeds` (multi-seed manifest) added 2026-08-02.
 **Question**: Can I reproduce the grokking phase transition on modular addition (a+b mod P) and reverse-engineer the discrete Fourier transform algorithm the model learns?
 
 **Status**: [x] Decided 2026-08-11 — **NO-GROK, a positive-negative** (full analysis:
-[grokking-verdict-p113](../06_production_ai/notes/grokking-verdict-p113.md)). The train/val split bug that made
+[grokking-verdict-p113](../07_capstone/notes/grokking-verdict-p113.md)). The train/val split bug that made
 this structurally unreachable was fixed 2026-07-26; the fixed split makes the task
 well-posed. The full P=113 run — three seeds to 5000/5000 epochs under the frozen
 protocol (ADR-0003 row 1) on this machine's CPU — reached **val accuracy 1.0 across

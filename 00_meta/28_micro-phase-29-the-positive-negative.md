@@ -66,11 +66,11 @@ writing a single claim here.
   pivots to root-cause diagnosis (the normalization/loss/schedule chain read
   as code, not as hope) — and no P=113 microscope trial is worth its wall
   time until that question is answered. The control's verdict is dated before
-  the microscope spends its three-trial budget ([[06_production_ai/notes/positive-control-protocol]]).
+  the microscope spends its three-trial budget ([[07_capstone/notes/positive-control-protocol]]).
 - **The microscope runs to a terminus, not a schedule.** ADR-0003 row 2's
   ≤ 3 single-variable trials each carry a pre-registered prediction and a
   falsification column written before the run starts
-  ([[06_production_ai/notes/microscope-trial-table]]); the third trial is
+  ([[07_capstone/notes/microscope-trial-table]]); the third trial is
   chosen with a one-line justification when trials 1–2 land. The planned
   third: weight decay 1.5×, the norm-pressure hypothesis, pending what the
   control says. Three failed trials close the row with one reason — the dated
@@ -80,7 +80,7 @@ writing a single claim here.
   solution: per-head Fourier dictionary of the P=113 checkpoints, norm
   structure against Nanda et al.'s sparse solution, frequency ablation, and
   an SAE reading of the dense residual stream with an honest L0/FVE delta
-  ([[06_production_ai/notes/dense-solutions-modular-addition]]). The public
+  ([[07_capstone/notes/dense-solutions-modular-addition]]). The public
   sentence the record ships is: *"grokking modular addition at P=113 was not
   reproduced under this protocol on this machine within this window; here is
   the algorithm the model found instead."*
@@ -123,7 +123,7 @@ writing a single claim here.
   launched, it is resumed under checkpoint-every-250 or re-launched with a
   dated PID — either way the row gets its heartbeat before the session ends.
 - The positive-control protocol pre-registered in full
-  ([[06_production_ai/notes/positive-control-protocol]]): P set, budget,
+  ([[07_capstone/notes/positive-control-protocol]]): P set, budget,
   threshold (k_99 < P/2 sustained ≥ 3 checkpoints), the one-change rule, and
   the decision tree for a harness-level negative.
 - The CI floor re-verified locally: tracked tests green, ruff clean, blocking
@@ -153,7 +153,7 @@ writing a single claim here.
   `--no-normalize-embeddings`, 5000 epochs) completed 14:30 local — val
   0.7176, gen epoch −1, k_99 = 112/113. Verdict stamped **FALSIFIED**
   (renormalization not the suppressor) in
-  [[06_production_ai/notes/microscope-trial-table]] — the trial enters the
+  [[07_capstone/notes/microscope-trial-table]] — the trial enters the
   table in the sitting that decided it, one sitting ahead of S2's schedule.
 - **Trial 2 enabler landed**: `--schedule constant` via the
   `make_lr_scheduler` factory — falsification tests first
@@ -183,7 +183,7 @@ writing a single claim here.
 - **ALL-DENSE, harness-level negative** — decision-tree branch 2:
   P=59 val 0.0000 (59/59), P=67 val 0.0006 (67/67), P=97 val 0.0002 (96/97),
   all gen −1 at 2000 epochs (frozen protocol minus renormalization). Stamped
-  in [[06_production_ai/notes/positive-control-protocol]]. The pre-registered
+  in [[07_capstone/notes/positive-control-protocol]]. The pre-registered
   prediction ("sparse at least at P=59") is falsified.
 - **The negative compounds**: no small-P run even reached the
   dense-generalizing regime — val ≈ 0 everywhere below P=113 (the pre-frozen
@@ -338,11 +338,11 @@ pending on R1's verdict (Session 4).
 ## Documentation contract
 
 - This roadmap, pre-registered (the file you are reading).
-- [[06_production_ai/notes/positive-control-protocol]] — the control-first
+- [[07_capstone/notes/positive-control-protocol]] — the control-first
   methodology note, signed in S0.
-- [[06_production_ai/notes/microscope-trial-table]] — the 3-trial A/B scaffold
+- [[07_capstone/notes/microscope-trial-table]] — the 3-trial A/B scaffold
   with predictions written before the trials.
-- [[06_production_ai/notes/dense-solutions-modular-addition]] — the
+- [[07_capstone/notes/dense-solutions-modular-addition]] — the
   characterization study note (the phase's scientific center).
 - ADR-0003 rows 2–7 stamped with dates and one-line reasons; ADR-0001/0002
   untouched; ADR-0006 frozen.
@@ -409,13 +409,13 @@ pending on R1's verdict (Session 4).
   consumes; its sessions 4–8 residue is this phase's intake.
 - [[docs/adr/0003-research-return-ledger]] — the rows this phase stamps;
   row 1's verdict is the intake.
-- [[06_production_ai/notes/grokking-verdict-p113]] — the verdict note this
+- [[07_capstone/notes/grokking-verdict-p113]] — the verdict note this
   phase's science extends.
-- [[06_production_ai/notes/scheduled-negatives-mp28]] — the pre-drafted
+- [[07_capstone/notes/scheduled-negatives-mp28]] — the pre-drafted
   negatives, kept or struck by the R1 lane.
-- [[06_production_ai/notes/positive-control-protocol]] ·
-  [[06_production_ai/notes/microscope-trial-table]] ·
-  [[06_production_ai/notes/dense-solutions-modular-addition]] — the phase's
+- [[07_capstone/notes/positive-control-protocol]] ·
+  [[07_capstone/notes/microscope-trial-table]] ·
+  [[07_capstone/notes/dense-solutions-modular-addition]] — the phase's
   three support notes.
 - [[06_production_ai/notes/results-manifests-and-provenance]] ·
   [[06_production_ai/notes/multi-seed-experiment-design]] — the manifest

@@ -1,3 +1,9 @@
+---
+title: "Readme"
+tags: [type/lesson, phase/7, state/review]
+created: 2026-10-11
+---
+
 # src/ — Capstone Source Code
 
 Expected modules (one at a time, tested incrementally):

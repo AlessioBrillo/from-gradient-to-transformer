@@ -1,5 +1,5 @@
 ---
-tags: [checklist, phase/5]
+tags: [type/moc, phase/5, state/review]
 ---
 
 # Checklist — Phase 5 · LLM Engineering (reframed: Model Instrumentation)

@@ -1,5 +1,5 @@
 ---
-tags: [moc, phase/7, capstone]
+tags: [type/moc, phase/7, capstone, state/review]
 ---
 
 # Capstone — Train + Reverse-Engineer

@@ -2354,11 +2354,11 @@ shakedown complete, resume guardrail landed test-first
   pre-registration, wired into home; the phase's spine is the positive
   control (does this harness ever go sparse?) gating the microscope's
   three-trial budget, with the dense solution as the contribution either way;
-  three support notes: [[06_production_ai/notes/positive-control-protocol]]
+  three support notes: [[07_capstone/notes/positive-control-protocol]]
   (P=59/67/97 scan, decision tree, pre-registered prediction),
-  [[06_production_ai/notes/microscope-trial-table]] (the 3 trials, each with
+  [[07_capstone/notes/microscope-trial-table]] (the 3 trials, each with
   mechanism hypothesis, prediction and falsification column written before
-  the runs), [[06_production_ai/notes/dense-solutions-modular-addition]] (the
+  the runs), [[07_capstone/notes/dense-solutions-modular-addition]] (the
   characterization study plan: per-head Fourier dictionary, norm structure,
   frequency ablation, SAE reading). One measured line carried over and
   sharpened: `make verify-claims` 3 → 0, with the dirty-tree re-derivation as
@@ -2389,7 +2389,7 @@ shakedown complete, resume guardrail landed test-first
   their 5000-epoch protocol; (4) `scripts/exp2_manifest_from_checkpoints.py`
   (manifest producer that reads the final checkpoints — the analysis side of
   the parallel launch) + `scripts/probe_checkpoints.py`; (5) the scheduled
-  negatives drafted in full before the finals ([[06_production_ai/notes/scheduled-negatives-mp28]]);
+  negatives drafted in full before the finals ([[07_capstone/notes/scheduled-negatives-mp28]]);
   (6) [[00_meta/27_micro-phase-28-the-execution]] wired into home as current.
 - **Open question**: none new — MP-27 closed the intake questions by executing
   them. The named suspects if P=113's Fourier analysis is negative (embedding

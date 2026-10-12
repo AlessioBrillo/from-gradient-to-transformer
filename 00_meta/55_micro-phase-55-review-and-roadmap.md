@@ -911,14 +911,14 @@ documentation I will write, and where:
 - [[docs/adr/0004-horizon-ledger]] — the horizon rows, including row 5
   (stop-and-publish), the honest exit every candidate must beat — and the row
   the terminal state executes.
-- [[06_production_ai/notes/dense-solutions-modular-addition]] ·
-  [[06_production_ai/notes/microscope-trial-table]] ·
-  [[06_production_ai/notes/positive-control-protocol]] — the science C93–C96
+- [[07_capstone/notes/dense-solutions-modular-addition]] ·
+  [[07_capstone/notes/microscope-trial-table]] ·
+  [[07_capstone/notes/positive-control-protocol]] — the science C93–C96
   adjudicate over, whose pending verdicts are the intake.
 - [[06_production_ai/notes/results-manifests-and-provenance]] — the manifest
   machinery every public number cites.
 - [[06_production_ai/notes/checkpoint-resume-durability]] ·
-  [[06_production_ai/notes/scheduled-negatives-mp28]] — the CPU-budget canon
+  [[07_capstone/notes/scheduled-negatives-mp28]] — the CPU-budget canon
   the phase's runs are specified against.
 - [[00_meta/03-progress-log]] — the dated journal this review will be
   answered in, session by session.

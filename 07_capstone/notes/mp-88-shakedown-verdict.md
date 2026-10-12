@@ -1,5 +1,5 @@
 ---
-tags: [phase/7, research/experiment, type/note]
+tags: [phase/7, research/experiment, type/lesson, state/review]
 created: 2026-09-07
 consumes: [ADR-0028]
 ---

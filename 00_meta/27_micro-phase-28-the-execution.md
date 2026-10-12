@@ -110,7 +110,7 @@ in the record's own format: launch commands, PIDs, heartbeats, verdict rows.
 - R1 standard-scale fresh-batches launched with `--checkpoint-every 250` and
   its resume path verified once.
 - The Falsification columns and the two scheduled negatives drafted in full
-  ([[06_production_ai/notes/scheduled-negatives-mp28]] — the no-grok paragraph
+  ([[07_capstone/notes/scheduled-negatives-mp28]] — the no-grok paragraph
   and the no-head memo, written while the finals were still computing).
 - The grokking night's heartbeats walked; the first Fourier pass read as data.
 
@@ -165,7 +165,7 @@ produces). Line moved: `results/exp2_grokking.json` from the S4 analysis;
 - [[docs/adr/0003-research-return-ledger]] — the rows this phase stamps.
 - [[06_production_ai/notes/checkpoint-resume-durability]] — the resume protocol
   memo the exp2 port inherits and repeats.
-- [[06_production_ai/notes/scheduled-negatives-mp28]] — the negatives drafted
+- [[07_capstone/notes/scheduled-negatives-mp28]] — the negatives drafted
   before the finals (S3).
 - [[06_production_ai/notes/results-manifests-and-provenance]] · [[06_production_ai/notes/multi-seed-experiment-design]] — the manifest machinery the S4 analysis uses.
 - [[00_meta/03_progress-log]] — the dated journal entries per session.

@@ -1,5 +1,5 @@
 ---
-tags: [moc, phase/2]
+tags: [type/moc, phase/2, state/consolidated]
 ---
 
 # Phase 2 · Classical ML — MOC

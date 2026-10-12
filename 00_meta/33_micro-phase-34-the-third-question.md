@@ -457,9 +457,9 @@ merge.
   as NEW rows under this phase's dates.
 - [[06_production_ai/notes/results-manifests-and-provenance]] — the manifest
   machinery every public number cites.
-- [[06_production_ai/notes/dense-solutions-modular-addition]] ·
-  [[06_production_ai/notes/positive-control-protocol]] ·
-  [[06_production_ai/notes/microscope-trial-table]] — the science C9–C12
+- [[07_capstone/notes/dense-solutions-modular-addition]] ·
+  [[07_capstone/notes/positive-control-protocol]] ·
+  [[07_capstone/notes/microscope-trial-table]] — the science C9–C12
   adjudicate over.
 - [[07_capstone/research-plan]] — the research plan the paper, the essay and
   the teaching lane distill.

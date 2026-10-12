@@ -1,5 +1,5 @@
 ---
-tags: [phase/2, note, state/review]
+tags: [phase/2, type/lesson, state/review]
 MI-forward-link: "Gini impurity maps to attention entropy as a measure of how diffused/pure a head's focus is."
 ---
 
@@ -42,3 +42,8 @@ Cost-complexity pruning: minimize impurity + α * |leaves|. Higher α → smalle
 
 ## MI Forward Link
 Attention entropy (how diffused a head's focus is) is conceptually related to Gini impurity. An attention head that strongly attends to one position is "pure" (low entropy); one that distributes attention evenly is "impure" (high entropy). Gini impurity is used in circuits literature to measure induction-head formation.
+
+## See also
+- [[01_foundations/notes/entropy-cross-entropy-and-kl-divergence|Entropy, Cross-Entropy, and KL Divergence]] — entropy as a splitting criterion is the same information-theoretic quantity defined here.
+- [[02_classical_ml/notes/bias-variance-and-evaluation|Bias/Variance and Evaluation]] — depth and cost-complexity pruning are the knobs that move a tree along the bias/variance axis.
+- [[02_classical_ml/proofs/trees-ensembles-pca|Decision Trees, Ensembles, and PCA]] — the gate proof that reconstructs splitting criteria and bagging variance reduction from memory.

@@ -1,5 +1,5 @@
 ---
-tags: [checklist, phase/2]
+tags: [type/moc, phase/2, state/consolidated]
 ---
 
 # Checklist — Phase 2 · Classical ML

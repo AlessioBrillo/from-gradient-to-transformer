@@ -1,3 +1,9 @@
+---
+title: "Ex 03 Pca And Feature Geometry"
+tags: [type/exercise, phase/2, state/consolidated]
+created: 2026-10-11
+---
+
 # Exercise 03 — PCA, Feature Geometry, and the SAE Connection
 
 ## Objective
@@ -36,3 +42,8 @@ The residual stream is a vector space where features live in superposition. PCA 
 - 2D PCA visualization of Iris
 - Reconstruction error curve
 - Written explanation of PCA vs. SAE
+
+## See also
+- [[02_classical_ml/notes/pca-and-dictionary-learning|PCA and Dictionary Learning]] — the lesson that defines the dense PCA basis versus the sparse, overcomplete SAE dictionary this exercise builds toward.
+- [[01_foundations/notes/singular-value-decomposition|Singular Value Decomposition]] — the from-scratch PCA implementation is an SVD of the centered data matrix, not an eigendecomposition of the covariance.
+- [[04_nlp_and_transformers/notes/superposition-and-feature-capacity|Superposition and Feature Capacity]] — explains why superposed residual-stream features violate the orthogonality assumption PCA relies on.

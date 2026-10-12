@@ -1,5 +1,5 @@
 ---
-tags: [phase/6, research/experiment, protocol, grokking]
+tags: [phase/6, research/experiment, type/lesson, grokking, state/review]
 created: 2026-08-21
 ---
 
@@ -182,3 +182,9 @@ uv run python -m src.results verify
 
 - Primary: Alessio Brillo (repository owner)
 - Issues: GitHub Issues (AlessioBrillo/from-gradient-to-transformer)
+
+## See also
+- [[07_capstone/notes/grokking-verdict-p113|Grokking Verdict P=113]] — the verdict this protocol exists to re-derive on GPU; currently under audit.
+- [[07_capstone/notes/mp-90-wandb-gpu-close|MP-90 W&B and GPU-Watch Close]] — the record of this run's Colab watch expiring without producing a manifest.
+- [[07_capstone/notes/positive-control-protocol|Positive-Control Protocol]] — the Nanda-faithful P=59 run that must precede any protocol ablation.
+- [[04_nlp_and_transformers/notes/training-dynamics-and-grokking|Training Dynamics and Grokking]] — the theory behind the generalization epoch this run measures.

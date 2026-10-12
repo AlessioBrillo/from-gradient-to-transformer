@@ -1,5 +1,5 @@
 ---
-tags: [type/exercise, phase/5]
+tags: [type/exercise, phase/5, state/review]
 skill: Model Instrumentation — synthetic circuit dataset construction
 created: 2026-07-08
 ---
@@ -83,3 +83,8 @@ for h in range(model.n_heads):
 
 ## Linked skill
 - [[00_meta/02_skill-tree]] → Model Instrumentation: Synthetic dataset construction
+
+## See also
+- [[05_llm_engineering/notes/04-circuit-datasets|Synthetic Dataset Construction for Circuit Tasks]] — the design principles (controlled templates, balanced confounders, clean baselines) behind these two datasets
+- [[04_nlp_and_transformers/notes/induction-heads|Induction Heads]] — the repeated-prefix dataset is exactly the probe that detects these heads
+- [[04_nlp_and_transformers/notes/activation-patching|Activation Patching]] — the causal test run on the IOI templates this exercise generates

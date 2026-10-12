@@ -1,5 +1,5 @@
 ---
-tags: [type/proof, phase/6]
+tags: [type/proof, phase/6, state/review]
 created: 2026-08-07
 ---
 

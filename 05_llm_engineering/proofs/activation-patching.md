@@ -1,5 +1,5 @@
 ---
-tags: [type/proof, phase/5]
+tags: [type/proof, phase/5, state/review]
 created: 2026-07-08
 ---
 
@@ -69,3 +69,8 @@ This is the core method behind circuit discovery in TransformerLens (Wang et al.
 ## Outcome
 - [x] Passed → check the skill in [[00_meta/02_skill-tree]]
 - [ ] Retry needed (what was missing): ...
+
+## See also
+- [[05_llm_engineering/proofs/hook-intervention|Hook Intervention]] — the prerequisite: that a hook write into the residual stream is a valid causal intervention at all
+- [[04_nlp_and_transformers/notes/path-patching|Path Patching]] — the extension from "which layer matters" to "which edge between two heads matters"
+- [[05_llm_engineering/proofs/intervention-validity|Intervention Validity]] — the site / counterfactual / metric checks that decide whether a patch measures anything real

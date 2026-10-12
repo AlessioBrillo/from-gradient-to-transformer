@@ -63,7 +63,11 @@ jobs:
       - name: Vault gate (note links + tag schema)
         # CLAUDE.md's "every note links at least 2 other notes" was written
         # down but enforced by nothing; 20 of 124 notes were in violation.
-        run: uv run python scripts/check_vault.py
+        # check_vault.py enforces link degree, the tag schema and MOC coverage;
+        # check_links.py additionally verifies every wikilink target exists.
+        run: |
+          uv run python scripts/check_vault.py
+          uv run python scripts/check_links.py
 
       - name: Type check — blocking (modules built clean from the start)
         run: uv run mypy src/results.py src/experiments/runner.py --ignore-missing-imports --follow-imports=silent

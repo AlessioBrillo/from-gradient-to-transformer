@@ -1,10 +1,10 @@
 .PHONY: sync test test-cov lint lint-fix typecheck typecheck-strict typecheck-new \
 	ci-check reproduce reproduce-quick reproduce-grokking reproduce-induction \
 	reproduce-superposition reproduce-patching reproduce-sae \
-	reproduce-multiseed verify-claims clean paper figures vault-check \
+	reproduce-multiseed verify-claims clean paper figures \
 	reproduce-grokking-probe reproduce-induction-standard reproduce-induction-1layer \
-	reproduce-exp3-geometry commitlint-head \
-	neuron-ablation \
+	reproduce-exp3-geometry commitlint-head neuron-ablation \
+	check-links vault-check reproduce-notebook \
 	reproduce-retune reproduce-retune-control reproduce-retune-offset reproduce-retune-reweight
 
 # --- Shell ---
@@ -248,6 +248,7 @@ verify-claims:
 # schema, and frontmatter presence across 01..07. See scripts/check_vault.py.
 vault-check:
 	uv run python scripts/check_vault.py
+	uv run python scripts/check_links.py
 
 # --- Curated figure set ---
 # portfolio/figures/ is TRACKED and used by the paper and RESULTS.md; the

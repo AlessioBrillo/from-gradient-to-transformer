@@ -412,9 +412,9 @@ documentation I will write, and where:
   continuum-ledger-5]] — the release report and the ledger Session 0
   consumes row by row.
 - [[00_meta/28_micro-phase-29-the-positive-negative]] ·
-  [[06_production_ai/notes/microscope-trial-table]] ·
-  [[06_production_ai/notes/positive-control-protocol]] ·
-  [[06_production_ai/notes/dense-solutions-modular-addition]] — the science
+  [[07_capstone/notes/microscope-trial-table]] ·
+  [[07_capstone/notes/positive-control-protocol]] ·
+  [[07_capstone/notes/dense-solutions-modular-addition]] — the science
   C21–C24 adjudicate over, whose pending verdicts are the intake.
 - [[00_meta/03-progress-log]] — the dated journal this review will be
   answered in, session by session.
