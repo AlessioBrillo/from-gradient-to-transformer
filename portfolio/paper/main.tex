@@ -42,17 +42,17 @@ final circuits with full causal access.
 The experimental arc spans six rungs:
 \begin{enumerate}
   \item \textbf{Induction heads} -- the canonical in-context learning
-    circuit (Olsson et al., 2022), trained on repeated-token sequences.
+    circuit (\citep{olsson2022induction}), trained on repeated-token sequences.
   \item \textbf{Grokking modular addition} -- delayed generalization on
-    $a+b \bmod P$ with Fourier reverse-engineering (Nanda et al., 2023).
+    $a+b \bmod P$ with Fourier reverse-engineering (\citep{nanda2023progress}).
   \item \textbf{Toy models of superposition} -- geometric phase transition
-    in a ReLU autoencoder (Elhage et al., 2022).
+    in a ReLU autoencoder (\citep{elhage2022superposition}).
   \item \textbf{Circuit verification} -- activation patching and path
-    patching for causal circuit discovery (Wang et al., 2023; Zhang \&
-    Nanda, 2024).
+    patching for causal circuit discovery (\citep{wang2023interpretability};
+    \citep{zhang2024best}).
   \item \textbf{Sparse autoencoders} -- feature extraction on synthetic and
-    real residual-stream activations (Bricken et al., 2023; Cunningham et
-    al., 2024).
+    real residual-stream activations (\citep{bricken2023monosemanticity};
+    \citep{cunningham2024sparse}).
   \item \textbf{Capstone} -- a joint modular-addition + induction
     transformer with full instrumentation (Fourier, K-composition,
     patching, SAE).
@@ -68,37 +68,39 @@ build fails if any tag points to a missing or mismatched value.
 \section{Related Work}
 \label{sec:related}
 
-\textbf{The circuits worldview.} Olsson et al. (2022) introduced induction
-heads as the mechanism of in-context learning, launching the transformer
-circuits thread (Anthropic). Wang et al. (2023) demonstrated full circuit
-recovery for indirect object identification in GPT-2 small using
-activation patching.
+\textbf{The circuits worldview.} \citet{olsson2022induction} introduced
+induction heads as the mechanism of in-context learning, launching the
+transformer circuits thread (Anthropic). \citet{wang2023interpretability}
+demonstrated full circuit recovery for indirect object identification in
+GPT-2 small using activation patching.
 
-\textbf{Grokking and mechanistic progress measures.} Power et al. (2022)
-discovered delayed generalization on modular arithmetic. Nanda et al.
-(2023) introduced Fourier progress measures and showed the model learns a
-discrete Fourier transform algorithm. Varma et al. (2023) and Lyu et al.
-(2024) characterized the dense attractor under joint training.
+\textbf{Grokking and mechanistic progress measures.} \citet{power2022grokking}
+discovered delayed generalization on modular arithmetic. \citet{nanda2023progress}
+introduced Fourier progress measures and showed the model learns a
+discrete Fourier transform algorithm. \citet{varma2023dense} and
+\citet{lyu2024dense} characterized the dense attractor under joint training.
 
-\textbf{Circuit discovery methods.} Activation patching (Wang et al.,
-2023) and path patching (Zhang \& Nanda, 2024) provide causal
-interventions. ACDC (Conmy et al., 2023) automates circuit discovery; not
+\textbf{Circuit discovery methods.} Activation patching (\citep{wang2023interpretability})
+and path patching (\citep{zhang2024best}) provide causal
+interventions. ACDC (\citep{conmy2023acdc}) automates circuit discovery; not
 reproduced here.
 
-\textbf{Superposition and sparse autoencoders.} Elhage et al. (2022)
-showed features can be superposed in a bottleneck. Bricken et al. (2023)
-and Cunningham et al. (2024) applied SAEs to language model activations.
+\textbf{Superposition and sparse autoencoders.} \citet{elhage2022superposition}
+showed features can be superposed in a bottleneck. \citet{bricken2023monosemanticity}
+and \citet{cunningham2024sparse} applied SAEs to language model
+activations.
 
 \section{Grokking Modular Addition}
 \label{sec:grokking}
 % manifest: results/exp2_grokking.json
 
 \subsection{Setup}
-We train a 1-layer decoder-only transformer (Nanda et al. configuration:
-$d_\text{model}=128$, $d_\text{mlp}=512$, $n_\text{heads}=4$) on
+We train a 1-layer decoder-only transformer (
+$d_\text{model}=128$, $d_\text{mlp}=512$, $n_\text{heads}=4$; the Nanda et
+al. configuration of \citep{nanda2023progress}) on
 $a+b \bmod 113$ with a 30\% train / 70\% validation split by equation
 (holding out random $(a,b)$ pairs, not target classes). Weight decay
-$1.0$ is critical for grokking (Power et al., 2022). Three seeds
+$1.0$ is critical for grokking (\citep{power2022grokking}). Three seeds
 (0, 1, 2) trained to 5000 epochs with checkpointing every 500 epochs.
 
 \subsection{The Grokking Curve}
@@ -205,7 +207,7 @@ autoencoder was expanding an already-compressed vector -- no bottleneck,
 no interference, nothing for superposition to trade off against.
 
 \subsection{Canonical Architecture (Elhage et al., 2022)}
-Rewritten to the correct setup: sparse features directly in
+Rewritten to the correct setup (\citep{elhage2022superposition}): sparse features directly in
 $\mathbb{R}^{n_\text{features}}$ (standard basis), encoder compresses
 $n_\text{features} \to n_\text{dimensions}$ with tied weights
 ($\text{decoder.weight} = \text{encoder.weight}^\top$), decoder adds
@@ -277,7 +279,7 @@ rate $7.6\%$ (fixed $10^{-4}$ threshold). Reproduces exactly.
 \subsection{Real Activations (First Run)}
 Harvested from a trained induction-heads checkpoint via forward hook on
 \texttt{ln\_final} (MP-88 shakedown checkpoint, 2000 steps): FVE
-\textbf{99.97\%}, L0 \textbf{136.25 / 256} (\textbf{53.2\%} active), 0\%
+\textbf{99.97\%}, L0 \textbf{136.25 / 256} (53.2\% active), 0\%
 dead features. Reconstruction MSE $0.125$ (higher than synthetic's
 $0.001$ because the residual stream is wider).
 
@@ -405,12 +407,12 @@ induction learns. Both Fourier dense.}
     shakedown is single-seed (3 seeds planned, 1 completed).
   \item \textbf{Attribution patching not implemented:} linear
     approximation with known failure modes on large activations
-    (Makelov et al., 2023).
+    (\citep{makelov2023subspace}).
   \item \textbf{Activation patching caveats:} layernorm denominator
-    effects and subspace-projection illusions can mislead (Makelov et
-    al., 2023).
+    effects and subspace-projection illusions can mislead
+    (\citep{makelov2023subspace}).
   \item \textbf{SAE interpretability is human-judged:} features can be
-    illusory (Makelov et al., 2023).
+    illusory (\citep{makelov2023subspace}).
 \end{itemize}
 
 \section{Conclusion}

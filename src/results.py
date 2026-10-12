@@ -245,12 +245,27 @@ def verify_claims(
        cites results with no manifest backing them, even when some other
        section elsewhere in the file happens to have a tag.
 
+    Only **git-tracked** manifests are checked. `results/probe_*_quick.json`
+    (where `--quick` runs go, see `resolve_manifest_path`) is deliberately
+    untracked scratch, and a manifest recorded against a dirty tree is only a
+    problem if anyone is supposed to be able to re-derive it. An untracked file
+    is, by construction, not a public claim.
+
     Returns:
         A list of problem descriptions; empty means everything checks out.
     """
     problems: list[str] = []
 
-    manifest_files = sorted(results_dir.glob("*.json")) if results_dir.exists() else []
+    manifest_files = (
+        sorted(results_dir.glob("*.json"))
+        if results_dir.exists()
+        else []
+    )
+    # Drop untracked scratch before checking anything: `--quick` writes
+    # results/probe_<experiment>_quick.json with a necessarily dirty tree (it
+    # runs while the code is being edited), which used to fail this whole
+    # checker for a file no document cites.
+    manifest_files = [p for p in manifest_files if _git_tracked(p)]
     if not manifest_files:
         problems.append(
             f"No manifests found in {results_dir}/ — no headline claim is "

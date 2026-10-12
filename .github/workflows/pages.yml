@@ -7,6 +7,18 @@ name: Deploy Portfolio
 on:
   push:
     branches: [main]
+    paths:
+      # Only rebuild the site when content that reaches it changes. The
+      # workflow used to re-run `make reproduce-quick` (20-30 CPU minutes) on
+      # every push to main, including pushes that only touched tests/.
+      - 'README.md'
+      - 'portfolio/**'
+      - 'scripts/build_site.py'
+      - 'src/results.py'
+      - 'Makefile'
+  schedule:
+    # Weekly refresh of the figures the site ships.
+    - cron: '17 4 * * 1'
   workflow_dispatch:  # Allow manual trigger
 
 permissions:

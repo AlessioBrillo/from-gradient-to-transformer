@@ -24,6 +24,22 @@ jobs:
           root_file: main.tex
           working_directory: portfolio/paper
           latexmk_use_lualatex: true
+          # Two passes so \bibliography resolves. Without the second pass every
+          # \citep renders as a ? and the 13-entry references.bib is dead
+          # weight — which is what happened when this workflow was added: the
+          # paper had no \cite calls at all, so the bibliography never engaged.
+          args: -pdf -interaction=nonstopmode -halt-on-error
+
+      - name: Fail if the bibliography is empty
+        # A paper with a seeded references.bib but zero citations compiles
+        # cleanly and cites nothing. This makes that visible in CI.
+        run: |
+          cites=$(grep -c '\\cite' portfolio/paper/main.tex || true)
+          if [ "$cites" -eq 0 ]; then
+            echo "::error::main.tex has no \\cite commands — references.bib is unreferenced."
+            exit 1
+          fi
+          echo "main.tex has $cites citation(s)."
 
       - name: Upload PDF artifact
         uses: actions/upload-artifact@v4
