@@ -184,6 +184,51 @@ class TestHarvestActivationsFromCheckpoint:
         assert activations.shape == (50, d_model)
         assert not torch.isnan(activations).any()
 
+    def test_harvests_from_rolling_resume_checkpoint(self, tmp_path: Path) -> None:
+        """A rolling resume checkpoint (what `--seeds` runs actually leave on
+        disk: a dict with model/optimizer/scheduler/rng_state/history) must be
+        harvestable exactly like the plain state_dict `--save-model` writes.
+
+        This is the format gap that made the Rung 1 -> Rung 5 cascade
+        impossible: `run_single_seed` (the `--seeds` path) never calls
+        --save-model, so the only per-seed artifact is the rolling checkpoint
+        at checkpoints/<prefix>_checkpoint_seed<N>.pt. Before the fix,
+        `load_state_dict` on that dict raised and the real-activation SAE
+        could only ever run on a single-seed model.
+        """
+        vocab_size, seq_len, d_model, n_layers, n_heads = 8, 8, 8, 1, 2
+        model = AttentionOnlyTransformer(
+            vocab_size=vocab_size,
+            d_model=d_model,
+            n_layers=n_layers,
+            n_heads=n_heads,
+            max_seq_len=seq_len,
+        )
+        rolling = {
+            "epoch": 42,
+            "model": model.state_dict(),
+            "optimizer": {},
+            "scheduler": {},
+            "rng_state": None,
+            "history": {"val_acc": [0.5]},
+        }
+        checkpoint_path = tmp_path / "exp1_checkpoint_seed0.pt"
+        torch.save(rolling, checkpoint_path)
+
+        activations = harvest_activations_from_checkpoint(
+            checkpoint_path=checkpoint_path,
+            vocab_size=vocab_size,
+            seq_len=seq_len,
+            d_model=d_model,
+            n_layers=n_layers,
+            n_heads=n_heads,
+            num_samples=50,
+            seed=0,
+        )
+
+        assert activations.shape == (50, d_model)
+        assert not torch.isnan(activations).any()
+
     def test_wrong_architecture_raises(self, tmp_path: Path) -> None:
         model = AttentionOnlyTransformer(
             vocab_size=8, d_model=8, n_layers=1, n_heads=2, max_seq_len=8

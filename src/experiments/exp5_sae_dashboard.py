@@ -438,8 +438,9 @@ def harvest_activations_from_checkpoint(
     seed: int,
 ) -> torch.Tensor:
     """Harvest real residual-stream activations from a trained
-    induction-heads checkpoint (`exp1_induction_heads.py --save-model`
-    output), instead of `ActivationGenerator`'s synthetic baseline.
+    induction-heads checkpoint (either the `--save-model` plain state_dict or
+    the per-seed rolling resume checkpoint `--seeds` runs leave on disk),
+    instead of `ActivationGenerator`'s synthetic baseline.
 
     Hooks the input to `ln_final` — the final residual stream, exactly what
     an SAE trained on "the model's residual stream" is supposed to mean —
@@ -467,6 +468,16 @@ def harvest_activations_from_checkpoint(
         max_seq_len=seq_len,
     )
     state_dict = torch.load(checkpoint_path, map_location=DEVICE)
+    # Two checkpoint formats reach this function. `--save-model` writes a plain
+    # state_dict (figures/exp1_trained_model.pt, single-seed runs only), while
+    # the `--seeds` runs leave the *rolling resume* checkpoint at
+    # checkpoints/<prefix>_checkpoint_seed<N>.pt — a dict carrying
+    # model/optimizer/scheduler/rng_state/history. run_single_seed never calls
+    # --save-model, so without unwrapping here the Rung 1 -> Rung 5 cascade
+    # ("SAE on activations from a confirmed-head checkpoint") could only run
+    # on single-seed models. Accept both; the "model" key is the state_dict.
+    if isinstance(state_dict, dict) and "model" in state_dict:
+        state_dict = state_dict["model"]
     model.load_state_dict(state_dict)
     model.to(DEVICE)
     model.eval()
