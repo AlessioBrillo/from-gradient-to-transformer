@@ -283,13 +283,17 @@ def _attention_patterns(model: nn.Module, x: torch.Tensor) -> Optional[list[torc
     `(logits, cache)` with the same tensors under
     `blocks.{i}.attn.attn_probs`.
 
-    Both helpers below used to call `model(x, record_attn=True)` directly,
-    which raises `TypeError: unexpected keyword argument 'record_attn'` on the
-    shared model — latent until the teaching artifact tried to run the exp1
-    detector against a capstone checkpoint, which is the whole point of the
-    Rung 1 -> 4 -> 5 cascade.
+    The `record_attn` protocol is checked FIRST, on purpose. `AttentionOnlyTransformer`
+    has a `blocks` attribute *and* a `record_attn` keyword, so an attribute check
+    alone picks the wrong branch for it — which silently returns no patterns at
+    all and then crashes `diagnose_induction_formation` on an empty list.
     """
     model.eval()
+    forward = getattr(model, "forward", None)
+    if forward is not None and "record_attn" in getattr(forward, "__code__", None).co_varnames:
+        _, attn_records = model(x, record_attn=True)
+        return attn_records
+
     if hasattr(model, "blocks"):
         try:
             _, cache = model(x, return_cache=True)
@@ -305,10 +309,6 @@ def _attention_patterns(model: nn.Module, x: torch.Tensor) -> Optional[list[torc
                 return None
             out.append(cache[key])
         return out
-
-    if hasattr(model, "forward") and "record_attn" in model.forward.__code__.co_varnames:
-        _, attn_records = model(x, record_attn=True)
-        return attn_records
 
     return None
 
@@ -667,6 +667,21 @@ def diagnose_induction_formation(all_patterns: list) -> dict:
             "best_l_dest": 1,
         }
 
+    # A layer with no attention patterns at all arrives as an empty list, not a
+    # tensor. Indexing that with [:, :, 1:, :-1] raises
+    # "list indices must be integers or slices, not tuple" — which is what the
+    # --seeds path hit whenever a layer produced no records.
+    if any(not hasattr(p, "ndim") for p in all_patterns):
+        return {
+            "step1_l0_duplicate_mass": [],
+            "l0_peakedness": 0.0,
+            "step2_k_composition": 0.0,
+            "best_l0_head": -1,
+            "best_l1_head": -1,
+            "best_l_src": 0,
+            "best_l_dest": 1,
+        }
+
     best_comp = -1.0
     best_pair = (0, 1, -1, -1)
     best_l0_duplicate_mass = []
@@ -943,7 +958,14 @@ def _write_single_manifest(
         ),
         notes="Single-seed standard-scale run (Micro-Phase 12 'landed domino').",
     )
-    manifest_path = Path("results") / "exp1_induction_heads.json"
+    # `--quick` is a smoke config and must not overwrite the flagship record;
+    # an explicit --manifest-path always wins.
+    manifest_path = resolve_manifest_path(
+        "exp1_induction_heads",
+        Path("results") / "exp1_induction_heads.json",
+        getattr(args, "manifest_path", None),
+        getattr(args, "quick", False),
+    )
     manifest.save(manifest_path)
     logger.info(f"Saved single-seed manifest to {manifest_path}")
 
@@ -999,6 +1021,10 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
     diagnosis = diagnose_induction_formation(all_patterns)
 
     metrics = _headline_metrics(history, induction_heads, diagnosis)
+    # Record which batch regime produced these numbers. The fixed-vs-fresh
+    # comparison is the one solid Rung 1 finding, and without this field a
+    # manifest does not say which arm of the comparison it is.
+    metrics["batch_mode"] = 0.0 if not args.fresh_batches else 1.0
     drop_sum = 0.0
     n_drops = 0
     for layer_idx, heads in enumerate(induction_heads):
@@ -1013,8 +1039,55 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
-def main() -> None:
-    FIGURES_DIR.mkdir(exist_ok=True)
+class _FreshBatchesAction(argparse.Action):
+    """`--fresh-batches` is the historical spelling of `--batches fresh`.
+
+    It has to write through to `batch_mode` as well as `fresh_batches`, or the
+    two fields disagree and every downstream consumer has to pick one.
+    """
+
+    def __init__(self, option_strings, dest, **kwargs):  # type: ignore[no-untyped-def]
+        kwargs["nargs"] = 0
+        super().__init__(option_strings, dest, **kwargs)
+
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: object,
+        option_string: str | None = None,
+    ) -> None:
+        setattr(namespace, self.dest, True)
+        setattr(namespace, "batch_mode", "fresh")
+
+
+class _BatchesAction(argparse.Action):
+    """`--batches {fixed,fresh}` writes through to `fresh_batches`.
+
+    Normalising at parse time rather than in main() means the flag is correct
+    for anything that parses arguments without running an experiment — which is
+    how tests exercise it, and how the matched fixed-vs-fresh comparison gets
+    built. When both spellings are given, the last one wins, which is standard
+    argparse semantics and more predictable than an error.
+    """
+
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: object,
+        option_string: str | None = None,
+    ) -> None:
+        assert isinstance(values, str)
+        if values not in ("fixed", "fresh"):
+            parser.error(f"--batches must be 'fixed' or 'fresh', got {values!r}")
+        setattr(namespace, "fresh_batches", values == "fresh")
+        setattr(namespace, "batch_mode", values)
+
+
+def build_parser() -> argparse.ArgumentParser:
+    """The exp1 CLI. Extracted from main() so tests can parse arguments without
+    running an experiment, matching exp2/exp6's structure."""
     parser = argparse.ArgumentParser(
         description="Rung 1: Induction heads in a 2-layer attention-only transformer"
     )
@@ -1057,13 +1130,13 @@ def main() -> None:
     parser.add_argument("--save-model", action="store_true", help="Save trained model")
     parser.add_argument(
         "--fresh-batches",
-        action="store_true",
+        action=_FreshBatchesAction,
         help=(
             "Resample a fresh set of training sequences every epoch instead "
             "of reusing one fixed set (reshuffled). Tests whether the fixed "
             "dataset lets the model memorize specific sequences rather than "
             "learn prefix-matching-and-copying (Olsson et al. resample "
-            "continuously)."
+            "continuously). Historical spelling of --batches fresh."
         ),
     )
     parser.add_argument(
@@ -1111,6 +1184,36 @@ def main() -> None:
             "after the run (implied by --standard)."
         ),
     )
+    parser.add_argument(
+        "--manifest-path",
+        type=str,
+        default=None,
+        help=(
+            "Explicit results/*.json path for the manifest. Defaults to "
+            "results/exp1_induction_heads.json. The matched fixed-vs-fresh "
+            "comparison needs two manifests, so both arms must pass this."
+        ),
+    )
+    parser.add_argument(
+        "--batches",
+        choices=["fixed", "fresh"],
+        default=None,
+        action=_BatchesAction,
+        help=(
+            "Which training-batch regime to use. `fixed` reuses one dataset for "
+            "every epoch (the ill-posed regime); `fresh` draws a new one each "
+            "epoch. The matched fixed-vs-fresh comparison is the one solid Rung 1 "
+            "finding, so both arms must be runnable with the SAME seeds — pass "
+            "--batches to each of the two runs rather than switching globally."
+        ),
+    )
+    parser.set_defaults(fresh_batches=False, batch_mode="fixed")
+    return parser
+
+
+def main() -> None:
+    FIGURES_DIR.mkdir(exist_ok=True)
+    parser = build_parser()
     args = parser.parse_args()
 
     logging.basicConfig(

@@ -4,7 +4,8 @@
 	reproduce-multiseed verify-claims clean paper figures \
 	reproduce-grokking-probe reproduce-induction-standard reproduce-induction-1layer \
 	reproduce-exp3-geometry commitlint-head neuron-ablation \
-	check-links vault-check reproduce-notebook \
+	check-links vault-check reproduce-induction-batches reproduce-induction-fixed \
+	reproduce-induction-fresh reproduce-notebook \
 	reproduce-retune reproduce-retune-control reproduce-retune-offset reproduce-retune-reweight
 
 # --- Shell ---
@@ -169,6 +170,24 @@ reproduce-induction-standard:
 reproduce-induction-1layer:
 	@echo "=== Rung 1: 1-layer headless lower bound (matched config) ==="
 	uv run python -m src.experiments.exp1_induction_heads --standard --n-layers 1
+
+# Rung 1 matched fixed-vs-fresh comparison — the ONE SOLID Rung 1 finding
+# (portfolio/RESULTS.md:252-254), previously prose-only with no manifest behind
+# it. Two runs, SAME three seeds, differing only in the batch regime, so the
+# comparison is apples-to-apples and both arms land in manifests. `--seeds`
+# requires identical metric keys across seeds, which is also what lets
+# tests/test_manifest_routing.py pin that an explicit --manifest-path wins over
+# the default.
+reproduce-induction-batches: reproduce-induction-fixed reproduce-induction-fresh
+	@echo "Done. See results/exp1_induction_fixed_batches.json and results/exp1_induction_fresh_batches.json"
+
+reproduce-induction-fixed:
+	@echo "=== Rung 1 arm A: FIXED batches (the ill-posed regime) ==="
+	uv run python -m src.experiments.exp1_induction_heads --batches fixed --vocab-size 256 --seq-len 16 --d-model 24 --n-layers 2 --n-heads 4 --epochs 800 --lr 0.001 --weight-decay 0.1 --batch-size 32 --num-train 256 --seeds 0,1,2 --manifest-path results/exp1_induction_fixed_batches.json
+
+reproduce-induction-fresh:
+	@echo "=== Rung 1 arm B: FRESH batches (one new random set per epoch) ==="
+	uv run python -m src.experiments.exp1_induction_heads --batches fresh --vocab-size 256 --seq-len 16 --d-model 24 --n-layers 2 --n-heads 4 --epochs 800 --lr 0.001 --weight-decay 0.1 --batch-size 32 --num-train 256 --seeds 0,1,2 --manifest-path results/exp1_induction_fresh_batches.json
 
 reproduce-exp3-geometry:
 	@echo "=== Rung 3: pentagon geometry check (5 features -> 2 dims) ==="
