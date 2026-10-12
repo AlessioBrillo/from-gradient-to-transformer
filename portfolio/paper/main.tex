@@ -162,7 +162,7 @@ A matched 800-epoch comparison (identical config, only
 \toprule
  & Fixed (reused) & Fresh (resampled) \\
 \midrule
-Final val accuracy & 0.05\% (below chance) & \textbf{52.2\%} \\
+Final val accuracy & 0.05\% (below chance) & \textbf{53.5\%} \\
 Final val loss & 24.31 (climbing) & 3.65 (flat, tracks train) \\
 Peak diag+1 mass & 0.155 (epoch 99, decays) & 0.145 (epoch 649, rising) \\
 Induction heads detected & 0 / 8 & 0 / 8 \\
@@ -173,7 +173,7 @@ Induction heads detected & 0 / 8 & 0 / 8 \\
 The fixed dataset produces catastrophic overfitting: train loss collapses
 to near-zero while val loss climbs and val accuracy decays \emph{below}
 random chance. Fresh batches yield stable, substantial generalization
-(52.2\%) without a train/val gap, but still no induction heads detected
+(53.5\%) without a train/val gap, but still no induction heads detected
 (diag+1 mass $< 0.3$ threshold) at this scale. The trajectory is still
 rising at epoch 800 -- standard scale ($d_\text{model}=64$,
 $d_\text{mlp}=256$, $n_\text{heads}=4$, $\text{seq\_len}=64$) with more
@@ -389,7 +389,7 @@ induction learns. Both Fourier dense.}
     are cleaner than natural language; circuits found here may not be
     representative of circuits in language models.
   \item \textbf{No induction heads at standard scale:} the fixed-vs-fresh
-    comparison (52.2\% val acc, 800 epochs) is the trustworthy scale for
+    comparison (53.5\% val acc, 800 epochs) is the trustworthy scale for
     this paper; standard scale ($d_\text{model}=64$, 10k epochs) is a
     follow-up, not a claim.
   \item \textbf{No grokking sparse circuit:} NO-GROK was measured with an

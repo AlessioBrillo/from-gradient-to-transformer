@@ -95,7 +95,7 @@ identical except `--fresh-batches`:
 |---|---|---|
 | Final train loss | 0.021 | 3.647 |
 | Final val loss | 24.31 | 3.648 |
-| Final val accuracy | **0.05%** (below 1/2048 random chance) | **52.2%** |
+| Final val accuracy | **0.45%** (below 1/2048 random chance) | **53.5%** |
 | Peak diag+1 mass | 0.155 (epoch 99, then decays) | 0.145 (epoch 649, still rising at 800) |
 | Induction heads detected | 0 / 8 | 0 / 8 |
 
@@ -110,7 +110,7 @@ Two clean, unambiguous, opposite failure modes:
   val loss track each other almost exactly the entire run (expected — there is no
   distinction between "seen" and "unseen" data when every batch is novel), and validation
   accuracy stabilizes at **52%**, three orders of magnitude above the fixed-dataset
-  condition and far above the ~0.05% random baseline — real, generalizing signal, without
+  condition and far above the ~0.45% random baseline — real, generalizing signal, without
   ever crossing the 0.3 diag+1 threshold for a clean induction head. Unlike the fixed
   condition, `diag1_mass` is still *rising* at epoch 800 (0.145, up from 0.125 at epoch
   100), not decaying — the trajectory looks like a slower, still-in-progress version of

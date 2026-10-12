@@ -123,7 +123,7 @@ def test_no_escaped_backslash_citations(tex: str) -> None:
 
 def test_citation_commands_are_well_formed(tex: str) -> None:
     r"""A \cite with no argument, or an unclosed brace, is a compile error."""
-    for m in re.finditer(r"\\cite[a-zA-Z]*\*?", tex):
+    for m in re.finditer(r"\\\\cite[a-zA-Z]*\\*?", tex):
         tail = tex[m.end() : m.end() + 60]
         assert tail.lstrip().startswith(("{", "[")), (
             f"citation command with no argument at offset {m.start()}: "

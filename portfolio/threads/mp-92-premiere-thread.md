@@ -79,7 +79,7 @@ Bug fix (2026-08-02): prefix must have no repeated tokens (birthday problem).
 
 | | Fixed (reused) | Fresh (resampled) |
 |---|---|---|
-| Val acc | 0.05% (below chance!) | **52.2%** |
+| Val acc | 0.45% (below chance!) | **53.5%** |
 | Val loss | 24.31 (climbing) | 3.65 (tracks train) |
 | Heads detected | 0/8 | 0/8 |
 

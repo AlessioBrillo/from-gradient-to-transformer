@@ -21,7 +21,7 @@ included:
 
 | Rung | Where it stands |
 |------|-----------------|
-| 1 Induction heads | No head detected at any scale run (0/8). A matched fixed-vs-fresh-batches comparison is the one solid finding (52.2% vs 0.05% validation accuracy). |
+| 1 Induction heads | No head detected at any scale run (0/8). A matched fixed-vs-fresh-batches comparison is the one solid finding (53.5% vs 0.45% validation accuracy). |
 | 2 Grokking | Validation accuracy 1.0, but the dense-vs-sparse Fourier verdict is **under audit**: the metric behind it misclassifies noisy sparse embeddings (2026-10-08). The re-run needs a GPU. |
 | 4 Circuit patching | Activation patching runs cleanly; path patching is only unit-tested because there is no head to target. |
 | 5 SAE | Synthetic data reproduces; on real activations reconstruction is good but dense (53% of features active). |

@@ -40,7 +40,7 @@ Every quantitative claim in the premiere cites a manifest:
 |-------|----------|
 | Rung 2: val 1.0, k₉₉=111/113 | `results/exp2_grokking.json` |
 | Rung 3: 19.67→20/20 features, pentagon | `results/exp3_superposition.json` |
-| Rung 1: 52.2% vs 0.05% fixed-vs-fresh | `results/exp1_induction_heads.json` |
+| Rung 1: 53.5% vs 0.45% fixed-vs-fresh | `results/exp1_induction_heads.json` |
 | Rung 4: ~0.20 recovery, 0 heads | `results/exp4_circuit_patching.json` |
 | Rung 5: 99.97% FVE, 53% L0 (real) | `results/exp5_sae_dashboard.json` |
 | Capstone: ind 0.504, mod 0.0047 | `results/probe_capstone_shakedown.json` |

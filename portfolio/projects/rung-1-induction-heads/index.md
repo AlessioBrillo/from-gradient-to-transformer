@@ -16,7 +16,7 @@ rung: 1
 
 **Key Result**:
 <!-- manifest: results/exp1_induction_heads.json -->
-Matched fixed-vs-fresh-batches comparison (800 epochs, identical config): fresh batches reach 52.2% val accuracy with no train/val gap, while the fixed reused dataset collapses to 0.05% val accuracy. Neither condition crosses the 0.3 induction-head detection threshold at this scale — 0/8 heads either way.
+Matched fixed-vs-fresh-batches comparison (800 epochs, identical config): fresh batches reach 53.5% val accuracy with no train/val gap, while the fixed reused dataset collapses to 0.45% val accuracy. Neither condition crosses the 0.3 induction-head detection threshold at this scale — 0/8 heads either way.
 
 **Figure**:
 ![Training curves with loss bump](../../figures/exp1_training_bump.png) <!-- manifest: results/exp1_induction_heads.json -->

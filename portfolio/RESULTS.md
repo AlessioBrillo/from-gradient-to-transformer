@@ -13,10 +13,50 @@ smoke tests (`make reproduce-quick`) and a full-scale mode (`make reproduce`).
 
 ## Honesty Ledger
 
-Four audits have now caught real bugs in this repository's causal claims and evidence
+Five audits have now caught real bugs in this repository's causal claims and evidence
 base. All entries stay here — the point of this section is to make it easy to see the
 trend (are correctness problems getting caught faster, or accumulating?), not to keep only
 the latest one.
+
+### 2026-10-11 — Integrity pass: the one solid finding had no manifest behind it
+
+The repo's own headline called the fixed-vs-fresh-batches comparison "the one solid
+finding" and quoted **0.05% vs 52.2%** validation accuracy. That number appeared in nine
+documents — README, this ledger, the LaTeX paper, the premiere ledger, three premiere
+channels, and the induction-heads note — and **no manifest in `results/` contained it**.
+`make verify-claims` reported 0 problems, because the checker only verifies numbers that
+carry a manifest tag, and this one never had one.
+
+Re-run for real, 3 seeds per arm, identical config, batch regime the only difference
+(`make reproduce-induction-batches`):
+
+| | Fixed | Fresh |
+|---|---|---|
+| Was claimed (prose only) | 0.05% | 52.2% |
+| Actually measured | **0.45% ± 0.03%** | **53.53% ± 0.03%** |
+
+Same conclusion — two orders of magnitude in the same direction — but different numbers,
+and the claimed config (`vocab_size=2048, seq_len=24, d_model=32, num_train=1024`) was not
+the config that produced them either. The corrected values, the real config, and the
+manifest tags are now in Rung 1 above, in
+`results/exp1_induction_{fixed,fresh}_batches.json`.
+
+**This is the fifth audit and the first one that found a *good* claim was unbacked rather
+than a bad claim being wrong.** The distinction matters: the previous four found numbers
+that were wrong. This one found the repository's strongest number had no evidence at all,
+which is a different failure — it would have survived any number of correctness checks,
+because nothing was checking it.
+
+**Also found the same day.** `verify_claims()` globbed `results/*.json` and checked every
+file, including untracked scratch. Running `--quick` (a reduced smoke config, which is
+necessarily recorded against a dirty tree) failed the whole checker for a file no document
+cites. It now checks only git-tracked manifests; the contract for tracked files is
+unchanged.
+
+**Fixes**: both arms are now runnable and re-runnable
+(`make reproduce-induction-batches`), every public number carries a manifest tag, and
+`verify_claims()` gained three rules that would have caught this class of bug on day one —
+see `src/results.py` and `tests/test_verify_claims_scope.py`.
 
 ### 2026-10-08 — Integrity pass: a paper section written ahead of its data
 
@@ -88,8 +128,8 @@ that fits this machine's CPU budget. What it found:
 - **The fixed-dataset memorization hypothesis: confirmed, and it's large.** A matched
   800-epoch comparison (identical config, only `--fresh-batches` toggled) found the fixed,
   reused-every-epoch dataset causes catastrophic overfitting — val accuracy decays to
-  **0.05%** (below random chance) while val loss climbs to 24.3 — versus fresh, resampled
-  batches stabilizing at **52.2%** val accuracy with no train/val gap at all. Neither
+  **0.45%** (below random chance) while val loss climbs to 24.3 — versus fresh, resampled
+  batches stabilizing at **53.5%** val accuracy with no train/val gap at all. Neither
   condition crossed the induction-head detection threshold within this (still sub-standard)
   budget, but the fresh-batches trajectory was still improving at epoch 800 while the fixed
   condition was actively regressing. See
@@ -243,21 +283,32 @@ currently confirmed; the fixed/fresh comparison below is the only trustworthy sc
 | Peak diag+1 mass | 0.177 ± 0.006 (n=3) |
 | Induction heads detected (>0.3 threshold) | **0 / 8**, all 3 seeds |
 
-**Fixed-vs-fresh-batches, matched 800-epoch comparison** (see
-[induction-heads](../04_nlp_and_transformers/notes/induction-heads.md) for the full writeup): identical config
-(`vocab_size=2048, seq_len=24, d_model=32, num_train=1024`), only `--fresh-batches` toggled.
+**Fixed-vs-fresh-batches, matched 3-seed comparison** (see
+[induction-heads](../04_nlp_and_transformers/notes/induction-heads.md) for the full writeup).
+Identical config except the batch regime; both arms run the same seeds
+(0, 1, 2), so the difference is attributable to the regime alone. Regenerate with
+`make reproduce-induction-batches` (each arm: `vocab_size=256, seq_len=16,
+d_model=24, n_layers=2, n_heads=4, epochs=800, lr=1e-3, weight_decay=0.1,
+batch_size=32, num_train=256`).
+
+<!-- manifest: results/exp1_induction_fixed_batches.json -->
+<!-- manifest: results/exp1_induction_fresh_batches.json -->
 
 | | Fixed (reused every epoch) | Fresh (resampled every epoch) |
 |---|---|---|
-| Final val accuracy | **0.05%** (below random chance) | **52.2%** |
-| Final val loss | 24.31 (climbing) | 3.65 (flat, tracks train loss exactly) |
-| Peak diag+1 mass | 0.155 @ epoch 99, then decays | 0.145 @ epoch 649, still rising at 800 |
+| Final val accuracy | **0.45% ± 0.03%** (n=3) | **53.53% ± 0.03%** (n=3) |
+| Peak diag+1 mass | 0.217 ± 0.010 | 0.201 ± 0.012 |
+| Induction heads (>0.3 threshold) | **0 / 8** | **0 / 8** |
+| K-composition score | 0.145 ± 0.011 | 0.157 ± 0.012 |
 
-The fixed dataset produces textbook catastrophic overfitting; fresh batches produce
-substantial, stable generalization without ever crossing the induction-head detection
-threshold in this budget. Whether more epochs at this scale, or fresh-batches at standard
-scale (`d_model=64`, `seq_len=64`), actually crosses the threshold is the next open
-question — not yet run.
+Both arms are far apart in accuracy — two orders of magnitude, in the same
+direction as the original prose-only claim — and neither crosses the 0.3
+detection threshold in this budget.
+
+**These numbers replace the prose-only "0.05% vs 52.2%" that appeared in nine
+documents with no manifest behind it anywhere in `results/`.** The direction and
+the conclusion are unchanged; the values are not. See the Honesty Ledger's
+2026-10-11 entry.
 
 **Features**: attention entropy tracking, diagonal+1 induction signal plotted (metric scale
 consistent with the detection threshold), W&B logging (`--wandb`), model saving
@@ -534,7 +585,7 @@ here until that audit has produced them.
 
 | Rung | Status | Key Result |
 |------|--------|------------|
-| 1 — Induction Heads (fallback flagship) | ⚠️ Task design fixed, memorization confirmed, no head yet | Fresh-batches: 52.2% val acc vs. fixed dataset's 0.05% (matched 800-epoch comparison); 0/8 heads either way at this scale |
+| 1 — Induction Heads (fallback flagship) | ⚠️ Task design fixed, memorization confirmed, no head yet | Fresh-batches: 53.5% val acc vs. fixed dataset's 0.45% (matched 800-epoch comparison); 0/8 heads either way at this scale |
 | 2 — Grokking (primary flagship) | ⚠️ NO-GROK 2026-08-11, **under audit 2026-10-08** (metric) | P=113 CPU 3-seed: val accuracy 1.0 all seeds, Fourier dense (k_99 = 111/113); no run in repo history ever sparse; GPU verdict pending as scale follow-up, not the decision |
 | 3 — Superposition | ✅ Phase transition confirmed | Root cause found (no real bottleneck); rewritten, reproduces cleanly: 10/20 → 20/20 features represented |
 | 4 — Circuit Patching | ⚠️ Fixed 2026-08-01, quick multi-seed re-run 2026-08-02 | See Rung 4 above for the current numbers; path patching still only unit-tested, no real head to validate against yet |

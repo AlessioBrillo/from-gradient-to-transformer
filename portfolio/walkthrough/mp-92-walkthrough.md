@@ -45,7 +45,7 @@
 ### 5:00–6:00 — Honest Landscape
 **Visual:** Limitations table + Rung 1 fixed-vs-fresh + Rung 4/5 results
 
-**Voice:** "The honest landscape: Rung 1's 52.2% is sub-standard scale (800 epochs). Rung 4's ~0.20 recovery is real but no head detected. Rung 5's SAE on real activations: 99.97% FVE but 53% L0 — dense reconstruction. Limitations upfront: micro-scale, algorithmic tasks, NO-GROK at all scales, GPU pending as follow-up."
+**Voice:** "The honest landscape: Rung 1's 53.5% is sub-standard scale (800 epochs). Rung 4's ~0.20 recovery is real but no head detected. Rung 5's SAE on real activations: 99.97% FVE but 53% L0 — dense reconstruction. Limitations upfront: micro-scale, algorithmic tasks, NO-GROK at all scales, GPU pending as follow-up."
 
 ### 6:00–7:00 — Teaching Artifact v22 (Reproducibility Proof)
 **Visual:** Notebook cells executing: load → Fourier (k₉₉=98) → K-comp (0.39, _vacuous) → Patching (~0.20) → SAE (99.97% FVE, 53% L0) → Literature table → Honest conclusion
