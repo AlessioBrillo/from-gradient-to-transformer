@@ -36,6 +36,11 @@ paper.md
 # of the tracked results/<experiment>.json. Scratch by design.
 results/probe_*_quick.json
 
+# Remote-run staging: rendered Kaggle kernels and downloaded manifests wait
+# here until pin_remote_run.py validates and installs them into results/.
+# Scratch by design — nothing under it is a claim until it is pinned.
+results/remote/
+
 # CI / Coverage
 .coverage
 .coverage.*
