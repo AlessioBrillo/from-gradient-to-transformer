@@ -43,7 +43,15 @@ LIVE_ROOT_DOCS = ("README.md", "CLAUDE.md", "CONTEXT.md")
 ARCHIVE_DIR = "00_meta"
 
 SKIP_DIRS = {".venv", ".git", ".obsidian", "_site", "node_modules", "__pycache__", ".pytest_cache"}
-WIKILINK = re.compile(r"\[\[([^\]|#]+?)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]")
+# The alias separator may be written `\|` — the Markdown-table escape for a
+# pipe, which is how wikilinks with aliases must appear inside tables
+# (e.g. `[[note\|alias]]` in a `|`-delimited row). Without the optional
+# backslash the target group swallows it, and then whether the link
+# resolves depends on the OS: on Windows `Path("a\\")` drops the trailing
+# separator, on Linux it is a filename character. Caught by CI on Linux
+# with a locally-green run on Windows — the exact class of platform-
+# dependent green this repo does not accept.
+WIKILINK = re.compile(r"\[\[([^\]|#]+?)(?:#[^\]|]*)?(?:\\?\|[^\]]*)?\]\]")
 
 
 def _collect(root: Path) -> tuple[list[Path], set[str]]:
