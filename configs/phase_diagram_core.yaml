@@ -186,6 +186,6 @@ warmup_steps: 100
 checkpoint_every: 500
 base_seed: 42
 
-# Epochs: 5000 for P<=59 (where grokking is faster), 2000 for P>59
-epochs: 2000
-epochs_small_p: 5000
+# Step budgets: 5000 for P<=59 (a small-P step is ~100x cheaper), 2000 above.
+steps: 2000
+steps_small_p: 5000

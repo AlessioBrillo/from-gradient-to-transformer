@@ -13,6 +13,29 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-10-12 — Increment 95a (non-GPU closure): integrity, detector proof, sweep parity, Phase 7 gate, paper ships
+
+- **Studied**: The six open v1.0 issues against the live tree. Four are GPU-gated runs with the code side mostly done; two are closable now. Two integration gaps found by reading, not by running: `exp5 --activations-from` cannot load the rolling resume checkpoint that `--seeds` runs actually leave on disk (the Rung 1 -> Rung 5 cascade was impossible for multi-seed models), and `pages.yml` never compiled the LaTeX paper, so the live site had never shipped `paper.pdf` — `build_site.py` copies it only when it exists.
+- **Built**:
+  - `harvest_activations_from_checkpoint` accepts both checkpoint formats (plain state_dict and rolling resume dict), test-first RED->GREEN. The real-activation SAE can now run on a confirmed-head checkpoint once Rung 1 has one.
+  - `tests/test_planted_induction_detector.py`: the diag+1 detector had *no* test of its threshold decision — every "0/8 heads" was a claim about untested code. Planted constructions at two levels (pattern stubs through the detector's real collection path; a real model with W_Q/W_K planted so the induction pattern exists by construction, mass 0.87), each with controls that must NOT fire (weak heads, two-weak-heads-not-summed, wrong offset q-2, self-attention, uniform) and a cross-metric consistency pin — the 2026-07-26 "mass ~1.0 but 0 heads detected" divergence class.
+  - `--scale large` preset in exp1, folding PR #164's exp7 intent *without* exp7 (the wrapper had hardcoded args, no resume, and a manifest-routing bug); preset resolution extracted to `apply_config_presets` and pinned by 6 tests. Issue #169's exp7 clause closes with reason.
+  - Phase-diagram sweep refactored to delegate to `exp2_grokking.run_single_seed` / `exp6_capstone.train_single_seed` with namespaces/configs built by those modules' own parsers — a sweep cell IS an exp2/exp6 run now, pinned by a parity falsifier (same seed + config -> identical metrics). Budgets stated in optimizer steps (the audit's "at P=29 an epoch is 2 steps" class), converted explicitly; sweep records the post-audit energy metric and `is_sparse` classifies on it; unmeasured metrics stay absent instead of fabricated zeros; `--emit-manifests` writes citable per-cell ResultsManifests.
+  - `pages.yml` compiles the paper before building the site and asserts `_site/paper.pdf` exists; `tests/test_workflows.py` pins the wiring.
+  - Phase 7 gate passed as an **honest negative** (new `07_capstone/checklist.md` + proof note): the capstone question has a defended answer — dense mechanism, causal ablations, all manifest-backed — and the Rung 2 re-run under audit is a post-gate confirmation, not a prerequisite.
+- **Open question**: Does the Nanda-faithful positive control at P=113 (GPU, issue #167) grok with the energy metric, or does the dense answer stand? The gate is stamped either way; the label may flip.
+
+## 2026-10-12 — Non-GPU completion (PR #176): integrity pass, vault enforcement, curriculum closure
+
+- **Studied**: The repository's own headline. The fixed-vs-fresh-batches comparison was called "the one solid finding" and quoted as 0.05% vs 52.2% in nine documents — with no manifest behind it anywhere in `results/`. The checker had never looked, because the number carried no manifest tag.
+- **Built**:
+  - Re-ran the comparison for real (3 seeds per arm, identical config, batch regime the only difference): **0.45% ± 0.03% vs 53.53% ± 0.03%**, manifests committed, `make reproduce-induction-batches` regenerates both arms. Same conclusion (two orders of magnitude), different numbers — the claimed config was not the config that produced them either. Fifth audit entry, first one where a *good* claim was unbacked rather than a bad claim wrong.
+  - `verify_claims()` hardened: only git-tracked manifests are checked (a `--quick` run against a dirty tree no longer fails the whole gate), and three new rules would have caught this class on day one.
+  - Vault rules enforced: `scripts/check_vault.py` checks link degree (>= 2 outbound), tag schema, frontmatter and MOC coverage across phases 1-7 — 20 of 124 notes were silently in violation; debt paid down. Every note links at least 2 others, now mechanically true.
+  - Phase 5/6 breadth items descoped with dated reasons (nnsight, RAG, LoRA, eval, RLHF, DVC, Docker, HF Spaces, W&B, system design, security); Phase 4's five MI-load-bearing notes written; capstone writeup rewritten from the manifests, promising only code that exists.
+  - `paper`: bibliography wired (13 entries), `test_paper.py` fixed to detect double-backslash citations, local LaTeX sanity gate added.
+- **Open question**: The four GPU-gated runs (#167, #168, #169, #170) — the milestone's entire remaining content — need hardware. Attrezzatura Kaggle/Colab in preparazione.
+
 ## 2026-09-17 — Micro-Phase 91/92, Sessions 1–6: Paper v20 Release Complete
 
 - **Studied**: MP-91 roadmap (frozen candidate set, zero new candidates). All 9 manifests re-verified: exp1–6 flagship + 3 retune probes. ADR-0028 zero unstamped rows confirmed. Baseline re-verified live on `main` (PR #145 merge): 223 tests pass, ruff clean, blocking mypy clean, verify-claims=0.

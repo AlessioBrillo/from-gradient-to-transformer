@@ -1,5 +1,5 @@
 # Phase Diagram Sweep Configuration - TEST MODE
-# Minimal test with 2 cells × 3 seeds, fast epochs
+# Minimal test with 2 cells × 3 seeds, fast step budgets
 
 cells:
   # Quick test cell
@@ -30,6 +30,6 @@ warmup_steps: 100
 checkpoint_every: 500
 base_seed: 42
 
-# FAST epochs for testing
-epochs: 100
-epochs_small_p: 100
+# FAST step budgets for testing
+steps: 100
+steps_small_p: 100

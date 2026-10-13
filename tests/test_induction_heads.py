@@ -1,5 +1,6 @@
 """Smoke tests for the induction heads experiment (Rung 1)."""
 
+import argparse
 import logging
 
 import torch
@@ -8,6 +9,8 @@ from torch.utils.data import DataLoader
 from src.experiments.exp1_induction_heads import (
     AttentionOnlyBlock,
     AttentionOnlyTransformer,
+    apply_config_presets,
+    build_parser,
     causal_ablation,
     checkpoint_path_for_seed,
     diagnose_induction_formation,
@@ -539,3 +542,64 @@ class TestCheckpointResume:
             resume_from=str(tmp_path / "does_not_exist.pt"),
         )
         assert len(hist["val_acc"]) == 2
+
+
+class TestConfigPresets:
+    """The named presets are pinned configs; a silent preset regression is a
+    run with the wrong shape. Extracted from main() so this is checkable
+    without training."""
+
+    @staticmethod
+    def _args(*argv: str) -> argparse.Namespace:
+        return build_parser().parse_args(list(argv))
+
+    def test_defaults_are_untouched(self) -> None:
+        args = self._args()
+        apply_config_presets(args)
+        assert args.standard is False
+        assert args.scale is None
+        assert args.d_model == 64  # the parser default, no preset applied
+
+    def test_scale_standard_matches_standard_flag(self) -> None:
+        via_flag = self._args("--standard")
+        via_scale = self._args("--scale", "standard")
+        apply_config_presets(via_flag)
+        apply_config_presets(via_scale)
+        for key in (
+            "vocab_size", "seq_len", "d_model", "n_layers", "n_heads",
+            "epochs", "num_train", "batch_size", "fresh_batches",
+            "checkpoint_every", "save_model", "save_manifest",
+        ):
+            assert getattr(via_scale, key) == getattr(via_flag, key), (
+                f"--scale standard disagrees with --standard on {key}"
+            )
+
+    def test_scale_large_sets_scaled_gpu_config(self) -> None:
+        args = self._args("--scale", "large")
+        apply_config_presets(args)
+        assert args.vocab_size == 2048
+        assert args.seq_len == 128
+        assert args.d_model == 256
+        assert (args.n_layers, args.n_heads) == (4, 8)
+        assert args.epochs == 1500
+        assert args.num_train == 16384
+        assert args.batch_size == 128
+        assert args.fresh_batches is True
+        assert args.checkpoint_every == 500  # stateful by default
+        assert args.save_model is True and args.save_manifest is True
+
+    def test_scale_large_differs_from_standard(self) -> None:
+        args = self._args("--scale", "large")
+        apply_config_presets(args)
+        assert (args.d_model, args.seq_len, args.n_layers) != (64, 64, 2)
+
+    def test_conflicting_presets_are_rejected(self) -> None:
+        import pytest
+
+        with pytest.raises(SystemExit):
+            apply_config_presets(self._args("--standard", "--scale", "large"))
+
+    def test_scale_large_respects_explicit_checkpoint_interval(self) -> None:
+        args = self._args("--scale", "large", "--checkpoint-every", "100")
+        apply_config_presets(args)
+        assert args.checkpoint_every == 100
