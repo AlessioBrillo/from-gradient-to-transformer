@@ -10,6 +10,7 @@ from src.experiments.exp5_sae_dashboard import (
     ActivationGenerator,
     SparseAutoencoder,
     analyze_features,
+    build_parser,
     evaluate_reconstruction,
     harvest_activations_from_checkpoint,
 )
@@ -249,3 +250,16 @@ class TestHarvestActivationsFromCheckpoint:
                 num_samples=10,
                 seed=0,
             )
+
+
+def test_manifest_path_flag_exists() -> None:
+    """The --seeds branch reads args.manifest_path; before the flag
+    existed, `exp5 --seeds 42` crashed with AttributeError — found by the
+    remote-notebook contract lint (2026-10-13), not by a run. The
+    real-activation cascade run needs to route its manifest off the
+    flagship file."""
+    args = build_parser().parse_args(
+        ["--seeds", "42", "--manifest-path", "results/probe_exp5.json"]
+    )
+    assert args.manifest_path == "results/probe_exp5.json"
+    assert build_parser().parse_args(["--seeds", "42"]).manifest_path is None

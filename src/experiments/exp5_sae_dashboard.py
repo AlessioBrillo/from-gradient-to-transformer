@@ -587,8 +587,9 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
-def main() -> None:
-    FIGURES_DIR.mkdir(exist_ok=True)
+def build_parser() -> argparse.ArgumentParser:
+    """exp5's CLI, extracted from main() so tests can pin the flag contract
+    (same pattern as exp1/exp2/exp4)."""
     parser = argparse.ArgumentParser(
         description="Rung 5: Sparse autoencoder feature dashboard"
     )
@@ -649,6 +650,18 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--manifest-path",
+        type=str,
+        default=None,
+        help=(
+            "Explicit results/*.json path for the multi-seed manifest "
+            "(default: results/exp5_sae_dashboard.json). The --seeds "
+            "branch reads this; without the flag the branch crashed on an "
+            "undefined attribute, so the real-activation cascade run had "
+            "no way to route its manifest off the flagship file."
+        ),
+    )
+    parser.add_argument(
         "--activations-from",
         type=Path,
         default=None,
@@ -680,6 +693,12 @@ def main() -> None:
         "--source-n-heads", type=int, default=4,
         help="Checkpoint's n-heads (must match training config)",
     )
+    return parser
+
+
+def main() -> None:
+    FIGURES_DIR.mkdir(exist_ok=True)
+    parser = build_parser()
     args = parser.parse_args()
 
     logging.basicConfig(

@@ -16,7 +16,9 @@ Output:
 
 import argparse
 import logging
+from collections.abc import Callable
 from pathlib import Path
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -25,7 +27,14 @@ from torch import nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from src.experiments.exp1_induction_heads import make_repeated_token_data as make_induction_data
+from src.experiments.exp1_induction_heads import (
+    _BatchesAction,
+    _FreshBatchesAction,
+    _make_fresh_batches_fn,
+)
+from src.experiments.exp1_induction_heads import (
+    make_repeated_token_data as make_induction_data,
+)
 from src.experiments.runner import parse_seeds, run_seeds
 from src.models.decoder_only_transformer import DecoderOnlyTransformer
 from src.reproducibility import set_seed
@@ -96,8 +105,20 @@ def train_model(
     weight_decay: float = 0.1,
     seed: int = 42,
     gradient_clip: float = 1.0,
+    fresh_batches_fn: Optional[Callable[[int], DataLoader]] = None,
 ) -> dict:
-    """Train the model and return history."""
+    """Train the model and return history.
+
+    `fresh_batches_fn`, if given, is called once per epoch with the epoch
+    index and must return a fresh DataLoader over a newly sampled set of
+    sequences — the regime exp1's `--standard`/`--scale large` presets
+    force, because the 2026-08-02 matched comparison found the fixed,
+    epoch-reused dataset actively harmful (0.45% vs 53.5% val accuracy;
+    see portfolio/RESULTS.md Rung 1). Without it this experiment's
+    "standard" config trained on the harmful regime while claiming to
+    match exp1's, and the Rung 1 -> Rung 4 cascade measured a different
+    model than the one Rung 1 trained.
+    """
     set_seed(seed)
     model.train()
     opt = torch.optim.AdamW(
@@ -107,6 +128,8 @@ def train_model(
 
     for epoch in tqdm(range(epochs), desc="Training"):
         model.train()
+        if fresh_batches_fn is not None:
+            train_loader = fresh_batches_fn(epoch)
         total_loss = 0.0
         for x, y in train_loader:
             opt.zero_grad()
@@ -507,7 +530,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         num_train=args.num_train,
         seed=seed,
     )
-    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=256, shuffle=False)
 
     model = DecoderOnlyTransformer(
@@ -519,6 +542,10 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
     )
     model.to(DEVICE)
 
+    # Same fresh-batches regime as exp1's presets so the cascade measures
+    # one shared model (see train_model's docstring).
+    fresh_batches_fn = _make_fresh_batches_fn(args, seed) if args.fresh_batches else None
+
     history = train_model(
         model=model,
         train_loader=train_loader,
@@ -527,6 +554,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         lr=args.lr,
         seed=seed,
         gradient_clip=args.gradient_clip,
+        fresh_batches_fn=fresh_batches_fn,
     )
 
     sample_inputs = next(iter(val_loader))[0][:8]
@@ -590,8 +618,68 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
     }
 
 
-def main() -> None:
-    FIGURES_DIR.mkdir(exist_ok=True)
+def apply_config_presets(args: argparse.Namespace) -> None:
+    """Resolve the named config presets (--quick / --standard / --scale).
+
+    Extracted from main() so the preset matrix is directly testable —
+    every preset is a pinned config that must match the exp1 preset of
+    the same name, because the cascade's three rungs share one model.
+    `--scale` resolves first: `--scale standard` is an alias for
+    `--standard`, and a conflicting combination fails loudly.
+    """
+    if args.quick:
+        args.vocab_size = 64
+        args.seq_len = 12
+        args.d_model = 32
+        args.n_layers = 2
+        args.n_heads = 2
+        args.epochs = 500
+        args.num_train = 1024
+        logger.info("QUICK MODE: reduced config for fast iteration")
+
+    if args.scale == "standard":
+        args.standard = True
+    elif args.scale == "large" and args.standard:
+        raise SystemExit(
+            "--standard and --scale large select different configs; "
+            "pass only --scale large (or only --standard)."
+        )
+
+    if args.standard:
+        args.vocab_size = 2048
+        args.seq_len = 64
+        args.d_model = 64
+        args.n_layers = 2
+        args.n_heads = 4
+        args.epochs = 3000
+        args.num_train = 8192
+        args.fresh_batches = True
+        logger.info(
+            "STANDARD MODE: canonical standard-scale config matching exp1 "
+            "--standard (vocab=2048, seq=64, d_model=64, epochs=3000, "
+            "fresh batches)"
+        )
+
+    if args.scale == "large":
+        # The same scaled GPU config exp1's --scale large selects; the
+        # cascade measures one model at whichever scale Rung 1 ran.
+        args.vocab_size = 2048
+        args.seq_len = 128
+        args.d_model = 256
+        args.n_layers = 4
+        args.n_heads = 8
+        args.epochs = 1500
+        args.num_train = 16384
+        args.fresh_batches = True
+        logger.info(
+            "SCALE=large: vocab=2048, seq=128, d_model=256, 4 layers, "
+            "8 heads, epochs=1500, fresh batches"
+        )
+
+
+def build_parser() -> argparse.ArgumentParser:
+    """exp4's CLI, extracted from main() so tests can pin the flag contract
+    (same pattern as exp1/exp2)."""
     parser = argparse.ArgumentParser(
         description="Rung 4: Circuit verification via activation patching"
     )
@@ -626,6 +714,15 @@ def main() -> None:
         help="Global-norm gradient clipping, matching exp2/exp6. 0 disables.",
     )
     parser.add_argument("--num-train", type=int, default=8192, help="Training samples")
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=64,
+        help=(
+            "Training batch size. Was hardcoded at 64; now a flag so the "
+            "fresh-batches regime can share exp1's batching semantics."
+        ),
+    )
     parser.add_argument("--quick", action="store_true", help="Quick test mode")
     parser.add_argument(
         "--standard",
@@ -634,7 +731,41 @@ def main() -> None:
             "Canonical standard-scale config (Micro-Phase 10 pinning), "
             "identical to exp1's --standard so the cascade's three rungs "
             "measure one shared model: vocab_size=2048, seq_len=64, "
-            "d_model=64, 2 layers, 4 heads, epochs=3000, num_train=8192."
+            "d_model=64, 2 layers, 4 heads, epochs=3000, num_train=8192, "
+            "fresh batches on."
+        ),
+    )
+    parser.add_argument(
+        "--scale",
+        type=str,
+        choices=["standard", "large"],
+        default=None,
+        help=(
+            "Named config preset. 'standard' is identical to --standard. "
+            "'large' is the scaled GPU config (vocab_size=2048, seq_len=128, "
+            "d_model=256, 4 layers, 8 heads, epochs=1500, num_train=16384, "
+            "fresh batches) — the same preset exp1's --scale large selects, "
+            "so a Rung 4 run can be matched to a Rung 1 run at either scale."
+        ),
+    )
+    parser.add_argument(
+        "--fresh-batches",
+        action=_FreshBatchesAction,
+        help=(
+            "Resample a fresh set of training sequences every epoch instead "
+            "of reusing one fixed set. Same flag and same semantics as "
+            "exp1's; the presets imply it (see train_model's docstring for "
+            "why the fixed regime is not a matched control)."
+        ),
+    )
+    parser.add_argument(
+        "--batches",
+        choices=["fixed", "fresh"],
+        default=None,
+        action=_BatchesAction,
+        help=(
+            "Which training-batch regime to use, writing through to "
+            "--fresh-batches (same convention as exp1)."
         ),
     )
     parser.add_argument(
@@ -650,6 +781,25 @@ def main() -> None:
             "results/exp4_circuit_patching.json manifest, and skips plotting."
         ),
     )
+    parser.add_argument(
+        "--manifest-path",
+        type=str,
+        default=None,
+        help=(
+            "Explicit results/*.json path for the multi-seed manifest "
+            "(default: results/exp4_circuit_patching.json). The --seeds "
+            "branch reads this; without the flag the branch crashed on an "
+            "undefined attribute — a remote cascade run must be able to "
+            "route its manifest away from the flagship file."
+        ),
+    )
+    parser.set_defaults(fresh_batches=False, batch_mode="fixed")
+    return parser
+
+
+def main() -> None:
+    FIGURES_DIR.mkdir(exist_ok=True)
+    parser = build_parser()
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -657,28 +807,7 @@ def main() -> None:
         format="%(asctime)s | %(levelname)s | %(message)s",
     )
 
-    if args.quick:
-        args.vocab_size = 64
-        args.seq_len = 12
-        args.d_model = 32
-        args.n_layers = 2
-        args.n_heads = 2
-        args.epochs = 500
-        args.num_train = 1024
-        logger.info("QUICK MODE: reduced config for fast iteration")
-
-    if args.standard:
-        args.vocab_size = 2048
-        args.seq_len = 64
-        args.d_model = 64
-        args.n_layers = 2
-        args.n_heads = 4
-        args.epochs = 3000
-        args.num_train = 8192
-        logger.info(
-            "STANDARD MODE: canonical standard-scale config matching exp1 "
-            "--standard (vocab=2048, seq=64, d_model=64, epochs=3000)"
-        )
+    apply_config_presets(args)
 
     logger.info(f"Device: {DEVICE}")
     logger.info(f"Arguments: {vars(args)}")
@@ -727,7 +856,7 @@ def main() -> None:
         num_train=args.num_train,
         seed=args.seed,
     )
-    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=256, shuffle=False)
     logger.info(f"Data: train={args.num_train} sequences, seq_len={args.seq_len}")
 
@@ -744,6 +873,9 @@ def main() -> None:
     logger.info(f"Model parameters: {n_params:,}")
 
     if not args.no_train:
+        # Same fresh-batches regime as run_single_seed so the single-seed
+        # and multi-seed paths cannot drift apart.
+        fresh_batches_fn = _make_fresh_batches_fn(args, args.seed) if args.fresh_batches else None
         history = train_model(
             model=model,
             train_loader=train_loader,
@@ -752,6 +884,7 @@ def main() -> None:
             lr=args.lr,
             seed=args.seed,
             gradient_clip=args.gradient_clip,
+            fresh_batches_fn=fresh_batches_fn,
         )
         logger.info(
             f"Training done | final val acc: {history['val_acc'][-1]:.4f}"
