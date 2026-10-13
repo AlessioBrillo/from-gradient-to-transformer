@@ -48,6 +48,13 @@ make figures                # rebuild portfolio/figures/ from the manifests
 make verify-claims          # every public number traces to a tracked manifest
 make vault-check            # note link/orphan + tag-schema gate
 make ci-check               # local mirror of .github/workflows/python-ci.yml
+
+# Remote GPU runs (Kaggle/Colab) — see docs/agents/gpu-runs.md
+make remote-dry-grokking    # validate the GPU notebook, push nothing
+make remote-run-grokking GPU_USER=<you>   # Rung 2 audit (issue #167)
+make remote-run-induction GPU_USER=<you>  # Rung 1/4/5 cascade (issue #169)
+make remote-run-capstone GPU_USER=<you>   # capstone 3x20k (issue #170)
+make remote-pin PIN_FROM=<dir>            # validate + install downloaded manifests
 ```
 
 Everything runs from the repo root: `FIGURES_DIR`, `RESULTS_DIR` and
@@ -66,6 +73,10 @@ This is **not** a distributable package — `pyproject.toml` has no
 ### Issue tracker
 
 Issues live in GitHub Issues (AlessioBrillo/from-gradient-to-transformer), via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### GPU runs
+
+The three GPU-gated issues run on free Kaggle/Colab through one contract (driver, pinner, notebook lint). See `docs/agents/gpu-runs.md`.
 
 ### Domain docs
 

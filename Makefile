@@ -6,7 +6,8 @@
 	reproduce-exp3-geometry commitlint-head neuron-ablation \
 	check-links vault-check reproduce-induction-batches reproduce-induction-fixed \
 	reproduce-induction-fresh reproduce-notebook \
-	reproduce-retune reproduce-retune-control reproduce-retune-offset reproduce-retune-reweight
+	reproduce-retune reproduce-retune-control reproduce-retune-offset reproduce-retune-reweight \
+	remote-dry-grokking remote-run-grokking remote-run-induction remote-run-capstone remote-pin
 
 # --- Shell ---
 # The recipes are POSIX verbatim (the CI mirror); Windows GNU Make defaults
@@ -297,6 +298,40 @@ paper:
 	else \
 		echo "No LaTeX toolchain found (latexmk/pdflatex). The paper source is portfolio/paper/main.tex; install TeX Live/MiKTeX or compile on Overleaf."; \
 	fi
+
+# --- Remote GPU runs (Kaggle/Colab; see docs/agents/gpu-runs.md) ---
+# The GPU work this repo still owes (issues #167, #169, #170) runs on free
+# Kaggle/Colab GPUs through one contract: the notebook clones a pinned ref,
+# the experiment writes its own manifest via --seeds --manifest-path, the
+# driver downloads it, and pin_remote_run.py validates + installs it.
+# Nothing here commits: the human commits after verify-claims is green.
+#
+# GPU_BRANCH: the pushed ref the remote run pins (default: dev).
+# GPU_USER:   your Kaggle username (default: $KAGGLE_USERNAME).
+# PIN_FROM:   directory of downloaded manifests for `make remote-pin`.
+GPU_BRANCH ?= dev
+GPU_USER ?= $(KAGGLE_USERNAME)
+PIN_FROM ?= results/remote
+
+remote-dry-grokking:
+	@echo "=== Validate the grokking GPU notebook without pushing ==="
+	uv run python scripts/kaggle_run.py --notebook notebooks/kaggle_grokking_p113.ipynb --branch $(GPU_BRANCH) --dry-run
+
+remote-run-grokking:
+	@echo "=== Rung 2: P=113 positive control + energy-metric re-judgement (GPU) ==="
+	uv run python scripts/kaggle_run.py --notebook notebooks/kaggle_grokking_p113.ipynb --branch $(GPU_BRANCH) --user $(GPU_USER) --poll --download
+
+remote-run-induction:
+	@echo "=== Rung 1/4/5: scaled induction run + head-validation cascade (GPU) ==="
+	uv run python scripts/kaggle_run.py --notebook notebooks/kaggle_induction_standard.ipynb --branch $(GPU_BRANCH) --user $(GPU_USER) --poll --download
+
+remote-run-capstone:
+	@echo "=== Capstone: 3 seeds x 20k steps (GPU) ==="
+	uv run python scripts/kaggle_run.py --notebook notebooks/kaggle_capstone_20k.ipynb --branch $(GPU_BRANCH) --user $(GPU_USER) --poll --download
+
+remote-pin:
+	@echo "=== Validating and installing remote-run manifests (fail-closed) ==="
+	uv run python scripts/pin_remote_run.py --from $(PIN_FROM)
 
 # --- Cleanup ---
 clean:
