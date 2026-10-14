@@ -21,11 +21,14 @@ hours. This repo has no GPU; the free tiers cover it. Both runtimes share
 - `python -m pip install kaggle` into the project venv (the driver invokes it
   as `sys.executable -m kaggle`, so no PATH gymnastics are needed).
 - Credentials: kaggle.com → Settings → Account → **Create New Token** →
-  download `kaggle.json` → place it at `C:\Users\<you>\.kaggle\kaggle.json`
-  (`~/.kaggle/kaggle.json`), or export `KAGGLE_USERNAME` / `KAGGLE_KEY`.
-  The driver's preflight checks for it before anything is pushed.
+  save the `KGAT_...` token to `~/.kaggle/access_token`
+  (Windows: `C:\Users\<you>\.kaggle\access_token`), or export
+  `KAGGLE_API_TOKEN`. The legacy username/key pair (`~/.kaggle/kaggle.json`)
+  is still accepted. The driver's preflight checks for all of these before
+  anything is pushed.
 - On Kaggle itself: the notebook needs **Internet On** and a **GPU
-  accelerator** (Settings → Accelerator → GPU T4/P100).
+  accelerator** (Settings → Accelerator → GPU T4/P100), and the account
+  needs phone verification before GPU/Internet access is granted.
 
 ## Why the contract is this strict
 

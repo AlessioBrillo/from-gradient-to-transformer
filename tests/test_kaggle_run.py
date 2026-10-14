@@ -124,9 +124,42 @@ class TestPreflight:
     def test_missing_credentials_are_explained(self, monkeypatch, tmp_path: Path) -> None:
         monkeypatch.delenv("KAGGLE_USERNAME", raising=False)
         monkeypatch.delenv("KAGGLE_KEY", raising=False)
+        monkeypatch.delenv("KAGGLE_API_TOKEN", raising=False)
         monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
         problems = kaggle_preflight()
-        assert any("kaggle.json" in p for p in problems)
+        assert any("access_token" in p for p in problems)
+
+    def test_kgat_token_file_is_accepted(self, monkeypatch, tmp_path: Path) -> None:
+        """Kaggle's current auth: the KGAT token at ~/.kaggle/access_token
+        (or KAGGLE_API_TOKEN) — the preflight must not demand the legacy
+        username/key pair when it is present."""
+        monkeypatch.delenv("KAGGLE_USERNAME", raising=False)
+        monkeypatch.delenv("KAGGLE_KEY", raising=False)
+        monkeypatch.delenv("KAGGLE_API_TOKEN", raising=False)
+        kaggle_dir = tmp_path / ".kaggle"
+        kaggle_dir.mkdir(parents=True)
+        (kaggle_dir / "access_token").write_text("KGAT_fake", encoding="utf-8")
+        monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
+
+        import scripts.kaggle_run as kr
+
+        monkeypatch.setattr(
+            kr, "_kaggle", lambda *a, **k: subprocess.CompletedProcess([], 0, "", "")
+        )
+        assert kaggle_preflight() == []
+
+    def test_kgat_env_var_is_accepted(self, monkeypatch, tmp_path: Path) -> None:
+        monkeypatch.delenv("KAGGLE_USERNAME", raising=False)
+        monkeypatch.delenv("KAGGLE_KEY", raising=False)
+        monkeypatch.setenv("KAGGLE_API_TOKEN", "KGAT_fake")
+        monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
+
+        import scripts.kaggle_run as kr
+
+        monkeypatch.setattr(
+            kr, "_kaggle", lambda *a, **k: subprocess.CompletedProcess([], 0, "", "")
+        )
+        assert kaggle_preflight() == []
 
     def test_kaggle_is_invoked_as_a_module(self, monkeypatch) -> None:
         """No PATH lookup: `python scripts/kaggle_run.py` outside an

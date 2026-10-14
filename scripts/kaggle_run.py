@@ -222,19 +222,31 @@ def _kaggle(args: list[str], timeout: int = 120) -> subprocess.CompletedProcess:
 
 
 def kaggle_preflight() -> list[str]:
-    """Is the kaggle CLI importable, with credentials?"""
+    """Is the kaggle CLI importable, with credentials?
+
+    Kaggle's current auth is the KGAT API token — either the
+    `KAGGLE_API_TOKEN` environment variable or the `~/.kaggle/access_token`
+    file the CLI reads automatically. The legacy username/key pair
+    (`~/.kaggle/kaggle.json`, or KAGGLE_USERNAME/KAGGLE_KEY) still works and
+    is accepted too.
+    """
     problems: list[str] = []
-    creds = Path.home() / ".kaggle" / "kaggle.json"
-    has_env = bool(os.environ.get("KAGGLE_USERNAME")) and bool(os.environ.get("KAGGLE_KEY"))
-    if not creds.exists() and not has_env:
+    kaggle_dir = Path.home() / ".kaggle"
+    has_token = bool(os.environ.get("KAGGLE_API_TOKEN")) or (
+        kaggle_dir / "access_token"
+    ).exists()
+    has_legacy = (kaggle_dir / "kaggle.json").exists() or (
+        bool(os.environ.get("KAGGLE_USERNAME")) and bool(os.environ.get("KAGGLE_KEY"))
+    )
+    if not has_token and not has_legacy:
         problems.append(
-            "no Kaggle credentials: create ~/.kaggle/kaggle.json "
-            "(kaggle.com -> Settings -> Account -> Create New Token; on Windows "
-            "C:\\Users\\<you>\\.kaggle\\kaggle.json), or set KAGGLE_USERNAME "
-            "and KAGGLE_KEY"
+            "no Kaggle credentials: save the KGAT token to "
+            "~/.kaggle/access_token (Windows: C:\\Users\\<you>\\.kaggle\\access_token) "
+            "or set KAGGLE_API_TOKEN — kaggle.com -> Settings -> Account -> "
+            "Create New Token. Legacy ~/.kaggle/kaggle.json is also accepted."
         )
         return problems
-    proc = _kaggle(["kernels", "list", "--mine", "1"])
+    proc = _kaggle(["kernels", "list", "--mine"])
     if proc.returncode != 0:
         problems.append(
             f"kaggle credentials rejected: {(proc.stdout + proc.stderr).strip()[:200]}"
