@@ -146,6 +146,26 @@ class TestZipExpansion:
         assert "DRY RUN OK" in proc.stdout
         assert not (REPO_ROOT / "results" / "good.json").exists()
 
+    def test_dry_run_pins_from_the_zip_file_itself(self, tmp_path: Path) -> None:
+        """`--from <path-to.zip>` is the natural thing an operator types after
+        `kaggle kernels output` hands them one archive."""
+        archive = self._zip_with_manifest(tmp_path)
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(REPO_ROOT / "scripts" / "pin_remote_run.py"),
+                "--from",
+                str(archive),
+                "--dry-run",
+            ],
+            capture_output=True,
+            text=True,
+            cwd=REPO_ROOT,
+            timeout=300,
+        )
+        assert proc.returncode == 0, proc.stdout + proc.stderr
+        assert "DRY RUN OK" in proc.stdout
+
 
 class TestDryRunEntryPoint:
     def test_dry_run_installs_nothing(self, tmp_path: Path) -> None:
