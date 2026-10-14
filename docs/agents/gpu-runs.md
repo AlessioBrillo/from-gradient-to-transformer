@@ -6,16 +6,26 @@ hours. This repo has no GPU; the free tiers cover it. Both runtimes share
 
 ```
 1. pick a notebook:   notebooks/kaggle_*.ipynb
-2. push dev:          git push origin dev     (the remote run pins a ref)
-3. validate locally:  make remote-dry-grokking  (checks everything, pushes nothing)
-4. run remotely:      make remote-run-<job> GPU_BRANCH=dev GPU_USER=<you>
+2. validate locally:  make remote-dry-grokking  (checks everything, pushes nothing)
+3. run remotely:      make remote-run-<job> GPU_USER=<you>
                       — or open the same notebook in Colab (link printed by dry-run)
-5. download:          the driver fetches the kernel output; on Colab the notebook
+4. download:          the driver fetches the kernel output; on Colab the notebook
                       zips the manifests and files.download()s them
-6. pin:               python scripts/pin_remote_run.py --from <dir>
-7. cite:              add <!-- manifest: results/... --> tags, make verify-claims
-8. commit by hand:    results/*.json on a branch, PR with CI green
+5. pin:               python scripts/pin_remote_run.py --from <dir>
+6. cite:              add <!-- manifest: results/... --> tags, make verify-claims
+7. commit by hand:    results/*.json on a branch, PR with CI green
 ```
+
+## One-time host setup
+
+- `python -m pip install kaggle` into the project venv (the driver invokes it
+  as `sys.executable -m kaggle`, so no PATH gymnastics are needed).
+- Credentials: kaggle.com → Settings → Account → **Create New Token** →
+  download `kaggle.json` → place it at `C:\Users\<you>\.kaggle\kaggle.json`
+  (`~/.kaggle/kaggle.json`), or export `KAGGLE_USERNAME` / `KAGGLE_KEY`.
+  The driver's preflight checks for it before anything is pushed.
+- On Kaggle itself: the notebook needs **Internet On** and a **GPU
+  accelerator** (Settings → Accelerator → GPU T4/P100).
 
 ## Why the contract is this strict
 

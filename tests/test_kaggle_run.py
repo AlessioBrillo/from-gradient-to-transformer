@@ -9,6 +9,8 @@ itself is never called here.
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -16,6 +18,7 @@ import pytest
 from scripts.kaggle_run import (
     NotebookError,
     code_cells,
+    kaggle_preflight,
     kernel_dir_for,
     load_notebook,
     set_branch,
@@ -112,3 +115,32 @@ class TestDryRunEntryPoint:
         )
         assert proc.returncode != 0
         assert "does not exist on origin" in proc.stderr
+
+
+class TestPreflight:
+    """The preflight must tell the operator exactly what is missing —
+    the failure mode of this step is a confused human, not a crash."""
+
+    def test_missing_credentials_are_explained(self, monkeypatch, tmp_path: Path) -> None:
+        monkeypatch.delenv("KAGGLE_USERNAME", raising=False)
+        monkeypatch.delenv("KAGGLE_KEY", raising=False)
+        monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
+        problems = kaggle_preflight()
+        assert any("kaggle.json" in p for p in problems)
+
+    def test_kaggle_is_invoked_as_a_module(self, monkeypatch) -> None:
+        """No PATH lookup: `python scripts/kaggle_run.py` outside an
+        activated venv must still find the CLI. The command form is the
+        contract — the CLI itself is a host-side tool, not a lockfile
+        dependency, so this must not require kaggle to be installed."""
+        import scripts.kaggle_run as kr
+
+        seen: list[list[str]] = []
+
+        def fake_run(cmd, *args, **kwargs):
+            seen.append(cmd)
+            return subprocess.CompletedProcess(cmd, 0, "", "")
+
+        monkeypatch.setattr(kr.subprocess, "run", fake_run)
+        kr._kaggle(["kernels", "status", "user/slug"])
+        assert seen[0] == [sys.executable, "-m", "kaggle", "kernels", "status", "user/slug"]

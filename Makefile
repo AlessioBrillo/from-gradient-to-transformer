@@ -306,11 +306,12 @@ paper:
 # driver downloads it, and pin_remote_run.py validates + installs it.
 # Nothing here commits: the human commits after verify-claims is green.
 #
-# GPU_BRANCH: the pushed ref the remote run pins (default: dev).
-# GPU_USER:   your Kaggle username (default: $KAGGLE_USERNAME).
+# GPU_BRANCH: the pushed ref the remote run pins (default: main).
+# GPU_USER:   your Kaggle username (default: alessiobrillo; override with
+#             GPU_USER=<you> make remote-run-...).
 # PIN_FROM:   directory of downloaded manifests for `make remote-pin`.
-GPU_BRANCH ?= dev
-GPU_USER ?= $(KAGGLE_USERNAME)
+GPU_BRANCH ?= main
+GPU_USER ?= alessiobrillo
 PIN_FROM ?= results/remote
 
 remote-dry-grokking:
