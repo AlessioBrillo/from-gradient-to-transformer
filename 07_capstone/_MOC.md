@@ -16,6 +16,7 @@ Index and links for the capstone phase. Detailed plan: [[07_capstone/README]].
 - [[07_capstone/notes/mp-95-session-0-transition|MP-95 Session 0 Transition]] — pivot from the dense-attractor characterisation to scaled Rung 1.
 - [[07_capstone/notes/capstone-gate-honest-negative|Capstone Gate — the honest negative]] — the Phase 7 gate answer: dense mechanism defended with manifests.
 - [[07_capstone/checklist|Capstone checklist]] — phase items and the stamped gate.
+- [[07_capstone/design|Capstone design]] — the joint-training pipeline: model, tasks, instrumentation, analysis chain, honest limits.
 - [[07_capstone/README|Capstone README]] — full pipeline overview, experiment ladder
 - [[07_capstone/writeup]] — mini-paper outline: grokking, circuits, SAE
 
