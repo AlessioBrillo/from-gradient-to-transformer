@@ -90,6 +90,30 @@ def validate_manifest(path: Path) -> list[str]:
     return problems
 
 
+def _expand_zips(source: Path) -> list[Path]:
+    """Unzip any archives under `source`, returning the JSONs inside.
+
+    The notebooks zip their manifests before download (one archive for both
+    runtimes), so the download directory typically holds a .zip rather than
+    loose .json files. Expanding here keeps the notebooks runtime-agnostic:
+    Colab downloads the zip, Kaggle's kernel output carries the zip.
+    """
+    import zipfile
+
+    candidates = sorted(source.rglob("*.json"))
+    for archive in sorted(source.rglob("*.zip")):
+        out_dir = archive.with_suffix("")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            with zipfile.ZipFile(archive) as zf:
+                zf.extractall(out_dir)
+        except zipfile.BadZipFile as e:
+            raise SystemExit(f"{archive.name} is not a readable zip: {e}")
+        logger.info("expanded %s -> %s", archive.name, out_dir)
+        candidates.extend(sorted(out_dir.rglob("*.json")))
+    return candidates
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--from", dest="source", type=str, required=True,
@@ -108,7 +132,7 @@ def main() -> None:
     if source.is_file():
         candidates = [source]
     else:
-        candidates = sorted(p for p in source.rglob("*.json") if p.is_file())
+        candidates = _expand_zips(source)
     if not candidates:
         print(f"no .json manifests found under {source}", file=sys.stderr)
         raise SystemExit(1)

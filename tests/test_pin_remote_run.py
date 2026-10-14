@@ -100,6 +100,53 @@ class TestValidateManifest:
         assert any("not a ResultsManifest" in p for p in problems)
 
 
+class TestZipExpansion:
+    """The notebooks ship manifests inside a zip (one archive for both
+    runtimes), so a download directory usually holds no loose JSON at all."""
+
+    def _zip_with_manifest(self, tmp_path: Path) -> Path:
+        import zipfile
+
+        src = tmp_path / "src"
+        src.mkdir(parents=True, exist_ok=True)
+        good = _write_manifest(src / "good.json")
+        archive = tmp_path / "run.zip"
+        with zipfile.ZipFile(archive, "w") as zf:
+            zf.write(good, arcname="results/good.json")
+        return archive
+
+    def test_zip_is_expanded_and_validated(self, tmp_path: Path) -> None:
+        from scripts.pin_remote_run import _expand_zips
+
+        archive = self._zip_with_manifest(tmp_path)
+        # The download directory holds the zip (and nothing else useful):
+        # that is exactly what the driver's `kaggle kernels output` gives.
+        candidates = _expand_zips(tmp_path)
+        assert any(c.name == "good.json" for c in candidates)
+        extracted = archive.with_suffix("") / "results" / "good.json"
+        assert extracted.exists()
+        assert validate_manifest(extracted) == []
+
+    def test_dry_run_pins_from_a_zip(self, tmp_path: Path) -> None:
+        self._zip_with_manifest(tmp_path)
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(REPO_ROOT / "scripts" / "pin_remote_run.py"),
+                "--from",
+                str(tmp_path),
+                "--dry-run",
+            ],
+            capture_output=True,
+            text=True,
+            cwd=REPO_ROOT,
+            timeout=300,
+        )
+        assert proc.returncode == 0, proc.stdout + proc.stderr
+        assert "DRY RUN OK" in proc.stdout
+        assert not (REPO_ROOT / "results" / "good.json").exists()
+
+
 class TestDryRunEntryPoint:
     def test_dry_run_installs_nothing(self, tmp_path: Path) -> None:
         src = _write_manifest(tmp_path / "good.json")
