@@ -129,7 +129,11 @@ def main() -> None:
     source = Path(args.source)
     if not source.is_absolute():
         source = REPO_ROOT / source
-    if source.is_file():
+    if source.is_file() and source.suffix == ".zip":
+        # A single downloaded archive: expand it, then validate the contents.
+        candidates = _expand_zips(source.parent if source.parent != source else source.parent)
+        candidates = [c for c in candidates if str(source.with_suffix("")) in str(c)]
+    elif source.is_file():
         candidates = [source]
     else:
         candidates = _expand_zips(source)
