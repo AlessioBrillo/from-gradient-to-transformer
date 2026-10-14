@@ -31,6 +31,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import re
 import shutil
 import subprocess
@@ -207,26 +208,37 @@ def kernel_dir_for(
 
 # ---------------------------------------------------------------------------
 # Kaggle CLI plumbing
+#
+# The CLI is invoked as `sys.executable -m kaggle`, not as the `kaggle`
+# executable: the module lives in the project venv, and a PATH lookup
+# fails whenever the driver is run outside an activated venv — which is
+# exactly how a `python scripts/kaggle_run.py ...` invocation happens.
 # ---------------------------------------------------------------------------
 
 def _kaggle(args: list[str], timeout: int = 120) -> subprocess.CompletedProcess:
     return subprocess.run(
-        ["kaggle", *args], capture_output=True, text=True, timeout=timeout
+        [sys.executable, "-m", "kaggle", *args], capture_output=True, text=True, timeout=timeout
     )
 
 
 def kaggle_preflight() -> list[str]:
-    """Is the kaggle CLI usable, with credentials?"""
+    """Is the kaggle CLI importable, with credentials?"""
     problems: list[str] = []
-    if shutil.which("kaggle") is None:
+    creds = Path.home() / ".kaggle" / "kaggle.json"
+    has_env = bool(os.environ.get("KAGGLE_USERNAME")) and bool(os.environ.get("KAGGLE_KEY"))
+    if not creds.exists() and not has_env:
         problems.append(
-            "kaggle CLI not found (pip install kaggle; credentials: "
-            "~/.kaggle/kaggle.json or KAGGLE_USERNAME/KAGGLE_KEY)"
+            "no Kaggle credentials: create ~/.kaggle/kaggle.json "
+            "(kaggle.com -> Settings -> Account -> Create New Token; on Windows "
+            "C:\\Users\\<you>\\.kaggle\\kaggle.json), or set KAGGLE_USERNAME "
+            "and KAGGLE_KEY"
         )
         return problems
     proc = _kaggle(["kernels", "list", "--mine", "1"])
     if proc.returncode != 0:
-        problems.append(f"kaggle credentials rejected: {proc.stderr.strip()[:200]}")
+        problems.append(
+            f"kaggle credentials rejected: {(proc.stdout + proc.stderr).strip()[:200]}"
+        )
     return problems
 
 

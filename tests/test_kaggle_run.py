@@ -9,6 +9,8 @@ itself is never called here.
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -16,6 +18,7 @@ import pytest
 from scripts.kaggle_run import (
     NotebookError,
     code_cells,
+    kaggle_preflight,
     kernel_dir_for,
     load_notebook,
     set_branch,
@@ -112,3 +115,27 @@ class TestDryRunEntryPoint:
         )
         assert proc.returncode != 0
         assert "does not exist on origin" in proc.stderr
+
+
+class TestPreflight:
+    """The preflight must tell the operator exactly what is missing —
+    the failure mode of this step is a confused human, not a crash."""
+
+    def test_missing_credentials_are_explained(self, monkeypatch, tmp_path: Path) -> None:
+        monkeypatch.delenv("KAGGLE_USERNAME", raising=False)
+        monkeypatch.delenv("KAGGLE_KEY", raising=False)
+        monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
+        problems = kaggle_preflight()
+        assert any("kaggle.json" in p for p in problems)
+
+    def test_kaggle_is_invoked_as_a_module(self) -> None:
+        """No PATH lookup: `python scripts/kaggle_run.py` outside an
+        activated venv must still find the CLI."""
+        proc = subprocess.run(
+            [sys.executable, "-m", "kaggle", "--help"],
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        assert proc.returncode == 0
+        assert "usage" in (proc.stdout + proc.stderr).lower()
