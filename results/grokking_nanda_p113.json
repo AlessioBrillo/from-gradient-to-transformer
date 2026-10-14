@@ -1,0 +1,160 @@
+{
+  "experiment": "exp2_grokking",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "args": {
+    "seed": 42,
+    "modulus": 113,
+    "train_fraction": 0.3,
+    "d_model": 128,
+    "d_mlp": 512,
+    "n_heads": 4,
+    "epochs": 40000,
+    "lr": 0.001,
+    "weight_decay": 1.0,
+    "batch_size": 512,
+    "quick": false,
+    "probe": false,
+    "micro": false,
+    "no_normalize_embeddings": true,
+    "schedule": "constant",
+    "protocol": "nanda",
+    "no_layernorm": true,
+    "grad_clip": 0.0,
+    "beta2": 0.98,
+    "warmup_epochs": 10,
+    "full_batch": true,
+    "progress_interval": 100,
+    "checkpoint_dir": "checkpoints/nanda",
+    "checkpoint_every": 5000,
+    "resume": true,
+    "resume_from": null,
+    "wandb": false,
+    "save_model": false,
+    "manifest_path": "results/grokking_nanda_p113.json"
+  },
+  "per_seed_metrics": [
+    {
+      "final_val_acc": 1.0,
+      "generalization_epoch": 5151.0,
+      "final_fourier_sparsity": 0.14065128564834595,
+      "k_90_percent": 81.0,
+      "k_99_percent": 110.0,
+      "total_mass_top_k": 0.6125374436378479,
+      "k_energy_90": 4.0,
+      "k_energy_99": 39.0,
+      "frac_energy_top5": 0.9187150597572327,
+      "energy_sparse": 1.0
+    },
+    {
+      "final_val_acc": 0.9996643919901554,
+      "generalization_epoch": 6220.0,
+      "final_fourier_sparsity": 0.15231847763061523,
+      "k_90_percent": 76.0,
+      "k_99_percent": 109.0,
+      "total_mass_top_k": 0.6427043676376343,
+      "k_energy_90": 6.0,
+      "k_energy_99": 38.0,
+      "frac_energy_top5": 0.8794941902160645,
+      "energy_sparse": 1.0
+    },
+    {
+      "final_val_acc": 1.0,
+      "generalization_epoch": 6386.0,
+      "final_fourier_sparsity": 0.15185749530792236,
+      "k_90_percent": 72.0,
+      "k_99_percent": 109.0,
+      "total_mass_top_k": 0.6798109412193298,
+      "k_energy_90": 7.0,
+      "k_energy_99": 32.0,
+      "frac_energy_top5": 0.8261206746101379,
+      "energy_sparse": 1.0
+    }
+  ],
+  "aggregate": {
+    "final_fourier_sparsity": {
+      "mean": 0.14827575286229452,
+      "std": 0.00539459614786818,
+      "min": 0.14065128564834595,
+      "max": 0.15231847763061523,
+      "n": 3.0
+    },
+    "final_val_acc": {
+      "mean": 0.9998881306633852,
+      "std": 0.00015820713305440517,
+      "min": 0.9996643919901554,
+      "max": 1.0,
+      "n": 3.0
+    },
+    "energy_sparse": {
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0,
+      "n": 3.0
+    },
+    "k_90_percent": {
+      "mean": 76.33333333333333,
+      "std": 3.681787005729087,
+      "min": 72.0,
+      "max": 81.0,
+      "n": 3.0
+    },
+    "k_energy_90": {
+      "mean": 5.666666666666667,
+      "std": 1.247219128924647,
+      "min": 4.0,
+      "max": 7.0,
+      "n": 3.0
+    },
+    "frac_energy_top5": {
+      "mean": 0.8747766415278116,
+      "std": 0.03794839908271631,
+      "min": 0.8261206746101379,
+      "max": 0.9187150597572327,
+      "n": 3.0
+    },
+    "k_energy_99": {
+      "mean": 36.333333333333336,
+      "std": 3.0912061651652345,
+      "min": 32.0,
+      "max": 39.0,
+      "n": 3.0
+    },
+    "generalization_epoch": {
+      "mean": 5919.0,
+      "std": 547.2701953027104,
+      "min": 5151.0,
+      "max": 6386.0,
+      "n": 3.0
+    },
+    "k_99_percent": {
+      "mean": 109.33333333333333,
+      "std": 0.4714045207910317,
+      "min": 109.0,
+      "max": 110.0,
+      "n": 3.0
+    },
+    "total_mass_top_k": {
+      "mean": 0.6450175841649374,
+      "std": 0.027512955702578317,
+      "min": 0.6125374436378479,
+      "max": 0.6798109412193298,
+      "n": 3.0
+    }
+  },
+  "wall_clock_seconds": 1516.0773363919998,
+  "git_sha": "bca650f",
+  "git_dirty": false,
+  "device": "cuda",
+  "torch_version": "2.11.0+cu128",
+  "numpy_version": "2.1.3",
+  "python_version": "3.13.15",
+  "n_parameters": 225792,
+  "created_at": "2026-10-14T17:24:50+00:00",
+  "notes": null,
+  "neuron_ablation": null
+}
