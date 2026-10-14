@@ -176,14 +176,29 @@ def validate_notebook(nb: dict[str, Any], check_flags: bool = True) -> list[str]
     return problems
 
 
+def normalize_slug(raw: str) -> str:
+    """Kaggle's slug rules: lowercase, no underscores.
+
+    A kernel's public id is derived from its *title*, and Kaggle's
+    slugifier turns underscores into hyphens — so `grokking_p113` becomes
+    `grokking-p113` and every subsequent `kernels status/output` call by the
+    underscore spelling fails with a permission error that reads like an
+    auth problem. Normalizing here (and setting the metadata title to the
+    same slug) keeps the id the driver prints and the id Kaggle assigns
+    bit-identical.
+    """
+    return raw.strip().lower().replace("_", "-")
+
+
 def kernel_dir_for(
     nb: dict[str, Any], nb_path: Path, ref: str, user: str, slug: str, out_dir: Path
 ) -> Path:
     """Render a Kaggle kernel directory: metadata + ref-pinned notebook."""
+    slug = normalize_slug(slug)
     out_dir.mkdir(parents=True, exist_ok=True)
     metadata = {
         "id": f"{user}/{slug}",
-        "title": slug,
+        "title": slug,  # the title MUST slugify to the id — hence the same string
         "code_file": nb_path.name,
         "language": "python",
         "kernel_type": "notebook",
@@ -262,16 +277,26 @@ def push_kernel(kernel_dir: Path) -> None:
 
 
 def poll_kernel(slug: str, user: str, timeout_s: int, interval_s: int = 60) -> str:
-    """Poll until the kernel is complete or errors; returns the final state."""
-    ref = f"{user}/{slug}"
+    """Poll until the kernel is complete or errors; returns the final state.
+
+    A single status call is allowed to be slow (the Kaggle API occasionally
+    hangs for minutes); a timeout is "unknown", not "dead" — the loop keeps
+    polling until the overall budget expires.
+    """
+    ref = f"{user}/{normalize_slug(slug)}"
     deadline = time.monotonic() + timeout_s
     while True:
-        proc = _kaggle(["kernels", "status", ref], timeout=120)
-        state = (proc.stdout + proc.stderr).lower()
+        try:
+            proc = _kaggle(["kernels", "status", ref], timeout=300)
+            state = (proc.stdout + proc.stderr).lower()
+        except subprocess.TimeoutExpired:
+            state = "status call timed out — still polling"
         logger.info("kaggle kernels status %s -> %s", ref, state.strip())
         if "complete" in state:
             return "complete"
-        if "error" in state or "cancel" in state:
+        # A wrong slug surfaces as a permission error; anything else with
+        # "error"/"cancel" is a genuine kernel failure.
+        if ("error" in state or "cancel" in state) and "still polling" not in state:
             return "error"
         if time.monotonic() > deadline:
             return "timeout"
@@ -280,7 +305,8 @@ def poll_kernel(slug: str, user: str, timeout_s: int, interval_s: int = 60) -> s
 
 def download_output(slug: str, user: str, out_dir: Path) -> Path:
     out_dir.mkdir(parents=True, exist_ok=True)
-    proc = _kaggle(["kernels", "output", f"{user}/{slug}", "-p", str(out_dir)], timeout=600)
+    ref = f"{user}/{normalize_slug(slug)}"
+    proc = _kaggle(["kernels", "output", ref, "-p", str(out_dir)], timeout=600)
     if proc.returncode != 0:
         raise RuntimeError(f"kaggle kernels output failed:\n{proc.stdout}\n{proc.stderr}")
     logger.info("downloaded kernel output into %s", out_dir)
@@ -314,6 +340,16 @@ def main() -> None:
         "--dry-run", action="store_true", help="Validate everything, push nothing"
     )
     parser.add_argument("--push", action="store_true", help="Push the kernel (default action)")
+    parser.add_argument(
+        "--poll-only",
+        action="store_true",
+        help=(
+            "Do not push: attach to the already-pushed kernel with this slug "
+            "and poll/download it. Recovers a run whose push succeeded but "
+            "whose driver invocation died (the kernel keeps running on "
+            "Kaggle regardless)."
+        ),
+    )
     parser.add_argument("--poll", action="store_true", help="Poll the kernel until it finishes")
     parser.add_argument(
         "--poll-timeout", type=int, default=9 * 3600,
@@ -329,7 +365,7 @@ def main() -> None:
         nb_path = REPO_ROOT / nb_path
     nb = load_notebook(nb_path)
     ref = args.branch
-    slug = args.slug or nb_path.stem.removeprefix("kaggle_")
+    slug = normalize_slug(args.slug or nb_path.stem.removeprefix("kaggle_"))
     staging = REPO_ROOT / args.staging_dir / slug
 
     # --- validation (always, even on a real run: a broken notebook pushed
@@ -374,7 +410,10 @@ def main() -> None:
             print(f"  - {p}", file=sys.stderr)
         raise SystemExit(1)
 
-    push_kernel(kernel_dir_for(nb, nb_path, ref, user, slug, staging / "kernel"))
+    if not args.poll_only:
+        push_kernel(kernel_dir_for(nb, nb_path, ref, user, slug, staging / "kernel"))
+    else:
+        logger.info("poll-only: attaching to the already-pushed kernel %s/%s", user, slug)
 
     if args.poll:
         state = poll_kernel(slug, user, args.poll_timeout)
