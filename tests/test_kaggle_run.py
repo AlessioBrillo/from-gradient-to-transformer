@@ -21,6 +21,7 @@ from scripts.kaggle_run import (
     kaggle_preflight,
     kernel_dir_for,
     load_notebook,
+    normalize_slug,
     set_branch,
     validate_notebook,
 )
@@ -69,7 +70,26 @@ class TestKernelDir:
         assert validate_notebook(load_notebook(GROKKING_NB)) == []
 
 
-class TestDryRunEntryPoint:
+class TestSlugNormalization:
+    """Kaggle derives a kernel's public id from its title with a slugifier
+    that turns underscores into hyphens — an underscore slug produces a
+    working push followed by 'permission denied' on every status call,
+    which reads like an auth failure and is not."""
+
+    def test_underscores_become_hyphens(self) -> None:
+        assert normalize_slug("grokking_p113") == "grokking-p113"
+
+    def test_already_normal_slug_unchanged(self) -> None:
+        assert normalize_slug("grokking-p113") == "grokking-p113"
+
+    def test_metadata_title_slugifies_to_the_id(self, tmp_path: Path) -> None:
+        nb = load_notebook(GROKKING_NB)
+        out = kernel_dir_for(
+            nb, GROKKING_NB, "main", "u", normalize_slug("grokking_p113"), tmp_path
+        )
+        meta = json.loads((out / "kernel-metadata.json").read_text(encoding="utf-8"))
+        assert meta["id"] == "u/grokking-p113"
+        assert meta["title"] == "grokking-p113"  # title == id: no slugifier surprise
     """The full CLI validation path, end to end, without pushing."""
 
     def test_dry_run_succeeds_on_a_pushed_ref(self) -> None:
