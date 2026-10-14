@@ -128,14 +128,19 @@ class TestPreflight:
         problems = kaggle_preflight()
         assert any("kaggle.json" in p for p in problems)
 
-    def test_kaggle_is_invoked_as_a_module(self) -> None:
+    def test_kaggle_is_invoked_as_a_module(self, monkeypatch) -> None:
         """No PATH lookup: `python scripts/kaggle_run.py` outside an
-        activated venv must still find the CLI."""
-        proc = subprocess.run(
-            [sys.executable, "-m", "kaggle", "--help"],
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
-        assert proc.returncode == 0
-        assert "usage" in (proc.stdout + proc.stderr).lower()
+        activated venv must still find the CLI. The command form is the
+        contract — the CLI itself is a host-side tool, not a lockfile
+        dependency, so this must not require kaggle to be installed."""
+        import scripts.kaggle_run as kr
+
+        seen: list[list[str]] = []
+
+        def fake_run(cmd, *args, **kwargs):
+            seen.append(cmd)
+            return subprocess.CompletedProcess(cmd, 0, "", "")
+
+        monkeypatch.setattr(kr.subprocess, "run", fake_run)
+        kr._kaggle(["kernels", "status", "user/slug"])
+        assert seen[0] == [sys.executable, "-m", "kaggle", "kernels", "status", "user/slug"]
