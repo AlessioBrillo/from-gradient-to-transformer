@@ -13,10 +13,42 @@ smoke tests (`make reproduce-quick`) and a full-scale mode (`make reproduce`).
 
 ## Honesty Ledger
 
-Five audits have now caught real bugs in this repository's causal claims and evidence
-base. All entries stay here — the point of this section is to make it easy to see the
-trend (are correctness problems getting caught faster, or accumulating?), not to keep only
+Six audits have now caught real problems in this repository's causal claims and
+evidence base. Five found claims that were wrong or unbacked; the sixth found a
+claim that was **right and had been called wrong by its own metric**. All entries
+stay here — the point of this section is to make it easy to see the trend (are
+correctness problems getting caught faster, or accumulating?), not to keep only
 the latest one.
+
+### 2026-10-14 — The NO-GROK verdict was the metric's fault: the sparse circuit was there all along
+
+The 2026-10-08 audit predicted exactly this: an L1-mass `k_99` calls a clean
+sparse embedding dense because noise spreads over every bin. The re-run it asked
+for (`notebooks/kaggle_grokking_p113.ipynb`, run on a free Kaggle GPU 2026-10-14)
+confirms the prediction on real embeddings:
+
+| Run | Protocol | val accuracy | k_energy_90 (of 56) | energy_sparse | L1 k_99 (the old reader) |
+|-----|----------|--------------|---------------------|---------------|--------------------------|
+| Job A | Nanda-faithful, 40k full-batch steps × 3 seeds | 0.9999 ± 0.0002 | **5.7 ± 1.2** | **3/3 seeds sparse** | 109–110 / 113 |
+| Job B | the historical repo protocol, re-run × 3 seeds | 1.0000 ± 0.0000 | **8.7 ± 1.2** | **3/3 seeds sparse** | 110 / 113 |
+
+The model solved modular addition **with** the sparse Fourier circuit in both
+protocols; the 2026-08-11 NO-GROK verdict read the same embeddings through the
+falsified classifier. The training, the split fix, the checkpoint machinery and
+the multi-seed manifests were all correct — only the reading was wrong.
+
+**What this changes**: the primary flagship is REPRODUCED, not a negative. ADR-0003
+row 1's NO-GROK stamp is retracted; the Phase 7 capstone gate flips from the
+honest-negative answer to the positive one (as that note's own supersession
+clause required); issue #167 closes; the protocol-ablation phase diagram (#168)
+unblocks from the Nanda-faithful setup. The P=59 positive control (2026-09-27)
+carries the same metric defect and is marked suspect — its checkpoints are gone,
+so re-measuring means re-running, now a one-command GPU job.
+
+**What this does not change**: the frequency ablation (keep 59/59 → 0.0000) and
+the generalization-epoch progress measures remain valid evidence; the figures
+generated from the seed-0 CPU checkpoint remain valid visualizations, but their
+dense captions predate the reversal and are the next regeneration item.
 
 ### 2026-10-11 — Integrity pass: the one solid finding had no manifest behind it
 
@@ -321,63 +353,75 @@ per epoch) and `--seeds` (multi-seed manifest) added 2026-08-02.
 
 ---
 
-## Rung 2 — Grokking Modular Addition (Primary Flagship — NO-GROK positive-negative, 2026-08-11)
+## Rung 2 — Grokking Modular Addition (Primary Flagship — REPRODUCED 2026-10-14; the 2026-08-11 NO-GROK was a metric artifact)
 
-<!-- manifest: results/exp2_grokking.json -->
+<!-- manifest: results/grokking_nanda_p113.json -->
+<!-- manifest: results/grokking_repo_p113_energy.json -->
 
-> **2026-10-08 - verdict under audit.** The NO-GROK / dense-Fourier claim was measured with an L1-mass `k_99` that classifies a noisy sparse embedding as dense (pinned by `tests/test_grokking.py::TestFourierEnergySparsity`), under a protocol that departs from Nanda et al. Do not cite it until the energy-metric rerun (`notebooks/kaggle_grokking_p113.ipynb`) is recorded. See the Honesty Ledger in `portfolio/RESULTS.md`.
+> **2026-10-14 — verdict REVERSED.** The NO-GROK claim (2026-08-11) was measured with
+> the L1-mass `k_99`, the exact classifier the 2026-10-08 audit falsified on a synthetic
+> noisy-sparse embedding. Re-run on a GPU with the **Nanda-faithful protocol** (job A:
+> 40k full-batch steps, 3 seeds) and with the **old repo protocol plus the energy
+> metric** (job B: the exact historical config re-run), the model **does** form the
+> sparse Fourier circuit: `energy_sparse = 1.0` on all three seeds of **both** runs,
+> `k_energy_90 = 5.7 ± 1.2` of 56 frequencies holding 90% of the embedding energy.
+> The mechanism was sparse all along; the classifier was wrong.
 
 **Question**: Can I reproduce the grokking phase transition on modular addition (a+b mod P) and reverse-engineer the discrete Fourier transform algorithm the model learns?
 
-**Status**: [x] Decided 2026-08-11 — **NO-GROK, a positive-negative** (full analysis:
-[grokking-verdict-p113](../07_capstone/notes/grokking-verdict-p113.md)). The train/val split bug that made
-this structurally unreachable was fixed 2026-07-26; the fixed split makes the task
-well-posed. The full P=113 run — three seeds to 5000/5000 epochs under the frozen
-protocol (ADR-0003 row 1) on this machine's CPU — reached **val accuracy 1.0 across
-all three seeds**, but the Fourier representation stayed **dense (k_99 = 111/113)**:
-the model solved modular addition *without* forming the sparse circuit the protocol
-defines as grokking. The pipeline, checkpoint machinery and multi-seed manifest all
-worked; the phenomenon did not appear. That negative is now the center of MP-29
-([28_micro-phase-29-the-positive-negative](../00_meta/28_micro-phase-29-the-positive-negative.md)): a small-P positive control
-(P=59/67/97, in flight), a ≤3-trial microscope lane on the frozen protocol
-(trial 1 `--no-normalize-embeddings` FALSIFIED 2026-08-13 — the dense solution
-persists without renormalization, and the run underperformed the baseline:
-val 0.7176 vs 1.0), and the dense solution itself characterized as the contribution.
+**Status**: [x] **REPRODUCED** — the question is answered *yes*, on both protocols, on a
+GPU, with the post-audit metric. The historical CPU run that produced the NO-GROK
+verdict reached the same embeddings (its L1 `k_99 = 111/113` matches job B's `110/113`);
+it measured them with the broken classifier. Nothing about the training or the model was
+ever wrong — only the reading.
 
-| Metric | P=113, frozen protocol, n=3 (manifest) |
-|--------|----------------------------------------|
-| Modulus P | 113 |
-| Train fraction | 30% |
-| Epochs | 5000 (3 seeds, checkpoint-every-500) |
-| Final val accuracy | **1.0000 ± 0.0000** (n=3) |
-| Generalization epoch (val ≥ 0.9) | 1208 ± 117 (range 1048–1326) |
-| Fourier frequencies used (k_99) | **111 / 113 — dense** (all 3 seeds) |
-| k_90 | 92.7 ± 0.9 |
-| Final Fourier sparsity | 0.079 ± 0.006 (dense regime) |
-| Wall clock | ~57 min × 3 seeds (parallel, 9/12 threads) |
+| Metric | Job A — Nanda protocol, P=113, 3 seeds (manifest) | Job B — repo protocol (historical config), P=113, 3 seeds (manifest) |
+|--------|----------------------------------------------------|---------------------------------------------------------------------|
+| Device / runtime | CUDA, torch 2.11.0+cu128 | CUDA, torch 2.11.0+cu128 |
+| Steps | 40,000 full-batch × 3 seeds | 5,000 epochs (batch 512) × 3 seeds |
+| Final val accuracy | **0.9999 ± 0.0002** | **1.0000 ± 0.0000** |
+| Generalization epoch (val ≥ 0.9) | 5919 ± 547 (range 5151–6386) | 759 ± 140 (range 657–957) |
+| **Frequencies for 90% of energy (k_energy_90)** | **5.7 ± 1.2 of 56** | **8.7 ± 1.2 of 56** |
+| Energy in the top-5 frequencies | 0.875 ± 0.038 | 0.764 ± 0.074 |
+| **Sparse (energy criterion)** | **yes — 3/3 seeds** | **yes — 3/3 seeds** |
+| L1-mass k_99 on the same embeddings | 109–110 / 113 | 110 / 113 |
+| Wall clock | ~1.5h GPU (Kaggle, resumable) | ~1h GPU (Kaggle, resumable) |
 
-Earlier small-P probes (P=29 at 2000 epochs, P=59 at 1500/3000 epochs, P=59 at weight
-decay 0.3) were all dense too (59/59 at P=59) — **no run in this repository's history
-has ever produced k_99 < P/2**, which is exactly the question the MP-29 positive
-control exists to answer. Fourier ablation (keep 59/59 frequencies → 0.0000) and the
-val-1.0-with-dense-Fourier outcome together say the harness found a legitimate dense
-algorithm, not a memorization failure: generalization is real at every P tested.
+**The audit's prediction, confirmed on the real embeddings.** The 2026-10-08 audit
+pinned that a clean 5-frequency embedding with 1% additive noise reads as dense under
+the L1-mass `k_99`, because L1 mass is dominated by noise spread over every bin. Both
+GPU runs carry that fingerprint: `k_99` (L1) says 109–110 of 113 frequencies while the
+energy metric says 5.7–8.7 of 56 carry the signal. The dense label was the noise.
 
-**Verdict ledger**: ADR-0003 row 1 stamped NO-GROK 2026-08-11; row 2 (microscope)
-in flight — trial 1 FALSIFIED 2026-08-13 (renormalization not the suppressor),
-trial 2 (`--schedule constant`) and trial 3 (weight decay 1.5×) pending the control.
+**What the historical work got right, and stays right**: the train/val split fix
+(2026-07-26), the checkpoint/resume machinery, the multi-seed manifests, the frequency
+ablation (keep 59/59 → 0.0000 — a causal result about the dense *reading* that now
+re-reads as confirmation that the few real frequencies are load-bearing), and the
+generalization-epoch progress measures.
 
-**Bug fixed 2026-07-26** (see Honesty Ledger above): the split held out by target class,
-not equation, making some output classes structurally unreachable. Fixed to hold out
-random `(a, b)` pairs.
+**Verdict ledger**: ADR-0003 row 1's NO-GROK stamp (2026-08-11) is **retracted** by this
+run. The reversal is recorded in the Honesty Ledger (2026-10-14) and in issue #167's
+closure. Per the gate note's own contract, the capstone's Phase 7 gate answer changes
+from the honest negative to the positive (see
+[capstone-gate-honest-negative](../07_capstone/notes/capstone-gate-honest-negative.md),
+superseded 2026-10-14).
+
+**Still open, now smaller**: the P=59 positive control (2026-09-27) was also read only
+through the L1 metric, so its "NO-GROK" label is suspect for the same reason — its
+checkpoints are gone, so re-measuring means re-running (now a one-command GPU job).
+The protocol-ablation phase diagram (issue #168) unblocks on this result and starts
+from the Nanda-faithful setup as designed.
 
 **Reference**: Nanda et al., "Progress Measures for Grokking via Mechanistic Interpretability," ICLR 2023 (oral).
 
 **Figures**: `portfolio/figures/exp2_grokking_curve.png`,
 `portfolio/figures/exp2_fourier_weights.png`,
 `portfolio/figures/exp2_frequency_ablation.png`,
-`portfolio/figures/exp2_progress_measures.png` — regenerated from the final
-P=113 seed-0 checkpoint 2026-08-13 (the manifest's provenance receipts this).
+`portfolio/figures/exp2_progress_measures.png` — generated from the final
+P=113 seed-0 CPU checkpoint 2026-08-13. They remain valid visualizations of the
+embeddings; their *dense* captions/labels predate the reversal and are the next
+regeneration item (the GPU checkpoints were remote scratch, so this needs a re-run
+with figures enabled, not a re-analysis).
 
 ---
 
@@ -556,16 +600,17 @@ recorded Rung-5 pending item.
 
 ---
 
-## Open Question — Solution-Regime Phase Diagram (reopened after audit)
+## Open Question — Solution-Regime Phase Diagram (protocol ablation, unblocked 2026-10-14)
 
-**Status**: [ ] No claim. The earlier draft of this section and the paper's phase-diagram
-section were removed on 2026-10-08 (see the Honesty Ledger): they rested on a 100-epoch
-test manifest with an empty aggregate and on 2000-epoch cells whose models had not
-generalized (val accuracy 0.06% at P=29), so "dense" there measured under-training, not a
-solution regime. The question is reopened only after the Rung 2 metric and protocol audit
-(Fourier-sparsity metric falsified against a synthetic sparse embedding; Nanda-faithful
-full-batch protocol as the positive control). No numbers, figures or manifest are cited
-here until that audit has produced them.
+**Status**: [ ] No claim yet — but no longer *blocked*. The 2026-10-08 audit removed
+the earlier draft (a 100-epoch test manifest, empty aggregate, models that had not
+generalized) and asked for the audit to run first. It has: the Nanda-faithful
+positive control grokked with a sparse Fourier circuit (Rung 2 above), so the
+question "where is the boundary between the sparse circuit and its absence across
+protocol deviations?" is now answerable by a sweep instead of speculation. The
+sweep runner is refactored and tested (delegates to exp2's own protocol code,
+budgets in optimizer steps, records the energy metric); the run itself -- issue #168 -- is one command on the free GPU tier. No numbers are cited here until that
+sweep's manifests land.
 
 ---
 
@@ -579,24 +624,31 @@ here until that audit has produced them.
 | 4 — NLP & Transformers | ✅ Complete | circuit-analysis-complete |
 | 5 — LLM Engineering | [~] Instrumentation done (hooks, determinism, harvesting, circuit datasets proven; nnsight pending) | — |
 | 6 — Production AI | [~] Reproducibility harness built (multi-seed + manifests + `verify-claims` + figure-provenance gate 2026-08-07, kill drill + bit-identical checkpoint/resume, CI/mypy fixed, paper scaffold + `make paper` added) — W&B, Hugging Face Spaces, and the mini-paper prose are still open | [reproducible-from-clean-clone](../06_production_ai/proofs/reproducible-from-clean-clone.md) (GREEN 2026-08-27, transcript committed) |
-| 7 — Capstone | [~] Research plan written | — |
+| 7 — Capstone | ✅ Gate passed 2026-10-12 on the honest negative, **upgraded to the positive 2026-10-14** | [capstone-gate-honest-negative](../07_capstone/notes/capstone-gate-honest-negative.md) (dense mechanism defended with manifests) → superseded: the sparse circuit is real ([Rung 2](#rung-2--grokking-modular-addition-primary-flagship--reproduced-2026-10-14-the-2026-08-11-no-grok-was-a-metric-artifact)) |
 
 ## Summary
 
 | Rung | Status | Key Result |
 |------|--------|------------|
 | 1 — Induction Heads (fallback flagship) | ⚠️ Task design fixed, memorization confirmed, no head yet | Fresh-batches: 53.5% val acc vs. fixed dataset's 0.45% (matched 800-epoch comparison); 0/8 heads either way at this scale |
-| 2 — Grokking (primary flagship) | ⚠️ NO-GROK 2026-08-11, **under audit 2026-10-08** (metric) | P=113 CPU 3-seed: val accuracy 1.0 all seeds, Fourier dense (k_99 = 111/113); no run in repo history ever sparse; GPU verdict pending as scale follow-up, not the decision |
+| 2 — Grokking (primary flagship) | ✅ **REPRODUCED 2026-10-14** (the 2026-08-11 NO-GROK was a metric artifact) | Nanda protocol, P=113, GPU, 3 seeds: val accuracy 0.9999 ± 0.0002, **k_energy_90 = 5.7 ± 1.2 of 56 — sparse on 3/3 seeds**; the historical repo protocol re-reads the same way |
 | 3 — Superposition | ✅ Phase transition confirmed | Root cause found (no real bottleneck); rewritten, reproduces cleanly: 10/20 → 20/20 features represented |
 | 4 — Circuit Patching | ⚠️ Fixed 2026-08-01, quick multi-seed re-run 2026-08-02 | See Rung 4 above for the current numbers; path patching still only unit-tested, no real head to validate against yet |
 | 5 — SAE Dashboard | ✅ Synthetic reproduced; ⚠️ real-activation upgrade shipped | Real: 99.97% FVE but 53% L0 (dense, not sparse) — informative gap, not yet a clean win |
 | 6 — ACDC | ❌ Deleted | Was fabricated data; removed 2026-08-01 rather than fixed |
 
-**What to trust right now, in order**: (1) Rung 3's phase transition — reproduced cleanly,
-root cause understood, multi-seed manifest backs it. (2) Rung 5's synthetic FVE/MSE numbers
-— reproduced and architecturally simple; the real-activation numbers are real but need a
-better checkpoint (one with a confirmed induction head) before the sparsity gap means
-anything conclusive. (3) Rung 1's fixed-vs-fresh comparison — a real, large, matched effect,
-though at a scale still well below standard. (4) Rung 4's quick multi-seed re-run — internal
-consistency confirmed (activation patching runs cleanly, matches Rung 1's "0 heads" finding)
-but path patching remains unvalidated against a real head. (5) Rung 2 — val accuracy 1.0 on 3 seeds is measured; the *dense* label is **not** trusted until the energy-metric rerun lands (the L1-mass `k_99` behind it misclassifies noisy sparse embeddings as dense, and the protocol departs from Nanda et al.).
+**What to trust right now, in order**: (1) Rung 2's sparse-circuit reproduction —
+GPU, 3 seeds, both protocols, post-audit energy metric, manifests pinned with
+provenance; the one caveat is that the checkpoints were remote scratch, so the
+figures still need regeneration from a re-run. (2) Rung 3's phase transition —
+reproduced cleanly, root cause understood, multi-seed manifest backs it. (3) Rung 5's
+synthetic FVE/MSE numbers — reproduced and architecturally simple; the
+real-activation numbers are real but need a better checkpoint (one with a confirmed
+induction head) before the sparsity gap means anything conclusive. (4) Rung 1's
+fixed-vs-fresh comparison — a real, large, matched effect, though at a scale still
+well below standard. (5) Rung 4's quick multi-seed re-run — internal consistency
+confirmed (activation patching runs cleanly, matches Rung 1's "0 heads" finding) but
+path patching remains unvalidated against a real head. The standard-scale induction
+run that would close Rung 1, 4 and 5's shared gap is a one-command GPU job
+(`make remote-run-induction`) — in queue on the same free tier that just reversed
+the flagship verdict.
