@@ -1,10 +1,22 @@
 ---
 tags: [phase/7, research/experiment, type/lesson, state/review]
 created: 2026-09-27
+updated: 2026-10-14
 consumes: [ADR-0028, 07_capstone/_MOC]
 ---
 
 # MP-94 Session 1 — Positive Control Results (P=59)
+
+> **2026-10-14 correction — this note's "NO-GROK" label carries the same metric
+> defect that reversed the P=113 verdict.** Every number above was read through
+> the L1-mass k_99, the classifier the 2026-10-08 audit falsified: on the P=113
+> GPU re-run (2026-10-14), the same embeddings that read k_99 = 109-110/113
+> under L1 read k_energy_90 = 5.7 ± 1.2 of 56 under the energy metric — sparse.
+> This run's k_99 = 58/59 is therefore evidence of *noise*, not density: the
+> embeddings most likely contained the sparse circuit all along. The manifest and
+> its provenance stay valid; the label does not. The checkpoints are gone, so the
+> re-measurement is a re-run (now a one-command GPU job), not a re-analysis.
+> See the Rung 2 section of portfolio/RESULTS.md for the reversal.
 
 ## Experiment
 
