@@ -47,7 +47,9 @@ logger = logging.getLogger(__name__)
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_STAGING = Path("results/remote")
 BRANCH_LINE_RE = re.compile(r'^BRANCH\s*=\s*["\']([^"\']*)["\']', re.MULTILINE)
-MODULE_RE = re.compile(r"python -m (src\.experiments\.[a-z0-9_]+)")
+# The runnable surface: the experiment modules and the sweep driver (a
+# scripts/ entry point — the phase-diagram notebook runs it, not an experiment).
+MODULE_RE = re.compile(r"python -m ((?:src\.experiments|scripts)\.[a-z0-9_]+)")
 FLAG_RE = re.compile(r"--[a-z0-9][a-z0-9-]*")
 
 
@@ -129,11 +131,15 @@ def validate_notebook(nb: dict[str, Any], check_flags: bool = True) -> list[str]
 
     modules = sorted(set(MODULE_RE.findall(text)))
     if not modules:
-        problems.append("no `python -m src.experiments.*` invocation to run")
+        problems.append(
+            "no `python -m src.experiments.*` (or `python -m scripts.*`) invocation to run"
+        )
     # Flags are validated per invocation line, so a flag used by one module
-    # is checked against THAT module's parser.
+    # is checked against THAT module's parser. Only the experiment modules
+    # carry the repo's flag contract; scripts/ entry points are orchestration.
+    experiment_modules = [m for m in modules if m.startswith("src.experiments.")]
     lines = [line for cell in cells for line in cell.splitlines()]
-    for module in modules:
+    for module in experiment_modules:
         try:
             __import__(module)
         except Exception as e:  # noqa: BLE001 - report, don't crash the lint

@@ -558,6 +558,13 @@ def emit_cell_manifest(cell: SweepCell, result: CellResult, out_dir: Path) -> Pa
         "total_mass_top_k": result.total_mass_top_k,
         "final_induction_acc": result.final_induction_acc,
         "final_kcomp": result.final_kcomp,
+        # The post-audit criterion — without it a sweep manifest carries the
+        # same falsified L1 reading the 2026-10-08 audit removed from the
+        # classification path.
+        "k_energy_90": result.k_energy_90,
+        "k_energy_99": result.k_energy_99,
+        "frac_energy_top5": result.frac_energy_top5,
+        "energy_sparse": result.energy_sparse,
     }
     aggregate = {
         key: stats
