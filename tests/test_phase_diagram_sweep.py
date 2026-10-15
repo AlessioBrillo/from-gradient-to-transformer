@@ -303,6 +303,39 @@ class TestEmitCellManifest:
         loaded = ResultsManifest.load(out)
         assert [m["final_val_acc"] for m in loaded.per_seed_metrics] == [0.4, 0.5, 0.6]
 
+    def test_emitted_manifest_carries_the_energy_metric(self, tmp_path) -> None:
+        """A sweep manifest without the post-audit energy metric carries the
+        same falsified L1 reading the 2026-10-08 audit removed — the
+        classification must be decidable from the manifest alone."""
+        from src.results import ResultsManifest
+
+        cell = _tiny_solo_cell(cell_id="emit4")
+        result = CellResult(
+            cell_id="emit4",
+            modulus=cell.modulus,
+            d_model=cell.d_model,
+            n_layers=cell.n_layers,
+            n_heads=cell.n_heads,
+            d_mlp=cell.d_mlp,
+            weight_decay=cell.weight_decay,
+            mode="solo",
+            seeds=[42, 43, 44],
+            final_val_acc={"mean": 1.0, "std": 0.0, "min": 1.0, "max": 1.0, "n": 3},
+            generalization_epoch=dict(ZERO_AGG),
+            final_fourier_sparsity=dict(ZERO_AGG),
+            k_90_percent=dict(ZERO_AGG),
+            k_99_percent={"mean": 110.0, "std": 0.0, "min": 110.0, "max": 110.0, "n": 3},
+            total_mass_top_k=dict(ZERO_AGG),
+            k_energy_90={"mean": 5.7, "std": 1.2, "min": 4.0, "max": 7.0, "n": 3},
+            frac_energy_top5={"mean": 0.87, "std": 0.04, "min": 0.83, "max": 0.92, "n": 3},
+            energy_sparse={"mean": 1.0, "std": 0.0, "min": 1.0, "max": 1.0, "n": 3},
+        )
+        out = emit_cell_manifest(cell, result, tmp_path)
+        loaded = ResultsManifest.load(out)
+        assert "energy_sparse" in loaded.aggregate
+        assert loaded.aggregate["energy_sparse"]["mean"] == 1.0
+        assert loaded.aggregate["k_energy_90"]["mean"] == 5.7
+
     def test_sparse_classification_prefers_energy_metric(self) -> None:
         """is_sparse must classify on the energy metric when present: the
         L1 k_99 calls a noisy sparse embedding dense, which is the exact
