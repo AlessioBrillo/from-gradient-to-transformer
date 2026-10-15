@@ -11,25 +11,30 @@
 
 ## Headline Result
 
-**Superposition geometry (Rung 3).** In a toy ReLU autoencoder with a real bottleneck, the
-number of represented features rises from 10/20 to 20/20 as sparsity drops, and in the sparse
-regime five features settle on a regular pentagon in two dimensions. The setup was
-root-caused, reproduced and backed by a multi-seed manifest.
+**The grokking flagship is reproduced — the sparse Fourier circuit is real (Rung 2,
+2026-10-14).** Trained on the Nanda-faithful protocol at P=113 (40k full-batch steps,
+3 seeds, GPU), the model reaches **val accuracy 0.9999 ± 0.0002** while its embedding
+energy concentrates in **5.7 ± 1.2 of 56 frequencies** — the sparse circuit Nanda et al.
+describe, detected by the post-audit energy metric on 3/3 seeds. The repository's
+2026-08-11 "NO-GROK" verdict was an artifact of the L1-mass metric the 2026-10-08 audit
+had falsified: on the *same embeddings* the old reader still says 109–110 of 113
+frequencies. The mechanism was sparse all along; the classifier was wrong.
 
 It is the only rung that is fully reproduced. The others are reported as measured, negatives
 included:
 
 | Rung | Where it stands |
 |------|-----------------|
-| 1 Induction heads | No head detected at any scale run (0/8). A matched fixed-vs-fresh-batches comparison is the one solid finding (53.5% vs 0.45% validation accuracy). |
-| 2 Grokking | Validation accuracy 1.0, but the dense-vs-sparse Fourier verdict is **under audit**: the metric behind it misclassifies noisy sparse embeddings (2026-10-08). The re-run needs a GPU. |
+| 1 Induction heads | No head detected at any scale run (0/8). A matched fixed-vs-fresh-batches comparison is the one solid finding (53.5% vs 0.45% validation accuracy). Standard-scale GPU run is queued (`make remote-run-induction`). |
+| 2 Grokking | ✅ **REPRODUCED 2026-10-14**: val accuracy 0.9999 ± 0.0002, sparse circuit (k_energy_90 = 5.7 ± 1.2 of 56) on both the Nanda protocol and the historical repo protocol, 3/3 seeds each. The 2026-08-11 NO-GROK was a metric artifact — retracted. |
+| 3 Superposition | Phase transition reproduced (10/20 → 20/20 features represented; pentagon geometry at sparsity ≤ 0.1). |
 | 4 Circuit patching | Activation patching runs cleanly; path patching is only unit-tested because there is no head to target. |
 | 5 SAE | Synthetic data reproduces; on real activations reconstruction is good but dense (53% of features active). |
-| Phase diagram | Removed: it had no data behind it. Reopened after the Rung 2 audit. |
 
 Read the Honesty Ledger in [`portfolio/RESULTS.md`](portfolio/RESULTS.md) before citing any
-number from this repository: four audits have found real bugs in earlier claims, and the repo
-keeps them visible. `make verify-claims` (run in CI) fails if a public number has no committed
+number from this repository: six audits have now examined these claims — five found numbers
+that were wrong or unbacked, the sixth reversed a negative verdict its own metric had
+manufactured. `make verify-claims` (run in CI) fails if a public number has no committed
 manifest behind it.
 
 **Live site:** <https://alessiobrillo.github.io/from-gradient-to-transformer/>
@@ -74,7 +79,7 @@ Rung 6 (automated circuit discovery vs. hand-found circuit) was descoped on 2026
 placeholder implementation simulated the comparison with random draws instead of running
 ACDC. See `07_capstone/research-plan.md` for the record.
 
-★ — **Primary flagship (not yet reproduced).** See [RESULTS](portfolio/RESULTS.md) for the full table.
+★ — **Primary flagship, REPRODUCED 2026-10-14** (sparse Fourier circuit, GPU, 3 seeds, both protocols — see [RESULTS](portfolio/RESULTS.md)).
 
 ---
 
@@ -111,8 +116,8 @@ NN_name/
 - [x] **Phase 3 — Deep Learning** (micrograd, training dynamics, grokking, RNN/CNN breadth)
 - [x] **Phase 4 — NLP & Transformers** (LOAD-BEARING for MI — QK/OV circuits, induction heads, activation patching, logit lens, TransformerLens)
 - [x] **Phase 5 — LLM Engineering** (model instrumentation: hooks, deterministic inference, activation harvesting, circuit datasets)
-- [~] **Phase 6 — Production AI** (reframed: reproducible research infra — pinned env, manifests, `verify-claims` in CI; W&B and the compiled paper PDF are still open)
-- [~] **Phase 7 — Capstone: train + reverse-engineer** (model built, rungs 1-5 implemented; the 20k-step capstone run and the Rung 2 re-run are pending a GPU)
+- [x] **Phase 6 — Production AI** (reframed: reproducible research infra — pinned env, manifests, `verify-claims` in CI; W&B closed-with-reason, the compiled paper PDF now ships with the site)
+- [~] **Phase 7 — Capstone: train + reverse-engineer** (model built, rungs 1-5 implemented; Rung 2 reproduced on GPU 2026-10-14; the planned 3×20k joint run executed 2026-10-14 — the modular/induction dissociation persists at full budget; the standard-scale induction run is in progress)
 
 See [03_progress-log](00_meta/03_progress-log.md) for the dated journal and [02_skill-tree](00_meta/02_skill-tree.md) for the complete skill tree.
 
