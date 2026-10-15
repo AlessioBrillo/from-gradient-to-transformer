@@ -54,6 +54,7 @@ make remote-dry-grokking    # validate the GPU notebook, push nothing
 make remote-run-grokking GPU_USER=<you>   # Rung 2 audit (issue #167)
 make remote-run-induction GPU_USER=<you>  # Rung 1/4/5 cascade (issue #169)
 make remote-run-capstone GPU_USER=<you>   # capstone 3x20k (issue #170)
+make remote-run-sweep GPU_USER=<you>      # phase-diagram protocol ablation (issue #168)
 make remote-pin PIN_FROM=<dir>            # validate + install downloaded manifests
 ```
 
