@@ -91,6 +91,23 @@ def test_resume_continues_from_checkpoint(tmp_path: Path) -> None:
     assert resumed["step"] == 6
 
 
+def test_final_metrics_carry_the_energy_metric(tmp_path: Path) -> None:
+    """The manifest must record the post-audit energy sparsity, not only the
+    L1-mass k_99 the 2026-10-08 audit falsified.
+
+    The 3x20k capstone run (2026-10-14) had to caveat exactly this: exp6
+    carried only the L1 reading, so its Fourier density was unestablished.
+    These keys close the gap for every future run.
+    """
+    cfg = _tiny_cfg(steps=2, checkpoint_every=0)
+    metrics = train_single_seed(cfg, 0, resume_step=0)
+    for key in ("final_k_energy_90", "final_frac_energy_top5", "final_energy_sparse"):
+        assert key in metrics, f"{key} missing from the capstone manifest metrics"
+    assert 1 <= metrics["final_k_energy_90"] <= cfg["task"]["modular"]["modulus"] // 2
+    assert 0.0 <= metrics["final_frac_energy_top5"] <= 1.0
+    assert metrics["final_energy_sparse"] in (0.0, 1.0)
+
+
 def _two_task_loader() -> RoundRobinDataLoader:
     """Modular-style 3-tuple loader + induction-style 2-tuple loader."""
     mod = TensorDataset(

@@ -40,6 +40,7 @@ import yaml
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
+from src.experiments.exp2_grokking import fourier_energy_sparsity
 from src.experiments.runner import parse_seeds, run_seeds
 from src.models.decoder_only_transformer import DecoderOnlyTransformer
 from src.reproducibility import set_seed
@@ -863,6 +864,16 @@ def train_single_seed(
         sparsity = analyze_fourier_sparsity(
             fourier_result["fourier_magnitudes"], cfg["task"]["modular"]["modulus"]
         )
+        # The post-audit energy metric, alongside the historical L1 reading.
+        # The 2026-10-08 audit falsified the L1-mass k_99 (noise spread over
+        # every bin calls a sparse embedding dense) and the 2026-10-14 P=113
+        # reversal proved it on the real embeddings. A capstone run carrying
+        # only the L1 reading cannot establish its Fourier regime — which is
+        # exactly the caveat the 3x20k run had to carry. Both metrics now
+        # land in the manifest; the energy one is the criterion.
+        energy = fourier_energy_sparsity(
+            mod_embeddings.detach().cpu(), cfg["task"]["modular"]["modulus"]
+        )
 
         # Final K-composition (pure induction loader: 2-tuple batches)
         kcomp_scores = compute_k_composition_scores(
@@ -898,6 +909,12 @@ def train_single_seed(
         "final_max_kcomp": max_kcomp,
         "total_steps": train_cfg["steps"],
         "model_params": count_parameters(model),
+        # Post-audit energy metric (exp2's), the criterion for the
+        # sparse/dense verdict; the L1 k_99 above stays for continuity with
+        # the historical record.
+        "final_k_energy_90": float(energy["k_energy_90"]),
+        "final_frac_energy_top5": float(energy["frac_energy_top5"]),
+        "final_energy_sparse": float(energy["is_sparse"]),
     }
 
 
