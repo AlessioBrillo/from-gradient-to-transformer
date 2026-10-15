@@ -1,10 +1,23 @@
 ---
-tags: [phase/7, type/proof, state/consolidated]
+tags: [phase/7, type/proof, state/review]
 created: 2026-10-12
+updated: 2026-10-14
 consumes: [07_capstone/research-plan, 07_capstone/notes/grokking-verdict-p113, portfolio/RESULTS]
 ---
 
 # Capstone Gate — The Honest Negative
+
+> **SUPERSEDED 2026-10-14.** This note's own falsifier fired: the energy-metric
+> re-run of Rung 2 found the **sparse** Fourier circuit after all
+> (`energy_sparse = 1/1` on 3/3 seeds of both GPU runs, `k_energy_90 = 5.7 ± 1.2`
+> of 56 — see portfolio/RESULTS.md, Rung 2). The capstone question is therefore
+> answered *positively*: the model implements the sparse Fourier algorithm Nanda
+> et al. describe, demonstrated with progress measures and causal ablations. The
+> NO-GROK reading this note defended was an artifact of the L1-mass k_99
+> classifier — the very failure the 2026-10-08 audit had pinned, now demonstrated
+> on the real embeddings. The note below is kept as the record of what the
+> negative answer was and why it was wrong; the gate text it answered is now met
+> by the positive itself.
 
 ## Claim
 
