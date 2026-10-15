@@ -7,7 +7,7 @@
 	check-links vault-check reproduce-induction-batches reproduce-induction-fixed \
 	reproduce-induction-fresh reproduce-notebook \
 	reproduce-retune reproduce-retune-control reproduce-retune-offset reproduce-retune-reweight \
-	remote-dry-grokking remote-run-grokking remote-run-induction remote-run-capstone remote-pin
+	remote-dry-grokking remote-run-grokking remote-run-induction remote-run-capstone remote-run-sweep remote-pin
 
 # --- Shell ---
 # The recipes are POSIX verbatim (the CI mirror); Windows GNU Make defaults
@@ -329,6 +329,10 @@ remote-run-induction:
 remote-run-capstone:
 	@echo "=== Capstone: 3 seeds x 20k steps (GPU) ==="
 	uv run python scripts/kaggle_run.py --notebook notebooks/kaggle_capstone_20k.ipynb --branch $(GPU_BRANCH) --user $(GPU_USER) --poll --download
+
+remote-run-sweep:
+	@echo "=== Phase-diagram sweep: protocol ablation from the Nanda-faithful baseline (GPU) ==="
+	uv run python scripts/kaggle_run.py --notebook notebooks/kaggle_phase_sweep.ipynb --branch $(GPU_BRANCH) --user $(GPU_USER) --poll --download
 
 remote-pin:
 	@echo "=== Validating and installing remote-run manifests (fail-closed) ==="
