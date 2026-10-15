@@ -3,6 +3,7 @@
 import argparse
 import logging
 
+import pytest
 import torch
 from torch.utils.data import DataLoader
 
@@ -282,6 +283,27 @@ class TestKComposition:
         scores = k_composition_scores(p0, p1)
         assert abs(scores[0, 0] - 1.0 / S) < 0.02, (
             f"Uniform patterns should score ~1/S, got {scores[0, 0]:.3f}"
+        )
+
+    def test_scores_device_tensors(self) -> None:
+        """The detector must work on non-CPU tensors.
+
+        exp6's compute_k_composition_scores collects patterns on CPU and then
+        moves them to the run device before scoring, so on a GPU run the
+        tensors arriving here are cuda tensors — and `.numpy()` on a cuda
+        tensor raises TypeError. The CPU path took `.to(DEVICE)` as a no-op,
+        so every planted test passed while the first capstone kernel on
+        Kaggle died in exactly this call. Gated on cuda: the regression is
+        GPU-only by construction, and this repo's CI is CPU-only.
+        """
+        if not torch.cuda.is_available():
+            pytest.skip("cuda unavailable — the GPU path is verified on Kaggle/Colab runs")
+        S = 8
+        p0 = self._onehot_attn([0] + [q - 2 for q in range(1, S)]).cuda()
+        p1 = self._onehot_attn([0, 0] + [q - 1 for q in range(2, S)]).cuda()
+        scores = k_composition_scores(p0, p1)
+        assert scores[0, 0] > 0.9, (
+            f"the hand-built chain must score ~1.0 on device tensors too, got {scores[0, 0]:.3f}"
         )
 
     def test_diagnose_returns_both_steps(self) -> None:

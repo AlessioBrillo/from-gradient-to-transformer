@@ -639,7 +639,13 @@ def k_composition_scores(p0: torch.Tensor, p1: torch.Tensor) -> np.ndarray:
         n_valid = int(mask.sum())
         if n_valid:
             masked = diag * mask[:, None, :].to(diag.dtype)  # (B, H1, S)
-            scores[h0] = masked.sum(dim=(0, 2)).numpy() / max(n_valid, 1)
+            # .cpu() BEFORE .numpy(): exp6's compute_k_composition_scores moves
+            # the collected patterns back to the device, so on GPU this tensor
+            # is a cuda tensor and .numpy() raises TypeError ("can't convert
+            # cuda:0 device type tensor to numpy"). The CPU path took the
+            # .to(DEVICE) as a no-op, so every planted test passed while the
+            # GPU run died — found by the first capstone kernel on Kaggle.
+            scores[h0] = masked.sum(dim=(0, 2)).cpu().numpy() / max(n_valid, 1)
     return scores
 
 
