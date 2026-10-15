@@ -88,6 +88,18 @@ checkpoint-every boundary (1000 steps):
   the runtime's preinstalled stack, not the local lockfile — the difference
   is visible in the manifest, not hidden.
 
+## Update 2026-10-15: the run is in
+
+The 3×20k run executed on a Kaggle T4 (`results/capstone_20k.json`; see the
+[execution log](execution-log.md) for the full reading). The dissociation it
+was built to test **persists at full budget**: induction accuracy 0.5034 ±
+0.0002 — the same plateau as the 2k-step shakedown (0.5041), so it is
+structural, not a budget artifact — and modular accuracy 0.1699 ± 0.0286,
+above chance but far from the solo-run 1.0. Two measurements follow: the
+joint model learns a *partial* modular solution, and the induction plateau
+does not move with 10x the steps. The design's one unverified prediction —
+that a longer budget would let both tasks develop — is falsified.
+
 ## Links
 - [[07_capstone/research-plan|Capstone research plan]] — the ladder and the rung map
 - [[portfolio/RESULTS|Honesty Ledger]] — the audit trail every number here answers to
