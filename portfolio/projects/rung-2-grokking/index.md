@@ -42,7 +42,7 @@ P=113 GPU 3-seed run, decided 2026-10-14: **REPRODUCED** — the sparse Fourier 
 
 On the same embeddings the old L1-mass k₉₉ reads 109–110/113 (dense) — that classifier is the
 2026-08-11 NO-GROK artifact, now retracted. See
-[grokking-dense-attractor](../essay/grokking-dense-attractor.md) for the full reversal narrative.
+[grokking-dense-attractor](../essay/grokking-dense-attractor.html) for the full reversal narrative.
 
 ## Figures
 
@@ -75,7 +75,7 @@ On the same embeddings the old L1-mass k₉₉ reads 109–110/113 (dense) — t
 - [RESULTS](../../RESULTS.md) — my honesty ledger and per-rung numbers
 - [research-plan](../../../07_capstone/research-plan.md) — where this flagship sits in the experiment ladder
 - [grokking-verdict-p113](../../../07_capstone/notes/grokking-verdict-p113.md) — full verdict analysis
-- [grokking essay](../essay/grokking-dense-attractor.md) — the reversal narrative
+- [grokking essay](../essay/grokking-dense-attractor.html) — the reversal narrative
 
 ## Next Steps
 
