@@ -82,3 +82,16 @@ The three GPU-gated issues run on free Kaggle/Colab through one contract (driver
 ### Domain docs
 
 Single-context — `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+## CI gate
+
+GitHub Actions is not the gate. The single source of truth is `.woodpecker/ci.yml`.
+
+- **Local, no server:** `ci-local` from the repo root (Docker running). Exit 0 = green.
+  Never run `woodpecker-cli exec` directly on the checkout: it bind-mounts the repo and
+  install steps would overwrite host dependencies.
+- **Server:** push the branch; the check is `ci/woodpecker/push/ci` (`gh pr checks <n> --watch`).
+- **Not in the gate:** the two commitlint targets (commit-msg hook and conventional-commits workflow cover them), paper LaTeX build, markdown-lint.
+- **Status:** pipeline written, first green run not recorded yet. If a step fails for an
+  environment reason (image, network, missing tool), fix `.woodpecker/ci.yml`, not the code.
+- Done / merge-ready means this gate is green on the final tree. See `~/.agents/CI.md`.
