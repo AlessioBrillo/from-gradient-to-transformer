@@ -1,5 +1,4 @@
 ---
-title: "Rung 2: Grokking Modular Addition"
 description: "Train 1-layer transformer on modular addition and reverse-engineer the learned algorithm via Fourier analysis"
 tags: [grokking, modular-addition, fourier-analysis, mechanistic-interpretability]
 phase: 2

@@ -1,5 +1,4 @@
 ---
-title: "The Sparse Circuit Was There All Along: A Metric Audit Reverses the Grokking Verdict"
 tags: [portfolio, essay, grokking, mechanistic-interpretability]
 published: 2026-10-16
 status: verified
