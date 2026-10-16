@@ -165,6 +165,8 @@ the dense reading stands unchanged; its meaning is now precise.
 
 \section{Induction Heads}
 \label{sec:induction}
+% manifest: results/exp1_induction_fixed_batches.json
+% manifest: results/exp1_induction_fresh_batches.json
 % manifest: results/exp1_induction_heads.json
 
 \subsection{Task Design Correction}
@@ -184,10 +186,10 @@ A matched 800-epoch comparison (identical config, only
 \toprule
  & Fixed (reused) & Fresh (resampled) \\
 \midrule
-Final val accuracy & 0.05\% (below chance) & \textbf{53.5\%} \\
+Final val accuracy & \textbf{0.45\%} $\pm$ 0.03\% (below chance) & \textbf{53.53\%} $\pm$ 0.03\% \\
 Final val loss & 24.31 (climbing) & 3.65 (flat, tracks train) \\
-Peak diag+1 mass & 0.155 (epoch 99, decays) & 0.145 (epoch 649, rising) \\
-Induction heads detected & 0 / 8 & 0 / 8 \\
+Peak diag+1 mass & 0.217 $\pm$ 0.010 & 0.201 $\pm$ 0.012 \\
+Induction heads detected & \textbf{0 / 8} & \textbf{0 / 8} \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -353,23 +355,22 @@ signal is seen, preventing vacuous zeros from being plotted as
 measurements. Final K-composition on a pure induction loader remains a
 pending validation.
 
-\section{Solution Regime: Dense vs. Sparse Fourier Circuit (Under Audit)}
+\section{Solution Regime: Dense vs. Sparse Fourier Circuit}
 \label{sec:phase-diagram}
-% manifest: results/exp2_grokking.json
+% manifest: results/grokking_nanda_p113.json
+% manifest: results/grokking_repo_p113_energy.json
 
-An earlier draft of this section reported a phase diagram of sparse versus
-dense Fourier solutions. It was removed on 2026-10-08: its cells came from
-100- and 2000-epoch smoke runs in which the models had not generalized
+The 2026-10-08 audit removed an earlier phase-diagram draft: its cells came
+from 100- and 2000-epoch smoke runs in which the models had not generalized
 (validation accuracy at most 0.06\% at $P=29$), so the reported
-``dense'' labels measured under-training rather than a solution regime. No
-phase-diagram claim is made in this version.
-
-The Fourier-sparsity metric and the training protocol behind the $P=113$
-NO-GROK verdict are being audited against Nanda et al.\ (2023): the metric
-is falsified against a synthetic sparse embedding, and the protocol is
-re-run with the original full-batch recipe before any boundary claim is
-reopened. The audit and its outcome are recorded in the Honesty Ledger of
-\texttt{portfolio/RESULTS.md}.
+``dense'' labels measured under-training rather than a solution regime. The
+audit also falsified the L1-mass $k_{99}$ classifier behind the $P=113$
+NO-GROK verdict. The protocol was re-run on a GPU with the post-audit energy
+metric: both the Nanda-faithful protocol (40{,}000 steps) and the historical
+repo protocol (5{,}000 epochs) produced the sparse Fourier circuit
+($k_{\mathrm{energy},90}$ = 5.7 $\pm$ 1.2 and 8.7 $\pm$ 1.2 of 56, sparse on
+3/3 seeds each) on all three seeds. No phase-diagram boundary claim is made
+in this version; the systematic sweep remains open (issue \#168).
 
 
 \subsection{Capstone Joint Training Dissociation}
@@ -401,6 +402,20 @@ induction learns. Both Fourier dense.}
 % manifest: results/probe_capstone_shakedown.json
 \end{figure}
 
+\subsection{Capstone 3$\times$20k run}
+\label{sec:capstone-20k}
+% manifest: results/capstone_20k.json
+
+The capstone joint-training model (d\_model=256, 4 layers, 8 heads,
+GPU, 3 seeds $\times$ 20,000 steps, configs/capstone.yaml) shows the
+dissociation persists at full budget: induction accuracy
+0.5034 $\pm$ 0.0002 --- the same plateau as the 2k-step shakedown
+(0.5041), so structural, not a budget artifact --- and modular accuracy
+0.1699 $\pm$ 0.0286, above chance (1/113 $\approx$ 0.0088) but far from
+the solo-run 1.0. This run records only the L1-mass k$_{99}$ (mean
+97.36/113); its Fourier density is not established by this run and needs
+the energy metric, a recorded follow-up.
+
 \section{Limitations}
 \label{sec:limitations}
 
@@ -414,10 +429,11 @@ induction learns. Both Fourier dense.}
     comparison (53.5\% val acc, 800 epochs) is the trustworthy scale for
     this paper; standard scale ($d_\text{model}=64$, 10k epochs) is a
     follow-up, not a claim.
-  \item \textbf{No grokking sparse circuit:} NO-GROK was measured with an
-    L1-mass Fourier metric later shown to call noisy sparse embeddings
-    dense, under a protocol that departs from Nanda et al., and several
-    small-modulus runs had not generalized. The verdict is under audit.
+  \item \textbf{Grokking sparse circuit reproduced:} Rung 2 reached val
+    accuracy 0.9999 $\pm$ 0.0002 with $k_{\mathrm{energy},90}$ = 5.7 $\pm$
+    1.2 of 56 frequencies (sparse, 3/3 seeds) on both the Nanda-faithful and
+    the historical protocol (GPU, 2026-10-14). The earlier NO-GROK label was
+    an L1-mass metric artifact, retracted after the 2026-10-08 audit.
   \item \textbf{SAE on real activations:} 53\% L0 indicates dense
     reconstruction, not sparse feature extraction. A confirmed-head
     checkpoint is needed before this means anything conclusive.
@@ -442,22 +458,21 @@ induction learns. Both Fourier dense.}
 
 This work demonstrates a complete micro-scale MI pipeline: from-scratch
 training, full instrumentation, causal circuit verification, and honest
-negative reporting. The strongest verified result is Rung 3's
+negative reporting. The primary flagship, Rung 2 grokking modular addition,
+is \textbf{reproduced} (val accuracy 0.9999 $\pm$ 0.0002, sparse Fourier
+circuit with $k_{\mathrm{energy},90}$ = 5.7 $\pm$ 1.2 of 56, GPU, 3 seeds,
+both protocols, 2026-10-14). The strongest verified result remains Rung 3's
 superposition phase transition (root-caused, reproduced, multi-seed
-manifest). The most surprising provisional result is Rung 2's NO-GROK (under
-audit): a model that solves modular addition perfectly, labelled
-\emph{without} the sparse Fourier circuit by a metric that is being
-re-examined. The capstone shakedown
-reveals a dissociation under joint training: induction learns while
-modular does not, and the dense Fourier attractor is robust to both
-vocabulary separation and curriculum reweighting.
+manifest). The 2026-08-11 NO-GROK label was an L1-mass metric artifact,
+retracted after the 2026-10-08 audit.
 
-The honest negatives are contributions: NO-MOVE falsifies two
-explanations of the joint-training dissociation at this scale; NO-GROK
-is provisional pending the audit. The path forward is the
-continuum ledger (ADR-0029): exactly one new research question from
-\{solution-regime phase diagram, scaled R1 induction, SAE on confirmed-head
-checkpoint, ACDC on real circuit\}.
+The capstone 3$\times$20k run reveals a dissociation under joint training
+that persists at full budget: induction accuracy 0.5034 $\pm$ 0.0002,
+modular accuracy 0.1699 $\pm$ 0.0286 (above chance, far from the solo-run
+1.0). The honest negatives are contributions: NO-MOVE falsifies two
+explanations of the joint-training dissociation at this scale; the P=59
+positive control carries the same L1 metric defect and is marked
+metric-suspect.
 
 \bibliographystyle{plainnat}
 \bibliography{references}

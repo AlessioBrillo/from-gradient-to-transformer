@@ -25,7 +25,7 @@ Index and links for the capstone phase. Detailed plan: [[07_capstone/README]].
 | Rung | Experiment | Status | Code |
 |------|------------|--------|------|
 | 1 | Induction heads | ⚠️ Task design fixed, no head detected yet | `src/experiments/exp1_induction_heads.py` |
-| 2 | Grokking modular addition ★ | ⏳ CPU-bound, GPU run pending | `src/experiments/exp2_grokking.py` |
+| 2 | Grokking modular addition ★ | ✅ REPRODUCED 2026-10-14 (sparse circuit, energy metric) | `src/experiments/exp2_grokking.py` |
 | 3 | Superposition geometry | ✅ Phase transition confirmed | `src/experiments/exp3_superposition.py` |
 | 4 | Circuit verification (patching) | ⚠️ Fixed, path patching still unvalidated (no real head) | `src/experiments/exp4_circuit_patching.py` |
 | 5 | SAE feature dashboard | ⚠️ Synthetic + real-activation upgrade (informative, not conclusive) | `src/experiments/exp5_sae_dashboard.py` |
@@ -43,7 +43,7 @@ implementation, not before.
 
 ## Capstone research notes
 - [[07_capstone/notes/positive-control-protocol|Positive-Control Protocol]] — reproduce the published setup before deviating from it; the Nanda-faithful P=59 run.
-- [[07_capstone/notes/grokking-verdict-p113|Grokking Verdict P=113]] — **under audit** (2026-10-08): the k_99 metric misclassifies noisy sparse embeddings. Do not cite.
+- [[07_capstone/notes/grokking-verdict-p113|Grokking Verdict P=113]] — REPRODUCED 2026-10-14; the 2026-08-11 NO-GROK was an L1-mass metric artifact, retracted.
 - [[07_capstone/notes/dense-solutions-modular-addition|Dense Solutions on Modular Addition]] — the k_99 = 58/59 P=59 positive-control characterisation.
 - [[07_capstone/notes/microscope-trial-table|Microscope Trial Table]] — the pre-registered trial schedule for the protocol ablation.
 - [[07_capstone/notes/scheduled-negatives-mp28|Scheduled Negatives (MP-28)]] — experiments registered to falsify, not to confirm.

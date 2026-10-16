@@ -13,5 +13,5 @@ steps:
     commands:
       - apt-get update -q && apt-get install -y -q make
       - uv sync --frozen --all-extras
-      - make lint vault-check typecheck-new typecheck test-cov
+      - make lint vault-check typecheck-new typecheck test-cov check-refs
       - uv run python -m src.results verify

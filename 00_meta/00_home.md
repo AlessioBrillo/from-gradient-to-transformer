@@ -9,8 +9,7 @@ Central map of the vault. Everything starts here.
 
 ## Headline Result
 
-The target research contribution: **mechanistic reverse-engineering of a transformer's learned algorithms at micro scale**. The strongest *verified* piece today is Rung 3's superposition phase transition (root-caused and reproduced 2026-08-02 after two prior audits couldn't explain it). Grokking modular addition (the primary flagship) closed its first dated verdict on 2026-08-11 — a **NO-GROK positive-negative**
-(val 1.0 across 3 seeds but Fourier dense, k_99 = 111/113), now the subject of the positive-control and microscope lanes in [[28_micro-phase-29-the-positive-negative|MP-29 · The Positive-Negative]].
+The target research contribution: **mechanistic reverse-engineering of a transformer's learned algorithms at micro scale**. The primary flagship, grokking modular addition (Rung 2), is **REPRODUCED 2026-10-14**: val accuracy 0.9999 ± 0.0002 on the Nanda protocol (GPU, 3 seeds) with k_energy_90 = 5.7 ± 1.2 of 56 — the sparse Fourier circuit Nanda et al. describe. The 2026-08-11 NO-GROK verdict was an L1-mass metric artifact, retracted after the 2026-10-08 audit (see [[portfolio/RESULTS|Honesty Ledger]]). Rung 3's superposition phase transition remains root-caused and reproduced (2026-08-02).
 
 **MP-91/92 Release (2026-09-17)**: Paper v20 prose complete from manifests (all sections, every number tagged, `verify-claims=0`). 223 tests green, ruff/mypy clean, ADR-0028 zero unstamped rows. PR #145 merged to `main`. Premiere channels (teaching v22, PDF, 5-channel atomic launch) in progress — Sessions 2–4.
 

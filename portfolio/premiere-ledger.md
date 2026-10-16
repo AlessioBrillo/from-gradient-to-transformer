@@ -38,7 +38,7 @@ Every quantitative claim in the premiere cites a manifest:
 
 | Claim | Manifest |
 |-------|----------|
-| Rung 2: val 1.0, k₉₉=111/113 | `results/exp2_grokking.json` |
+| Rung 2: val 0.9999 ± 0.0002, k_energy_90 = 5.7 ± 1.2 of 56 (sparse) | `results/grokking_nanda_p113.json`, `results/grokking_repo_p113_energy.json` |
 | Rung 3: 19.67→20/20 features, pentagon | `results/exp3_superposition.json` |
 | Rung 1: 53.5% vs 0.45% fixed-vs-fresh | `results/exp1_induction_heads.json` |
 | Rung 4: ~0.20 recovery, 0 heads | `results/exp4_circuit_patching.json` |
@@ -67,7 +67,7 @@ git log --oneline -1         # premiere commit present
 ## Cross-References
 
 - Paper v20: `portfolio/paper/main.tex`
-- Teaching artifact v22: `notebooks/capstone_teaching_artifact_v22.ipynb`
+- Teaching artifact v23: `notebooks/capstone_teaching_artifact_v23.ipynb`
 - Results ledger: `portfolio/RESULTS.md`
 - Continuum ledger: `docs/adr/0028-continuum-ledger-23.md`
 - Release report: `00_meta/92_micro-phase-92-release-report.md` (to be written)

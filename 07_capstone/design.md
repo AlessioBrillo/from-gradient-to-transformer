@@ -16,8 +16,8 @@ evidence; this is the design that run tests.
 
 `src/models/decoder_only_transformer.py`: decoder-only, RMSNorm, RoPE,
 causal multi-head attention with KV cache. Config (`configs/capstone.yaml`):
-**d_model=256, 4 layers, 8 heads, d_mlp=1024, dropout 0.1** — ~25M
-parameters at the capstone vocab. RoPE's relative-position property is
+**d_model=256, 4 layers, 8 heads, d_mlp=1024, dropout 0.1** — ~4.26M
+parameters (4,259,584) at the capstone vocab. RoPE's relative-position property is
 pinned by a test (`test_relative_position_invariance`); the convention
 mismatch it caught in 2026-08 is the kind of bug that trains fine and
 measures wrong.
@@ -75,9 +75,12 @@ checkpoint-every boundary (1000 steps):
 
 ## Honest limits
 
-- The sparse Fourier circuit has **never** been observed in this repository
-  at any scale (every run dense, k₉₉ ≈ P). This run may well extend the
-  negative; that is a result, not a failure, and the phase-gate note
+- The sparse Fourier circuit **has** been observed at Rung 2 scale (P=113,
+  GPU, 3 seeds, both protocols, energy metric — see
+  [[07_capstone/notes/grokking-verdict-p113]]). The capstone joint run
+  (this design) records only the L1-mass k₉₉, so its Fourier density is not
+  established by this run — it needs the energy metric, a recorded follow-up.
+  The phase-gate note
   ([[07_capstone/notes/capstone-gate-honest-negative|the honest negative]])
   is written to stand either way.
 - d_model=256/4L is small by grokking-paper standards; Nanda et al. used

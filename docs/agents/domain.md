@@ -11,7 +11,7 @@ How agents should consume this repo's domain documentation when exploring the co
 
 ## Use the glossary's vocabulary
 
-When your output names a domain concept (in an issue title, a refactor proposal, a hypothesis, a test name), use the term as defined in `CONTEXT.md`. Don't drift to synonyms the glossary explicitly avoids — **Rung**, **Manifest**, **Ledger**, **Claim**, **Backed**, **Grokking (NO-GROK)**, **k₉₀/k₉₉**, **Superposition** and **Induction head** all have precise meanings here.
+When your output names a domain concept (in an issue title, a refactor proposal, a hypothesis, a test name), use the term as defined in `CONTEXT.md`. Don't drift to synonyms the glossary explicitly avoids — **Rung**, **Manifest**, **Ledger**, **Claim**, **Backed**, **Grokking (REPRODUCED)**, **k₉₀/k₉₉**, **Superposition** and **Induction head** all have precise meanings here.
 
 If the concept you need isn't in the glossary yet, that's a signal — either you're inventing language the project doesn't use (reconsider) or there's a real gap. Raise it; don't silently coin a term.
 
