@@ -26,9 +26,9 @@ The capstone question (roadmap, Phase 7 gate): *"How does your transformer imple
 - [x] **Honesty ledger maintained** — five audits, all entries kept visible: [[portfolio/RESULTS|Honesty Ledger]]
 
 ## Still open (tracked in GitHub Issues, not checklist items)
-- [~] **3 seeds × 20k steps, capstone, with W&B** — issue #170 (GPU: `make remote-run-capstone`)
-- [~] **Rung 1 standard-scale run + head validation, then the exp4/exp5 cascade** — issue #169 (GPU: `make remote-run-induction`)
-- [~] **Rung 2 P=113 positive control and NO-GROK re-verdict** — issue #167 (GPU: `make remote-run-grokking`); the gate above is stamped on current evidence and stands either way
+- [x] **3 seeds × 20k steps, capstone** — issue #170 (GPU: `make remote-run-capstone`); run executed 2026-10-14, dissociation persists at full budget (`results/capstone_20k.json`). W&B never connected (no credentials) — closed-with-reason.
+- [~] **Rung 1 standard-scale run + head validation, then the exp4/exp5 cascade** — issue #169 (GPU: `make remote-run-induction`); next GPU job, unblocks exp4 path patching and exp5 real-activation SAE.
+- [x] **Rung 2 P=113 positive control and NO-GROK re-verdict** — issue #167 (GPU: `make remote-run-grokking`); reversed 2026-10-14, sparse circuit reproduced on both protocols. Follow-ups: regenerate `exp2_*` figures from GPU re-run; re-measure P=59 positive control with energy metric (dedicated issue).
 
 ## Links
 - [[07_capstone/research-plan|Capstone research plan]]

@@ -94,7 +94,7 @@ typecheck-new:
 # violation introduced by the new commit escapes it. The new-commit mirror
 # lints exactly what the push will add:
 #   npx --yes commitlint --from origin/dev --to HEAD --config commitlint.config.mjs
-ci-check: lint vault-check typecheck-new typecheck test-cov commitlint-new commitlint-head
+ci-check: lint vault-check typecheck-new typecheck test-cov check-refs commitlint-new commitlint-head
 
 commitlint-new:
 	@echo "=== commitlint (unpushed commits origin/dev..HEAD, mirror of the PR range) ==="
@@ -261,6 +261,10 @@ reproduce-multiseed:
 # count). See src/results.py.
 verify-claims:
 	uv run python -m src.results verify
+
+# Bibliography hygiene: no placeholder arXiv/DOI ids, every cited key exists.
+check-refs:
+	uv run python scripts/check_refs.py
 
 # --- Vault gate (CLAUDE.md: "Every note links at least 2 other notes") ---
 # The rule was written down in CLAUDE.md but enforced by nothing, so 20 of 124

@@ -82,3 +82,18 @@ The three GPU-gated issues run on free Kaggle/Colab through one contract (driver
 ### Domain docs
 
 Single-context — `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+## CI gate
+
+GitHub Actions is not the gate. The single source of truth is `.woodpecker/ci.yml`.
+
+- **Local, no server:** `ci-local` from the repo root (Docker running). Exit 0 = green.
+  Never run `woodpecker-cli exec` directly on the checkout: it bind-mounts the repo and
+  install steps would overwrite host dependencies.
+- **Server:** push the branch; the check is `ci/woodpecker/push/ci` (`gh pr checks <n> --watch`).
+- **Not in the gate:** the two commitlint targets (commit-msg hook and conventional-commits workflow cover them), paper LaTeX build, markdown-lint.
+- **Status:** first green run recorded 2026-10-16 (lint, vault-check, test-cov 392 passed,
+  verify-claims=0). `typecheck-new`/mypy require the CI Docker image and are blocked on this
+  host by an Application Control policy — they run in CI. If a step fails for an environment
+  reason (image, network, missing tool), fix `.woodpecker/ci.yml`, not the code.
+- Done / merge-ready means this gate is green on the final tree. See `~/.agents/CI.md`.
