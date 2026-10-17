@@ -19,7 +19,8 @@ Output: a new manifest `results/capstone_20k_energy.json` (the original
 
 Usage:
     python scripts/capstone_energy_from_checkpoints.py \
-        --checkpoint-glob "results/remote/capstone-20k/output3/repo/checkpoints/exp6_capstone_seed*_step20000.pt" \
+        --checkpoint-glob "results/remote/capstone-20k/output3/repo/checkpoints/"
+        "exp6_capstone_seed*_step20000.pt" \
         --config configs/capstone.yaml \
         --output results/capstone_20k_energy.json
 """
@@ -88,7 +89,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Capstone energy re-analysis from checkpoints")
     parser.add_argument(
         "--checkpoint-glob",
-        default="results/remote/capstone-20k/output3/repo/checkpoints/exp6_capstone_seed*_step20000.pt",
+        default="results/remote/capstone-20k/output3/repo/checkpoints/"
+        "exp6_capstone_seed*_step20000.pt",
         help="Glob for the final capstone checkpoints (one per seed).",
     )
     parser.add_argument(
