@@ -1,6 +1,6 @@
 # GPU runs: Kaggle / Colab
 
-The repository's remaining v1.0 work (issues #167, #169, #170) needs GPU
+The repository's remaining v1.0 work (issues #196, #168, #169) needs GPU
 hours. This repo has no GPU; the free tiers cover it. Both runtimes share
 **one contract**, so which one you use changes nothing downstream:
 

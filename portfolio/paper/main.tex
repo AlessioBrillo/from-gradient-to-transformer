@@ -397,9 +397,11 @@ separation and curriculum reweighting.
 \centering
 \includegraphics[width=0.95\textwidth]{../figures/joint_dissociation.png}
 \caption{Joint dissociation (capstone shakedown). Modular stays at chance;
-induction learns. Both Fourier dense.}
+induction learns. Both Fourier dense under the energy criterion:
+$k_{\mathrm{energy},90}=49/56$, sparse on 0/3 seeds.}
 \label{fig:joint-dissociation}
 % manifest: results/probe_capstone_shakedown.json
+% manifest: results/capstone_20k_energy.json
 \end{figure}
 
 \subsection{Capstone 3$\times$20k run}
@@ -412,9 +414,10 @@ dissociation persists at full budget: induction accuracy
 0.5034 $\pm$ 0.0002 --- the same plateau as the 2k-step shakedown
 (0.5041), so structural, not a budget artifact --- and modular accuracy
 0.1699 $\pm$ 0.0286, above chance (1/113 $\approx$ 0.0088) but far from
-the solo-run 1.0. This run records only the L1-mass k$_{99}$ (mean
-97.36/113); its Fourier density is not established by this run and needs
-the energy metric, a recorded follow-up.
+the solo-run 1.0. Its Fourier density is measured with the post-audit energy
+criterion: $k_{\mathrm{energy},90}=49/56$ (of 56), energy\_sparse on 0/3
+seeds -- the joint solution is \textbf{dense}, not a sparse Fourier circuit.
+% manifest: results/capstone_20k_energy.json
 
 \section{Limitations}
 \label{sec:limitations}

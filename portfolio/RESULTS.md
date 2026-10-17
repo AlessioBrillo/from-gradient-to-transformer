@@ -47,8 +47,12 @@ so re-measuring means re-running, now a one-command GPU job.
 
 **What this does not change**: the frequency ablation (keep 59/59 → 0.0000) and
 the generalization-epoch progress measures remain valid evidence; the figures
-generated from the seed-0 CPU checkpoint remain valid visualizations, but their
-dense captions predate the reversal and are the next regeneration item.
+generated from the seed-0 CPU checkpoint remain valid visualizations, and were
+regenerated 2026-10-17 from the P=113 seed-0 GPU checkpoint of job A with their
+captions corrected to the sparse (energy) reading (`portfolio/figures/exp2_grokking_curve.png`,
+`portfolio/figures/exp2_fourier_weights.png`, `portfolio/figures/exp2_frequency_ablation.png`,
+`portfolio/figures/exp2_progress_measures.png`;
+re-analysis provenance `results/grokking_p113_gpu_reanalysis.json`).
 
 ### 2026-10-11 — Integrity pass: the one solid finding had no manifest behind it
 
@@ -417,11 +421,14 @@ from the Nanda-faithful setup as designed.
 **Figures**: `portfolio/figures/exp2_grokking_curve.png`,
 `portfolio/figures/exp2_fourier_weights.png`,
 `portfolio/figures/exp2_frequency_ablation.png`,
-`portfolio/figures/exp2_progress_measures.png` — generated from the final
-P=113 seed-0 CPU checkpoint 2026-08-13. They remain valid visualizations of the
-embeddings; their *dense* captions/labels predate the reversal and are the next
-regeneration item (the GPU checkpoints were remote scratch, so this needs a re-run
-with figures enabled, not a re-analysis).
+`portfolio/figures/exp2_progress_measures.png` — regenerated 2026-10-17 from the
+P=113 seed-0 GPU checkpoint of job A (`results/grokking_nanda_p113.json`;
+re-analysis provenance: `results/grokking_p113_gpu_reanalysis.json`). The
+embeddings are identical to the earlier CPU-era rendering; the *dense*
+captions/labels that predated the 2026-10-14 reversal have been corrected to the
+sparse (energy) reading below. The GPU checkpoints are on disk
+(`results/remote/grokking-p113/output2/repo/checkpoints/nanda/`), so no re-run
+was needed — only a re-analysis.
 
 ---
 
@@ -639,9 +646,11 @@ sweep's manifests land.
 
 **What to trust right now, in order**: (1) Rung 2's sparse-circuit reproduction —
 GPU, 3 seeds, both protocols, post-audit energy metric, manifests pinned with
-provenance; the one caveat is that the checkpoints were remote scratch, so the
-figures still need regeneration from a re-run. (2) Rung 3's phase transition —
-reproduced cleanly, root cause understood, multi-seed manifest backs it. (3) Rung 5's
+provenance; the checkpoints are on disk
+(`results/remote/grokking-p113/output2/repo/checkpoints/nanda/`) and the four
+`exp2_*` figures were regenerated from them 2026-10-17. (2) Rung 3's phase
+transition — reproduced cleanly, root cause understood, multi-seed manifest
+backs it. (3) Rung 5's
 synthetic FVE/MSE numbers — reproduced and architecturally simple; the
 real-activation numbers are real but need a better checkpoint (one with a confirmed
 induction head) before the sparsity gap means anything conclusive. (4) Rung 1's
