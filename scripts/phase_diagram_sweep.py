@@ -291,6 +291,7 @@ def exp2_args_for_cell(cell: SweepCell) -> argparse.Namespace:
         args.beta2 = cell.beta2
     if cell.full_batch is not None:
         args.full_batch = cell.full_batch
+    args.batch_size = cell.batch_size
     if cell.warmup_steps is not None:
         # exp2's warmup is counted in epochs; convert so it stays a step count.
         args.warmup_epochs = max(0, math.ceil(cell.warmup_steps / cell.steps_per_epoch))
@@ -457,6 +458,12 @@ def run_joint_cell(
             "final_fourier_sparsity": float(metrics["final_k_99"] / cell.modulus),
             "k_90_percent": float(metrics["final_k_90"]),
             "k_99_percent": float(metrics["final_k_99"]),
+            # Post-audit energy criterion — exp6 now emits it alongside the L1
+            # reading (commit 8ea0f97 lineage). Joint cells must classify on
+            # the same audited criterion as solo cells, never on L1 alone.
+            "k_energy_90": float(metrics["final_k_energy_90"]),
+            "frac_energy_top5": float(metrics["final_frac_energy_top5"]),
+            "energy_sparse": float(metrics["final_energy_sparse"]),
             "final_induction_acc": float(metrics["final_induction_acc"]),
             "final_kcomp": float(metrics["final_max_kcomp"]),
         }
@@ -482,6 +489,10 @@ def run_joint_cell(
         final_fourier_sparsity=agg("final_fourier_sparsity"),
         k_90_percent=agg("k_90_percent"),
         k_99_percent=agg("k_99_percent"),
+        # Post-audit energy criterion (see run_one above).
+        k_energy_90=agg("k_energy_90"),
+        frac_energy_top5=agg("frac_energy_top5"),
+        energy_sparse=agg("energy_sparse"),
         total_mass_top_k=None,
         final_induction_acc=agg("final_induction_acc"),
         final_kcomp=agg("final_kcomp"),
@@ -509,7 +520,10 @@ def generate_sweep_grid(config: dict) -> list[SweepCell]:
 
     for cell_config in config.get("cells", []):
         modulus = cell_config["modulus"]
-        steps = steps_small_p if modulus <= 59 else steps_default
+        # Per-cell budget (STEPS, never epochs — see the 2026-10-08 audit).
+        # Falls back to the small-P / default top-level budget when absent.
+        default_steps = steps_small_p if modulus <= 59 else steps_default
+        steps = cell_config.get("steps", default_steps)
 
         cell = SweepCell(
             cell_id=cell_config["cell_id"],
@@ -524,10 +538,17 @@ def generate_sweep_grid(config: dict) -> list[SweepCell]:
             train_fraction=train_fraction,
             lr=lr,
             steps=steps,
-            batch_size=batch_size,
+            batch_size=cell_config.get("batch_size", batch_size),
             warmup_steps=warmup_steps,
             checkpoint_every=checkpoint_every,
             seed=base_seed,
+            # Protocol deviations (None = inherit the preset's value).
+            schedule=cell_config.get("schedule"),
+            normalize_embeddings=cell_config.get("normalize_embeddings"),
+            layernorm=cell_config.get("layernorm"),
+            grad_clip=cell_config.get("grad_clip"),
+            beta2=cell_config.get("beta2"),
+            full_batch=cell_config.get("full_batch"),
         )
         cells.append(cell)
 

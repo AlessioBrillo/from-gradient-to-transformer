@@ -50,24 +50,26 @@ On the same embeddings the old L1-mass k₉₉ reads 109–110/113 (dense) — t
 ![Frequency Ablation](../../figures/exp2_frequency_ablation.png) <!-- manifest: results/grokking_nanda_p113.json -->
 ![Progress Measures](../../figures/exp2_progress_measures.png) <!-- manifest: results/grokking_nanda_p113.json -->
 
-> Note: the four `exp2_*` figures above were generated from the historical CPU-era checkpoint
-  (2026-08-13) and remain valid visualizations of the embeddings. Their dense captions predate
-  the 2026-10-14 reversal and are scheduled for regeneration from a GPU re-run with figures
-  enabled. The GPU checkpoints were remote scratch, so this needs a re-run, not a re-analysis.
+> Note: the four `exp2_*` figures above were regenerated 2026-10-17 from the
+> P=113 seed-0 GPU checkpoint of job A (`results/grokking_nanda_p113.json`);
+> see `results/grokking_p113_gpu_reanalysis.json` for the re-analysis provenance.
+> The embeddings match the earlier CPU-era rendering; the captions now use the
+> sparse (energy) reading of the 2026-10-14 reversal. No re-run was needed: the
+> GPU checkpoints are on disk under `results/remote/grokking-p113/`.
 
 ## Reproduce
 
 `uv run python -m src.experiments.exp2_grokking --quick` (smoke test); full P=113 via
-`notebooks/kaggle_grokking_p113.ipynb` on GPU (issue #167).
+`notebooks/kaggle_grokking_p113.ipynb` on GPU (issue #196 re-measurement uses the
+P=59 control config; issue #168 runs the phase-sweep notebook).
 
 ## Limitations
 
 - No sparse Fourier solution was ever produced under the L1-mass reading; the energy reading is
   the one that classifies the solution as sparse
 - The P=59 positive control's NO-GROK label carries the same L1 metric defect (checkpoints gone;
-  re-measure pending)
+  re-measure pending, issue #196)
 - Small model (1-layer, d_model=128) — larger models may behave differently
-- The four tracked figures need regeneration from a GPU run (see Figures note above)
 
 ## Links
 
@@ -78,5 +80,6 @@ On the same embeddings the old L1-mass k₉₉ reads 109–110/113 (dense) — t
 
 ## Next Steps
 
-- Regenerate the four `exp2_*` figures from a GPU re-run with figures enabled
-- Re-measure the P=59 positive control with the energy metric (dedicated GPU job)
+- Re-measure the P=59 positive control with the energy metric (issue #196)
+- Extend energy-metric coverage to the capstone joint-training run
+- Standard-scale Rung 1 induction run + head-validation cascade (exp4 path patching, exp5 real-activation SAE)

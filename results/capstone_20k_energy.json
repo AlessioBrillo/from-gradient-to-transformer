@@ -1,0 +1,86 @@
+{
+  "experiment": "capstone_20k_energy",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "args": {
+    "config": "configs/capstone.yaml",
+    "checkpoint_glob": "results/remote/capstone-20k/output3/repo/checkpoints/exp6_capstone_seed*_step20000.pt",
+    "reanalysis_of": "results/capstone_20k.json",
+    "modulus": 113,
+    "steps": 20000
+  },
+  "per_seed_metrics": [
+    {
+      "k_energy_90": 49.0,
+      "k_energy_99": 56.0,
+      "frac_energy_top5": 0.1792590618133545,
+      "energy_sparse": 0.0,
+      "n_freq": 56.0
+    },
+    {
+      "k_energy_90": 49.0,
+      "k_energy_99": 56.0,
+      "frac_energy_top5": 0.2037634253501892,
+      "energy_sparse": 0.0,
+      "n_freq": 56.0
+    },
+    {
+      "k_energy_90": 49.0,
+      "k_energy_99": 56.0,
+      "frac_energy_top5": 0.17278514802455902,
+      "energy_sparse": 0.0,
+      "n_freq": 56.0
+    }
+  ],
+  "aggregate": {
+    "k_energy_90": {
+      "mean": 49.0,
+      "std": 0.0,
+      "min": 49.0,
+      "max": 49.0,
+      "n": 3.0
+    },
+    "k_energy_99": {
+      "mean": 56.0,
+      "std": 0.0,
+      "min": 56.0,
+      "max": 56.0,
+      "n": 3.0
+    },
+    "frac_energy_top5": {
+      "mean": 0.18526921172936758,
+      "std": 0.01334178506361692,
+      "min": 0.17278514802455902,
+      "max": 0.2037634253501892,
+      "n": 3.0
+    },
+    "energy_sparse": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 3.0
+    },
+    "n_freq": {
+      "mean": 56.0,
+      "std": 0.0,
+      "min": 56.0,
+      "max": 56.0,
+      "n": 3.0
+    }
+  },
+  "wall_clock_seconds": 2.8502116999588907,
+  "git_sha": "245b233",
+  "git_dirty": false,
+  "device": "cpu",
+  "torch_version": "2.12.1+cpu",
+  "numpy_version": "2.5.0",
+  "python_version": "3.14.7",
+  "n_parameters": 4259584,
+  "created_at": "2026-10-17T10:48:13+00:00",
+  "notes": "Re-analysis of the 3x20k-step capstone checkpoints with the post-audit energy metric; NO retraining. Original run: results/capstone_20k.json (checkpoints on disk under results/remote/capstone-20k/). git tree dirty=False (analysis committed separately from the run).",
+  "neuron_ablation": null
+}

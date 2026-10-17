@@ -92,7 +92,7 @@ GitHub Actions is not the gate. The single source of truth is `.woodpecker/ci.ym
   install steps would overwrite host dependencies.
 - **Server:** push the branch; the check is `ci/woodpecker/push/ci` (`gh pr checks <n> --watch`).
 - **Not in the gate:** the two commitlint targets (commit-msg hook and conventional-commits workflow cover them), paper LaTeX build, markdown-lint.
-- **Status:** first green run recorded 2026-10-16 (lint, vault-check, test-cov 392 passed,
+- **Status:** first green run recorded 2026-10-16 (lint, vault-check, test-cov 393 passed,
   verify-claims=0). `typecheck-new`/mypy require the CI Docker image and are blocked on this
   host by an Application Control policy — they run in CI. If a step fails for an environment
   reason (image, network, missing tool), fix `.woodpecker/ci.yml`, not the code.
