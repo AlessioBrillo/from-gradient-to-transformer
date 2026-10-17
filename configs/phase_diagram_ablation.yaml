@@ -1,0 +1,139 @@
+# Phase Diagram Protocol Ablation — issue #168.
+#
+# Design: start from the Nanda-faithful setup (full-batch AdamW(lr 1e-3,
+# betas 0.9/0.98, wd 1.0), constant LR, no LayerNorm, no embedding
+# re-normalization, no gradient clipping at P=113) and switch ON exactly ONE
+# deviation per cell, plus a weight-decay axis. Every cell is an exp2 run at
+# that config (the sweep delegates to exp2's own code — see
+# scripts/phase_diagram_sweep.py), budgets are optimizer STEPS (never epochs,
+# see the 2026-10-08 audit), 3 seeds per cell.
+#
+# Pre-registered interpretation (issue #168):
+#   - NOT_GROKKED: val_acc < 0.99 at final step (under-trained / broken)
+#   - GROKKED + SPARSE: energy_sparse mean >= 0.5 on 3/3 seeds (the criterion)
+#   - GROKKED + DENSE: val_acc >= 0.99 but energy_sparse < 0.5
+# The L1-mass k_99 is recorded for continuity only; it never classifies.
+#
+# Baseline: Nanda-faithful at P=113, wd=1.0, 20k steps (gen-epoch measured at
+# ~5919±547 on job A, so 20k gives >3x headroom).
+cells:
+  # === Baseline: Nanda-faithful (full-batch, constant LR, betas 0.98,
+  #     no renorm / layernorm / grad clip) ===
+  - cell_id: "p113_nanda_wd10"
+    modulus: 113
+    d_model: 128
+    n_layers: 1
+    n_heads: 4
+    d_mlp: 512
+    weight_decay: 1.0
+    mode: "solo"
+    protocol: "nanda"
+    steps: 20000
+
+  # === Single deviations (baseline + exactly one deviation) ===
+  - cell_id: "p113_minibatch_wd10"
+    modulus: 113
+    d_model: 128
+    n_layers: 1
+    n_heads: 4
+    d_mlp: 512
+    weight_decay: 1.0
+    mode: "solo"
+    protocol: "nanda"
+    batch_size: 512
+    full_batch: false
+    steps: 20000
+
+  - cell_id: "p113_beta2_0999_wd10"
+    modulus: 113
+    d_model: 128
+    n_layers: 1
+    n_heads: 4
+    d_mlp: 512
+    weight_decay: 1.0
+    mode: "solo"
+    protocol: "nanda"
+    beta2: 0.999
+    steps: 20000
+
+  - cell_id: "p113_cosine_wd10"
+    modulus: 113
+    d_model: 128
+    n_layers: 1
+    n_heads: 4
+    d_mlp: 512
+    weight_decay: 1.0
+    mode: "solo"
+    protocol: "nanda"
+    schedule: "cosine"
+    steps: 20000
+
+  - cell_id: "p113_renorm_wd10"
+    modulus: 113
+    d_model: 128
+    n_layers: 1
+    n_heads: 4
+    d_mlp: 512
+    weight_decay: 1.0
+    mode: "solo"
+    protocol: "nanda"
+    normalize_embeddings: true
+    steps: 20000
+
+  - cell_id: "p113_layernorm_wd10"
+    modulus: 113
+    d_model: 128
+    n_layers: 1
+    n_heads: 4
+    d_mlp: 512
+    weight_decay: 1.0
+    mode: "solo"
+    protocol: "nanda"
+    layernorm: true
+    steps: 20000
+
+  - cell_id: "p113_gradclip_1_wd10"
+    modulus: 113
+    d_model: 128
+    n_layers: 1
+    n_heads: 4
+    d_mlp: 512
+    weight_decay: 1.0
+    mode: "solo"
+    protocol: "nanda"
+    grad_clip: 1.0
+    steps: 20000
+
+  # === Weight-decay axis (baseline protocol, varying wd) ===
+  - cell_id: "p113_nanda_wd01"
+    modulus: 113
+    d_model: 128
+    n_layers: 1
+    n_heads: 4
+    d_mlp: 512
+    weight_decay: 0.1
+    mode: "solo"
+    protocol: "nanda"
+    steps: 20000
+
+  - cell_id: "p113_nanda_wd05"
+    modulus: 113
+    d_model: 128
+    n_layers: 1
+    n_heads: 4
+    d_mlp: 512
+    weight_decay: 0.5
+    mode: "solo"
+    protocol: "nanda"
+    steps: 20000
+
+  - cell_id: "p113_nanda_wd20"
+    modulus: 113
+    d_model: 128
+    n_layers: 1
+    n_heads: 4
+    d_mlp: 512
+    weight_decay: 2.0
+    mode: "solo"
+    protocol: "nanda"
+    steps: 20000

@@ -304,7 +304,7 @@ paper:
 	fi
 
 # --- Remote GPU runs (Kaggle/Colab; see docs/agents/gpu-runs.md) ---
-# The GPU work this repo still owes (issues #167, #169, #170) runs on free
+# The GPU work this repo still owes (issues #196, #168, #169) runs on free
 # Kaggle/Colab GPUs through one contract: the notebook clones a pinned ref,
 # the experiment writes its own manifest via --seeds --manifest-path, the
 # driver downloads it, and pin_remote_run.py validates + installs it.

@@ -174,6 +174,10 @@ class TestJointCellDelegation:
         assert 0.0 <= result.final_val_acc["mean"] <= 1.0
         assert result.final_induction_acc is not None
         assert result.final_kcomp is not None
+        # exp6 now emits the post-audit energy metric; joint cells must carry
+        # it (never classify on the falsified L1 k_99 alone).
+        assert result.k_energy_90 is not None and result.k_energy_90["n"] == 1
+        assert result.energy_sparse is not None and result.energy_sparse["n"] == 1
 
 
 class TestBudgetUnits:
@@ -368,3 +372,88 @@ class TestEmitCellManifest:
             total_mass_top_k=dict(ZERO_AGG),
         )
         assert result.is_sparse() is False
+
+
+class TestGridReadsPerCellDeviations:
+    """generate_sweep_grid must honour per-cell protocol deviations and
+    per-cell step budgets — otherwise the ablation config expresses nothing
+    and the sweep silently re-runs the preset (issue #168's design gap)."""
+
+    def test_grid_reads_per_cell_deviations(self) -> None:
+        config = {
+            "steps": 2000,
+            "cells": [
+                {
+                    "cell_id": "base",
+                    "modulus": 113,
+                    "d_model": 128,
+                    "n_layers": 1,
+                    "n_heads": 4,
+                    "d_mlp": 512,
+                    "weight_decay": 1.0,
+                    "mode": "solo",
+                    "protocol": "nanda",
+                },
+                {
+                    "cell_id": "dev_minibatch",
+                    "modulus": 113,
+                    "d_model": 128,
+                    "n_layers": 1,
+                    "n_heads": 4,
+                    "d_mlp": 512,
+                    "weight_decay": 1.0,
+                    "mode": "solo",
+                    "protocol": "nanda",
+                    "batch_size": 512,
+                    "full_batch": False,
+                    "steps": 5000,
+                },
+                {
+                    "cell_id": "dev_cosine",
+                    "modulus": 113,
+                    "d_model": 128,
+                    "n_layers": 1,
+                    "n_heads": 4,
+                    "d_mlp": 512,
+                    "weight_decay": 1.0,
+                    "mode": "solo",
+                    "protocol": "nanda",
+                    "schedule": "cosine",
+                    "normalize_embeddings": True,
+                    "layernorm": True,
+                    "grad_clip": 1.0,
+                    "beta2": 0.999,
+                },
+            ],
+        }
+        cells = {c.cell_id: c for c in generate_sweep_grid(config)}
+
+        base = cells["base"]
+        assert base.schedule is None
+        assert base.normalize_embeddings is None
+        assert base.full_batch is None
+        assert base.steps == 2000
+
+        dev = cells["dev_minibatch"]
+        assert dev.full_batch is False
+        assert dev.batch_size == 512
+        assert dev.steps == 5000  # per-cell budget overrides the top-level
+
+        cosine = cells["dev_cosine"]
+        assert cosine.schedule == "cosine"
+        assert cosine.normalize_embeddings is True
+        assert cosine.layernorm is True
+        assert cosine.grad_clip == 1.0
+        assert cosine.beta2 == 0.999
+        assert cosine.steps == 2000  # fell back to the top-level budget
+
+
+class TestBatchSizePropagatesToExp2:
+    """batch_size was defined on SweepCell but never forwarded to exp2's
+    args, so a minibatch deviation cell trained at exp2's parser default
+    instead of the cell's batch size."""
+
+    def test_batch_size_reaches_exp2_args(self) -> None:
+        cell = _tiny_solo_cell(batch_size=256)
+        args = exp2_args_for_cell(cell)
+        assert args.batch_size == 256

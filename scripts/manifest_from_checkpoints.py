@@ -38,6 +38,7 @@ from src.experiments.exp2_grokking import (
     OneLayerTransformer,
     analyze_fourier_sparsity,
     fourier_decompose_embeddings,
+    fourier_energy_sparsity,
     make_modular_addition_data,
     plot_ablation_curve,
     plot_fourier_weights,
@@ -53,6 +54,26 @@ from src.results import ResultsManifest, count_parameters
 DIAG1_THRESHOLD = 0.3
 SUSTAINED_CKPT_COUNT = 5
 VAL_ACC_GENERALIZATION = 0.9
+
+# Architecture flags per training protocol. The Nanda et al. (ICLR 2023)
+# recipe has no embedding re-normalization and no LayerNorm; the historical
+# repo default has both. Loading a checkpoint with the wrong architecture
+# raises a size-mismatch error, so the protocol must travel with the
+# checkpoint — it cannot be reconstructed from the state dict alone.
+PROTOCOL_ARCH: dict[str, tuple[bool, bool]] = {
+    "repo": (True, True),     # normalize_embed, use_layernorm
+    "nanda": (False, False),  # neither
+}
+
+
+def arch_for_protocol(protocol: str) -> tuple[bool, bool]:
+    """Return (normalize_embed, use_layernorm) for a protocol name."""
+    try:
+        return PROTOCOL_ARCH[protocol]
+    except KeyError:
+        raise SystemExit(
+            f"unknown protocol {protocol!r}; expected {sorted(PROTOCOL_ARCH)}"
+        )
 
 
 def exp1_metrics(path: Path, args: argparse.Namespace) -> dict[str, float]:
@@ -104,16 +125,20 @@ def exp2_metrics(path: Path, args: argparse.Namespace) -> dict[str, float]:
     history = ckpt["history"]
     modulus = args.modulus
 
+    normalize_embed, use_layernorm = arch_for_protocol(args.protocol)
     model = OneLayerTransformer(
         d_model=args.d_model,
         d_mlp=args.d_mlp,
         n_heads=args.n_heads,
         modulus=modulus,
+        normalize_embed=normalize_embed,
+        use_layernorm=use_layernorm,
     )
     model.load_state_dict(ckpt["model"])
 
     fourier_result = fourier_decompose_embeddings(model.embed.weight.data.detach().cpu(), modulus)
     sparsity = analyze_fourier_sparsity(fourier_result, top_k=20)
+    energy = fourier_energy_sparsity(model.embed.weight.data.detach().cpu(), modulus)
 
     return {
         "final_val_acc": float(history["val_acc"][-1]),
@@ -124,13 +149,25 @@ def exp2_metrics(path: Path, args: argparse.Namespace) -> dict[str, float]:
         "k_90_percent": float(sparsity["k_90_percent"]),
         "k_99_percent": float(sparsity["k_99_percent"]),
         "total_mass_top_k": float(sparsity["total_mass_top_k"]),
+        # Post-audit energy criterion (replaces L1 k_99 for the sparse/dense
+        # verdict — see 2026-10-08 audit and the 2026-10-14 P=113 reversal).
+        "k_energy_90": float(energy["k_energy_90"]),
+        "k_energy_99": float(energy["k_energy_99"]),
+        "frac_energy_top5": float(energy["frac_energy_top5"]),
+        "energy_sparse": float(energy["is_sparse"]),
     }
 
 
 def exp2_figures(checkpoint_dir: Path, seeds: list[int], args: argparse.Namespace) -> None:
     """Regenerate the four flagship figures from the best seed's checkpoint —
     the same plots the single-seed path produces, but from disk (no second
-    training run needed)."""
+    training run needed).
+
+    `args.protocol` selects the architecture the checkpoint was trained with
+    (repo: renorm+LayerNorm; nanda: neither). `args.figures_dir` selects the
+    output directory; defaults to the scratch `figures/` but callers regen-
+    erating into the committed `portfolio/figures/` pass it explicitly.
+    """
 
     def best_seed_checkpoint() -> Path:
         best_path, best_acc = None, -1.0
@@ -151,11 +188,14 @@ def exp2_figures(checkpoint_dir: Path, seeds: list[int], args: argparse.Namespac
     history = ckpt["history"]
     modulus = args.modulus
 
+    normalize_embed, use_layernorm = arch_for_protocol(args.protocol)
     model = OneLayerTransformer(
         d_model=args.d_model,
         d_mlp=args.d_mlp,
         n_heads=args.n_heads,
         modulus=modulus,
+        normalize_embed=normalize_embed,
+        use_layernorm=use_layernorm,
     )
     model.load_state_dict(ckpt["model"])
 
@@ -167,18 +207,19 @@ def exp2_figures(checkpoint_dir: Path, seeds: list[int], args: argparse.Namespac
     fourier_result = fourier_decompose_embeddings(model.embed.weight.data.detach().cpu(), modulus)
     ablation = run_ablation_sweep(model, val_loader, fourier_result, modulus)
 
-    plot_grokking_curve(history, save_path=FIGURES_DIR / "exp2_grokking_curve.png")
+    figures_dir = Path(getattr(args, "figures_dir", FIGURES_DIR))
+    plot_grokking_curve(history, save_path=figures_dir / "exp2_grokking_curve.png")
     plot_fourier_weights(
         fourier_result,
         modulus=modulus,
-        save_path=FIGURES_DIR / "exp2_fourier_weights.png",
+        save_path=figures_dir / "exp2_fourier_weights.png",
     )
     plot_ablation_curve(
         ablation,
         modulus=modulus,
-        save_path=FIGURES_DIR / "exp2_frequency_ablation.png",
+        save_path=figures_dir / "exp2_frequency_ablation.png",
     )
-    plot_progress_measures(history, save_path=FIGURES_DIR / "exp2_progress_measures.png")
+    plot_progress_measures(history, save_path=figures_dir / "exp2_progress_measures.png")
 
 
 # experiment -> (launch config, notes, metrics extractor, figure regenerator).
@@ -248,6 +289,20 @@ def main() -> None:
     parser.add_argument("--seeds", default="0,1,2")
     parser.add_argument("--output", default=None)
     parser.add_argument(
+        "--protocol",
+        default="repo",
+        choices=sorted(PROTOCOL_ARCH),
+        help="Training protocol the checkpoints were produced with: selects the "
+        "model architecture (embedding re-normalization, LayerNorm) used to "
+        "load them. A checkpoint cannot be loaded with the wrong architecture.",
+    )
+    parser.add_argument(
+        "--figures-dir",
+        default=str(FIGURES_DIR),
+        help="Directory the figure regenerator writes to (default: the scratch "
+        "figures/; pass portfolio/figures/ to regenerate the committed set).",
+    )
+    parser.add_argument(
         "--start-ts",
         default=None,
         help="ISO launch timestamp of the parallel runs (from the heartbeat "
@@ -266,8 +321,12 @@ def main() -> None:
     checkpoint_dir = Path(args.checkpoint_dir)
     seeds = [int(s) for s in args.seeds.split(",") if s.strip()]
     prefix = args.experiment.split("_")[0]
+    # The protocol is not part of a launch config; it travels with the
+    # checkpoint set being re-analysed.
     run_args = dict(launch_args)
-    run_args.update({"seeds": seeds, "checkpoint_dir": args.checkpoint_dir})
+    run_args.update(
+        {"seeds": seeds, "checkpoint_dir": args.checkpoint_dir, "protocol": args.protocol}
+    )
 
     per_seed = [
         metrics_fn(checkpoint_dir / f"{prefix}_checkpoint_seed{seed}.pt", args) for seed in seeds
