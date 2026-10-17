@@ -9,16 +9,16 @@ Guardrails (2026-10-16):
   is recomputed from the embedding and lands in every exp2 re-analysis manifest.
 """
 
+from argparse import Namespace
+
 import torch
 
-from src.experiments.exp2_grokking import OneLayerTransformer
 from scripts.manifest_from_checkpoints import (
     PROTOCOL_ARCH,
     arch_for_protocol,
     exp2_metrics,
 )
-
-from argparse import Namespace
+from src.experiments.exp2_grokking import OneLayerTransformer
 
 
 def _tmp_checkpoint(tmp_path, modulus: int, protocol: str, seed: int = 42) -> str:
