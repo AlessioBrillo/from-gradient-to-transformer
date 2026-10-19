@@ -455,7 +455,7 @@ dissociation probe added 2026-10-19.
 
 **Reference**: Olsson et al., "In-context Learning and Induction Heads," Transformer Circuits Thread (Anthropic), 2022.
 
-**Figures**: `portfolio/figures/exp1_training_bump.png`
+**Figures**: `portfolio/figures/exp1_training_bump.png` — regenerated 2026-10-20 with the corrected detector: the fourth panel is now the **copy-offset** induction mass with the previous-token mass as a control (the old figure plotted the previous-token mass under the label "diag+1"). Quick scale (2L/4H, d_model 24, 150 epochs, fresh batches, seed 0), the configuration the `figures` target pins.
 
 ---
 
@@ -744,9 +744,9 @@ positive control grokked with a sparse Fourier circuit (Rung 2 above), so the
 question "where is the boundary between the sparse circuit and its absence across
 protocol deviations?" is now answerable by a sweep instead of speculation. The
 sweep runner is refactored and tested (delegates to exp2's own protocol code,
-budgets in optimizer steps, records the energy metric); the run itself -- issue
-#168 -- is one command on the free GPU tier. No numbers are cited here until that
-sweep's manifests land.
+budgets in optimizer steps, records the energy metric); the run itself
+(issue #168) is one command on the free GPU tier. No numbers are cited here
+until that sweep's manifests land.
 
 **Moved to v1.1 on 2026-10-19.** The sweep is ten cells × three seeds × 20k
 full-batch steps at P=113 — one to two weeks of the free GPU quota — while the

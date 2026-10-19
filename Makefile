@@ -292,7 +292,10 @@ vault-check:
 # that the tracked documents actually cite. figures/ stays scratch.
 figures:
 	@echo "=== Rebuilding portfolio/figures/ from the manifests ==="
-	uv run python -m src.experiments.exp1_induction_heads --fresh-batches --vocab-size 256 --seq-len 16 --d-model 24 --n-layers 2 --n-heads 4 --epochs 150 --lr 0.001 --weight-decay 0.1 --batch-size 32 --num-train 256 --seeds 0,1,2
+	@echo "note: the exp1 arm writes a scratch manifest (probe_*_quick.json is gitignored),"
+	@echo "so regenerating the figures cannot overwrite the tracked flagship manifest with"
+	@echo "a dirty-tree record."
+	uv run python -m src.experiments.exp1_induction_heads --fresh-batches --vocab-size 256 --seq-len 16 --d-model 24 --n-layers 2 --n-heads 4 --epochs 150 --lr 0.001 --weight-decay 0.1 --batch-size 32 --num-train 256 --seeds 0,1,2 --manifest-path results/probe_exp1_figures_quick.json
 	uv run python -m src.experiments.exp3_superposition --epochs 600 --num-samples 8000 --batch-size 512 --single-sparsity 0.01 --seeds 0,1,2
 	uv run python -m src.experiments.exp4_circuit_patching --quick --seeds 0,1,2
 	uv run python -m src.experiments.exp5_sae_dashboard --quick
