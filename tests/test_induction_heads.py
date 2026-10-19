@@ -566,6 +566,126 @@ class TestCheckpointResume:
         assert len(hist["val_acc"]) == 2
 
 
+class TestEarlyStopAndCheckpoint:
+    """The early stop, the stop rule, and the checkpoint it must leave behind.
+
+    The 2026-10-19 GPU run found all three of these the hard way: the stop
+    fired at epoch 100 while the rolling checkpoint was written every 250
+    epochs, so the checkpoint the confirmation produced did not exist and the
+    Rung 4 step had nothing to load. The rules are pinned here so the cascade
+    cannot break again silently.
+    """
+
+    @staticmethod
+    def _planted_model():
+        """An attention-only model with a first-layer copy head planted.
+
+        The head attends to `q - (L-1)`, the copy offset of the data the
+        detector reads (L = seq_len/2, the generator's layout), so the
+        detector confirms it on the mass alone (the first layer has no
+        earlier layer to compose with) — exactly the object the "any" stop
+        rule fires on and the "mechanism" rule does not.
+        """
+        from src.experiments.exp1_induction_heads import AttentionOnlyTransformer
+
+        torch.manual_seed(0)
+        vocab, seq_len, d_model = 64, 16, 16
+        prefix_len = seq_len // 2
+        model = AttentionOnlyTransformer(
+            vocab_size=vocab, d_model=d_model, n_layers=2, n_heads=1, max_seq_len=seq_len
+        )
+        with torch.no_grad():
+            model.embed.weight.zero_()
+            model.pos_embed.weight.copy_(
+                torch.eye(model.pos_embed.num_embeddings, d_model)
+            )
+            block = model.blocks[0]
+            w_q = torch.zeros(d_model, d_model)
+            for i in range(prefix_len - 1, model.pos_embed.num_embeddings):
+                w_q[i - (prefix_len - 1), i] = 8.0
+            w_q[0, 0] = 8.0
+            block.W_Q.weight.copy_(w_q)
+            block.W_K.weight.copy_(torch.eye(d_model))
+        return model, vocab, seq_len
+
+    @staticmethod
+    def _loaders(vocab: int, seq_len: int):
+        train, val = make_repeated_token_data(
+            vocab_size=vocab, seq_len=seq_len, num_train=16, num_val=8, seed=0
+        )
+        return (
+            DataLoader(train, batch_size=8, shuffle=True),
+            DataLoader(val, batch_size=8, shuffle=False),
+        )
+
+    def test_stop_rule_any_fires_on_a_first_layer_copy_head(self) -> None:
+        model, vocab, seq_len = self._planted_model()
+        train_loader, val_loader = self._loaders(vocab, seq_len)
+        history = train_model(
+            model=model,
+            train_loader=train_loader,
+            val_loader=val_loader,
+            epochs=6,
+            lr=0.0,  # keep the planted weights planted
+            weight_decay=0.0,
+            seed=0,
+            detect_every=1,
+            stop_on_confirmed=True,
+            stop_rule="any",
+        )
+        assert history["confirmed_epoch"] == 2.0, (
+            "the stop must fire on the second consecutive confirmation"
+        )
+        assert len(history["val_acc"]) == 2, "the run must stop at the confirmation"
+
+    def test_stop_rule_mechanism_ignores_a_first_layer_copy_head(self) -> None:
+        """A first-layer copy head is not the two-step circuit.
+
+        The model confirms one on the mass alone, but with the mechanism
+        rule the run must continue to the full budget — stopping there would
+        answer a different question than the rung asks.
+        """
+        model, vocab, seq_len = self._planted_model()
+        train_loader, val_loader = self._loaders(vocab, seq_len)
+        history = train_model(
+            model=model,
+            train_loader=train_loader,
+            val_loader=val_loader,
+            epochs=6,
+            lr=0.0,
+            weight_decay=0.0,
+            seed=0,
+            detect_every=1,
+            stop_on_confirmed=True,
+            stop_rule="mechanism",
+        )
+        assert history["confirmed_epoch"] == -1.0, "the mechanism rule must not fire"
+        assert len(history["val_acc"]) == 6, "the run must run its full budget"
+
+    def test_the_confirmation_point_writes_the_checkpoint(self, tmp_path) -> None:
+        """The checkpoint the cascade loads must exist even when the stop
+        fires before the first `checkpoint_every` boundary."""
+        model, vocab, seq_len = self._planted_model()
+        train_loader, val_loader = self._loaders(vocab, seq_len)
+        history = train_model(
+            model=model,
+            train_loader=train_loader,
+            val_loader=val_loader,
+            epochs=6,
+            lr=0.0,
+            weight_decay=0.0,
+            seed=0,
+            detect_every=1,
+            stop_on_confirmed=True,
+            stop_rule="any",
+            checkpoint_dir=str(tmp_path),
+            checkpoint_every=1000,  # never reached on its own
+        )
+        assert history["confirmed_epoch"] == 2.0
+        ckpt = tmp_path / "exp1_checkpoint_seed0.pt"
+        assert ckpt.exists(), "the confirmation point must write the checkpoint"
+
+
 class TestConfigPresets:
     """The named presets are pinned configs; a silent preset regression is a
     run with the wrong shape. Extracted from main() so this is checkable
