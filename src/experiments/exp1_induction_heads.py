@@ -401,6 +401,7 @@ def train_model(
     schedule_epochs: Optional[int] = None,
     detect_every: int = 50,
     stop_on_confirmed: bool = False,
+    stop_rule: str = "mechanism",
     detect_patience: int = 2,
     prefix_len: Optional[int] = None,
     composition_threshold: float = COMPOSITION_THRESHOLD,
@@ -438,12 +439,23 @@ def train_model(
     Detection cadence and early stop: every `detect_every` epochs the
     detector runs on the validation set and the result is recorded in the
     history (`induction_mass`, `prev_token_mass`, `composition_score`,
-    `confirmed`). With `stop_on_confirmed` the run stops as soon as a head
-    has been confirmed at `detect_patience` consecutive checks — the
-    positive case is bounded by the mechanism rather than by the wall
-    clock, while the negative case still runs the *full* pre-registered
-    budget (a shorter budget would reproduce exactly the under-trained
-    false negatives this repository's audit history keeps finding).
+    `confirmed`). With `stop_on_confirmed` the run stops as soon as the stop
+    rule fires at `detect_patience` consecutive checks — the positive case
+    is bounded by the mechanism rather than by the wall clock, while the
+    negative case still runs the *full* pre-registered budget (a shorter
+    budget would reproduce exactly the under-trained false negatives this
+    repository's audit history keeps finding).
+
+    The stop rule is `stop_rule`:
+
+    * `"mechanism"` (default) — stop only when a head in a layer **above
+      the first** is confirmed, i.e. when the two-step circuit (Nanda's
+      duplicate head + K-composition) is actually there. A copy head in the
+      first layer has no earlier layer to compose with, so it is confirmed
+      on the mass alone; on this periodic task the model forms exactly that
+      (a fixed-offset copy) within 50 epochs, and stopping there would
+      answer a different question than the rung asks.
+    * `"any"` — stop on any confirmed head, first layer included.
     """
     set_seed(seed)
     model = model.to(DEVICE)
@@ -485,6 +497,7 @@ def train_model(
         "prev_token_mass": [],
         "composition_score": [],
         "confirmed": [],
+        "mechanism_confirmed": [],
         "detect_checked": [],
     }
     # A scalar, not a list: the epoch at which the mechanism was confirmed
@@ -542,6 +555,7 @@ def train_model(
         # Attention metrics and head detection, on the same cadence.
         checked = bool(detect_every > 0 and (epoch + 1) % detect_every == 0)
         confirmed = False
+        mechanism_confirmed = False
         composition = 0.0
         if checked:
             report, _patterns, _tokens = detect_from_loader(
@@ -555,6 +569,10 @@ def train_model(
             prev_token_mass = report.peak("prev_token")
             composition = report.best_composition
             confirmed = report.confirmed_count > 0
+            # "the circuit is there": a confirmed head above the first layer
+            # (which is the only kind that needed the composition to be
+            # confirmed in the first place).
+            mechanism_confirmed = any(len(h) > 0 for h in report.confirmed[1:])
         elif (epoch + 1) % 50 == 0:
             # Detection off (`--detect-every 0`): the cheap metric-only
             # cadence, kept so the training curves still show the signal.
@@ -567,6 +585,11 @@ def train_model(
             induction_mass = history["induction_mass"][-1] if history["induction_mass"] else 0.0
             prev_token_mass = history["prev_token_mass"][-1] if history["prev_token_mass"] else 0.0
             confirmed = bool(history["confirmed"][-1]) if history["confirmed"] else False
+            mechanism_confirmed = (
+                bool(history["mechanism_confirmed"][-1])
+                if history["mechanism_confirmed"]
+                else False
+            )
 
         history["train_loss"].append(train_loss)
         history["val_loss"].append(val_loss)
@@ -576,6 +599,7 @@ def train_model(
         history["prev_token_mass"].append(prev_token_mass)
         history["composition_score"].append(composition)
         history["confirmed"].append(1.0 if confirmed else 0.0)
+        history["mechanism_confirmed"].append(1.0 if mechanism_confirmed else 0.0)
         history["detect_checked"].append(1.0 if checked else 0.0)
 
         if _wandb is not None:
@@ -617,9 +641,28 @@ def train_model(
             logger.info(f"Checkpoint saved: {ckpt_path} (epoch {epoch + 1})")
 
         if stop_on_confirmed and checked:
-            consecutive_confirmations = consecutive_confirmations + 1 if confirmed else 0
+            stop_fired = confirmed if stop_rule == "any" else mechanism_confirmed
+            consecutive_confirmations = consecutive_confirmations + 1 if stop_fired else 0
             if consecutive_confirmations >= detect_patience:
                 history["confirmed_epoch"] = float(epoch + 1)
+                # The rolling checkpoint may not exist yet: the confirmation
+                # can land *before* the first `checkpoint_every` boundary (the
+                # standard run confirmed a head at epoch 100 with a 250-epoch
+                # checkpoint interval). Writing it here is what makes the
+                # cascade runnable — Rung 4 analyses the checkpoint of the
+                # model that was confirmed, not a stale one.
+                if ckpt_path is not None:
+                    save_training_checkpoint(
+                        ckpt_path,
+                        epoch,
+                        model,
+                        optimizer,
+                        scheduler,
+                        history,
+                        torch.random.get_rng_state(),
+                        arch=architecture_metadata(model),
+                    )
+                    logger.info(f"Checkpoint saved at the confirmation point: {ckpt_path}")
                 logger.info(
                     f"Early stop: an induction head was confirmed at "
                     f"{consecutive_confirmations} consecutive checks "
@@ -1023,10 +1066,22 @@ def _headline_metrics(
     )
     epochs_run = float(len(history["val_acc"]))
     steps_per_epoch = float(history.get("steps_per_epoch", 0.0))
+    # Where the confirmed heads live. The split matters: a copy head in the
+    # *first* layer has no earlier layer to compose with (so it is confirmed
+    # on the mass alone), while a head in a later layer is confirmed only
+    # when the K-composition mechanism agrees — so "how many in layer 0" and
+    # "how many above it" are two different claims.
+    first_layer = len(induction_heads[0]) if induction_heads else 0
+    later_layers = total_induction - first_layer
     metrics = {
         "final_val_acc": float(history["val_acc"][-1]),
         "total_induction_heads": float(total_induction),
         "total_mass_heads": float(report.screen_count if report is not None else total_induction),
+        "confirmed_heads_first_layer": float(first_layer),
+        "confirmed_heads_later_layers": float(later_layers),
+        "mechanism_confirmed": float(
+            bool(report is not None and any(len(h) > 0 for h in report.confirmed[1:]))
+        ),
         "peak_induction_mass": peak_induction,
         "peak_prev_token_mass": peak_prev_token,
         "k_composition_score": float(diagnosis["step2_k_composition"]),
@@ -1131,6 +1186,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         resume_from=resume_from,
         detect_every=getattr(args, "detect_every", 50),
         stop_on_confirmed=getattr(args, "stop_on_confirmed", False),
+        stop_rule=getattr(args, "stop_rule", "mechanism"),
         detect_patience=getattr(args, "detect_patience", 2),
         prefix_len=prefix_length_for(args.seq_len),
     )
@@ -1342,10 +1398,22 @@ def build_parser() -> argparse.ArgumentParser:
         "--stop-on-confirmed",
         action="store_true",
         help=(
-            "Stop training as soon as a head has been confirmed at "
+            "Stop training as soon as the stop rule fires at "
             "--detect-patience consecutive checks. The positive case is then "
             "bounded by the mechanism; the negative case still runs the full "
             "pre-registered budget."
+        ),
+    )
+    parser.add_argument(
+        "--stop-rule",
+        choices=["mechanism", "any"],
+        default="mechanism",
+        help=(
+            "What counts as 'confirmed' for the early stop. 'mechanism' (the "
+            "default) requires a confirmed head above the first layer, i.e. "
+            "the two-step circuit; 'any' also stops on a first-layer copy "
+            "head, which on this periodic task the model forms within 50 "
+            "epochs and which is not the circuit the rung is about."
         ),
     )
     parser.add_argument(
@@ -1585,6 +1653,7 @@ def main() -> None:
             resume_from=run_resume_from,
             detect_every=args.detect_every,
             stop_on_confirmed=args.stop_on_confirmed,
+            stop_rule=args.stop_rule,
             detect_patience=args.detect_patience,
             prefix_len=prefix_length_for(args.seq_len),
         )

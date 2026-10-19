@@ -440,6 +440,10 @@ the conclusion are unchanged; the values are not. See the Honesty Ledger's
 > previous-token control, the duplicate mass and the K-composition score, and
 > the standard-scale run that will produce the corrected numbers is issue
 > #169.
+>
+> *The manifests behind these rows record the same quantity under the old key
+> `peak_diag1_mass` — it is the previous-token mass, renamed in the table above
+> for what it actually measures.*
 
 **Features**: attention entropy tracking, the induction signal on the copy offset plotted
 (metric scale consistent with the detection threshold) with the previous-token mass as a

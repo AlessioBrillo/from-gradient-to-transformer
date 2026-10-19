@@ -65,13 +65,17 @@ lint-fix:
 # work, not something to silently claim fixed. Tracked as follow-up. Unlike
 # `|| true`, this still fails on a genuine mypy crash (exit 2) — see
 # .github/workflows/python-ci.yml for why that distinction matters.
+# `python -m mypy`, not the `mypy` console script: on Windows the
+# console-script shims are blocked by Application Control (os error 4551),
+# so the local mirror of this gate could not run the very commands the
+# Woodpecker pipeline runs. The module invocation works everywhere.
 typecheck:
-	@uv run mypy src/ --ignore-missing-imports; code=$$?; \
+	@uv run python -m mypy src/ --ignore-missing-imports; code=$$?; \
 	if [ $$code -eq 2 ]; then echo "mypy crashed (exit 2) — failing."; exit 1; fi; \
 	exit 0
 
 typecheck-strict:
-	uv run mypy src/ --ignore-missing-imports
+	uv run python -m mypy src/ --ignore-missing-imports
 
 # Blocking: a small, deliberately-growing allowlist of modules held to
 # `mypy --strict` with zero tolerance from the day they were written. New
@@ -84,7 +88,7 @@ typecheck-strict:
 # errors in whatever these two files transitively import (caught in CI —
 # see .github/workflows/python-ci.yml's blocking step comment).
 typecheck-new:
-	uv run mypy src/results.py src/experiments/runner.py --ignore-missing-imports --follow-imports=silent
+	uv run python -m mypy src/results.py src/experiments/runner.py --ignore-missing-imports --follow-imports=silent
 
 # --- CI mirror (local replica of .github/workflows/python-ci.yml) ---
 # commitlint-head is part of the mirror since 2026-08-08: the PR-only

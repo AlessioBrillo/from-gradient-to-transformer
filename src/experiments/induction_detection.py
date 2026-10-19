@@ -64,7 +64,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, cast
 
 import numpy as np
 import torch
@@ -227,8 +227,8 @@ def model_logits(model: nn.Module, x: torch.Tensor) -> torch.Tensor:
     """
     out = model(x)
     if isinstance(out, tuple):
-        return out[0]
-    return out
+        return cast(torch.Tensor, out[0])
+    return cast(torch.Tensor, out)
 
 
 def _supports(model: nn.Module, kwarg: str) -> bool:
@@ -736,8 +736,12 @@ def run_dissociation_probe(
         p_triples: list[tuple[int, int, int]] = []
         keys_c = content_key.detach().cpu().numpy()
         keys_p = period_key.detach().cpu().numpy()
+        # The attention matrix has one position per *input* token; the key
+        # arrays carry one extra column (the last token is the target, not an
+        # input), so the loop is bounded by the attention width.
+        seq_len = min(keys_c.shape[1], probs.shape[-1])
         for b in range(keys_c.shape[0]):
-            for q in range(keys_c.shape[1]):
+            for q in range(seq_len):
                 if keys_c[b, q] < 0:
                     continue
                 c_triples.append((b, q, int(keys_c[b, q])))

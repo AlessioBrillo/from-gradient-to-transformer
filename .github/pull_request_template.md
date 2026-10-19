@@ -4,7 +4,7 @@
 
 ## Evidence
 
-- [ ] `uv run pytest` and `uv run ruff check src/ tests/` pass
+- [ ] `uv run python -m pytest` and `uv run ruff check src/ tests/` pass
 - [ ] `uv run python -m src.results verify` passes: every number in `portfolio/RESULTS.md`
       or the paper points at a committed `results/*.json` manifest
 - [ ] No test writes into `results/` (use `tmp_path` or `--manifest-path`)
