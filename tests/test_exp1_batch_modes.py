@@ -76,7 +76,7 @@ def test_batch_mode_reaches_the_metrics() -> None:
     the comparison produced it — and the two arms differ by two orders of
     magnitude in validation accuracy."""
     metrics = exp1._headline_metrics(
-        {"val_acc": [0.5], "diag1_mass": [0.1]},
+        {"val_acc": [0.5], "induction_mass": [0.1], "prev_token_mass": [0.05]},
         [],
         {"step2_k_composition": 0.0, "step1_l0_duplicate_mass": []},
     )

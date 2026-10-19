@@ -10,9 +10,20 @@
 #
 # Pre-registered interpretation (issue #168):
 #   - NOT_GROKKED: val_acc < 0.99 at final step (under-trained / broken)
-#   - GROKKED + SPARSE: energy_sparse mean >= 0.5 on 3/3 seeds (the criterion)
-#   - GROKKED + DENSE: val_acc >= 0.99 but energy_sparse < 0.5
+#   - GROKKED + SPARSE: every seed sparse (3/3) under the energy metric
+#   - GROKKED + MIXED: 1 or 2 of 3 seeds sparse — a boundary cell, reported
+#     as such (never folded into SPARSE)
+#   - GROKKED + DENSE: no seed sparse (0/3)
 # The L1-mass k_99 is recorded for continuity only; it never classifies.
+#
+# Clarified 2026-10-19, BEFORE any cell of this sweep had ever been run:
+# the runner used to compare the aggregate mean against 0.5 (a majority
+# rule) while this comment said "3/3 seeds", and the disagreement was
+# invisible because no cell had been executed. The taxonomy above is the
+# one that will be applied; the per-seed count (k/3) is reported next to
+# every cell so no reader has to infer it from an aggregate. The P=113
+# positive control clears the SPARSE bar at 3/3, so the bar is the same one
+# the control meets.
 #
 # Baseline: Nanda-faithful at P=113, wd=1.0, 20k steps (gen-epoch measured at
 # ~5919±547 on job A, so 20k gives >3x headroom).

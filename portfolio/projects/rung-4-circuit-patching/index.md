@@ -17,18 +17,18 @@ rung: 4
 
 **Key Result**:
 <!-- manifest: results/exp4_circuit_patching.json -->
-Quick-mode 3-seed manifest: mean activation-patching recovery ~0.20 across 10 layer/position combos with 0/4 heads detected in all 3 seeds (2 layers by 2 heads — corrected 2026-09-06; the earlier `0/8` conflated this config with Rung 1's 2-by-4) — a real, small, consistent circuit sensitivity, just not concentrated enough in one head to cross the 0.3 threshold. Head ablation and path patching skipped again (no head to target): path patching remains validated by unit tests only.
+Quick-mode 3-seed manifest: mean activation-patching recovery ~0.20 across 10 layer/position combos — a real, small, consistent circuit sensitivity. The "0/4 heads" figure this rung carried is **retracted** (2026-10-19): the detector measured the strict upper triangle of a causal softmax, which is identically zero, so it could never fire on any model. Head ablation and path patching were therefore never given a target: path patching remains validated by unit tests only. Since 2026-10-19 the rung analyses Rung 1's own checkpoint (`--from-checkpoint`) instead of training a second model under the same claim.
 
 **Figures**:
 ![Attention Patterns](../../figures/exp4_attention_patterns.png) <!-- manifest: results/exp4_circuit_patching.json -->
 ![Patching Results](../../figures/exp4_patching_results.png) <!-- manifest: results/exp4_circuit_patching.json -->
 Head-ablation figure struck: ablation is skipped whenever 0 heads are detected, so there is no result to plot — struck rather than left dangling.
 
-**Reproduce**: `uv run python -m src.experiments.exp4_circuit_patching --quick` (smoke test) or `--quick --seeds 0,1,2` for the manifest config.
+**Reproduce**: `uv run python -m src.experiments.exp4_circuit_patching --quick` (smoke test) or `--quick --seeds 0,1,2` for the manifest config. For the cascade: `--from-checkpoint checkpoints/induction_standard --source-* ...`.
 
 **Limitations**:
-- Gated on Rung 1 producing confirmed induction heads (0/8 at Rung 1 scale; 0/4 in this rung's own quick config, so far)
-- No real circuit discovery yet — infrastructure ready, awaiting real heads
+- Gated on Rung 1 producing a confirmed head (the standard-scale run, issue #169) — the quick config is far below any threshold
+- No real circuit discovery yet — infrastructure ready, awaiting a real head
 
 **Links**:
 - [RESULTS](../../RESULTS.md) — my honesty ledger and per-rung numbers

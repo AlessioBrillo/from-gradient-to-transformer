@@ -13,12 +13,95 @@ smoke tests (`make reproduce-quick`) and a full-scale mode (`make reproduce`).
 
 ## Honesty Ledger
 
-Six audits have now caught real problems in this repository's causal claims and
-evidence base. Five found claims that were wrong or unbacked; the sixth found a
+Seven audits have now caught real problems in this repository's causal claims and
+evidence base. Six found claims that were wrong or unbacked; the seventh found a
 claim that was **right and had been called wrong by its own metric**. All entries
 stay here — the point of this section is to make it easy to see the trend (are
 correctness problems getting caught faster, or accumulating?), not to keep only
 the latest one.
+
+### 2026-10-19 — The induction detector measured the *previous-token* head: every "0 / N heads" was a statement about the detector
+
+The seventh audit, and the one that reaches furthest back: it invalidates the
+head counts this repository has published since 2026-08-02 — not by finding them
+wrong, but by finding that **the thing that measured them measured a different
+circuit**.
+
+**What was broken.** Two detectors, both wrong, in different ways:
+
+- `exp1_induction_heads.analyze_induction_heads` and
+  `compute_attention_entropy` measured the attention mass on the offset
+  `q → q-1` — the **previous token** — and called it "diag+1". On this task's
+  `prefix + prefix` layout the induction (copy) offset is `q → q-L+1`, where
+  `L` is the prefix length: at a second-copy query `q`, the token `x[q]` has
+  its previous occurrence at `q-L`, and the token to copy sits one position
+  later. A head that attends to `q-1` is a different circuit, and it does not
+  copy the repeated token at all.
+- `exp4_circuit_patching.detect_induction_heads` measured
+  `attn_probs.diagonal(offset=1)` — the strict upper triangle of a *causal*
+  softmax, which is identically zero. That detector could never fire, on any
+  model, at any scale.
+
+**Why it survived a year of audits.** The planted tests planted the same wrong
+pattern: `_planted_patterns` put the mass on `q-1` and asserted it was
+detected. A test that encodes the bug passes the bug — and the "0 / 8 heads"
+headline it protected was, all along, the detector's verdict.
+
+**What it invalidates.** Every head count this repository has published —
+"0 / 8" at Rung 1 (2 layers × 4 heads), "0 / 4" at Rung 4 (2 layers × 2
+heads, three seeds) — is retracted as *uninterpretable*: it is a statement
+about the detector, not about the model. The numbers are not "wrong" in the
+direction they point (no head was confirmed, and the planted tests still show
+the previous-token head is not an induction head); they are simply not
+measurements of induction.
+
+**What replaced it.** One detector, shared by Rungs 1, 4 and 5
+(`src/experiments/induction_detection.py`):
+
+- the **induction mass** on the copy offset `q-(L-1)`, averaged over the
+  *collision-free* queries only (those whose nearest previous occurrence is
+  exactly `q-L`), so the ambiguous positions in a prefix that contains a
+  repeated token neither dilute nor inflate it;
+- the **previous-token mass** on `q-1`, kept as an explicitly labelled
+  control — the number the old detector called "diag+1";
+- the **duplicate mass** on `q-L` (Nanda's Step 1) and the **content mass**
+  on `prev(q)+1`;
+- **confirmation** requires the mechanism, not just the mass: a head counts
+  only when its layer is composed with an earlier layer at a K-composition
+  score ≥ 0.4 (the first layer has no earlier layer and is confirmed on the
+  mass alone, and the report says so).
+
+The planted tests were rebuilt around the *task layout*: the copy offset must
+fire; the previous-token offset, the duplicate offset, an off-by-one, uniform
+attention and self-attention must not. The same constructions are repeated at
+the weights level, on a real model.
+
+**The caveat that the fix exposes.** On `prefix + prefix` the previous
+occurrence of the current token is *always* at `q-L`, so a circuit that
+copies by content and a circuit that copies by a fixed offset are the same
+function on this task — no in-distribution measurement can separate them, and
+the K-composition score cannot either (it reads the previous occurrence from
+a layer-0 head's argmax, which on a periodic task is the same position). The
+new **dissociation probe** does separate them: it feeds a batch whose second
+half is a *permuted* copy of the prefix, where the content target and the
+fixed offset point at different keys. Until that probe has run on a given
+checkpoint, the honest wording for a detected head is *"prefix-copying head
+at offset L-1"*, not *"induction head"*.
+
+**What it does not change.** Rung 2 (grokking), Rung 3 (superposition) and
+Rung 5's synthetic SAE baseline are untouched — none of them depends on the
+induction detector. The fixed-vs-fresh-batches comparison (53.5% vs 0.45%)
+survives: it is an accuracy measurement, not a head count. What is retracted
+is only the *head-count annotation* on both arms.
+
+**The cascade, finally one model.** Rung 4 used to train its *own*
+decoder-only model while claiming to match exp1's attention-only config, with
+a batch size of 64 against exp1's 128 — so the two "matched" runs took 384k
+and 192k optimizer steps respectively over the same data, and the parity test
+only compared the flags both presets happened to set. `exp4 --from-checkpoint`
+now loads exp1's checkpoint and analyses *that* model; the parity test covers
+the batch size and the step count, and the interventions (activation
+patching, head ablation, path patching) run unchanged on either model family.
 
 ### 2026-10-14 — The NO-GROK verdict was the metric's fault: the sparse circuit was there all along
 
@@ -42,8 +125,9 @@ row 1's NO-GROK stamp is retracted; the Phase 7 capstone gate flips from the
 honest-negative answer to the positive one (as that note's own supersession
 clause required); issue #167 closes; the protocol-ablation phase diagram (#168)
 unblocks from the Nanda-faithful setup. The P=59 positive control (2026-09-27)
-carries the same metric defect and is marked suspect — its checkpoints are gone,
-so re-measuring means re-running, now a one-command GPU job.
+carried the same metric defect and was re-measured on 2026-10-19 (issue #196):
+**2 of 3 seeds sparse** — a MIXED verdict, not the "sparse" label the first
+reading carried. See Rung 2 below for the per-seed numbers.
 
 **What this does not change**: the frequency ablation (keep 59/59 → 0.0000) and
 the generalization-epoch progress measures remain valid evidence; the figures
@@ -316,8 +400,8 @@ currently confirmed; the fixed/fresh comparison below is the only trustworthy sc
 | Epochs | 150 |
 | Train samples | 256 (resampled every epoch, `--fresh-batches`) |
 | Val accuracy | 0.0047 ± 0.0012 (n=3) |
-| Peak diag+1 mass | 0.177 ± 0.006 (n=3) |
-| Induction heads detected (>0.3 threshold) | **0 / 8**, all 3 seeds |
+| Peak previous-token mass (the old "diag+1") | 0.177 ± 0.006 (n=3) |
+| Induction heads detected (>0.3 threshold) | **RETRACTED — uninterpretable** (the detector measured the previous-token offset; see the Honesty Ledger's 2026-10-19 entry) |
 
 **Fixed-vs-fresh-batches, matched 3-seed comparison** (see
 [induction-heads](../04_nlp_and_transformers/notes/induction-heads.md) for the full writeup).
@@ -333,8 +417,8 @@ batch_size=32, num_train=256`).
 | | Fixed (reused every epoch) | Fresh (resampled every epoch) |
 |---|---|---|
 | Final val accuracy | **0.45% ± 0.03%** (n=3) | **53.53% ± 0.03%** (n=3) |
-| Peak diag+1 mass | 0.217 ± 0.010 | 0.201 ± 0.012 |
-| Induction heads (>0.3 threshold) | **0 / 8** | **0 / 8** |
+| Peak previous-token mass (the old "diag+1") | 0.217 ± 0.010 | 0.201 ± 0.012 |
+| Induction heads (>0.3 threshold) | **RETRACTED** (old detector) | **RETRACTED** (old detector) |
 | K-composition score | 0.145 ± 0.011 | 0.157 ± 0.012 |
 
 Both arms are far apart in accuracy — two orders of magnitude, in the same
@@ -346,10 +430,24 @@ documents with no manifest behind it anywhere in `results/`.** The direction and
 the conclusion are unchanged; the values are not. See the Honesty Ledger's
 2026-10-11 entry.
 
-**Features**: attention entropy tracking, diagonal+1 induction signal plotted (metric scale
-consistent with the detection threshold), W&B logging (`--wandb`), model saving
+> **2026-10-19 — the head counts in this section are retracted.** The detector
+> behind the "0 / 8" rows measured the previous-token offset (`q → q-1`) and
+> called it the induction signature; the copy offset on this task is
+> `q → q-L+1`. The rows above are kept (with the old metric relabelled) because
+> the *accuracy* comparison they support is unaffected, but the head-count
+> annotation is not a measurement. The corrected detector
+> (`src/experiments/induction_detection.py`) reports the induction mass, the
+> previous-token control, the duplicate mass and the K-composition score, and
+> the standard-scale run that will produce the corrected numbers is issue
+> #169.
+
+**Features**: attention entropy tracking, the induction signal on the copy offset plotted
+(metric scale consistent with the detection threshold) with the previous-token mass as a
+control, W&B logging (`--wandb`), model saving
 (`--save-model`), loss bump detection, 2×2 training curves plot, `--fresh-batches` (resample
-per epoch) and `--seeds` (multi-seed manifest) added 2026-08-02.
+per epoch), `--detect-every` / `--stop-on-confirmed` (detection cadence and early stop) and
+`--seeds` (multi-seed manifest) added 2026-08-02; the detector and the content-vs-position
+dissociation probe added 2026-10-19.
 
 **Reference**: Olsson et al., "In-context Learning and Induction Heads," Transformer Circuits Thread (Anthropic), 2022.
 
@@ -410,11 +508,33 @@ from the honest negative to the positive (see
 [capstone-gate-honest-negative](../07_capstone/notes/capstone-gate-honest-negative.md),
 superseded 2026-10-14).
 
-**Still open, now smaller**: the P=59 positive control (2026-09-27) was also read only
-through the L1 metric, so its "NO-GROK" label is suspect for the same reason — its
-checkpoints are gone, so re-measuring means re-running (now a one-command GPU job).
-The protocol-ablation phase diagram (issue #168) unblocks on this result and starts
-from the Nanda-faithful setup as designed.
+**The P=59 positive control, re-measured (2026-10-19, issue #196)**: the probe
+was re-run with the post-audit energy metric, on the **repo protocol** (not the
+Nanda config the old note claimed) — `results/grokking_p59_repo_energy.json`,
+3 seeds, CPU, 5000 epochs, batch 128:
+
+<!-- manifest: results/grokking_p59_repo_energy.json -->
+
+| Seed | val accuracy | k_energy_90 (of 29) | k_energy_90 / n_freq | energy_sparse |
+|------|--------------|---------------------|----------------------|---------------|
+| 42 | 1.0000 | 5 | 0.172 | ✅ sparse |
+| 43 | 0.9918 | 8 | 0.276 | ❌ not sparse |
+| 44 | 0.9988 | 7 | 0.241 | ✅ sparse |
+
+**Verdict: MIXED (2 of 3 seeds sparse), not "sparse".** The classification is
+knife-edge — the `is_sparse` convention is "90% of the energy in fewer than
+25% of the frequencies", and seed 44 sits at 0.241 while seed 43 sits at
+0.276 — so the honest reading is "2/3, with one seed's solution slightly
+denser", not the "SPARSE" label the first reading of this probe carried. No
+re-run was attempted to move the label: re-running a seed until it agrees is
+selection, not measurement. The probe's role (a cheap positive control for the
+recipe) is served by P=113, which is 3/3 on both protocols; P=59 is kept here
+as a footnote with its per-seed numbers.
+
+**Still open, now smaller**: the protocol-ablation phase diagram (issue #168)
+unblocks on this result and starts from the Nanda-faithful setup as designed —
+now scheduled for v1.1, with its taxonomy clarified before the first cell runs
+(see the Open Question below).
 
 **Reference**: Nanda et al., "Progress Measures for Grokking via Mechanistic Interpretability," ICLR 2023 (oral).
 
@@ -507,33 +627,37 @@ epochs=500`):
 |--------|--------------------------|
 | Final val accuracy | 0.489 ± 0.014 |
 | Mean activation-patching recovery (10 layer/position combos) | 0.197 ± 0.007 |
-| Induction heads detected | **0 / 4**, all 3 seeds — consistent with Rung 1 at comparable scale |
+| Induction heads detected | **RETRACTED — uninterpretable** (this rung's detector measured `attn_probs.diagonal(offset=1)`, the strict upper triangle of a causal softmax: identically zero. See the Honesty Ledger's 2026-10-19 entry) |
 | Head ablation / path patching | not run (no head to target) |
 
 Dated correction 2026-09-06 (MP-85 Session 0): this row previously read `0 / 8`.
-The manifest ran `n_layers=2, n_heads=2` (4 heads total), so `0 / 4` is correct.
-Rung 1's `0 / 8` (2 layers by 4 heads) is unaffected.
+The manifest ran `n_layers=2, n_heads=2` (4 heads total). Superseded on
+2026-10-19: the count itself was never a measurement — this rung's detector
+could not fire on any model, so "0 / 4" and Rung 1's "0 / 8" were both
+statements about broken code.
 
 Activation patching runs cleanly and finds a real, small, consistent recovery signal
 (~0.20, not zero) even without a detected induction head — some circuit sensitivity exists
-at these (layer, position) combinations, just not concentrated enough in one head to cross
-the 0.3 detection threshold. Because **0 induction heads were detected in all 3 seeds**,
-head ablation and path patching were skipped again — meaning path patching's
-implementation is *still* validated only by its unit tests (self-patch-is-zero,
-runs-and-returns-expected-keys), not by an end-to-end run against a real head. This is now
-the second consecutive confirmation (2026-08-01 quick, 2026-08-02 quick multi-seed) that a
-real head is needed before this validation gap can close — the fix has to come from Rung
-1's scale/fresh-batches work (see above), not from anything in this file.
+at these (layer, position) combinations. Head ablation and path patching were skipped
+again, meaning path patching's implementation is *still* validated only by its unit tests
+(self-patch-is-zero, runs-and-returns-expected-keys), not by an end-to-end run against a
+real head. The fix has to come from Rung 1's standard-scale run (issue #169) with the
+corrected detector — and, since 2026-10-19, with `--from-checkpoint`, so this rung
+analyses the *same model* Rung 1 trained instead of a second one.
 
 **Method**:
-1. Train `DecoderOnlyTransformer` on repeated-token prediction (same task as Rung 1),
-   detect induction heads via diagonal+1 attention mass.
-2. **Residual stream activation patching**: hook the block's `attn` module directly (its
-   output is already post-`W_O`) to override `resid_mid` at a given (layer, position) from
-   a corrupted run — a second, disjoint batch from the same task generator, not a
-   within-sequence permutation (which destroys the induction structure and leaves no
-   well-defined correct answer). Metric: `logits[answer] − logits[counterfactual]` against
-   each batch's real next-token label.
+1. Analyse the model Rung 1 trained (`--from-checkpoint`, the default for the
+   cascade) or train one here; detect induction heads with the shared detector
+   on the copy offset `q-(L-1)`, confirmed by the K-composition mechanism.
+2. **Residual stream activation patching**: hook the block's attention module
+   (its output is already post-`W_O`) to override `resid_mid` at a given (layer,
+   position) from a corrupted run — a second, disjoint batch from the same task
+   generator, not a within-sequence permutation (which destroys the induction
+   structure and leaves no well-defined correct answer). Metric:
+   `logits[answer] − logits[counterfactual]` against each batch's real
+   next-token label. The attention-only model (no MLP) is patched by
+   overriding the block output at the target position, which is the exact
+   analogue of the same intervention.
 3. **Path patching**: isolate a single head's *direct* effect on the logits by decomposing
    `attn_out` through `W_O`'s per-head column blocks and swapping only that head's
    contribution to the final residual stream — everything else (other heads, all MLPs,
@@ -607,7 +731,7 @@ recorded Rung-5 pending item.
 
 ---
 
-## Open Question — Solution-Regime Phase Diagram (protocol ablation, unblocked 2026-10-14)
+## Open Question — Solution-Regime Phase Diagram (protocol ablation, unblocked 2026-10-14; scheduled for v1.1)
 
 **Status**: [ ] No claim yet — but no longer *blocked*. The 2026-10-08 audit removed
 the earlier draft (a 100-epoch test manifest, empty aggregate, models that had not
@@ -616,8 +740,33 @@ positive control grokked with a sparse Fourier circuit (Rung 2 above), so the
 question "where is the boundary between the sparse circuit and its absence across
 protocol deviations?" is now answerable by a sweep instead of speculation. The
 sweep runner is refactored and tested (delegates to exp2's own protocol code,
-budgets in optimizer steps, records the energy metric); the run itself -- issue #168 -- is one command on the free GPU tier. No numbers are cited here until that
+budgets in optimizer steps, records the energy metric); the run itself -- issue
+#168 -- is one command on the free GPU tier. No numbers are cited here until that
 sweep's manifests land.
+
+**Moved to v1.1 on 2026-10-19.** The sweep is ten cells × three seeds × 20k
+full-batch steps at P=113 — one to two weeks of the free GPU quota — while the
+v1.0 milestone's one open issue (#169, the standard-scale induction run and the
+head validation it unlocks) is still open. The run is therefore scheduled
+*after* #169, not instead of it: the boundary question is worth a milestone of
+its own, and spending the quota on it first would have delayed the rung that
+the milestone is about. Issue #168 was reopened and moved to the v1.1
+milestone for that reason.
+
+**Pre-registered taxonomy, clarified before any cell ran** (2026-10-19): the
+runner used to compare the aggregate mean against 0.5 — a *majority* rule —
+while the configuration file's comment said "3/3 seeds", and the disagreement
+was invisible because no cell had ever been executed. The reading that will be
+applied is the explicit one:
+
+| Label | Meaning |
+|---|---|
+| **SPARSE** | every seed sparse (3/3) — the same bar the P=113 positive control clears |
+| **MIXED** | 1 or 2 of 3 seeds sparse: a *boundary* cell, reported as such and never folded into SPARSE |
+| **DENSE** | no seed sparse (0/3) |
+
+The per-seed count (k/3) and the per-seed `k_energy_90` are reported next to
+every cell, so no reader has to infer them from an aggregate.
 
 ---
 
@@ -637,10 +786,10 @@ sweep's manifests land.
 
 | Rung | Status | Key Result |
 |------|--------|------------|
-| 1 — Induction Heads (fallback flagship) | ⚠️ Task design fixed, memorization confirmed, no head yet | Fresh-batches: 53.5% val acc vs. fixed dataset's 0.45% (matched 800-epoch comparison); 0/8 heads either way at this scale |
+| 1 — Induction Heads (fallback flagship) | ⚠️ Task design fixed, memorization confirmed; **the head counts are retracted (2026-10-19)** — the detector measured the wrong offset | Fresh-batches: 53.5% val acc vs. fixed dataset's 0.45% (matched 800-epoch comparison); the "0/8 heads" rows were statements about the detector, not the model. The corrected detector + the standard-scale run (issue #169) are the open work |
 | 2 — Grokking (primary flagship) | ✅ **REPRODUCED 2026-10-14** (the 2026-08-11 NO-GROK was a metric artifact) | Nanda protocol, P=113, GPU, 3 seeds: val accuracy 0.9999 ± 0.0002, **k_energy_90 = 5.7 ± 1.2 of 56 — sparse on 3/3 seeds**; the historical repo protocol re-reads the same way |
 | 3 — Superposition | ✅ Phase transition confirmed | Root cause found (no real bottleneck); rewritten, reproduces cleanly: 10/20 → 20/20 features represented |
-| 4 — Circuit Patching | ⚠️ Fixed 2026-08-01, quick multi-seed re-run 2026-08-02 | See Rung 4 above for the current numbers; path patching still only unit-tested, no real head to validate against yet |
+| 4 — Circuit Patching | ⚠️ Fixed 2026-08-01; **the "0/4 heads" row retracted 2026-10-19** (the detector was identically zero) | Activation patching runs cleanly (recovery ≈ 0.20 at quick scale); path patching still only unit-tested, no real head to validate against yet. Since 2026-10-19 the rung analyses Rung 1's *own* checkpoint (`--from-checkpoint`) |
 | 5 — SAE Dashboard | ✅ Synthetic reproduced; ⚠️ real-activation upgrade shipped | Real: 99.97% FVE but 53% L0 (dense, not sparse) — informative gap, not yet a clean win |
 | 6 — ACDC | ❌ Deleted | Was fabricated data; removed 2026-08-01 rather than fixed |
 
@@ -655,9 +804,10 @@ synthetic FVE/MSE numbers — reproduced and architecturally simple; the
 real-activation numbers are real but need a better checkpoint (one with a confirmed
 induction head) before the sparsity gap means anything conclusive. (4) Rung 1's
 fixed-vs-fresh comparison — a real, large, matched effect, though at a scale still
-well below standard. (5) Rung 4's quick multi-seed re-run — internal consistency
-confirmed (activation patching runs cleanly, matches Rung 1's "0 heads" finding) but
-path patching remains unvalidated against a real head. The standard-scale induction
-run that would close Rung 1, 4 and 5's shared gap is a one-command GPU job
-(`make remote-run-induction`) — in queue on the same free tier that just reversed
-the flagship verdict.
+well below standard. (5) Rung 4's quick multi-seed re-run — activation patching
+runs cleanly; path patching remains unvalidated against a real head. The
+standard-scale induction run that would close Rung 1, 4 and 5's shared gap is a
+one-command GPU job (`make remote-run-induction`) — the notebook now measures
+its own throughput first, runs the canonical standard config before the scaled
+one, stops a seed as soon as a head is confirmed, and analyses **the same
+checkpoint** at Rungs 4 and 5 instead of training a second model.

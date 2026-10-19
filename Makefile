@@ -33,11 +33,16 @@ sync:
 	uv sync
 
 # --- Testing ---
+# `python -m pytest`, not the `pytest` console script: on Windows the
+# console-script shim is blocked by Application Control (os error 4551), so
+# `make test` failed on the dev machine while the Docker-based Woodpecker
+# gate (which runs the same targets) stayed green. The module invocation
+# works everywhere and changes nothing about what runs.
 test:
-	uv run pytest -v --tb=short
+	uv run python -m pytest -v --tb=short
 
 test-cov:
-	uv run pytest -v --tb=short --cov=src --cov-report=term-missing
+	uv run python -m pytest -v --tb=short --cov=src --cov-report=term-missing
 # --- Linting ---
 # scripts/ joined src/ and tests/ on 2026-10-11. It had been silently out of
 # scope, which is how a real NameError (fourier_ablation, undefined at
@@ -149,7 +154,7 @@ reproduce-quick:
 # executes is a notebook that rots, which is what happened to v22.
 reproduce-notebook:
 	@echo "=== Executing the capstone teaching artifact ==="
-	uv run pytest tests/test_teaching_artifact.py -v
+	uv run python -m pytest tests/test_teaching_artifact.py -v
 
 reproduce-grokking:
 	@echo "=== Rung 2: Grokking modular addition (FLAGSHIP) ==="

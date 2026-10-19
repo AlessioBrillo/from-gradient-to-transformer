@@ -162,6 +162,49 @@ class CellResult:
     per_seed: list[dict[str, float]] = field(default_factory=list)
     wall_clock_seconds: float = 0.0
 
+    def sparse_seed_count(self) -> Optional[int]:
+        """How many seeds were classified sparse (one 0/1 per seed).
+
+        The energy metric is a per-seed verdict; the aggregate carries its
+        mean, so the count is recovered from `mean * n`.
+        """
+        if self.energy_sparse is not None and self.energy_sparse.get("n", 0):
+            return int(round(self.energy_sparse["mean"] * self.energy_sparse["n"]))
+        return None
+
+    def regime(self) -> str:
+        """SPARSE / MIXED / DENSE — the pre-registered taxonomy.
+
+        Clarified on 2026-10-19, *before* any sweep cell had ever run, so
+        this is a pre-run clarification and not a goalpost move:
+
+        * **SPARSE** — every seed was sparse (3/3), the same bar the P=113
+          positive control clears;
+        * **MIXED** — 1 or 2 of 3 seeds were sparse. This is a *boundary*
+          cell, and calling it SPARSE would hide exactly the transition the
+          sweep exists to locate;
+        * **DENSE** — no seed was sparse.
+
+        The previous implementation compared the aggregate mean against 0.5,
+        i.e. a *majority* rule, while the configuration file's comment said
+        "3/3 seeds" — the two disagreed, and the disagreement was invisible
+        because no cell had been run.
+        """
+        count = self.sparse_seed_count()
+        if count is None:
+            # Legacy path: a manifest recorded before the energy metric
+            # existed. The L1 criterion is all there is, and it is binary.
+            l1_sparse = self.k_99_percent["mean"] < self.modulus * L1_SPARSE_RATIO
+            return "SPARSE" if l1_sparse else "DENSE"
+        n = int(self.energy_sparse.get("n", 0))
+        if n <= 0:
+            return "UNKNOWN"
+        if count == n:
+            return "SPARSE"
+        if count == 0:
+            return "DENSE"
+        return "MIXED"
+
     def is_sparse(self) -> bool:
         """Sparse-regime classification.
 
@@ -169,9 +212,14 @@ class CellResult:
         noise is correctly called sparse by it; the L1-mass k_99 calls it
         dense). Falls back to the L1 criterion k_99/P < 0.5 for manifests
         recorded before the energy metric existed.
+
+        "Sparse" means the **SPARSE** regime of `regime()`: every seed
+        sparse. A cell where only some seeds are sparse is MIXED, and
+        `is_sparse()` says so — the per-seed count is always reported
+        next to it, so no reader has to guess.
         """
         if self.energy_sparse is not None and self.energy_sparse.get("n", 0):
-            return self.energy_sparse["mean"] >= 0.5
+            return self.regime() == "SPARSE"
         return self.k_99_percent["mean"] < self.modulus * L1_SPARSE_RATIO
 
     def to_dict(self) -> dict[str, Any]:
@@ -713,7 +761,8 @@ def main():
             logger.info(
                 f"  -> val_acc={result.final_val_acc['mean']:.4f}, "
                 f"k_99/P={result.k_99_percent['mean']/cell.modulus:.3f}, "
-                f"sparse={result.is_sparse()}"
+                f"regime={result.regime()} "
+                f"(sparse seeds {result.sparse_seed_count()}/{len(result.seeds)})"
             )
 
         except Exception as e:
@@ -733,9 +782,17 @@ def main():
     metadata["total_wall_clock_seconds"] = total_time
     save_manifest(manifest_path, cells_results, metadata)
 
-    # Summary
-    sparse_cells = sum(1 for r in cells_results.values() if r.is_sparse())
-    logger.info(f"Sparse regime cells: {sparse_cells}/{len(cells_results)}")
+    # Summary — the taxonomy, with the per-cell seed counts always shown.
+    by_regime: dict[str, list[str]] = {"SPARSE": [], "MIXED": [], "DENSE": [], "UNKNOWN": []}
+    for cell_id, r in cells_results.items():
+        by_regime.setdefault(r.regime(), []).append(cell_id)
+    for regime, ids in by_regime.items():
+        if ids:
+            logger.info(f"{regime} regime cells ({len(ids)}): {', '.join(ids)}")
+    logger.info(
+        f"Sparse regime cells: {len(by_regime['SPARSE'])}/{len(cells_results)}"
+        f" | mixed: {len(by_regime['MIXED'])} | dense: {len(by_regime['DENSE'])}"
+    )
 
 
 if __name__ == "__main__":

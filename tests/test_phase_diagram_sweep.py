@@ -374,6 +374,56 @@ class TestEmitCellManifest:
         assert result.is_sparse() is False
 
 
+class TestRegimeTaxonomy:
+    """SPARSE / MIXED / DENSE — the pre-registered reading of a cell.
+
+    Clarified on 2026-10-19, before any cell had run: SPARSE means every
+    seed sparse (3/3, the bar the P=113 positive control clears), MIXED
+    means 1 or 2 of 3 (a boundary cell — the very thing the sweep looks
+    for), DENSE means none.
+    """
+
+    @staticmethod
+    def _cell(sparse_seeds: int, n: int = 3):
+        return CellResult(
+            cell_id="c", modulus=113, d_model=128, n_layers=1, n_heads=4,
+            d_mlp=512, weight_decay=1.0, mode="solo", seeds=list(range(n)),
+            wall_clock_seconds=1.0,
+            final_val_acc=dict(ZERO_AGG),
+            generalization_epoch=dict(ZERO_AGG),
+            final_fourier_sparsity=dict(ZERO_AGG),
+            k_90_percent=dict(ZERO_AGG),
+            k_99_percent={"mean": 110.0, "std": 0.0, "min": 110.0, "max": 110.0, "n": n},
+            total_mass_top_k=dict(ZERO_AGG),
+            energy_sparse={
+                "mean": sparse_seeds / n,
+                "std": 0.0,
+                "min": 0.0,
+                "max": 1.0,
+                "n": float(n),
+            },
+        )
+
+    def test_three_of_three_is_sparse(self) -> None:
+        assert self._cell(3).regime() == "SPARSE"
+        assert self._cell(3).is_sparse() is True
+
+    def test_two_of_three_is_mixed_not_sparse(self) -> None:
+        """The case the old majority rule called SPARSE."""
+        cell = self._cell(2)
+        assert cell.regime() == "MIXED"
+        assert cell.is_sparse() is False
+        assert cell.sparse_seed_count() == 2
+
+    def test_one_of_three_is_mixed(self) -> None:
+        assert self._cell(1).regime() == "MIXED"
+
+    def test_none_is_dense(self) -> None:
+        cell = self._cell(0)
+        assert cell.regime() == "DENSE"
+        assert cell.is_sparse() is False
+
+
 class TestGridReadsPerCellDeviations:
     """generate_sweep_grid must honour per-cell protocol deviations and
     per-cell step budgets — otherwise the ablation config expresses nothing

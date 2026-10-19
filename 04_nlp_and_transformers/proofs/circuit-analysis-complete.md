@@ -22,7 +22,12 @@ logits, cache = model.run_with_cache(tokens)
 ```
 
 ### Step 3: Detect induction heads
-Compute diagonal-offset-1 attention mass per head. Heads where diag+1 > 0.4 are candidates.
+Compute the attention mass per head on the **copy offset** — the key holding
+the token after the previous occurrence of the current token (`q-(L-1)` on
+this repo's repeated-token task; `q-1` is the *previous-token* head and is a
+different circuit). Heads where that mass exceeds the threshold are
+candidates, and a candidate counts as confirmed only when its layer is
+composed with an earlier layer (K-composition).
 In GPT-2 small: L4H11, L5H5, L5H8, L6H9 are known induction heads.
 
 ### Step 4: QK/OV decomposition

@@ -25,16 +25,18 @@ included:
 
 | Rung | Where it stands |
 |------|-----------------|
-| 1 Induction heads | No head detected at any scale run (0/8). A matched fixed-vs-fresh-batches comparison is the one solid finding (53.5% vs 0.45% validation accuracy). Standard-scale GPU run is queued (`make remote-run-induction`). |
+| 1 Induction heads | The head counts this repository used to publish are **retracted** (2026-10-19): the detector measured the previous-token offset, so "0/8" was a statement about the detector, not the model. The corrected detector and the standard-scale GPU run (`make remote-run-induction`) are the open work. A matched fixed-vs-fresh-batches comparison is the one solid finding (53.5% vs 0.45% validation accuracy). |
 | 2 Grokking | ✅ **REPRODUCED 2026-10-14**: val accuracy 0.9999 ± 0.0002, sparse circuit (k_energy_90 = 5.7 ± 1.2 of 56) on both the Nanda protocol and the historical repo protocol, 3/3 seeds each. The 2026-08-11 NO-GROK was a metric artifact — retracted. |
 | 3 Superposition | Phase transition reproduced (10/20 → 20/20 features represented; pentagon geometry at sparsity ≤ 0.1). |
-| 4 Circuit patching | Activation patching runs cleanly; path patching is only unit-tested because there is no head to target. |
+| 4 Circuit patching | Activation patching runs cleanly; path patching is only unit-tested because there is no head to target. Since 2026-10-19 this rung analyses Rung 1's own checkpoint (`--from-checkpoint`) instead of training a second model. |
 | 5 SAE | Synthetic data reproduces; on real activations reconstruction is good but dense (53% of features active). |
 
 Read the Honesty Ledger in [`portfolio/RESULTS.md`](portfolio/RESULTS.md) before citing any
-number from this repository: six audits have now examined these claims — five found numbers
-that were wrong or unbacked, the sixth reversed a negative verdict its own metric had
-manufactured. `make verify-claims` (run in CI) fails if a public number has no committed
+number from this repository: seven audits have now examined these claims — six found numbers
+that were wrong or unbacked, the seventh reversed a negative verdict its own metric had
+manufactured, and the latest (2026-10-19) retracted every head count this repository had
+published because the detector behind them measured the wrong attention offset.
+`make verify-claims` (run in CI) fails if a public number has no committed
 manifest behind it.
 
 **Live site:** <https://alessiobrillo.github.io/from-gradient-to-transformer/>
