@@ -24,7 +24,7 @@ number traced to a committed run manifest**.
 | **Grokking (REPRODUCED)** | A run reaching val accuracy ~1.0 with a **sparse** Fourier embedding (the Nanda et al. circuit). The Rung 2 verdict since 2026-10-14, measured by the energy metric. The 2026-08-11 NO-GROK label was an L1-metric artifact — retracted; see the Honesty Ledger. |
 | **energy_sparse** | The post-audit sparsity criterion: whether the frequencies holding 90% of the embedding *energy* number < P/2. Replaces the L1-mass k99, which misclassifies noisy sparse embeddings as dense (audit 2026-10-08; reversal 2026-10-14). |
 | **Induction head** | An attention head attending from the current query `q` to the token **after the previous occurrence of the current token** — on this repo's `prefix + prefix` task, the key `q-(L-1)`. Detected by the shared detector (`src/experiments/induction_detection.py`): induction mass ≥ 0.3 **and** a K-composition score ≥ 0.4 with an earlier layer. The previous "diag+1" detector measured `q-1` (the previous token) and the "0/8" counts it produced were retracted on 2026-10-19 — see the Honesty Ledger. |
-| **Prefix-copying head** | What a detected head is called until the **dissociation probe** says otherwise: on a perfectly periodic task, copying by content and copying by a fixed offset are the same function, and only the probe (a second half that is a permuted copy of the prefix) can tell them apart. |
+| **Prefix-copying head** | What the standard-scale run actually found (2026-10-20): 2–3 heads per seed with a copy-offset mass of 0.95, all in the first layer, K-composition 0.05 — and the dissociation probe puts the copy on the **fixed offset**, not on the previous occurrence of the same token. On a perfectly periodic task the two are the same function in-distribution; only the probe (a second half that is a permuted copy of the prefix) can tell them apart, and it says the copy is positional. |
 | **Superposition** | More features than dimensions, represented as non-orthogonal directions. Rung 3 is the only fully reproduced rung. |
 | **k₉₀ / k₉₉** | Number of Fourier frequencies needed to hold 90% / 99% of embedding energy. `k₉₉ < P/2` is the sparsity criterion. |
 | **P** | Modulus of the modular-addition task (P=113 is the flagship scale). |
@@ -33,7 +33,7 @@ number traced to a committed run manifest**.
 
 | Rung | Module | Status |
 |---|---|---|
-| 1 Induction heads | `src/experiments/exp1_induction_heads.py` | Head counts retracted 2026-10-19 (the detector measured the wrong offset); the corrected detector + the standard-scale run are the open work. Fixed-vs-fresh batches is the one solid finding |
+| 1 Prefix-copying heads | `src/experiments/exp1_induction_heads.py` | **A head forms at standard scale (GPU, 3 seeds, 2026-10-20)** and the causal interventions land (ablation 0.44, path patching 0.82) — but the copy is *positional*, not content-based: the task admits the shortcut |
 | 2 Grokking (flagship) | `src/experiments/exp2_grokking.py` | **REPRODUCED 2026-10-14**: sparse circuit on the Nanda protocol and the repo protocol, GPU, 3 seeds each |
 | 3 Superposition | `src/experiments/exp3_superposition.py` | **Fully reproduced** (the first rung to be; Rung 2 followed on 2026-10-14) |
 | 4 Circuit patching | `src/experiments/exp4_circuit_patching.py` | Activation patching clean; path patching unit-tested only |

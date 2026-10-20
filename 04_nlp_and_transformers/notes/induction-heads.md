@@ -118,6 +118,20 @@ that epoch/scale budget) still stands. See
 > support is unaffected; the head-count rows are not measurements. See
 > `portfolio/RESULTS.md`'s Honesty Ledger, 2026-10-19.
 
+> **2026-10-20 — and what the corrected detector found.** Standard scale on a GPU,
+> three seeds, 3000 epochs: **2–3 heads per seed**, copy-offset mass **0.945**,
+> previous-token control 0.046 — so heads *do* form at standard scale, within 50
+> epochs, and the retracted "0 / 8" was a detector artifact. But every confirmed
+> head is in the **first layer**, the K-composition between layers is **0.052**,
+> and the **dissociation probe** puts the model's mass on the **fixed offset**
+> (0.695) and not on the previous occurrence of the same token (0.031), 3/3 seeds.
+> The circuit is a single-head **prefix-copying** circuit, not the two-step
+> induction circuit — because the task is perfectly periodic and hands the model
+> that shortcut. The causal interventions land: ablating the head costs **0.44**
+> of the logit difference and path patching attributes **0.82** of its direct
+> effect on the logits to it. A content-based induction claim needs a task with
+> repeats at *varying* distances (v1.1).
+
 A second, independent question this pass added the tooling to test: does the fixed
 dataset (generated once, then only reshuffled across epochs) let the model **memorize**
 specific sequences rather than learn the general prefix-matching-and-copying rule? Olsson

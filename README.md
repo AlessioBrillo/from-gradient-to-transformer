@@ -25,10 +25,10 @@ included:
 
 | Rung | Where it stands |
 |------|-----------------|
-| 1 Induction heads | The head counts this repository used to publish are **retracted** (2026-10-19): the detector measured the previous-token offset, so "0/8" was a statement about the detector, not the model. The corrected detector and the standard-scale GPU run (`make remote-run-induction`) are the open work. A matched fixed-vs-fresh-batches comparison is the one solid finding (53.5% vs 0.45% validation accuracy). |
+| 1 Prefix-copying heads | A head **does** form at standard scale (GPU, 3 seeds, 3000 epochs): 2–3 heads per seed, copy-offset mass 0.945, ablation effect 0.44, path-patch effect 0.82 — but the dissociation probe shows the copy follows a **fixed offset**, not the previous occurrence of the same token, so it is a *prefix-copying* head, not an induction head (the repeated-token task is perfectly periodic and hands the model that shortcut). The retracted "0 / 8" was a detector artifact: the detector measured the previous-token offset. The fixed-vs-fresh-batches comparison remains the one solid finding (53.5% vs 0.45% validation accuracy). |
 | 2 Grokking | ✅ **REPRODUCED 2026-10-14**: val accuracy 0.9999 ± 0.0002, sparse circuit (k_energy_90 = 5.7 ± 1.2 of 56) on both the Nanda protocol and the historical repo protocol, 3/3 seeds each. The 2026-08-11 NO-GROK was a metric artifact — retracted. |
 | 3 Superposition | Phase transition reproduced (10/20 → 20/20 features represented; pentagon geometry at sparsity ≤ 0.1). |
-| 4 Circuit patching | Activation patching runs cleanly; path patching is only unit-tested because there is no head to target. Since 2026-10-19 this rung analyses Rung 1's own checkpoint (`--from-checkpoint`) instead of training a second model. |
+| 4 Circuit patching | ✅ The cascade ran end to end on Rung 1's own checkpoint: head ablation 0.4445 ± 0.0425, path patching 0.8215 ± 0.1255 — the first end-to-end path-patching result against a real head. |
 | 5 SAE | Synthetic data reproduces; on real activations reconstruction is good but dense (53% of features active). |
 
 Read the Honesty Ledger in [`portfolio/RESULTS.md`](portfolio/RESULTS.md) before citing any

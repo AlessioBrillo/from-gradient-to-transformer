@@ -226,10 +226,54 @@ such measurement can claim: on a perfectly periodic task the previous
 occurrence of the current token is always at $q-L$, so copying by content
 and copying by a fixed offset are the same function on-distribution, and
 only an off-distribution dissociation probe (a second half that is a
-permuted copy of the prefix) can tell the two apart. Until that probe
-runs on a given checkpoint, the defensible wording is
-\emph{prefix-copying head at offset $L-1$} rather than \emph{induction
-head}.
+permuted copy of the prefix) can tell the two apart.
+
+\subsection{Standard Scale: A Head Forms, and It Copies by Position}
+% manifest: results/induction_standard.json
+% manifest: results/induction_standard_emergence.json
+% manifest: results/exp4_standard.json
+The corrected detector was then run on a GPU (Kaggle T4) at the canonical
+standard scale ($V=2048$, $\text{seq\_len}=64$, $d_\text{model}=64$, 2 layers,
+4 heads, fresh batches, 3000 epochs $=384$k optimizer steps per seed), three
+seeds:
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+ & Emergence run (early stop) & Full budget \\
+\midrule
+Confirmed heads (per seed) & 3, 3, 3 & 3, 2, 3 \\
+\quad in the first layer & 3, 3, 3 & 3, 2, 3 \\
+\quad above the first layer (mechanism) & 0 & 0 \\
+Peak induction mass (copy offset) & $0.947 \pm 0.003$ & $0.945 \pm 0.001$ \\
+Previous-token mass (control) & $0.033 \pm 0.013$ & $0.046 \pm 0.007$ \\
+K-composition score & $0.080 \pm 0.021$ & $0.052 \pm 0.008$ \\
+Final validation accuracy & $0.5082$ & $0.5081$ \\
+Dissociation probe: content mass & $0.031$ & $0.031$ \\
+Dissociation probe: period mass & $0.909$ & $0.695$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Three things follow. First, the retracted ``$0/8$'' really was a detector
+artifact: at standard scale the model forms a copy head within 50 epochs
+(the emergence run stops at epoch 100 after two consecutive confirmations),
+with a copy-offset mass of $0.95$ against a $0.3$ threshold, while the
+previous-token control stays at $0.03$--$0.05$. Second, the head is not the
+two-step circuit: every confirmed head sits in the first layer, where the
+detector can only confirm it on the mass, and the K-composition between
+layers is $0.05$--$0.08$, far below the $0.4$ confirmation bar. Third, and
+decisively, the copy is \emph{positional}: on the permuted batch the model's
+mass sits on the fixed-offset target ($0.70$) and not on the
+previous-occurrence target ($0.03$), on 3/3 seeds in both runs.
+
+The mechanism is therefore a single-head \emph{prefix-copying} circuit, and
+the reason is the task, not the model: on a perfectly periodic sequence the
+previous occurrence of the current token is always at $q-L$, so the two
+hypotheses coincide in-distribution and the model takes the cheaper one.
+The $0.508$ accuracy plateau is the same one the joint capstone run
+measured ($0.5034$): copying the periodic continuation is exactly right on
+the second half of the sequence and unpredictable on the first.
 
 \subsection{Multi-Seed Quick-Scale Manifest}
 Three seeds at quick scale ($V=256$, $\text{seq\_len}=16$,
@@ -314,11 +358,36 @@ The head count for this manifest is \emph{retracted}: this rung's
 detector measured the strict upper triangle of a causal softmax, which is
 identically zero, so it could not fire on any model (see
 Sec.~\ref{sec:induction}). Head ablation and path patching were therefore
-skipped -- path patching's implementation is validated only by unit tests
-(self-patch is zero, runs and returns expected keys). The rung now
-analyses the \emph{same} checkpoint the induction rung trained
-(\texttt{--from-checkpoint}) instead of training a second, differently
-shaped model under the same claim.
+skipped -- path patching's implementation was validated only by unit tests
+(self-patch is zero, runs and returns expected keys).
+
+\subsection{The Cascade, Run End to End}
+The circuit rung now analyses the \emph{same} checkpoint the induction rung
+trained (\texttt{--from-checkpoint}) instead of training a second, differently
+shaped model under the same claim. On the standard-scale checkpoint (epoch
+3000), three seeds:
+
+\begin{center}
+\begin{tabular}{lc}
+\toprule
+Intervention & Effect on the answer-minus-counterfactual logit difference \\
+\midrule
+Head ablation (zero the confirmed head) & $0.4445 \pm 0.0425$ \\
+Path patching (the head's \emph{direct} effect on the logits) & $0.8215 \pm 0.1255$ \\
+Activation patching (per layer/position recovery) & $0.0834 \pm 0.0002$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+This is the first end-to-end path-patching result in this work: the head
+the corrected detector finds is also the head that carries the task's
+answer --- path patching isolates its direct contribution to the logits with
+every other head, every MLP and the head's own indirect effects kept clean.
+What the interventions do not settle is the \emph{mechanism} of the copy: the
+dissociation probe says the head copies from a fixed offset rather than from
+the previous occurrence of the same token, and the K-composition between
+layers is $0.05$, so this is a single-head circuit on a periodic task, not
+the two-step induction circuit.
 
 \subsection{Interpretation}
 Activation patching finds a real, small, consistent recovery signal
@@ -474,16 +543,18 @@ seeds -- the joint solution is \textbf{dense}, not a sparse Fourier circuit.
     representative of circuits in language models.
   \item \textbf{No induction heads at standard scale:} the fixed-vs-fresh
     comparison (53.5\% val acc, 800 epochs) is the trustworthy scale for
-    this paper; the standard-scale run with the corrected detector
-    ($d_\text{model}=64$, 3000 epochs, three seeds) is the outstanding
-    measurement, not a claim.
+    the earlier measurements; the standard-scale run with the corrected
+    detector ($d_\text{model}=64$, 3000 epochs, three seeds) is reported
+    above, and what it finds is a \emph{prefix-copying} head, not an
+    induction head.
   \item \textbf{The head counts in this paper were retracted}
     (2026-10-19): the detectors measured the previous-token offset, so
     every ``$0 / N$'' figure was a statement about the detector. Even with
     the corrected detector, a perfectly periodic task cannot separate
-    copying by content from copying by a fixed offset; only the
-    dissociation probe can, and until it runs the wording is
-    \emph{prefix-copying head}, not \emph{induction head}.
+    copying by content from copying by a fixed offset; the dissociation
+    probe does, and it says the copy here is positional. A task with
+    repeats at \emph{varying} distances is required to make the
+    content-based claim testable at all, and it is not in this version.
   \item \textbf{Grokking sparse circuit reproduced:} Rung 2 reached val
     accuracy 0.9999 $\pm$ 0.0002 with $k_{\mathrm{energy},90}$ = 5.7 $\pm$
     1.2 of 56 frequencies (sparse, 3/3 seeds) on both the Nanda-faithful and

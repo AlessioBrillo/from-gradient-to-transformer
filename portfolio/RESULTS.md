@@ -55,6 +55,18 @@ direction they point (no head was confirmed, and the planted tests still show
 the previous-token head is not an induction head); they are simply not
 measurements of induction.
 
+**What it changed, measured the next day.** The corrected detector on the
+standard-scale GPU run (2026-10-20) finds **2–3 heads per seed** with a
+copy-offset mass of **0.95** — so the retracted "0 / 8" really was a detector
+artifact, and the model *does* form a copy head within 50 epochs. The causal
+interventions land too: ablating the confirmed head costs **0.44** of the
+logit difference and path patching attributes **0.82** of its direct effect
+on the logits to that head. What the probe adds is the *mechanism*: the copy
+follows the fixed offset, not the previous occurrence of the same token, and
+the K-composition between layers is 0.05 — so this is a single-head
+**prefix-copying** circuit, not the two-step induction circuit. The full
+numbers are in the Rung 1 and Rung 4 sections; the decision is ADR-0032.
+
 **What replaced it.** One detector, shared by Rungs 1, 4 and 5
 (`src/experiments/induction_detection.py`):
 
@@ -378,20 +390,77 @@ real figures and cross-check the numbers already documented. Findings:
 
 ---
 
-## Rung 1 — Induction Heads (Fallback Flagship, currently the strongest verified result)
+## Rung 1 — Prefix-Copying Heads (Fallback Flagship — the detector was wrong; a head does form, and it is positional)
 
 <!-- manifest: results/exp1_induction_heads.json -->
 
 **Question**: Do induction heads emerge in a 2-layer attention-only transformer trained on repeated tokens? Can we detect, verify, and ablate them causally?
 
-**Status**: task-design bug fixed 2026-08-02 (see Honesty Ledger) — the prefix-ambiguity bug
-made the task ill-posed at nearly every position for the repository's entire history, at
-every scale ever run. Fixing it alone did not produce heads at quick scale. A matched
-fixed-vs-fresh-batches comparison (below) found a second, independently real effect: the
-fixed-dataset training loop was actively harmful, not just insufficient. Standard-scale
-numbers from before 2026-08-01 are **retracted** (ablation-site and metric-scale bugs; see
-the Honesty Ledger's 2026-08-01 entry) — no standard-scale number in this table is
-currently confirmed; the fixed/fresh comparison below is the only trustworthy scale.
+**Status**: [x] **A head forms at standard scale — and it is a *prefix-copying* head, not an induction head.** The detector that reported "0 / N heads" was measuring the previous-token offset (see the Honesty Ledger's 2026-10-19 entry); with the corrected detector the standard-scale run confirms **2–3 heads per seed** with a copy-offset mass of **0.95**, and the causal interventions land: ablating the confirmed head costs **44%** of the logit difference and path patching attributes **82%** of its direct effect on the logits to that head. But the **dissociation probe** shows the copy follows the *fixed offset* (`q-(L-1)`), not the previous occurrence of the same token (period mass 0.70 vs content mass 0.03, 3/3 seeds), and the K-composition between layers stays at **0.05** — so there is **no two-step circuit**. The task is perfectly periodic, which makes "copy by content" and "copy by offset" the same function in-distribution; the model found the cheaper one. See [ADR-0032](../docs/adr/0032-induction-detector-and-the-positional-shortcut.md).
+
+### Standard scale, GPU, 3 seeds (the measurement that replaces the retracted counts)
+
+<!-- manifest: results/induction_standard.json -->
+<!-- manifest: results/induction_standard_emergence.json -->
+<!-- manifest: results/exp4_standard.json -->
+
+| Metric | Emergence run (early stop) | Full budget (3000 epochs) | Rung 4 on the same checkpoint |
+|--------|--------------------------|----------------------------|--------------------------------|
+| Manifest | `induction_standard_emergence.json` | `induction_standard.json` | `exp4_standard.json` |
+| Device / wall clock | CUDA, 391 s | CUDA, 3 h 13 min | CPU re-analysis of the GPU checkpoint (epoch 3000) |
+| Budget | stopped at the confirmation (epoch 100, two consecutive checks) | 3000 epochs = 384k optimizer steps/seed | — |
+| **Confirmed heads (per seed)** | **3, 3, 3** | **3, 2, 3** | 3, 2, 3 |
+| … in the first layer | 3, 3, 3 | 3, 2, 3 | 3, 2, 3 |
+| … above the first layer (mechanism confirmed) | **0** | **0** | — |
+| Peak induction mass (copy offset `q-(L-1)`) | **0.947 ± 0.003** | **0.945 ± 0.001** | — |
+| Previous-token mass (control, `q-1`) | 0.033 ± 0.013 | 0.046 ± 0.007 | — |
+| K-composition score (L→L) | 0.080 ± 0.020 | 0.052 ± 0.008 | — |
+| L0 duplicate-token mass | 0.019 ± 0.002 | 0.200 ± 0.082 | — |
+| Final val accuracy | 0.5082 ± 0.0000 | 0.5081 ± 0.0000 | 0.5083 ± 0.0002 |
+| **Head ablation effect** (logit-diff drop) | 0.038 ± 0.026 | 0.078 ± 0.044 | **0.4445 ± 0.0425** |
+| **Path-patching effect** (direct effect on logits) | not run | not run | **0.8215 ± 0.1255** |
+| Activation-patching recovery (layer/position) | not run | not run | 0.0834 ± 0.0002 |
+| Dissociation probe — content mass | 0.031 ± 0.001 | 0.031 ± 0.000 | 0.0309 ± 0.0003 |
+| Dissociation probe — period mass | 0.909 ± 0.015 | 0.695 ± 0.100 | 0.6950 ± 0.0996 |
+| **Copy is content-based?** | **no (3/3 seeds)** | **no (3/3 seeds)** | **no (3/3 seeds)** |
+
+Reading the table:
+
+- **The retracted "0 / 8" really was a detector artifact.** At standard scale the
+  model forms heads within 50 epochs (the emergence run stops at epoch 100 after
+  two consecutive confirmations), with a copy-offset mass of 0.95 against the
+  0.3 threshold, while the previous-token control stays at 0.03–0.05.
+- **They are not the two-step circuit.** Every confirmed head is in the *first*
+  layer, where the detector can only confirm it on the mass (there is no earlier
+  layer to compose with). The K-composition between layers is 0.05–0.08, far
+  below the 0.4 confirmation bar, and the L0 duplicate-token mass — the head
+  that is supposed to find the previous occurrence — stays at 0.02 (early) and
+  0.20 (full budget) against a copy-offset mass of 0.95.
+- **The causal interventions land, and they are the first end-to-end path-patching
+  result in this repository.** On the same checkpoint (epoch 3000), ablating the
+  confirmed head costs **0.44** of the answer-minus-counterfactual logit
+  difference, and path patching — which isolates the head's *direct* contribution
+  to the logits — attributes **0.82** of it to that head. The head is the circuit
+  for this task.
+- **But it is a positional copy.** The dissociation probe (a batch whose second
+  half is a *permuted* copy of the prefix, so the content target and the fixed
+  offset point at different keys) puts the model's mass on the **position**
+  target (0.70) and not on the content target (0.03) on 3/3 seeds, in both runs
+  and in the Rung 4 re-analysis. On a perfectly periodic sequence the previous
+  occurrence of the current token is *always* at `q-L`, so "copy from the
+  previous occurrence of the same token" and "copy from the fixed offset" are
+  the same function on this task — and the model took the shortcut.
+- **The accuracy plateau (0.508) is the same plateau the capstone measured**
+  (induction accuracy 0.5034 in the joint run): the model copies the periodic
+  continuation, which is exactly right on the second half of the sequence and
+  unpredictable on the first.
+
+**What this does not claim**: that the model implements Olsson-style content-based
+induction. It does not, on this task. The content-based claim is not testable
+here — it needs a task with repeats at *varying* distances, which is a v1.1
+task-design increment (ADR-0032, decision 3).
+
+### Quick scale (the historical scale, for continuity)
 
 | Metric | Tiny multi-seed (3 seeds, confirmed 2026-08-02) |
 |--------|-------|
@@ -403,7 +472,9 @@ currently confirmed; the fixed/fresh comparison below is the only trustworthy sc
 | Peak previous-token mass (the old "diag+1") | 0.177 ± 0.006 (n=3) |
 | Induction heads detected (>0.3 threshold) | **RETRACTED — uninterpretable** (the detector measured the previous-token offset; see the Honesty Ledger's 2026-10-19 entry) |
 
-**Fixed-vs-fresh-batches, matched 3-seed comparison** (see
+### Fixed-vs-fresh-batches, matched 3-seed comparison
+
+(see
 [induction-heads](../04_nlp_and_transformers/notes/induction-heads.md) for the full writeup).
 Identical config except the batch regime; both arms run the same seeds
 (0, 1, 2), so the difference is attributable to the regime alone. Regenerate with
@@ -615,7 +686,7 @@ Figure: `portfolio/figures/exp3_pentagon_geometry.png`.
 
 **Question**: Can I find and causally validate a specific circuit via activation patching, path patching, and head ablation?
 
-**Status**: Patch site and metric fixed 2026-08-01 (see Honesty Ledger — the previous
+**Status**: [x] **The cascade ran end to end on Rung 1's own checkpoint (2026-10-20)** — and path patching is no longer unit-test-only. Patch site and metric fixed 2026-08-01 (see Honesty Ledger — the previous
 implementation patched a tensor that never reached the residual stream, and measured
 confidence rather than correctness). Path patching added; it did not exist in any form
 before this pass. The pre-fix standard-scale recovery numbers (0.787, 0.270, ...) that
@@ -624,8 +695,39 @@ that mostly didn't land, so they don't mean what they claimed to. Vocabulary-amb
 design bug (see Rung 1) fixed 2026-08-02, since this rung reuses
 `make_repeated_token_data`; `--seeds` added.
 
-**Quick-mode 3-seed manifest, 2026-08-02** (`vocab_size=64, seq_len=12, d_model=32,
-epochs=500`):
+### The cascade, on the model Rung 1 trained (2026-10-20)
+
+<!-- manifest: results/exp4_standard.json -->
+
+Standard scale, the checkpoint of the full-budget run (epoch 3000), 3 seeds, analysed
+with `--from-checkpoint` (the model is loaded, not retrained — the cascade is one
+model, not two):
+
+| Metric | Value (mean ± std, n=3) |
+|--------|--------------------------|
+| Confirmed heads (per seed) | 3, 2, 3 (all in the first layer) |
+| **Head ablation effect** (drop in the answer−counterfactual logit difference) | **0.4445 ± 0.0425** (range 0.398–0.501) |
+| **Path-patching effect** (the head's *direct* effect on the logits) | **0.8215 ± 0.1255** (range 0.730–0.999) |
+| Mean activation-patching recovery (layer/position combos) | 0.0834 ± 0.0002 |
+| Dissociation probe — content mass / period mass | 0.0309 / 0.6950 (**positional**, 3/3 seeds) |
+
+**This is the first end-to-end path-patching result in this repository**: the
+head that the corrected detector finds is also the head that carries the task's
+answer. Ablating it costs 44% of the logit difference; path patching — which
+isolates the head's direct contribution to the logits, with every other head,
+every MLP and the head's own indirect effects kept clean — attributes 82% of
+that to it.
+
+**What the interventions do not settle**: the *mechanism* of the copy. The
+dissociation probe says the head copies from a fixed offset rather than from
+the previous occurrence of the same token (see Rung 1 and
+[ADR-0032](../docs/adr/0032-induction-detector-and-the-positional-shortcut.md)),
+and the K-composition between layers is 0.05, so this is a single-head circuit
+on a periodic task, not the two-step induction circuit.
+
+### Quick-mode 3-seed manifest, 2026-08-02 (historical)
+
+(`vocab_size=64, seq_len=12, d_model=32, epochs=500`):
 
 | Metric | Value (mean ± std, n=3) |
 |--------|--------------------------|
@@ -642,12 +744,10 @@ statements about broken code.
 
 Activation patching runs cleanly and finds a real, small, consistent recovery signal
 (~0.20, not zero) even without a detected induction head — some circuit sensitivity exists
-at these (layer, position) combinations. Head ablation and path patching were skipped
-again, meaning path patching's implementation is *still* validated only by its unit tests
-(self-patch-is-zero, runs-and-returns-expected-keys), not by an end-to-end run against a
-real head. The fix has to come from Rung 1's standard-scale run (issue #169) with the
-corrected detector — and, since 2026-10-19, with `--from-checkpoint`, so this rung
-analyses the *same model* Rung 1 trained instead of a second one.
+at these (layer, position) combinations. In the quick manifest, head ablation and path
+patching were skipped (no head to target), so path patching's implementation was
+validated only by its unit tests (self-patch-is-zero, runs-and-returns-expected-keys);
+the 2026-10-20 cascade run above closes that gap on a real head.
 
 **Method**:
 1. Analyse the model Rung 1 trained (`--from-checkpoint`, the default for the
@@ -790,10 +890,10 @@ every cell, so no reader has to infer them from an aggregate.
 
 | Rung | Status | Key Result |
 |------|--------|------------|
-| 1 — Induction Heads (fallback flagship) | ⚠️ Task design fixed, memorization confirmed; **the head counts are retracted (2026-10-19)** — the detector measured the wrong offset | Fresh-batches: 53.5% val acc vs. fixed dataset's 0.45% (matched 800-epoch comparison); the "0/8 heads" rows were statements about the detector, not the model. The corrected detector + the standard-scale run (issue #169) are the open work |
+| 1 — Prefix-Copying Heads (fallback flagship) | ✅ **A head forms at standard scale — and it is positional** (2026-10-20) | Corrected detector, GPU, 3 seeds, 3000 epochs: **2–3 heads/seed**, copy-offset mass **0.945** (previous-token control 0.046), all in the first layer; ablation effect **0.44**, path-patch effect **0.82**; the dissociation probe says the copy follows the **fixed offset** (period 0.70 vs content 0.03), and the K-composition is 0.05 — a single-head prefix-copying circuit, not the two-step induction circuit (ADR-0032) |
 | 2 — Grokking (primary flagship) | ✅ **REPRODUCED 2026-10-14** (the 2026-08-11 NO-GROK was a metric artifact) | Nanda protocol, P=113, GPU, 3 seeds: val accuracy 0.9999 ± 0.0002, **k_energy_90 = 5.7 ± 1.2 of 56 — sparse on 3/3 seeds**; the historical repo protocol re-reads the same way |
 | 3 — Superposition | ✅ Phase transition confirmed | Root cause found (no real bottleneck); rewritten, reproduces cleanly: 10/20 → 20/20 features represented |
-| 4 — Circuit Patching | ⚠️ Fixed 2026-08-01; **the "0/4 heads" row retracted 2026-10-19** (the detector was identically zero) | Activation patching runs cleanly (recovery ≈ 0.20 at quick scale); path patching still only unit-tested, no real head to validate against yet. Since 2026-10-19 the rung analyses Rung 1's *own* checkpoint (`--from-checkpoint`) |
+| 4 — Circuit Patching | ✅ **Cascade ran end to end on Rung 1's checkpoint** (2026-10-20) | Head ablation **0.4445 ± 0.0425**, path patching **0.8215 ± 0.1255** — the first end-to-end path-patching result against a real head; activation recovery 0.0834 |
 | 5 — SAE Dashboard | ✅ Synthetic reproduced; ⚠️ real-activation upgrade shipped | Real: 99.97% FVE but 53% L0 (dense, not sparse) — informative gap, not yet a clean win |
 | 6 — ACDC | ❌ Deleted | Was fabricated data; removed 2026-08-01 rather than fixed |
 
@@ -801,17 +901,18 @@ every cell, so no reader has to infer them from an aggregate.
 GPU, 3 seeds, both protocols, post-audit energy metric, manifests pinned with
 provenance; the checkpoints are on disk
 (`results/remote/grokking-p113/output2/repo/checkpoints/nanda/`) and the four
-`exp2_*` figures were regenerated from them 2026-10-17. (2) Rung 3's phase
+`exp2_*` figures were regenerated from them 2026-10-17. (2) Rung 1's
+prefix-copying head — GPU, 3 seeds, standard scale, 3000 epochs, with the
+causal interventions (ablation 0.44, path patching 0.82) and the dissociation
+probe that says the copy is positional rather than content-based; the
+detector behind it is planted-tested, and the previous "0 / 8" was a detector
+artifact. (3) Rung 3's phase
 transition — reproduced cleanly, root cause understood, multi-seed manifest
-backs it. (3) Rung 5's
+backs it. (4) Rung 5's
 synthetic FVE/MSE numbers — reproduced and architecturally simple; the
 real-activation numbers are real but need a better checkpoint (one with a confirmed
-induction head) before the sparsity gap means anything conclusive. (4) Rung 1's
+induction head) before the sparsity gap means anything conclusive. (5) Rung 1's
 fixed-vs-fresh comparison — a real, large, matched effect, though at a scale still
-well below standard. (5) Rung 4's quick multi-seed re-run — activation patching
-runs cleanly; path patching remains unvalidated against a real head. The
-standard-scale induction run that would close Rung 1, 4 and 5's shared gap is a
-one-command GPU job (`make remote-run-induction`) — the notebook now measures
-its own throughput first, runs the canonical standard config before the scaled
-one, stops a seed as soon as a head is confirmed, and analyses **the same
-checkpoint** at Rungs 4 and 5 instead of training a second model.
+well below standard. (6) Rung 4's quick multi-seed re-run — activation patching
+runs cleanly; the standard-scale cascade above is the current number. The
+protocol-ablation phase diagram (issue #168) is scheduled for v1.1.
