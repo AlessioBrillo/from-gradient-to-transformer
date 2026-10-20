@@ -47,6 +47,7 @@ implementation, not before.
 - [[07_capstone/notes/dense-solutions-modular-addition|Dense Solutions on Modular Addition]] — the k_99 = 58/59 P=59 positive-control characterisation.
 - [[07_capstone/notes/microscope-trial-table|Microscope Trial Table]] — the pre-registered trial schedule for the protocol ablation.
 - [[07_capstone/notes/scheduled-negatives-mp28|Scheduled Negatives (MP-28)]] — experiments registered to falsify, not to confirm.
+- [[07_capstone/notes/variable-distance-induction-preregistration|Variable-Distance Induction Task — Pre-Registration]] — the frozen task, thresholds, budget and decision rule for issue #200.
 
 ## Source code
 Core implementations live in the root `src/` directory, not in `07_capstone/src/`:
