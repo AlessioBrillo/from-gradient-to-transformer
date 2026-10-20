@@ -275,6 +275,29 @@ The $0.508$ accuracy plateau is the same one the joint capstone run
 measured ($0.5034$): copying the periodic continuation is exactly right on
 the second half of the sequence and unpredictable on the first.
 
+\subsection{The Task That Can Answer It (Pre-Registered, Not Yet Run)}
+\label{sec:content-task}
+The result above is a statement about a task that does not contain the
+question. A task that does is specified and frozen before its run: a key of
+$36$ distinct tokens, four verbatim copy blocks of five, with the source
+windows \emph{and} the block positions resampled per sequence, so the
+distance between a token and its previous occurrence changes from block to
+block. Every token appears at most twice, so the task is well posed, and
+the copy queries are derived from the tokens alone rather than from the
+generator. The best \emph{single fixed offset} explains $17.6\%$ of the
+copy queries on that data, while a content-matching head can reach $100\%$
+--- a gap that is a property of the data, measured before the run.
+
+The verdict is pre-registered as seven criteria (content mass, content mass
+above the best fixed offset, copy accuracy, accuracy on the
+non-modal-distance group, the margin over the fixed-offset baseline, the
+ablation drop and the path-patching effect), computed from the manifest by
+the notebook rather than written by hand, on three seeds at the same budget
+as the periodic run, with a negative reported as a negative. The run is not
+in this version, and this paper therefore does not claim an induction head:
+it claims a prefix-copying head, and it says why the difference is
+structural.
+
 \subsection{Multi-Seed Quick-Scale Manifest}
 Three seeds at quick scale ($V=256$, $\text{seq\_len}=16$,
 $d_\text{model}=24$, 2 layers, 4 heads, 150 epochs, fresh batches):
