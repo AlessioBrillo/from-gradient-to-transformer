@@ -131,6 +131,22 @@ def _is_attention_only(model: nn.Module) -> bool:
     return not hasattr(model.blocks[0], "attn")
 
 
+def _model_device(model: nn.Module) -> torch.device:
+    """The device the model lives on.
+
+    The interventions used to assume the caller had already moved every
+    tensor to `DEVICE`. The cascade does not: it hands the interventions the
+    validation tensors as the dataset produced them (CPU), while the model
+    lives on the GPU. That mismatch is a hard error on CUDA ("Expected all
+    tensors to be on the same device") and it is why the first GPU cascade
+    run died in the patching step.
+    """
+    try:
+        return next(model.parameters()).device
+    except StopIteration:  # pragma: no cover - parameterless models
+        return torch.device("cpu")
+
+
 def _install_resid_mid_patch(
     model: nn.Module,
     layer: int,
@@ -313,7 +329,7 @@ def train_model(
 
 
 def run_activation_patching(
-    model: DecoderOnlyTransformer,
+    model: nn.Module,
     clean_inputs: torch.Tensor,
     clean_answers: torch.Tensor,
     corrupted_inputs: torch.Tensor,
@@ -352,15 +368,18 @@ def run_activation_patching(
     """
     model.eval()
     results: dict = {}
+    device = _model_device(model)
+    clean_inputs = clean_inputs.to(device)
+    corrupted_inputs = corrupted_inputs.to(device)
     batch_size = min(batch_size, clean_inputs.size(0), corrupted_inputs.size(0))
 
     with torch.no_grad():
         clean_logits, clean_cache = _forward_with_cache(model, clean_inputs[:batch_size])
         _, corrupted_cache = _forward_with_cache(model, corrupted_inputs[:batch_size])
 
-    answer = clean_answers[:batch_size].to(DEVICE)
-    counterfactual = corrupted_answers[:batch_size].to(DEVICE)
-    idx = torch.arange(batch_size, device=DEVICE)
+    answer = clean_answers[:batch_size].to(device)
+    counterfactual = corrupted_answers[:batch_size].to(device)
+    idx = torch.arange(batch_size, device=device)
 
     def logit_diff(logits: torch.Tensor) -> torch.Tensor:
         last_logits = logits[:, -1, :]
@@ -396,7 +415,7 @@ def run_activation_patching(
 
 
 def run_path_patching_to_logits(
-    model: DecoderOnlyTransformer,
+    model: nn.Module,
     clean_inputs: torch.Tensor,
     clean_answers: torch.Tensor,
     corrupted_inputs: torch.Tensor,
@@ -429,6 +448,9 @@ def run_path_patching_to_logits(
     """
     model.eval()
     results: dict = {}
+    device = _model_device(model)
+    clean_inputs = clean_inputs.to(device)
+    corrupted_inputs = corrupted_inputs.to(device)
     batch_size = min(batch_size, clean_inputs.size(0), corrupted_inputs.size(0))
     n_layers = len(model.blocks)
 
@@ -436,9 +458,9 @@ def run_path_patching_to_logits(
         clean_logits, clean_cache = _forward_with_cache(model, clean_inputs[:batch_size])
         _, corrupted_cache = _forward_with_cache(model, corrupted_inputs[:batch_size])
 
-    answer = clean_answers[:batch_size].to(DEVICE)
-    counterfactual = corrupted_answers[:batch_size].to(DEVICE)
-    idx = torch.arange(batch_size, device=DEVICE)
+    answer = clean_answers[:batch_size].to(device)
+    counterfactual = corrupted_answers[:batch_size].to(device)
+    idx = torch.arange(batch_size, device=device)
 
     def logit_diff(logits: torch.Tensor) -> torch.Tensor:
         # Read at `pos`, not always the last position: since ln_final/unembed
@@ -483,7 +505,7 @@ def run_path_patching_to_logits(
 
 
 def run_head_ablation(
-    model: DecoderOnlyTransformer,
+    model: nn.Module,
     inputs: torch.Tensor,
     answers: torch.Tensor,
     counterfactuals: torch.Tensor,
@@ -501,14 +523,16 @@ def run_head_ablation(
     """
     model.eval()
     results: dict = {}
+    device = _model_device(model)
+    inputs = inputs.to(device)
     batch_size = min(batch_size, inputs.size(0))
 
     with torch.no_grad():
         clean_logits, _ = model(inputs[:batch_size])
 
-    answer = answers[:batch_size].to(DEVICE)
-    counterfactual = counterfactuals[:batch_size].to(DEVICE)
-    idx = torch.arange(batch_size, device=DEVICE)
+    answer = answers[:batch_size].to(device)
+    counterfactual = counterfactuals[:batch_size].to(device)
+    idx = torch.arange(batch_size, device=device)
 
     def logit_diff(logits: torch.Tensor) -> torch.Tensor:
         last_logits = logits[:, -1, :]

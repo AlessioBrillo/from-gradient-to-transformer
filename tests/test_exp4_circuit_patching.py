@@ -277,6 +277,52 @@ class TestBatchRegimeAndPresets:
         assert self._args("--seeds", "0").manifest_path is None
 
 
+class TestInterventionsAcceptRawDatasetTensors:
+    """The interventions must accept the tensors the dataset produced.
+
+    The cascade hands them the validation tensors as they come out of the
+    dataset (CPU) while the model lives on the GPU. The interventions used
+    to assume the caller had already moved everything to the device, which
+    is a hard error on CUDA — and it is what killed the first GPU cascade
+    run, *after* the training it was supposed to analyse had completed.
+
+    On a CPU-only machine this test cannot fail (the model is on CPU too),
+    so it also asserts the contract directly: the intervention resolves the
+    model's own device rather than a global one.
+    """
+
+    def test_model_device_follows_the_model_not_a_global(self) -> None:
+        from src.experiments.exp4_circuit_patching import _model_device
+
+        model = DecoderOnlyTransformer(
+            vocab_size=16, d_model=16, n_layers=1, n_heads=2, max_seq_len=12
+        )
+        assert _model_device(model) == next(model.parameters()).device
+
+    def test_interventions_run_on_raw_dataset_tensors(self) -> None:
+        from src.experiments.exp1_induction_heads import make_repeated_token_data
+
+        dataset, _ = make_repeated_token_data(
+            vocab_size=16, seq_len=12, num_train=16, num_val=8, seed=0
+        )
+        raw_x, raw_y = dataset.tensors
+        model = DecoderOnlyTransformer(
+            vocab_size=16, d_model=16, n_layers=1, n_heads=2, max_seq_len=12
+        )
+        results = run_activation_patching(
+            model=model,
+            clean_inputs=raw_x[:8],
+            clean_answers=raw_y[:8, -1],
+            corrupted_inputs=raw_x[8:16],
+            corrupted_answers=raw_y[8:16, -1],
+            layers_to_patch=[0],
+            positions_to_patch=[4, 6],
+        )
+        assert results, "the intervention produced no measurements"
+        for vals in results.values():
+            assert "recovery" in vals
+
+
 class TestAttentionOnlyInterventions:
     """The interventions must work on the model Rung 1 actually trains.
 
