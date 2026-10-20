@@ -704,7 +704,7 @@ def detect_heads(
         return report
 
     layout = build_copy_layout(tokens, prefix_len, task=task)
-    masses = {
+    masses: dict[str, list[np.ndarray]] = {
         "induction": [],
         "duplicate": [],
         "content": [],
