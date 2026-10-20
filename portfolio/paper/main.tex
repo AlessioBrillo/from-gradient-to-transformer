@@ -547,34 +547,45 @@ seeds -- the joint solution is \textbf{dense}, not a sparse Fourier circuit.
   \item \textbf{Algorithmic tasks:} modular addition and repeated tokens
     are cleaner than natural language; circuits found here may not be
     representative of circuits in language models.
-  \item \textbf{No induction heads at standard scale:} the fixed-vs-fresh
-    comparison (53.5\% val acc, 800 epochs) is the trustworthy scale for
-    the earlier measurements; the standard-scale run with the corrected
-    detector ($d_\text{model}=64$, 3000 epochs, three seeds) is reported
-    above, and what it finds is a \emph{prefix-copying} head, not an
-    induction head.
+  \item \textbf{No content-based induction head yet:} at standard scale the
+    model forms a \emph{prefix-copying} head -- it copies from a fixed
+    offset, not from the previous occurrence of the same token. The
+    standard-scale run with the corrected detector ($d_\text{model}=64$,
+    3000 epochs, three seeds) is reported above. The task it was trained
+    on is perfectly periodic, so a fixed offset and a content match are
+    the same function there; a task with the repeats at \emph{varying}
+    distances is required to separate them, and that run is pre-registered
+    but not in this version.
+    % manifest: results/induction_standard.json
   \item \textbf{The head counts in this paper were retracted}
     (2026-10-19): the detectors measured the previous-token offset, so
-    every ``$0 / N$'' figure was a statement about the detector. Even with
-    the corrected detector, a perfectly periodic task cannot separate
-    copying by content from copying by a fixed offset; the dissociation
-    probe does, and it says the copy here is positional. A task with
-    repeats at \emph{varying} distances is required to make the
-    content-based claim testable at all, and it is not in this version.
+    every ``$0 / N$'' figure was a statement about the detector. With the
+    corrected detector the same run finds a prefix-copying head, and the
+    dissociation probe says the copy follows the offset rather than the
+    content.
+    % manifest: results/induction_standard_emergence.json
   \item \textbf{Grokking sparse circuit reproduced:} Rung 2 reached val
     accuracy 0.9999 $\pm$ 0.0002 with $k_{\mathrm{energy},90}$ = 5.7 $\pm$
     1.2 of 56 frequencies (sparse, 3/3 seeds) on both the Nanda-faithful and
     the historical protocol (GPU, 2026-10-14). The earlier NO-GROK label was
     an L1-mass metric artifact, retracted after the 2026-10-08 audit.
-  \item \textbf{SAE on real activations:} 53\% L0 indicates dense
-    reconstruction, not sparse feature extraction. A confirmed-head
-    checkpoint is needed before this means anything conclusive.
-  \item \textbf{Path patching unvalidated against a real head:}
-    implementation is unit-tested only; end-to-end validation requires
-    Rung 1's standard-scale work.
+    % manifest: results/grokking_nanda_p113.json
+  \item \textbf{SAE on real activations is sparse but over-complete:} on the
+    Rung 1 checkpoint the real-activation dictionary reaches L0 = 15.1/512
+    (3.0\% active) with FVE 99.998\%, but it is ~8$\times$ wider than the
+    64-dimensional residual stream it has to cover and 78\% of its features
+    are dead. The dictionary size, not the sparsity, is the open question.
+    % manifest: results/exp5_real_activations.json
+  \item \textbf{Path patching is validated end to end:} on Rung 1's own
+    checkpoint the head-ablation effect is 0.4445 $\pm$ 0.0425 and the
+    path-patching effect is 0.8215 $\pm$ 0.1255. What that validates is the
+    *method* on a real head; the head in question is a prefix-copying head,
+    so it is not yet an induction circuit.
+    % manifest: results/exp4_standard.json
   \item \textbf{Single architecture family, limited seeds:} multi-seed
-    harness covers Rungs 1--4; Rung 5 synthetic is single-seed; capstone
-    shakedown is single-seed (3 seeds planned, 1 completed).
+    harness covers Rungs 1--4; Rung 5 synthetic is single-seed; the
+    capstone ran 3 seeds $\times$ 20k steps.
+    % manifest: results/capstone_20k.json
   \item \textbf{Attribution patching not implemented:} linear
     approximation with known failure modes on large activations
     (\citep{makelov2023subspace}).
@@ -593,18 +604,32 @@ training, full instrumentation, causal circuit verification, and honest
 negative reporting. The primary flagship, Rung 2 grokking modular addition,
 is \textbf{reproduced} (val accuracy 0.9999 $\pm$ 0.0002, sparse Fourier
 circuit with $k_{\mathrm{energy},90}$ = 5.7 $\pm$ 1.2 of 56, GPU, 3 seeds,
-both protocols, 2026-10-14). The strongest verified result remains Rung 3's
-superposition phase transition (root-caused, reproduced, multi-seed
-manifest). The 2026-08-11 NO-GROK label was an L1-mass metric artifact,
-retracted after the 2026-10-08 audit.
+both protocols, 2026-10-14). The 2026-08-11 NO-GROK label was an L1-mass
+metric artifact, retracted after the 2026-10-08 audit.
+% manifest: results/grokking_nanda_p113.json
+
+Rung 1 is the rung this work does \emph{not} close, and it says so. With
+the detector fixed (2026-10-19) and the standard-scale run in hand
+(2026-10-20), the model forms a head that copies by a \emph{fixed offset},
+not by content: on a perfectly periodic task the two hypotheses are the
+same function, and the dissociation probe separates them in favour of the
+offset. A content-based task with the repeats at varying distances is
+pre-registered (ADR-0033); the Rung 4 and Rung 5 results in this paper
+are measured on the prefix-copying head, and are reported as a validation
+of the \emph{method} rather than of an induction circuit.
+% manifest: results/induction_standard.json
+% manifest: results/exp4_standard.json
 
 The capstone 3$\times$20k run reveals a dissociation under joint training
 that persists at full budget: induction accuracy 0.5034 $\pm$ 0.0002,
 modular accuracy 0.1699 $\pm$ 0.0286 (above chance, far from the solo-run
 1.0). The honest negatives are contributions: NO-MOVE falsifies two
 explanations of the joint-training dissociation at this scale; the P=59
-positive control carries the same L1 metric defect and is marked
-metric-suspect.
+positive control, re-measured with the energy metric on 2026-10-19, comes
+back \textbf{MIXED} (2 of 3 seeds sparse), which is a boundary cell and is
+reported as one.
+% manifest: results/capstone_20k.json
+% manifest: results/grokking_p59_repo_energy.json
 
 \bibliographystyle{plainnat}
 \bibliography{references}

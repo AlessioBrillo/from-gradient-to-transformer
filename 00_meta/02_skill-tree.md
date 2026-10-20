@@ -91,25 +91,53 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
   ~17-20h `--standard` scale — see the proof's own limitations).
 
 ## Research Skills (Mechanistic Interpretability)
-- [x] **Induction head reproduction** — attention-pattern analysis, causal verification (ablation site fixed 2026-08-01, see [[05_llm_engineering/proofs/intervention-validity]])
-- [~] **Grokking reproduction + Fourier reverse-engineering** — the primary flagship 🌟, **not yet reproduced**.
-  This was wrongly checked `[x]` before 2026-08-01 — the vault's own rule at the top of this file ("A checked box without proof is a lie you tell yourself") applied to this exact line.
-  The full P=113 run is still pending; the data-split bug that made it structurally unreachable was fixed 2026-07-26 (see [[portfolio/RESULTS]]). `--seeds` added 2026-08-02; Colab notebook hardened for the 3-seed GPU run — still the single most important open item.
+- [~] **Induction head reproduction** — a head forms at standard scale (2–3 per
+  seed, copy-offset mass 0.945, GPU, 3 seeds, 2026-10-20) and the causal
+  interventions land on it, but the dissociation probe puts the copy on a
+  **fixed offset**: on the periodic task the two mechanisms are the same
+  function, so the head is a *prefix-copying* head. The content-based task
+  that separates them is pre-registered (ADR-0033) and its run is the open
+  item of issue #200.
+  <!-- manifest: results/induction_standard.json -->
+- [x] **Grokking reproduction + Fourier reverse-engineering** — the primary
+  flagship, **reproduced 2026-10-14**: val accuracy 0.9999 ± 0.0002 with a
+  sparse Fourier circuit (k_energy_90 = 5.7 ± 1.2 of 56) on the Nanda
+  protocol and on the historical repo protocol, GPU, 3 seeds each. The
+  2026-08-11 NO-GROK label was an L1-mass metric artifact, retracted after the
+  2026-10-08 audit.
+  <!-- manifest: results/grokking_nanda_p113.json -->
 - [x] **Toy Models of Superposition** — feature geometry, phase changes. Root cause of the
   flat/near-zero recovery found and fixed 2026-08-02 (no real bottleneck in the
   architecture, not the untied-weights hypothesis tested 2026-08-01): the phase transition
   now reproduces cleanly (10/20 → 20/20 features represented). See
   [[05_llm_engineering/proofs/superposition-setup-validity]].
-- [x] **Circuit discovery via activation + path patching** — find + causally validate (patch site and metric fixed 2026-08-01). Quick multi-seed re-run 2026-08-02 confirms internal consistency (0 heads, 3/3 seeds, matching Rung 1) but path patching is still validated only by unit tests — no real head has existed to point it at yet.
-- [~] **Sparse autoencoder training** — feature dashboard; real-activation harvesting shipped 2026-08-02 (`--activations-from`, pre-encoder bias added), but the source checkpoint has no confirmed induction head yet, so the real-vs-synthetic comparison (99.97% FVE, only 53% sparse) is informative rather than conclusive — see [[portfolio/RESULTS]] Rung 5.
+  <!-- manifest: results/exp3_superposition.json -->
+- [x] **Circuit discovery via activation + path patching** — find + causally validate
+  (patch site and metric fixed 2026-08-01). The cascade ran end to end on Rung 1's
+  own checkpoint: head ablation 0.4445 ± 0.0425, path patching 0.8215 ± 0.1255
+  (GPU, 3 seeds). The head is a prefix-copying one, so this validates the
+  *method* on a real head; an induction circuit needs the content-based run.
+  <!-- manifest: results/exp4_standard.json -->
+- [~] **Sparse autoencoder training** — feature dashboard; real-activation harvesting
+  shipped 2026-08-02 (`--activations-from`, pre-encoder bias added). On Rung 1's
+  checkpoint the real-activation dictionary is sparse (L0 3.0% of 512, FVE
+  0.99998) but ~8× wider than the 64-dimensional residual stream, with 78% of
+  its features never firing: the over-completeness, not the sparsity, is the
+  open question — see [[portfolio/RESULTS]] Rung 5.
+  <!-- manifest: results/exp5_real_activations.json -->
 - [ ] **Automated circuit discovery** — ACDC, AtP, attribution patching. Descoped 2026-08-01: the placeholder implementation simulated results with random draws instead of running ACDC; deleted.
-- [~] Mini-paper writing (LaTeX, citations, ablations, limitations) — `portfolio/paper/`
-  scaffold added 2026-08-02 (structure + seeded `references.bib`); no prose yet — every
-  section is a `% TODO` pointing at the manifest/proof it should be written from.
+- [x] Mini-paper writing (LaTeX, citations, ablations, limitations) — `portfolio/paper/`
+  is written from the manifests, with the retracted claims retracted in place.
+  <!-- manifest: results/grokking_nanda_p113.json -->
+  <!-- manifest: results/induction_standard.json -->
 
 ## Phase 7 — Capstone
 - [x] From-scratch decoder-only transformer (the model to reverse-engineer) — `src/models/decoder_only_transformer.py`
-- [~] Grokking experiment end-to-end (training + analysis + figures) — CPU-bound P=113
-- [x] At least one circuit verification (activation patching on the capstone model) — exp4
-- [~] SAE feature dashboard (browsable artifact) — real-activation path now exists; needs a checkpoint with a confirmed induction head to be a meaningful upgrade over synthetic
-- [ ] Mini-paper with all ablations and primary-literature citations
+- [x] Grokking experiment end-to-end (training + analysis + figures) — reproduced on GPU (3 seeds, both protocols); the CPU-bound P=113 run is no longer the flagship
+  <!-- manifest: results/grokking_nanda_p113.json -->
+- [x] At least one circuit verification (activation patching on the capstone model) — exp4, end to end on Rung 1's own checkpoint
+  <!-- manifest: results/exp4_standard.json -->
+- [~] SAE feature dashboard (browsable artifact) — the real-activation path exists and is sparse (L0 3.0%), but the dictionary is ~8× too wide with 78% dead features; the browsable artifact itself is descoped
+  <!-- manifest: results/exp5_real_activations.json -->
+- [x] Mini-paper with all ablations and primary-literature citations — `portfolio/paper/main.tex`, written from the manifests
+  <!-- manifest: results/grokking_nanda_p113.json -->

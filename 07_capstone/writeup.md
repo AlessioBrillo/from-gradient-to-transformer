@@ -66,9 +66,11 @@ energy-carrying frequencies are load-bearing; the L1-mass spectrum around them
 is noise.
 
 The positive control P=59 (k₉₉ = 58/59) was read only through the L1 metric, so
-its NO-GROK label carries the same defect. Checkpoints are gone; re-measuring
-means a one-command GPU job. Marked **metric-suspect**, not confirmed.
+its NO-GROK label carried the same defect. It was re-measured with the energy
+metric on 2026-10-19 and came back **MIXED — 2 of 3 seeds sparse**, a boundary
+cell rather than a confirmation, and it is reported as one.
 <!-- manifest: results/phase_diagram_positive_control.json -->
+<!-- manifest: results/grokking_p59_repo_energy.json -->
 
 See [[07_capstone/notes/grokking-verdict-p113]] (the verdict),
 [[07_capstone/notes/positive-control-protocol]] (the protocol), and
@@ -77,10 +79,11 @@ regime).
 
 ## 3. Induction heads
 
-**Verdict: the head counts are retracted (2026-10-19) — the detector measured the
-previous-token offset, so "no head at any scale" was a statement about the
-detector, not about the models.**
+**Verdict: a head forms and it copies by a fixed offset — the content-based
+claim is still open (2026-10-20).**
 <!-- manifest: results/exp1_induction_heads.json -->
+<!-- manifest: results/induction_standard_emergence.json -->
+<!-- manifest: results/induction_standard.json -->
 
 Setup: 2-layer attention-only transformer on repeated random tokens. The old
 detector measured the attention mass on `q-1` (the previous token) and called
@@ -89,8 +92,31 @@ it "diag+1"; the copy offset on this task is `q-(L-1)`. Its peak was
 evidence about induction heads. The corrected detector
 (`src/experiments/induction_detection.py`) reports the induction mass on the
 copy offset with the previous-token mass as a control, and confirms a head only
-when the K-composition mechanism agrees; the standard-scale run with it is
-issue #169.
+when the K-composition mechanism agrees.
+
+**The standard-scale run, with the corrected detector (GPU, 3 seeds, 3000
+epochs = 384k steps per seed):** a head is confirmed on **every seed —
+2.67 ± 0.47 heads**, all of them in the first layer (0.00 above it), with
+copy-offset mass **0.9451 ± 0.0013** against a previous-token control of
+0.0458 ± 0.0072. It appears early: the emergence run confirms it at
+**epoch 100** (3 heads per seed, 12.8k steps). The two-step circuit is
+absent: the K-composition score is 0.0521 ± 0.0075.
+
+**And it is not an induction head.** The dissociation probe — the only
+measurement that can separate the two mechanisms on this task — reads
+**content mass 0.0312 ± 0.0004 against period mass 0.6950 ± 0.0997**:
+the copy follows the fixed offset. That is not a detector artefact and not a
+scale problem: on a perfectly periodic task the previous occurrence of a token
+is *always* at `q-L`, so "attend to `q-L+1`" and "attend to the token after
+the previous occurrence" are **the same function**, and the task does not
+contain the question the rung asks. The honest name for this head is a
+**prefix-copying head**.
+
+The task that does contain the question — the same structure with the repeats
+at *varying* distances, where the best single fixed offset explains 17.6% of
+the copy queries — is specified in ADR-0033 and pre-registered in
+[[07_capstone/notes/variable-distance-induction-preregistration]]. Its run is
+the open item of issue #200, and this section is updated when it lands.
 
 The one solid, matched finding is **fixed versus fresh batches** at otherwise
 identical configs: validation accuracy **0.45% ± 0.03%** (fixed, reused every
@@ -121,34 +147,52 @@ al. (2022) predicts. See [[04_nlp_and_transformers/notes/superposition-and-featu
 
 ## 5. Circuit discovery via activation patching
 
-**Verdict: activation patching clean; path patching unit-tested only.**
+**Verdict: the cascade ran end to end on Rung 1's own checkpoint — and the
+head it found is a prefix-copying one (2026-10-20).**
 <!-- manifest: results/exp4_circuit_patching.json -->
+<!-- manifest: results/exp4_standard.json -->
 
-Validation accuracy 0.489 ± 0.014; mean logit-difference recovery 0.197 ± 0.007
-across patched sites. The **0/4 heads** figure is retracted with the rest
-(2026-10-19): this rung's detector measured the strict upper triangle of a
+Since 2026-10-19 this rung analyses **Rung 1's own checkpoint**
+(`--from-checkpoint`) instead of training a second, differently shaped model,
+so the three rungs measure one model. On the standard-scale checkpoint
+(epoch 3000, 3 seeds) the interventions land: **head ablation 0.4445 ±
+0.0425** and **path patching 0.8215 ± 0.1255** of the answer-vs-counterfactual
+logit difference — the first end-to-end path-patching result in this
+repository against a real head.
+
+What the interventions validate is the **method**. The head they point at
+copies by a fixed offset (probe: content 0.0309 ± 0.0003 against period
+0.6950 ± 0.0996), so the circuit they certify is a prefix-copying circuit,
+not an induction circuit. The cascade has to be re-run on a content-based
+checkpoint before it says anything about induction.
+
+The retracted pre-fix numbers were removed with their replacement, not left
+dangling: the **0/4 heads** figure is retracted with the rest (2026-10-19),
+because this rung's old detector measured the strict upper triangle of a
 causal softmax, which is identically zero and could never fire on any model.
-Head ablation and path patching were therefore never given a target; since
-2026-10-19 the rung analyses Rung 1's own checkpoint (`--from-checkpoint`)
-instead of training a second, differently shaped model. The retracted pre-fix
-recovery numbers were removed with their replacement, not left dangling. See
-[[04_nlp_and_transformers/notes/activation-patching]] and
+See [[04_nlp_and_transformers/notes/activation-patching]] and
 [[04_nlp_and_transformers/notes/path-patching]].
 
 ## 6. Sparse autoencoder extraction
 
-**Verdict: synthetic reproduces; real activations are dense.**
+**Verdict: synthetic reproduces; on real activations the dictionary is sparse
+but eight times too wide (2026-10-20).**
 <!-- manifest: results/exp5_sae_dashboard.json -->
+<!-- manifest: results/exp5_real_activations.json -->
 
 Synthetic baseline: L0 96.60/512 (18.9% active), FVE 0.9749, MSE 0.00101, 39/512
 dead features — the sparsity/reconstruction tradeoff behaves as Bricken et al.
 (2023) describe.
 
-On real residual-stream activations the reconstruction is better and the features
-are *not* sparse: L0 136.25/256 (53.2% active), FVE 0.9997, 0/256 dead. A
-32-dimensional residual stream from a small model with no confirmed induction
-head may simply not contain disentangled features yet. Reported as an honest gap
-rather than a result. See [[06_production_ai/notes/results-manifests-and-provenance]].
+On the real residual-stream activations of Rung 1's standard-scale checkpoint
+(d_model 64) the reconstruction is essentially perfect (FVE 0.99998, MSE
+0.0004) and the features are *sparse*: **L0 15.12/512 (3.0% active)**. The
+open question is not the sparsity but the **size**: the dictionary is about
+eight times wider than the 64-dimensional residual stream it has to cover,
+and **78.1% of its features never fire** (dead rate 0.7812) — a dictionary
+that is too large for its input has to be, and the honest reading is that the
+sparsity measurement is evidence about the *over-completeness*, not yet about
+a disentangled feature set. See [[06_production_ai/notes/results-manifests-and-provenance]].
 
 ## 7. Capstone: joint training
 
@@ -187,12 +231,17 @@ See [[07_capstone/notes/mp-89-retune-verdict]].
 - Modular addition is cleaner than natural language; circuits found here may not
   be representative.
 - The sparse Fourier circuit has been observed under the energy metric (Rung 2,
-  both protocols, 3/3 seeds); the capstone joint run records only the L1-mass
-  k₉₉, so its Fourier density is not established by that run — it needs the
-  energy metric, a recorded follow-up.
-- No induction head has ever been confirmed here, so the Rung 1 → 4 → 5 cascade
-  is blocked at its first link. Every path-patching and SAE-on-real-activations
-  claim is downstream of that.
+  both protocols, 3/3 seeds); the capstone joint run is dense under the same
+  metric (k_energy_90 = 49.0 of 56, sparse on 0/3 seeds).
+- No *content-based* induction head has been confirmed here. A prefix-copying
+  head forms at standard scale and the causal interventions land on it
+  (ablation 0.4445, path patching 0.8215), but on the periodic task the two
+  mechanisms are the same function, and the probe says the copy is the
+  positional one. The content-based task that separates them is pre-registered
+  (ADR-0033) and its run is the open item of issue #200.
+- The real-activation SAE is sparse (L0 3.0%) but its dictionary is ~8× wider
+  than the residual stream and 78% of its features never fire: the sparsity is
+  evidence about the over-completeness, not yet about disentanglement.
 - Attribution patching is a first-order approximation and is **not implemented**
   in this repo — see [[04_nlp_and_transformers/notes/attribution-patching]] for
   what it would take and why it has not been done.
@@ -216,7 +265,7 @@ See [[07_capstone/notes/mp-89-retune-verdict]].
 - The hardest part of MI is not running experiments — it is forming precise,
   falsifiable hypotheses. The tools are easier than the thinking.
 - **A negative result honestly reported is more valuable than a positive result
-  overclaimed.** Six audits have caught real bugs in this repo's own claims, and
+  overclaimed.** Seven audits have caught real bugs in this repo's own claims, and
   they are all still visible in [[portfolio/RESULTS]].
 
 ## Links

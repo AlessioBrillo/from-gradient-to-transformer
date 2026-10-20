@@ -28,7 +28,12 @@ Research and educational demonstration of mechanistic interpretability technique
 | Rung 2 — Grokking ★ | Modular addition pairs | Equation (a + b) mod P = c for all pairs; train/test split holds out random *equations*, with every target class represented in both splits (see `portfolio/RESULTS.md` Honesty Ledger for the earlier, broken by-target-class split) |
 | Rung 3 — Superposition | Synthetic sparse features | Randomly activated features with controlled sparsity; ground-truth features known |
 | Rung 4 — Circuit patching | Synthetic IOI / task-specific templates | Controlled templates (e.g., "When [A] and [B] went to the store, [A] gave a book to") |
-| Rung 5 — SAE | Residual stream activations | Harvested from forward passes of the capstone model on evaluation prompts |
+| Rung 5 — SAE | Residual stream activations | Harvested from forward passes of Rung 1's standard-scale checkpoint on the induction task's sequences (d_model 64) |
+
+The manifests behind this card: Rung 2
+<!-- manifest: results/grokking_nanda_p113.json -->, Rung 4
+<!-- manifest: results/exp4_standard.json -->, Rung 5
+<!-- manifest: results/exp5_real_activations.json -->.
 
 ## Factors
 
