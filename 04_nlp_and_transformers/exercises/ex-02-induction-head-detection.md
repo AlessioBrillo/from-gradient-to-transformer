@@ -79,9 +79,9 @@ Full implementation in `src/experiments/exp1_induction_heads.py` (703 lines). Ap
 
 1. **Data**: `make_repeated_token_data` generates sequences where even positions copy odds — e.g., `[a, b, a, b, c, d, c, d, ...]`.
 2. **Model**: `AttentionOnlyTransformer` — 2-layer, no MLP, no bias (attention-only). This isolates the induction mechanism.
-3. **Detection**: `diagonal+1 mass` — for each head, average attention probability at position `(i, i+1)`. Heads with mass > 0.3 are induction heads.
+3. **Detection**: the **copy-offset mass** — for each head, the average attention probability on the key `q-(L-1)`, i.e. the token after the previous occurrence of the current token. Heads with mass > 0.3 are candidates, and a head in a layer above the first is confirmed only when the K-composition with an earlier layer agrees. (The pre-2026-10-19 detector measured the *previous-token* offset `q-1` and called it "diag+1" — that is a different circuit, and the counts it produced are retracted.)
 4. **Causal ablation**: Zero the W_O output for the target head via a forward hook. Measure accuracy before/after.
-5. **Training metrics**: Attention entropy (decreases as heads specialize), diag+1 mass (increases as induction heads form).
+5. **Training metrics**: Attention entropy (decreases as heads specialize), the copy-offset mass (increases as the head forms) with the previous-token mass as a control.
 
 ### Running the experiment
 ```bash

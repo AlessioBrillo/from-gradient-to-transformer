@@ -104,7 +104,10 @@ analysis in this repo:
 | `hook_ln_final` | the final normalised residual stream |
 | `hook_logits` | unembedded logits |
 
-`attn_probs` is what the induction detector reads (`diag+1` mass);
+`attn_probs` is what the induction detector reads (the attention mass on
+the *copy* offset `q-(L-1)`, with the previous-token offset kept as a
+labelled control — see
+[[src/experiments/induction_detection]]);
 `hook_ln_final`'s input is what `exp5` harvests for SAE training; `resid_pre`
 /`attn_out` are what activation patching moves.
 

@@ -44,11 +44,19 @@ which is precisely the case when a circuit has not stabilised.
 the roadmap (`00_meta/01_roadmap.md`) marks the phase complete on the strength of
 activat**ion** patching. The gap is recorded rather than papered over:
 
-1. **There is no confirmed circuit to attribute to.** No induction head has been
-   detected in this repository at any scale (0/8 heads; see
-   [[06_production_ai/notes/grokking-verdict-p113]] for the parallel admission on
-   Rung 2). Attribution patching ranks edges *within* a working circuit; with no
-   head there is nothing to rank.
+1. **There is no confirmed circuit to attribute to.** The heads this repository
+   measured before 2026-10-19 were counted by a detector that measured the
+   previous-token offset, so "0/8 heads" was a statement about the detector;
+   the corrected detector does find heads at standard scale (2–3 per seed),
+   but they are **prefix-copying** heads (a fixed offset, not the previous
+   occurrence of the same token) and the K-composition between layers is 0.05
+   — there is no two-step circuit to attribute to yet. See
+   [[04_nlp_and_transformers/notes/induction-heads]] and
+   [[docs/adr/0032-induction-detector-and-the-positional-shortcut]]. The
+   parallel admission on Rung 2 is in
+   [[06_production_ai/notes/grokking-verdict-p113]]. Attribution patching ranks
+   edges *within* a working circuit; with a single-head positional copy there
+   is nothing to rank.
 2. **A ranking without a working circuit is exactly the failure mode this repo
    exists to avoid.** `exp6_automated_circuit.py` was deleted on 2026-08-01 for
    reporting drawn-from-a-distribution numbers as "faithfulness"; a plausible
