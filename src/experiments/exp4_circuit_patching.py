@@ -46,15 +46,20 @@ from src.experiments.exp1_induction_heads import (
     _FreshBatchesAction,
     _make_fresh_batches_fn,
 )
-from src.experiments.exp1_induction_heads import (
-    make_repeated_token_data as make_induction_data,
-)
 from src.experiments.induction_detection import (
     COMPOSITION_THRESHOLD,
     INDUCTION_MASS_THRESHOLD,
     detect_from_inputs,
     prefix_length_for,
+    run_content_vs_offset_probe,
     run_dissociation_probe,
+)
+from src.experiments.induction_tasks import (
+    TASK_PERIODIC,
+    TASK_VARIABLE,
+    TaskSpec,
+    copy_query_batch,
+    task_datasets,
 )
 from src.experiments.runner import parse_seeds, run_seeds
 from src.models.decoder_only_transformer import DecoderOnlyTransformer
@@ -66,6 +71,59 @@ logger = logging.getLogger(__name__)
 FIGURES_DIR = Path("figures")
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+def _task_spec(
+    task: str,
+    vocab_size: int,
+    seq_len: int,
+    key_len: Optional[int] = None,
+    copy_blocks: Optional[int] = None,
+    copy_block_len: Optional[int] = None,
+) -> TaskSpec:
+    """The task of the model this rung analyses.
+
+    With ``--from-checkpoint`` the data must be generated with the
+    *source* config, not with this rung's own flags: a checkpoint trained
+    on the variable-distance task is analysed on variable-distance data,
+    and one trained on the periodic task on periodic data.
+    """
+    if task != TASK_VARIABLE:
+        return TaskSpec.periodic(vocab_size=vocab_size, seq_len=seq_len)
+    from src.experiments.exp1_induction_heads import default_variable_geometry
+
+    default_key, default_blocks, default_block = default_variable_geometry(seq_len)
+    return TaskSpec.variable(
+        vocab_size=vocab_size,
+        seq_len=seq_len,
+        key_len=key_len or default_key,
+        copy_blocks=copy_blocks or default_blocks,
+        copy_block_len=copy_block_len or default_block,
+    )
+
+
+def _run_task_probe(
+    model: nn.Module,
+    task: str,
+    vocab_size: int,
+    seq_len: int,
+    seed: int,
+    tokens: Optional[torch.Tensor] = None,
+) -> dict:
+    """The naming test of the task, in the task's own terms.
+
+    The periodic task needs an off-distribution batch (its content target
+    and its fixed offset are the same key in distribution); the
+    variable-distance task does not, because its repeats sit at different
+    distances by construction.
+    """
+    if task == TASK_VARIABLE:
+        if tokens is None:
+            raise ValueError("the variable-task probe needs the task's tokens")
+        return run_content_vs_offset_probe(model, tokens)
+    return run_dissociation_probe(
+        model, vocab_size=vocab_size, seq_len=seq_len, num_samples=32, seed=seed
+    )
 
 
 
@@ -214,11 +272,12 @@ def detect_induction_heads(
     threshold: float = INDUCTION_MASS_THRESHOLD,
     prefix_len: Optional[int] = None,
     composition_threshold: float = COMPOSITION_THRESHOLD,
+    task: str = TASK_PERIODIC,
 ) -> list[tuple[int, int]]:
     """Detect induction heads by their attention pattern.
 
     The detection is the shared one (`src.experiments.induction_detection`):
-    the head must put enough mass on the **copy offset** `q - (L-1)` — the
+    the head must put enough mass on the task's **copy key** — the
     key holding the token after the previous occurrence of the current token
     — and its layer must be composed with an earlier layer.
 
@@ -226,6 +285,10 @@ def detect_induction_heads(
     the strict upper triangle of a causal softmax: exactly zero, always.
     That is why this rung reported "0 / 4 induction heads" and skipped
     ablation and path patching for every run it ever made.
+
+    On the periodic task the copy key is the fixed offset `q - (L-1)`; on
+    the variable-distance task it is `prev(q) + 1`, which is not a fixed
+    offset at all (ADR-0033). The task is a parameter, not an assumption.
     """
     report, _patterns = detect_from_inputs(
         model,
@@ -233,6 +296,7 @@ def detect_induction_heads(
         prefix_len=prefix_len,
         mass_threshold=threshold,
         composition_threshold=composition_threshold,
+        task=task,
     )
     return [
         (layer, head)
@@ -337,6 +401,7 @@ def run_activation_patching(
     layers_to_patch: list[int],
     positions_to_patch: list[int],
     batch_size: int = 32,
+    pos: int = -1,
 ) -> dict:
     """Run residual stream activation patching.
 
@@ -382,8 +447,14 @@ def run_activation_patching(
     idx = torch.arange(batch_size, device=device)
 
     def logit_diff(logits: torch.Tensor) -> torch.Tensor:
-        last_logits = logits[:, -1, :]
-        return last_logits[idx, answer] - last_logits[idx, counterfactual]
+        # `pos` is the position the answer and the counterfactual belong
+        # to. It defaults to the last position, which is a copy query on
+        # the periodic task; on the variable-distance task the copy
+        # queries sit at different positions per sequence, so the caller
+        # passes the position it patched (and read) at.
+        read_at = pos if pos >= 0 else logits.shape[1] - 1
+        at_logits = logits[:, read_at, :]
+        return at_logits[idx, answer] - at_logits[idx, counterfactual]
 
     clean_diff = logit_diff(clean_logits).mean().item()
     logger.info(f"Clean logit diff (answer - counterfactual): {clean_diff:.4f}")
@@ -511,6 +582,7 @@ def run_head_ablation(
     counterfactuals: torch.Tensor,
     induction_heads: list[tuple[int, int]],
     batch_size: int = 32,
+    pos: int = -1,
 ) -> dict:
     """Zero-ablate individual induction heads and measure effect.
 
@@ -535,8 +607,9 @@ def run_head_ablation(
     idx = torch.arange(batch_size, device=device)
 
     def logit_diff(logits: torch.Tensor) -> torch.Tensor:
-        last_logits = logits[:, -1, :]
-        return last_logits[idx, answer] - last_logits[idx, counterfactual]
+        read_at = pos if pos >= 0 else logits.shape[1] - 1
+        at_logits = logits[:, read_at, :]
+        return at_logits[idx, answer] - at_logits[idx, counterfactual]
 
     clean_diff = logit_diff(clean_logits).mean().item()
 
@@ -759,18 +832,22 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
 
     # With a checkpoint, the data must be generated with the *source* config
     # (vocab/seq_len), not with this rung's own flags.
+    task = getattr(args, "source_task", TASK_PERIODIC)
     if checkpoint is not None:
         vocab_size = args.source_vocab_size
         seq_len = args.source_seq_len
     else:
         vocab_size = args.vocab_size
         seq_len = args.seq_len
-    train_dataset, val_dataset = make_induction_data(
-        vocab_size=vocab_size,
-        seq_len=seq_len,
-        num_train=args.num_train,
-        seed=seed,
+    spec = _task_spec(
+        task,
+        vocab_size,
+        seq_len,
+        key_len=getattr(args, "source_key_len", None),
+        copy_blocks=getattr(args, "source_copy_blocks", None),
+        copy_block_len=getattr(args, "source_copy_block_len", None),
     )
+    train_dataset, val_dataset = task_datasets(spec, args.num_train, 1024, seed)
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=256, shuffle=False)
 
@@ -804,24 +881,31 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
     sample_inputs = next(iter(val_loader))[0][:8]
     prefix_len = prefix_length_for(seq_len)
     induction_heads = detect_induction_heads(
-        model, sample_inputs, prefix_len=prefix_len
+        model, sample_inputs, prefix_len=prefix_len, task=task
     )
 
-    probe = run_dissociation_probe(
-        model,
-        vocab_size=vocab_size,
-        seq_len=seq_len,
-        num_samples=32,
-        seed=seed,
+    probe = _run_task_probe(
+        model, task, vocab_size, seq_len, seed, tokens=sample_inputs
     )
 
     val_x, val_y = val_dataset.tensors
-    n_pair = min(32, val_x.size(0) // 2)
-    val_batch, val_batch_answers = val_x[:n_pair], val_y[:n_pair, -1]
-    corrupted, corrupted_answers = val_x[n_pair:2 * n_pair], val_y[n_pair:2 * n_pair, -1]
+    if task == TASK_VARIABLE:
+        patch = copy_query_batch(val_x, val_y, vocab_size=vocab_size)
+        val_batch = patch["clean_inputs"]
+        val_batch_answers = patch["clean_answers"]
+        corrupted = patch["corrupted_inputs"]
+        corrupted_answers = patch["corrupted_answers"]
+        read_pos = int(patch["pos"])
+    else:
+        n_pair = min(32, val_x.size(0) // 2)
+        val_batch, val_batch_answers = val_x[:n_pair], val_y[:n_pair, -1]
+        corrupted, corrupted_answers = val_x[n_pair:2 * n_pair], val_y[n_pair:2 * n_pair, -1]
+        read_pos = -1
 
     layers_to_patch = list(range(len(getattr(model, "blocks", []))))
-    positions_to_patch = list(range(max(2, seq_len // 4), seq_len, 2))
+    positions_to_patch = (
+        [read_pos] if read_pos >= 0 else list(range(max(2, seq_len // 4), seq_len, 2))
+    )
     patching_results = run_activation_patching(
         model=model,
         clean_inputs=val_batch,
@@ -831,6 +915,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         layers_to_patch=layers_to_patch,
         positions_to_patch=positions_to_patch,
         batch_size=min(32, val_batch.size(0)),
+        pos=read_pos,
     )
     mean_activation_recovery = (
         float(np.mean([v["recovery"] for v in patching_results.values()]))
@@ -847,6 +932,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
             answers=val_batch_answers,
             counterfactuals=corrupted_answers,
             induction_heads=induction_heads,
+            pos=read_pos,
         )
         mean_ablation_effect = float(
             np.mean([v["effect"] for v in ablation_results.values()])
@@ -859,6 +945,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
             corrupted_inputs=corrupted,
             corrupted_answers=corrupted_answers,
             heads=induction_heads,
+            pos=read_pos,
         )
         mean_path_patch_effect = float(
             np.mean([v["effect"] for v in path_results.values()])
@@ -1087,6 +1174,30 @@ def build_parser() -> argparse.ArgumentParser:
         "--source-n-heads", type=int, default=4,
         help="The checkpoint's head count (must match how it was trained)",
     )
+    parser.add_argument(
+        "--source-task",
+        choices=[TASK_PERIODIC, TASK_VARIABLE],
+        default=TASK_PERIODIC,
+        help=(
+            "The task the checkpoint was trained on. 'periodic' is the "
+            "historical prefix+prefix layout; 'variable' is the "
+            "content-based task of ADR-0033, whose repeats sit at varying "
+            "distances. The data this rung analyses and the position it "
+            "measures the interventions at follow from it."
+        ),
+    )
+    parser.add_argument(
+        "--source-key-len", type=int, default=None,
+        help="Variable task only: the checkpoint's key length.",
+    )
+    parser.add_argument(
+        "--source-copy-blocks", type=int, default=None,
+        help="Variable task only: the checkpoint's number of copy blocks.",
+    )
+    parser.add_argument(
+        "--source-copy-block-len", type=int, default=None,
+        help="Variable task only: the checkpoint's copy block length.",
+    )
     parser.set_defaults(fresh_batches=False, batch_mode="fixed")
     return parser
 
@@ -1143,6 +1254,7 @@ def main() -> None:
     # Data
     model, checkpoint = _build_model(args, args.seed)
     model.to(DEVICE)
+    task = getattr(args, "source_task", TASK_PERIODIC)
     if checkpoint is not None:
         vocab_size = args.source_vocab_size
         seq_len = args.source_seq_len
@@ -1150,15 +1262,20 @@ def main() -> None:
         vocab_size = args.vocab_size
         seq_len = args.seq_len
 
-    train_dataset, val_dataset = make_induction_data(
-        vocab_size=vocab_size,
-        seq_len=seq_len,
-        num_train=args.num_train,
-        seed=args.seed,
+    spec = _task_spec(
+        task,
+        vocab_size,
+        seq_len,
+        key_len=getattr(args, "source_key_len", None),
+        copy_blocks=getattr(args, "source_copy_blocks", None),
+        copy_block_len=getattr(args, "source_copy_block_len", None),
     )
+    train_dataset, val_dataset = task_datasets(spec, args.num_train, 1024, args.seed)
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=256, shuffle=False)
-    logger.info(f"Data: train={args.num_train} sequences, seq_len={seq_len}")
+    logger.info(
+        f"Data: train={args.num_train} sequences, seq_len={seq_len} | task={task}"
+    )
 
     n_params = sum(p.numel() for p in model.parameters())
     logger.info(f"Model parameters: {n_params:,}")
@@ -1191,7 +1308,7 @@ def main() -> None:
     )
 
     induction_heads = detect_induction_heads(
-        model, sample_inputs, prefix_len=prefix_length_for(seq_len)
+        model, sample_inputs, prefix_len=prefix_length_for(seq_len), task=task
     )
     logger.info("=" * 60)
     logger.info("Induction Head Detection")
@@ -1207,13 +1324,13 @@ def main() -> None:
     if not induction_heads:
         logger.warning("No induction heads detected.")
 
-    probe = run_dissociation_probe(
-        model, vocab_size=vocab_size, seq_len=seq_len, num_samples=32, seed=args.seed
+    probe = _run_task_probe(
+        model, task, vocab_size, seq_len, args.seed, tokens=sample_inputs
     )
     logger.info(
         "Dissociation probe — content mass "
-        f"{probe['peak_content_mass']:.3f} vs period mass "
-        f"{probe['peak_period_mass']:.3f} -> "
+        f"{probe['peak_content_mass']:.3f} vs positional mass "
+        f"{probe.get('peak_offset_mass', probe.get('peak_period_mass', 0.0)):.3f} -> "
         f"{'CONTENT-based' if probe['content_wins'] else 'POSITIONAL'} copy"
     )
 
@@ -1229,12 +1346,23 @@ def main() -> None:
     # well-defined "correct answer" for the corrupted run to provide as a
     # counterfactual.
     val_x, val_y = val_dataset.tensors
-    n_pair = min(32, val_x.size(0) // 2)
-    val_batch, val_batch_answers = val_x[:n_pair], val_y[:n_pair, -1]
-    corrupted, corrupted_answers = val_x[n_pair:2 * n_pair], val_y[n_pair:2 * n_pair, -1]
+    if task == TASK_VARIABLE:
+        patch = copy_query_batch(val_x, val_y, vocab_size=vocab_size)
+        val_batch = patch["clean_inputs"]
+        val_batch_answers = patch["clean_answers"]
+        corrupted = patch["corrupted_inputs"]
+        corrupted_answers = patch["corrupted_answers"]
+        read_pos = int(patch["pos"])
+    else:
+        n_pair = min(32, val_x.size(0) // 2)
+        val_batch, val_batch_answers = val_x[:n_pair], val_y[:n_pair, -1]
+        corrupted, corrupted_answers = val_x[n_pair:2 * n_pair], val_y[n_pair:2 * n_pair, -1]
+        read_pos = -1
 
     layers_to_patch = list(range(len(getattr(model, "blocks", []))))
-    positions_to_patch = list(range(max(2, seq_len // 4), seq_len, 2))
+    positions_to_patch = (
+        [read_pos] if read_pos >= 0 else list(range(max(2, seq_len // 4), seq_len, 2))
+    )
 
     patching_results = run_activation_patching(
         model=model,
@@ -1245,6 +1373,7 @@ def main() -> None:
         layers_to_patch=layers_to_patch,
         positions_to_patch=positions_to_patch,
         batch_size=min(32, val_batch.size(0)),
+        pos=read_pos,
     )
 
     if patching_results:
@@ -1277,6 +1406,7 @@ def main() -> None:
             answers=val_batch_answers,
             counterfactuals=corrupted_answers,
             induction_heads=induction_heads,
+            pos=read_pos,
         )
         plot_head_ablation(
             ablation_results,
@@ -1302,6 +1432,7 @@ def main() -> None:
             corrupted_inputs=corrupted,
             corrupted_answers=corrupted_answers,
             heads=induction_heads,
+            pos=read_pos,
         )
         for (layer, head), vals in path_results.items():
             logger.info(

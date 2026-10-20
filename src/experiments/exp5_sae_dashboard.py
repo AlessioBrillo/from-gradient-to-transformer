@@ -436,6 +436,7 @@ def harvest_activations_from_checkpoint(
     n_heads: int,
     num_samples: int,
     seed: int,
+    task: str = "periodic",
 ) -> torch.Tensor:
     """Harvest real residual-stream activations from a trained
     induction-heads checkpoint (either the `--save-model` plain state_dict or
@@ -455,9 +456,11 @@ def harvest_activations_from_checkpoint(
         features" exist for real activations, unlike ActivationGenerator's
         synthetic output.
     """
-    from src.experiments.exp1_induction_heads import (
-        AttentionOnlyTransformer,
-        make_repeated_token_data,
+    from src.experiments.exp1_induction_heads import AttentionOnlyTransformer
+    from src.experiments.induction_tasks import (
+        TASK_VARIABLE,
+        TaskSpec,
+        task_datasets,
     )
 
     model = AttentionOnlyTransformer(
@@ -493,13 +496,24 @@ def harvest_activations_from_checkpoint(
 
     positions_per_seq = seq_len - 1
     num_sequences = max(32, (num_samples // positions_per_seq) + 1)
-    dataset, _ = make_repeated_token_data(
-        vocab_size=vocab_size,
-        seq_len=seq_len,
-        num_train=num_sequences,
-        num_val=1,
-        seed=seed,
-    )
+    # The activations must come from the *same task* the checkpoint was
+    # trained on: a model trained on the variable-distance task has never
+    # seen a periodic sequence, and harvesting the wrong distribution would
+    # measure a dictionary on activations the model cannot produce.
+    if task == TASK_VARIABLE:
+        from src.experiments.exp1_induction_heads import default_variable_geometry
+
+        key_len, blocks, block_len = default_variable_geometry(seq_len)
+        spec = TaskSpec.variable(
+            vocab_size=vocab_size,
+            seq_len=seq_len,
+            key_len=key_len,
+            copy_blocks=blocks,
+            copy_block_len=block_len,
+        )
+    else:
+        spec = TaskSpec.periodic(vocab_size=vocab_size, seq_len=seq_len)
+    dataset, _ = task_datasets(spec, num_sequences, 1, seed)
     loader = DataLoader(dataset, batch_size=64, shuffle=False)
 
     with torch.no_grad():
@@ -538,6 +552,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
             n_heads=args.source_n_heads,
             num_samples=args.num_samples,
             seed=seed,
+            task=getattr(args, "source_task", "periodic"),
         )
         d_model = activations.size(1)
         true_features = torch.zeros(activations.size(0), 1)
@@ -693,6 +708,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--source-n-heads", type=int, default=4,
         help="Checkpoint's n-heads (must match training config)",
     )
+    parser.add_argument(
+        "--source-task",
+        choices=["periodic", "variable"],
+        default="periodic",
+        help=(
+            "The task the checkpoint was trained on. The harvested "
+            "activations must come from that task: a model trained on the "
+            "variable-distance task has never seen a periodic sequence."
+        ),
+    )
     return parser
 
 
@@ -768,6 +793,7 @@ def main() -> None:
             n_heads=args.source_n_heads,
             num_samples=args.num_samples,
             seed=args.seed,
+            task=getattr(args, "source_task", "periodic"),
         )
         args.d_model = activations.size(1)  # match the harvested activations exactly
         true_features = torch.zeros(activations.size(0), 1)  # no ground truth for real data

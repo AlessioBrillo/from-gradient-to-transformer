@@ -554,6 +554,64 @@ def fixed_offset_baseline(
     }
 
 
+# ---------------------------------------------------------------------------
+# The patch batch: where a causal intervention is measured
+# ---------------------------------------------------------------------------
+def copy_query_batch(
+    x: torch.Tensor,
+    y: torch.Tensor,
+    vocab_size: int = 0,
+) -> dict[str, Any]:
+    """Two disjoint batches of sequences whose copy query sits at the *same*
+    position, with their answers.
+
+    The causal interventions of Rung 4 read one position's logits and
+    compare the answer with a counterfactual. On the periodic task that
+    position is the last one, and it is a copy query by construction. On
+    the variable-distance task the copy queries sit at *different* positions
+    in every sequence, so a fixed position would be a filler position —
+    where the right answer is unpredictable and the logit difference is
+    noise.
+
+    This helper picks the position that carries the most copy queries (a
+    rule about the data, not a choice about the model), keeps the sequences
+    that have a copy query there, and splits them in two: the **clean**
+    batch, whose answers are the model's targets, and the **corrupted**
+    batch, whose answers are the counterfactuals (the same position of a
+    different sequence — a token the model has no reason to predict
+    there).
+    """
+    full = torch.cat([x, y[:, -1:]], dim=1)
+    geom = copy_queries(full.numpy())
+    mask = geom["mask"]
+    counts = mask.sum(axis=0)
+    if int(counts.max()) == 0:
+        raise ValueError("no copy query found in this batch")
+    pos = int(np.argmax(counts))
+    selected = np.nonzero(mask[:, pos])[0]
+    if len(selected) < 4:
+        raise ValueError("not enough sequences share a copy-query position")
+
+    half = len(selected) // 2
+    clean_idx = selected[:half]
+    corrupt_idx = selected[half:]
+    answers = y[clean_idx, pos]
+    counterfactuals = y[corrupt_idx[:half], pos]
+    clash = counterfactuals == answers
+    if bool(clash.any()) and vocab_size > 1:
+        counterfactuals = torch.where(
+            clash, (answers + 1) % vocab_size, counterfactuals
+        )
+    return {
+        "clean_inputs": x[clean_idx],
+        "clean_answers": answers,
+        "corrupted_inputs": x[corrupt_idx[:half]],
+        "corrupted_answers": counterfactuals,
+        "pos": pos,
+        "n_sequences": int(half),
+    }
+
+
 def copy_accuracy_by_distance(
     tokens: np.ndarray,
     copy_mask: np.ndarray,

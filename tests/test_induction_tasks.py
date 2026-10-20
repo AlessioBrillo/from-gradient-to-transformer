@@ -93,7 +93,6 @@ class TestVariableTaskInvariants:
         geom = copy_queries(tokens)
         for b in range(tokens.shape[0]):
             row = tokens[b]
-            key = row[: VARIABLE.key_len]
             for q in np.nonzero(geom["mask"][b])[0]:
                 src = int(geom["prev"][b, q])
                 assert src < VARIABLE.key_len, "the source is not in the key"
@@ -186,7 +185,6 @@ class TestDistanceBreakdown:
         geom = copy_queries(tokens)
         answers = tokens[:, 1:]
         mask = geom["mask"][:, :-1]
-        dist = geom["distance"][:, :-1]
         q_idx = np.arange(answers.shape[1])[None, :]
         d = 20
         key_idx = q_idx - d + 1

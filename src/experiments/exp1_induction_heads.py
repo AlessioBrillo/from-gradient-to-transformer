@@ -43,6 +43,7 @@ from src.experiments.induction_detection import (
     head_masses,
     layer_entropy,
     prefix_length_for,
+    run_content_vs_offset_probe,
     run_dissociation_probe,
 )
 
@@ -50,6 +51,15 @@ from src.experiments.induction_detection import (
 # exp6 imports it from this module, and mypy's implicit-reexport rule would
 # otherwise report it as "not explicitly exported".
 from src.experiments.induction_detection import k_composition_scores as k_composition_scores
+from src.experiments.induction_tasks import (
+    TASK_PERIODIC,
+    TASK_VARIABLE,
+    TaskSpec,
+    copy_mask_for_pairs,
+    copy_queries,
+    fixed_offset_baseline,
+    task_datasets,
+)
 from src.experiments.runner import parse_seeds, run_seeds
 from src.reproducibility import set_seed
 from src.results import ResultsManifest, count_parameters, resolve_manifest_path
@@ -147,31 +157,65 @@ def make_repeated_token_data(
             f"{PREFIX_AMBIGUITY_WARN_THRESHOLD:.0%}."
         )
 
-    rng = np.random.default_rng(seed)
-
-    def _generate(n: int) -> torch.Tensor:
-        sequences = []
-        for _ in range(n):
-            # Random prefix: the unique tokens
-            prefix = rng.integers(0, vocab_size, size=prefix_len).tolist()
-            # Repeat the prefix to fill the rest of the sequence
-            tokens = prefix.copy()
-            while len(tokens) < seq_len:
-                tokens.append(tokens[len(tokens) % prefix_len])
-            sequences.append(tokens[:seq_len])
-        return torch.tensor(sequences, dtype=torch.long)
-
-    train_ids = _generate(num_train)
-    val_ids = _generate(num_val)
-
-    # Language modeling task: predict next token
-    train_x, train_y = train_ids[:, :-1], train_ids[:, 1:]
-    val_x, val_y = val_ids[:, :-1], val_ids[:, 1:]
-
-    return (
-        TensorDataset(train_x, train_y),
-        TensorDataset(val_x, val_y),
+    # The generator itself lives in `src.experiments/induction_tasks`, so the
+    # periodic task and the variable-distance task are produced by the same
+    # code path and the periodic data stays bit-for-bit what every manifest
+    # in this repository was written against.
+    spec = TaskSpec.periodic(
+        vocab_size=vocab_size, seq_len=seq_len, prefix_ratio=prefix_ratio
     )
+    return task_datasets(spec, num_train, num_val, seed)
+
+
+def default_variable_geometry(seq_len: int) -> tuple[int, int, int]:
+    """The variable task's ``(key_len, copy_blocks, copy_block_len)``.
+
+    The standard geometry (seq_len 64) is the one
+    [[07_capstone/notes/variable-distance-induction-preregistration]]
+    froze: a key of 36 distinct tokens and four blocks of five. Any other
+    sequence length gets a geometry that fits, with one filler token per
+    gap, so the layout stays well posed.
+    """
+    if seq_len >= 48:
+        return 36, 4, 5
+    block_len = 3
+    blocks = 2
+    key_len = seq_len - blocks * block_len - (blocks + 1)
+    return key_len, blocks, block_len
+
+
+def task_spec_from_args(args: argparse.Namespace) -> TaskSpec:
+    """The task a run is about, from its CLI arguments.
+
+    ``--task periodic`` (the default) is the historical ``prefix + prefix``
+    layout. ``--task variable`` is the content-based task of ADR-0033, whose
+    repeats sit at varying distances and therefore cannot be copied by a
+    fixed offset.
+    """
+    if getattr(args, "task", TASK_PERIODIC) == TASK_VARIABLE:
+        key_len, blocks, block_len = default_variable_geometry(args.seq_len)
+        return TaskSpec.variable(
+            vocab_size=args.vocab_size,
+            seq_len=args.seq_len,
+            key_len=getattr(args, "key_len", None) or key_len,
+            copy_blocks=getattr(args, "copy_blocks", None) or blocks,
+            copy_block_len=getattr(args, "copy_block_len", None) or block_len,
+        )
+    return TaskSpec.periodic(
+        vocab_size=args.vocab_size,
+        seq_len=args.seq_len,
+        prefix_ratio=getattr(args, "prefix_ratio", 0.5),
+    )
+
+
+def make_task_data(
+    args: argparse.Namespace,
+    num_train: int,
+    num_val: int,
+    seed: int,
+) -> tuple[TensorDataset, TensorDataset]:
+    """The training and validation data of the run's task."""
+    return task_datasets(task_spec_from_args(args), num_train, num_val, seed)
 
 
 # ---------------------------------------------------------------------------
@@ -313,6 +357,99 @@ def evaluate(model: nn.Module, loader: DataLoader) -> tuple[float, float]:
 
 
 # ---------------------------------------------------------------------------
+# Copy metrics: the behavioural half of the induction claim
+# ---------------------------------------------------------------------------
+def analyze_copy_metrics(
+    model: nn.Module,
+    loader: DataLoader,
+    max_batches: Optional[int] = None,
+) -> dict[str, float]:
+    """How well the model copies, and whether it copies by content.
+
+    Three numbers, all measured on the **copy queries** — the positions
+    where "copy what followed the previous occurrence" is the right thing
+    to do (see `src/experiments/induction_tasks.copy_queries`):
+
+    * ``copy_accuracy`` — the accuracy on those positions. On the variable
+      task this is the headline: only a quarter of the positions are
+      learnable, so the overall accuracy is not comparable across tasks.
+    * ``copy_accuracy_nonmodal`` — the accuracy on the copy queries whose
+      distance is *not* the most frequent one. A fixed-offset head is right
+      on the queries that share its offset and wrong everywhere else, so its
+      non-modal accuracy is ~0; a content head is right on all of them.
+    * ``fixed_offset_baseline`` — the accuracy of the *best single fixed
+      offset* on the same queries. It is the ceiling of the positional
+      explanation, measured on the data rather than assumed.
+
+    The overall accuracy is reported next to them, never instead of them.
+    """
+    model.eval()
+    per_distance_total: dict[int, int] = {}
+    per_distance_correct: dict[int, int] = {}
+    token_chunks: list[np.ndarray] = []
+    mask_chunks: list[np.ndarray] = []
+    overall_correct = 0
+    overall_total = 0
+
+    with torch.no_grad():
+        for i, (x, y) in enumerate(loader):
+            if max_batches is not None and i >= max_batches:
+                break
+            full = torch.cat([x, y[:, -1:]], dim=1)
+            geom = copy_queries(full.numpy())
+            mask = geom["mask"][:, :-1]
+            dist = geom["distance"][:, :-1]
+            logits, _ = model(x.to(DEVICE), record_attn=False)
+            preds = logits.argmax(dim=-1).cpu().numpy()
+            answers = y.numpy()
+            ok = preds == answers
+            overall_correct += int(ok.sum())
+            overall_total += int(answers.size)
+            for d in np.unique(dist[mask]):
+                sel = mask & (dist == d)
+                key = int(d)
+                per_distance_total[key] = per_distance_total.get(key, 0) + int(sel.sum())
+                per_distance_correct[key] = per_distance_correct.get(key, 0) + int(
+                    ok[sel].sum()
+                )
+            token_chunks.append(full.numpy())
+            mask_chunks.append(geom["mask"])
+
+    total = sum(per_distance_total.values())
+    correct = sum(per_distance_correct.values())
+    modal = (
+        max(per_distance_total, key=lambda k: per_distance_total[k])
+        if per_distance_total
+        else -1
+    )
+    modal_total = per_distance_total.get(modal, 0)
+    modal_correct = per_distance_correct.get(modal, 0)
+    nonmodal_total = total - modal_total
+    nonmodal_correct = correct - modal_correct
+
+    baseline = {"best_offset": -1, "best_accuracy": 0.0}
+    if token_chunks:
+        baseline = fixed_offset_baseline(
+            np.concatenate(token_chunks), np.concatenate(mask_chunks)
+        )
+
+    return {
+        "copy_accuracy": float(correct / total) if total else 0.0,
+        "copy_accuracy_nonmodal": (
+            float(nonmodal_correct / nonmodal_total) if nonmodal_total else 0.0
+        ),
+        "fixed_offset_baseline": float(baseline["best_accuracy"]),
+        "fixed_offset_best_d": float(baseline["best_offset"]),
+        "n_copy_queries": float(total),
+        "n_distances": float(len(per_distance_total)),
+        "modal_distance": float(modal),
+        "overall_accuracy": (
+            float(overall_correct / overall_total) if overall_total else 0.0
+        ),
+    }
+
+
+# ---------------------------------------------------------------------------
 # Checkpoint / resume (Micro-Phase 12)
 # ---------------------------------------------------------------------------
 # save/load/path helpers live in src/experiments/checkpointing.py (shared
@@ -338,6 +475,7 @@ def compute_attention_entropy(
     loader: DataLoader,
     prefix_len: Optional[int] = None,
     max_batches: int = 4,
+    task: str = TASK_PERIODIC,
 ) -> dict:
     """Per-layer attention entropy and the four offset masses.
 
@@ -380,7 +518,7 @@ def compute_attention_entropy(
         prefix_len = prefix_length_for(seq_len)
 
     entropy = layer_entropy(patterns)
-    masses = head_masses(patterns, tokens, prefix_len)
+    masses = head_masses(patterns, tokens, prefix_len, task=task)
     out = {"entropy": entropy}
     for name in ("induction", "duplicate", "content", "prev_token"):
         out[f"{name}_mass"] = [
@@ -409,6 +547,7 @@ def train_model(
     detect_patience: int = 2,
     prefix_len: Optional[int] = None,
     composition_threshold: float = COMPOSITION_THRESHOLD,
+    task: str = TASK_PERIODIC,
 ) -> dict:
     """Train the model and return training curves.
 
@@ -567,6 +706,7 @@ def train_model(
                 val_loader,
                 prefix_len=prefix_len,
                 composition_threshold=composition_threshold,
+                task=task,
             )
             attn_entropy = float(sum(report.entropy))
             induction_mass = report.peak("induction")
@@ -580,7 +720,9 @@ def train_model(
         elif (epoch + 1) % 50 == 0:
             # Detection off (`--detect-every 0`): the cheap metric-only
             # cadence, kept so the training curves still show the signal.
-            attn_metrics = compute_attention_entropy(model, val_loader, prefix_len=prefix_len)
+            attn_metrics = compute_attention_entropy(
+                model, val_loader, prefix_len=prefix_len, task=task
+            )
             attn_entropy = sum(attn_metrics["entropy"])
             induction_mass = max(attn_metrics["induction_mass"])
             prev_token_mass = max(attn_metrics["prev_token_mass"])
@@ -688,6 +830,7 @@ def analyze_induction_heads(
     prefix_len: Optional[int] = None,
     threshold: float = INDUCTION_MASS_THRESHOLD,
     composition_threshold: float = COMPOSITION_THRESHOLD,
+    task: str = TASK_PERIODIC,
 ) -> tuple[list, list]:
     """Identify induction heads by their attention patterns.
 
@@ -717,6 +860,7 @@ def analyze_induction_heads(
         prefix_len=prefix_len,
         mass_threshold=threshold,
         composition_threshold=composition_threshold,
+        task=task,
     )
     return report.confirmed, patterns
 
@@ -727,6 +871,7 @@ def analyze_induction_heads_full(
     prefix_len: Optional[int] = None,
     threshold: float = INDUCTION_MASS_THRESHOLD,
     composition_threshold: float = COMPOSITION_THRESHOLD,
+    task: str = TASK_PERIODIC,
 ):
     """The full detection report (masses, screen, confirmation, composition).
 
@@ -740,6 +885,7 @@ def analyze_induction_heads_full(
         prefix_len=prefix_len,
         mass_threshold=threshold,
         composition_threshold=composition_threshold,
+        task=task,
     )
 
 
@@ -752,6 +898,7 @@ def diagnose_induction_formation(
     all_patterns: list,
     tokens: Optional[torch.Tensor] = None,
     prefix_len: Optional[int] = None,
+    task: str = TASK_PERIODIC,
 ) -> dict:
     """The "how far did the model get" instrument for the two-step path
     (Nanda & Jacobsen 2023). Given collected per-layer attention patterns
@@ -797,10 +944,12 @@ def diagnose_induction_formation(
 
     step1_metric = "prev_token"
     if tokens is not None and tokens.numel():
-        if prefix_len is None:
+        if prefix_len is None and task != TASK_VARIABLE:
             seq_len = tokens.shape[1] + 1
             prefix_len = prefix_length_for(seq_len)
-        step1_masses = head_masses(list(all_patterns), tokens, prefix_len)["duplicate"]
+        step1_masses = head_masses(
+            list(all_patterns), tokens, prefix_len if prefix_len is not None else 0, task=task
+        )["duplicate"]
         step1_metric = "duplicate"
     else:
         step1_masses = [
@@ -919,9 +1068,8 @@ def _make_fresh_batches_fn(args: argparse.Namespace, seed: int) -> Callable[[int
     fresh_batches_fn docstring."""
 
     def fn(epoch: int) -> DataLoader:
-        dataset, _ = make_repeated_token_data(
-            vocab_size=args.vocab_size,
-            seq_len=args.seq_len,
+        dataset, _ = make_task_data(
+            args,
             num_train=args.num_train,
             num_val=1,
             seed=seed * 1_000_003 + epoch + 1,
@@ -931,7 +1079,13 @@ def _make_fresh_batches_fn(args: argparse.Namespace, seed: int) -> Callable[[int
     return fn
 
 
-def causal_ablation(model: nn.Module, loader: DataLoader, layer: int, head: int) -> float:
+def causal_ablation(
+    model: nn.Module,
+    loader: DataLoader,
+    layer: int,
+    head: int,
+    restrict_to_copy: bool = False,
+) -> float:
     """Ablate a specific attention head by zeroing its contribution.
 
     Measures the accuracy drop when a head's contribution is removed,
@@ -943,6 +1097,11 @@ def causal_ablation(model: nn.Module, loader: DataLoader, layer: int, head: int)
     W_O's output is a d_model vector that has already mixed every head, so
     that zeroed an arbitrary residual-stream subspace, not a specific head.
     This mirrors the (correct) approach in exp4_circuit_patching.py.
+
+    `restrict_to_copy` measures the accuracy on the **copy queries** only.
+    On the variable-distance task that is the meaningful number: the
+    filler positions are unpredictable, so an overall accuracy is mostly a
+    measure of how much of the sequence is noise.
 
     Returns:
         Accuracy after head ablation.
@@ -957,14 +1116,23 @@ def causal_ablation(model: nn.Module, loader: DataLoader, layer: int, head: int)
     total = 0
     with torch.no_grad():
         for x, y in loader:
+            copy_mask = None
+            if restrict_to_copy:
+                copy_mask = copy_mask_for_pairs(x, y)
             x, y = x.to(DEVICE), y.to(DEVICE)
             logits, _ = model(x, record_attn=False)
             preds = logits.argmax(dim=-1)
-            correct += (preds == y).sum().item()
-            total += y.numel()
+            ok = preds == y
+            if copy_mask is not None:
+                mask_device = copy_mask.to(ok.device)
+                ok = ok & mask_device
+                total += int(mask_device.sum().item())
+            else:
+                total += y.numel()
+            correct += int(ok.sum().item())
 
     block.head_mask = None
-    return correct / total
+    return correct / total if total else 0.0
 
 
 def plot_induction_pattern(
@@ -1043,12 +1211,40 @@ def plot_training_curves(history: dict, save_path: Path) -> None:
 # ---------------------------------------------------------------------------
 # Multi-seed headline run
 # ---------------------------------------------------------------------------
+def _run_task_probe(
+    model: nn.Module,
+    args: argparse.Namespace,
+    val_loader: DataLoader,
+    seed: int,
+) -> dict:
+    """The naming test of the run's task.
+
+    On the **periodic** task the content target and the fixed offset are
+    the same key, so the probe needs an off-distribution batch to tell the
+    two mechanisms apart (ADR-0032). On the **variable-distance** task the
+    dissociation is native: the repeats sit at different distances, so the
+    training distribution itself separates the mechanisms and no
+    off-distribution batch is needed.
+    """
+    if getattr(args, "task", TASK_PERIODIC) == TASK_VARIABLE:
+        tokens = next(iter(val_loader))[0]
+        return run_content_vs_offset_probe(model, tokens)
+    return run_dissociation_probe(
+        model,
+        vocab_size=args.vocab_size,
+        seq_len=args.seq_len,
+        num_samples=min(64, max(16, args.num_train // 16)),
+        seed=seed,
+    )
+
+
 def _headline_metrics(
     history: dict,
     induction_heads: list,
     diagnosis: dict,
     report=None,
     probe: Optional[dict] = None,
+    copy_stats: Optional[dict] = None,
 ) -> dict[str, float]:
     """The headline numbers both the multi-seed manifest and the single-seed
     `--standard` manifest report, derived from one analysis pass — shared so
@@ -1060,6 +1256,13 @@ def _headline_metrics(
     called the induction signal — is now reported as
     `peak_prev_token_mass` (a control), and the induction signal itself is
     `peak_induction_mass`, measured on the copy offset `q - L + 1`.
+
+    With the variable-distance task (2026-10-20) three more numbers travel
+    with them, because on that task the overall accuracy is mostly a
+    measure of how much of the sequence is noise: the accuracy on the copy
+    queries, the accuracy on the *non-modal* distance group (the
+    behavioural separator between copying by content and copying by a fixed
+    offset) and the best fixed-offset baseline they have to beat.
     """
     total_induction = sum(len(h) for h in induction_heads)
     peak_induction = (
@@ -1077,6 +1280,7 @@ def _headline_metrics(
     # "how many above it" are two different claims.
     first_layer = len(induction_heads[0]) if induction_heads else 0
     later_layers = total_induction - first_layer
+    stats = copy_stats or {}
     metrics = {
         "final_val_acc": float(history["val_acc"][-1]),
         "total_induction_heads": float(total_induction),
@@ -1088,15 +1292,31 @@ def _headline_metrics(
         ),
         "peak_induction_mass": peak_induction,
         "peak_prev_token_mass": peak_prev_token,
+        "peak_content_mass": float(report.peak("content") if report is not None else 0.0),
+        "peak_offset_mass": float(
+            report.peak_offset_mass if report is not None else 0.0
+        ),
         "k_composition_score": float(diagnosis["step2_k_composition"]),
         "l0_duplicate_head_mass": float(max(diagnosis["step1_l0_duplicate_mass"] or [0.0])),
         "mean_ablation_drop": 0.0,
+        "mean_copy_ablation_drop": 0.0,
         "confirmed_epoch": float(history.get("confirmed_epoch", -1.0)),
         "epochs_run": epochs_run,
         "steps_run": epochs_run * steps_per_epoch,
         "probe_content_mass": float((probe or {}).get("peak_content_mass", 0.0)),
         "probe_period_mass": float((probe or {}).get("peak_period_mass", 0.0)),
+        "probe_offset_mass": float(
+            (probe or {}).get("peak_offset_mass", (probe or {}).get("peak_period_mass", 0.0))
+        ),
         "probe_content_wins": float(bool((probe or {}).get("content_wins", False))),
+        "copy_accuracy": float(stats.get("copy_accuracy", 0.0)),
+        "copy_accuracy_nonmodal": float(stats.get("copy_accuracy_nonmodal", 0.0)),
+        "fixed_offset_baseline": float(stats.get("fixed_offset_baseline", 0.0)),
+        "copy_gap": float(
+            stats.get("copy_accuracy", 0.0) - stats.get("fixed_offset_baseline", 0.0)
+        ),
+        "n_copy_queries": float(stats.get("n_copy_queries", 0.0)),
+        "n_copy_distances": float(stats.get("n_distances", 0.0)),
     }
     return metrics
 
@@ -1149,9 +1369,8 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
     steps, minus plotting and model-saving — used by `--seeds` to aggregate
     across seeds via `src.experiments.runner.run_seeds`.
     """
-    train_dataset, val_dataset = make_repeated_token_data(
-        vocab_size=args.vocab_size,
-        seq_len=args.seq_len,
+    train_dataset, val_dataset = make_task_data(
+        args,
         num_train=args.num_train,
         num_val=1024,
         seed=seed,
@@ -1193,28 +1412,33 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         stop_rule=getattr(args, "stop_rule", "mechanism"),
         detect_patience=getattr(args, "detect_patience", 2),
         prefix_len=prefix_length_for(args.seq_len),
+        task=getattr(args, "task", TASK_PERIODIC),
     )
     history["steps_per_epoch"] = float(len(train_loader))
 
     prefix_len = prefix_length_for(args.seq_len)
+    task = getattr(args, "task", TASK_PERIODIC)
     report, all_patterns, tokens = analyze_induction_heads_full(
-        model, val_loader, prefix_len=prefix_len
+        model, val_loader, prefix_len=prefix_len, task=task
     )
     induction_heads = report.confirmed
-    diagnosis = diagnose_induction_formation(all_patterns, tokens=tokens, prefix_len=prefix_len)
+    diagnosis = diagnose_induction_formation(
+        all_patterns, tokens=tokens, prefix_len=prefix_len, task=task
+    )
 
     probe = None
     if getattr(args, "probe_dissociation", True):
-        probe = run_dissociation_probe(
-            model,
-            vocab_size=args.vocab_size,
-            seq_len=args.seq_len,
-            num_samples=min(64, max(16, args.num_train // 16)),
-            seed=seed,
-        )
+        probe = _run_task_probe(model, args, val_loader, seed=seed)
+
+    copy_stats = analyze_copy_metrics(model, val_loader)
 
     metrics = _headline_metrics(
-        history, induction_heads, diagnosis, report=report, probe=probe
+        history,
+        induction_heads,
+        diagnosis,
+        report=report,
+        probe=probe,
+        copy_stats=copy_stats,
     )
     # Record which batch regime produced these numbers. The fixed-vs-fresh
     # comparison is the one solid Rung 1 finding, and without this field a
@@ -1222,12 +1446,20 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
     metrics["batch_mode"] = 0.0 if not args.fresh_batches else 1.0
     drop_sum = 0.0
     n_drops = 0
+    copy_drop_sum = 0.0
     for layer_idx, heads in enumerate(induction_heads):
         for head_idx in heads:
             ablated_acc = causal_ablation(model, val_loader, layer_idx, head_idx)
             drop_sum += history["val_acc"][-1] - ablated_acc
             n_drops += 1
+            copy_ablated = causal_ablation(
+                model, val_loader, layer_idx, head_idx, restrict_to_copy=True
+            )
+            copy_drop_sum += copy_stats["copy_accuracy"] - copy_ablated
     metrics["mean_ablation_drop"] = float(drop_sum / n_drops) if n_drops else 0.0
+    metrics["mean_copy_ablation_drop"] = (
+        float(copy_drop_sum / n_drops) if n_drops else 0.0
+    )
     return metrics
 
 
@@ -1300,6 +1532,48 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument("--seq-len", type=int, default=64, help="Sequence length")
+    parser.add_argument(
+        "--task",
+        choices=[TASK_PERIODIC, TASK_VARIABLE],
+        default=TASK_PERIODIC,
+        help=(
+            "Which induction task to train on. 'periodic' is the historical "
+            "prefix+prefix layout, where the previous occurrence of a token "
+            "is always at q-L and a fixed-offset copy is the same function as "
+            "a content-based one (ADR-0032). 'variable' is the content-based "
+            "task of ADR-0033: the repeats sit at distances that change from "
+            "block to block, so the fixed-offset shortcut does not exist and "
+            "the induction claim becomes testable."
+        ),
+    )
+    parser.add_argument(
+        "--key-len",
+        type=int,
+        default=None,
+        help=(
+            "Variable task only: the length of the source segment (the "
+            "distinct 'key' tokens at the start of the sequence). Default: "
+            "the pre-registered geometry for the sequence length."
+        ),
+    )
+    parser.add_argument(
+        "--copy-blocks",
+        type=int,
+        default=None,
+        help=(
+            "Variable task only: how many verbatim copies of the key each "
+            "sequence carries. Default: the pre-registered geometry."
+        ),
+    )
+    parser.add_argument(
+        "--copy-block-len",
+        type=int,
+        default=None,
+        help=(
+            "Variable task only: the length of each copy block. Default: the "
+            "pre-registered geometry."
+        ),
+    )
     parser.add_argument("--d-model", type=int, default=64, help="Model dimension")
     parser.add_argument("--n-layers", type=int, default=2, help="Number of layers")
     parser.add_argument("--n-heads", type=int, default=4, help="Heads per layer")
@@ -1609,16 +1883,16 @@ def main() -> None:
         return
 
     # Data
-    train_dataset, val_dataset = make_repeated_token_data(
-        vocab_size=args.vocab_size,
-        seq_len=args.seq_len,
+    task = getattr(args, "task", TASK_PERIODIC)
+    train_dataset, val_dataset = make_task_data(
+        args,
         num_train=args.num_train,
         num_val=1024,
         seed=args.seed,
     )
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
-    logger.info(f"Data: train={len(train_dataset)}, val={len(val_dataset)}")
+    logger.info(f"Data: train={len(train_dataset)}, val={len(val_dataset)} | task={task}")
 
     # Model
     model = AttentionOnlyTransformer(
@@ -1660,6 +1934,7 @@ def main() -> None:
             stop_rule=args.stop_rule,
             detect_patience=args.detect_patience,
             prefix_len=prefix_length_for(args.seq_len),
+            task=task,
         )
         history["steps_per_epoch"] = float(len(train_loader))
 
@@ -1698,7 +1973,7 @@ def main() -> None:
     # Analyze induction heads
     prefix_len = prefix_length_for(args.seq_len)
     report, all_patterns, tokens = analyze_induction_heads_full(
-        model, val_loader, prefix_len=prefix_len
+        model, val_loader, prefix_len=prefix_len, task=task
     )
     induction_heads = report.confirmed
 
@@ -1706,7 +1981,9 @@ def main() -> None:
     # get" instrument — Step 1 (L0 duplicate-token head) and Step 2
     # (K-composition) are reported independently so a missing induction head
     # is measured, not just counted.
-    diagnosis = diagnose_induction_formation(all_patterns, tokens=tokens, prefix_len=prefix_len)
+    diagnosis = diagnose_induction_formation(
+        all_patterns, tokens=tokens, prefix_len=prefix_len, task=task
+    )
     if diagnosis["best_l0_head"] >= 0:
         step1 = max(diagnosis["step1_l0_duplicate_mass"])
         logger.info("-" * 60)
@@ -1745,25 +2022,30 @@ def main() -> None:
         f"{report.best_composition:.3f}"
     )
 
-    # The dissociation probe: on the periodic training distribution a
-    # content-matching copy circuit and a positional copy circuit are the
-    # same function, so only this off-distribution batch can say which one
-    # the model actually learned.
+    # The naming test. On the periodic task the content-vs-position
+    # dissociation needs an off-distribution batch; on the variable task the
+    # dissociation is native and the probe measures it in distribution.
     probe = None
     if args.probe_dissociation:
-        probe = run_dissociation_probe(
-            model,
-            vocab_size=args.vocab_size,
-            seq_len=args.seq_len,
-            num_samples=min(64, max(16, args.num_train // 16)),
-            seed=args.seed,
-        )
+        probe = _run_task_probe(model, args, val_loader, seed=args.seed)
         logger.info(
             "Dissociation probe — content mass "
-            f"{probe['peak_content_mass']:.3f} vs period mass "
-            f"{probe['peak_period_mass']:.3f} -> "
+            f"{probe['peak_content_mass']:.3f} vs positional mass "
+            f"{probe.get('peak_offset_mass', probe.get('peak_period_mass', 0.0)):.3f} -> "
             f"{'CONTENT-based' if probe['content_wins'] else 'POSITIONAL'} copy"
         )
+
+    # The behavioural half of the claim: how well does the model copy, and
+    # is the copy explained by a fixed offset?
+    copy_stats = analyze_copy_metrics(model, val_loader)
+    logger.info(
+        f"Copy metrics — copy accuracy {copy_stats['copy_accuracy']:.4f} "
+        f"(non-modal distance group: {copy_stats['copy_accuracy_nonmodal']:.4f}) | "
+        f"best fixed-offset baseline {copy_stats['fixed_offset_baseline']:.4f} "
+        f"at d={copy_stats['fixed_offset_best_d']:.0f} | "
+        f"{copy_stats['n_distances']:.0f} distinct distances, "
+        f"{copy_stats['n_copy_queries']:.0f} copy queries"
+    )
 
     if total_induction == 0:
         logger.warning(
@@ -1789,16 +2071,29 @@ def main() -> None:
     # always points at the newest honest run.
     if not args.no_train and args.save_manifest:
         metrics = _headline_metrics(
-            history, induction_heads, diagnosis, report=report, probe=probe
+            history,
+            induction_heads,
+            diagnosis,
+            report=report,
+            probe=probe,
+            copy_stats=copy_stats,
         )
         drop_sum = 0.0
         n_drops = 0
+        copy_drop_sum = 0.0
         for layer_idx, heads in enumerate(induction_heads):
             for head_idx in heads:
                 ablated_acc = causal_ablation(model, val_loader, layer_idx, head_idx)
                 drop_sum += history["val_acc"][-1] - ablated_acc
                 n_drops += 1
+                copy_ablated = causal_ablation(
+                    model, val_loader, layer_idx, head_idx, restrict_to_copy=True
+                )
+                copy_drop_sum += copy_stats["copy_accuracy"] - copy_ablated
         metrics["mean_ablation_drop"] = float(drop_sum / n_drops) if n_drops else 0.0
+        metrics["mean_copy_ablation_drop"] = (
+            float(copy_drop_sum / n_drops) if n_drops else 0.0
+        )
         _write_single_manifest(args, metrics, time.monotonic() - t_run_start)
 
 
