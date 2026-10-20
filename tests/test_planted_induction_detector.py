@@ -252,6 +252,75 @@ class TestMassMetricScale:
         assert entropy["induction_mass"][0] < 0.2
 
 
+class TestTheOldDetectorWasAntiCorrelatedWithTheTruth:
+    """The regression test for the 2026-10-19 detector bug, stated as the
+    contrast it was.
+
+    The old detector measured the attention mass on the previous-token
+    offset (`q-1`) and called it "diag+1". On a *previous-token* head it
+    therefore reported a high score (a false positive: it called that head an
+    induction head), and on a *real copy* head — the one that attends to
+    `q-(L-1)` — it reported a low score (a false negative: it could not see
+    the head it was looking for).
+
+    This test pins both directions at once, because a detector that is merely
+    "different" is not what was wrong: the old one was *inverted*.
+    """
+
+    @staticmethod
+    def _planted(offset: int, mass: float = 0.9) -> torch.Tensor:
+        """One head attending to `q - offset`, mass `mass`."""
+        data, _ = make_repeated_token_data(
+            vocab_size=VOCAB, seq_len=SEQ_LEN, num_train=N_SAMPLES, num_val=8, seed=0
+        )
+        x = torch.stack([data[i][0] for i in range(N_SAMPLES)])
+        probs = torch.zeros(x.shape[0], 1, INPUT_LEN, INPUT_LEN)
+        for b in range(x.shape[0]):
+            for q in range(INPUT_LEN):
+                n_keys = q + 1
+                row = torch.full((n_keys,), (1.0 - mass) / max(n_keys - 1, 1))
+                if q >= PREFIX_LEN:
+                    key = q - offset
+                    if 0 <= key <= q:
+                        row[key] = mass
+                probs[b, 0, q, :n_keys] = row
+        return probs, x
+
+    @staticmethod
+    def _old_metric(probs: torch.Tensor) -> float:
+        """What the old detector measured: the mass on the `q-1` offset."""
+        return (
+            probs[:, :, 1:, :-1]
+            .diagonal(dim1=-2, dim2=-1)
+            .mean(dim=(0, -1))
+            .mean()
+            .item()
+        )
+
+    def test_old_metric_fires_on_a_previous_token_head(self) -> None:
+        probs, _ = self._planted(offset=1)
+        assert self._old_metric(probs) > 0.3, (
+            "the old detector's metric must be shown firing on the wrong head — "
+            "that is the bug this test pins"
+        )
+
+    def test_old_metric_misses_a_real_copy_head(self) -> None:
+        probs, _ = self._planted(offset=PREFIX_LEN - 1)
+        assert self._old_metric(probs) < 0.3, (
+            "the old detector's metric must be shown missing the real head"
+        )
+
+    def test_the_new_detector_inverts_both(self) -> None:
+        from src.experiments.induction_detection import detect_heads
+
+        prev_probs, prev_tokens = self._planted(offset=1)
+        copy_probs, copy_tokens = self._planted(offset=PREFIX_LEN - 1)
+        prev_report = detect_heads([prev_probs], prev_tokens, PREFIX_LEN)
+        copy_report = detect_heads([copy_probs], copy_tokens, PREFIX_LEN)
+        assert prev_report.screen == [[]], "the q-1 head must not be screened in"
+        assert copy_report.screen == [[0]], "the copy head must be screened in"
+
+
 class TestPlantedModelWeights:
     """The same detector on a real model with weights planted so the
     pattern exists by construction. This is the level that catches hook
