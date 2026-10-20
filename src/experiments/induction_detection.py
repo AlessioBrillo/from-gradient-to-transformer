@@ -58,6 +58,27 @@ Two subtleties the old detector also ignored
    Until that probe has run on a given checkpoint, the honest wording for a
    detected head is "prefix-copying head at offset ``L-1``", not "induction
    head".
+
+Two tasks, one detector
+------------------------
+The measurement above is the *periodic* task's geometry, and it is
+unchanged: every manifest this repository has written was produced with it.
+
+The **variable-distance** task (`src/experiments/induction_tasks.py`, ADR
+0033) removes the shortcut that made the periodic task unanswerable: the
+repeats sit at distances that change from block to block, so the content
+key ``prev(q) + 1`` is *not* a fixed offset. The same module measures both
+tasks through one `CopyLayout`:
+
+* the periodic layout keeps its historical query sets exactly, so the old
+  numbers are reproducible;
+* the variable layout measures the content hypothesis on the copy queries,
+  and `offset_profile` measures every fixed offset ``q - d`` so the
+  positional ceiling is a measurement rather than an assumption.
+
+`run_content_vs_offset_probe` is the naming test of the variable task: on
+that distribution the dissociation is native, so no off-distribution batch
+is needed.
 """
 
 from __future__ import annotations
@@ -70,6 +91,12 @@ import numpy as np
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
+
+from src.experiments.induction_tasks import (
+    TASK_PERIODIC,
+    TASK_VARIABLE,
+    copy_queries,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -204,6 +231,146 @@ def _mean_mass(probs: torch.Tensor, triples: np.ndarray) -> np.ndarray:
 
 
 # ---------------------------------------------------------------------------
+# The layout: which (query, key) pairs each hypothesis is measured on
+# ---------------------------------------------------------------------------
+@dataclass(frozen=True)
+class CopyLayout:
+    """The (b, q, key) triples every hypothesis is measured on.
+
+    ``induction`` is the hypothesis the screen uses, and it is the only
+    field that differs between the two tasks:
+
+    * on the **periodic** task it is the periodic offset ``q - L + 1``,
+      restricted to the collision-free queries — the historical behaviour,
+      bit-for-bit;
+    * on the **variable-distance** task it is the *content* offset
+      ``prev(q) + 1``, restricted to the copy queries, because a periodic
+      offset does not exist there: the distance between a token and its
+      previous occurrence changes from block to block.
+
+    The remaining three are the same measurements under three names, so
+    the numbers stay comparable across tasks and across rungs:
+
+    ``duplicate``   key ``prev(q)``   — Nanda's Step 1, the duplicate-token
+                     head. On the periodic task this coincides with the
+                     collision-free ``q - L``.
+    ``content``     key ``prev(q)+1`` — the token after the previous
+                     occurrence of the same token.
+    ``prev_token``  key ``q-1``       — the previous-token head: the offset
+                     the 2026-08-01 detector measured and called "diag+1",
+                     kept as an explicitly labelled control.
+    """
+
+    periodic: np.ndarray
+    duplicate: np.ndarray
+    content: np.ndarray
+    prev_token: np.ndarray
+    induction: np.ndarray
+    hypothesis: str
+    n_queries: int
+    n_copy_queries: int
+
+    @property
+    def n_induction_queries(self) -> int:
+        return int(self.induction.shape[0])
+
+
+def build_copy_layout(
+    tokens: torch.Tensor,
+    prefix_len: Optional[int] = None,
+    task: str = TASK_PERIODIC,
+) -> CopyLayout:
+    """Build the measurement layout of a task from its tokens.
+
+    The layout is read from the *tokens*, never from the generator: a
+    detector that trusted the generator could not detect a generator that
+    lies, and the whole point of this module is that the measurement
+    decides, not the intent.
+    """
+    arr = tokens.detach().cpu().numpy()
+    if arr.ndim == 1:
+        arr = arr[None, :]
+    bsz, seq = arr.shape
+
+    if task == TASK_VARIABLE:
+        geom = copy_queries(arr)
+        mask = geom["mask"]
+        prev = geom["prev"]
+        b_idx, q_idx = np.nonzero(mask)
+        keys = prev[b_idx, q_idx]
+        content = np.stack([b_idx, q_idx, keys + 1], axis=1).astype(np.int64)
+        duplicate = np.stack([b_idx, q_idx, keys], axis=1).astype(np.int64)
+        prev_token = np.stack([b_idx, q_idx, q_idx - 1], axis=1).astype(np.int64)
+        # The key must be a position the attention matrix actually has.
+        keep = (content[:, 2] < seq) & (content[:, 2] != content[:, 1])
+        content = content[keep]
+        duplicate = duplicate[keep]
+        prev_token = prev_token[keep]
+        empty = np.zeros((0, 3), dtype=np.int64)
+        return CopyLayout(
+            periodic=empty,
+            duplicate=duplicate,
+            content=content,
+            prev_token=prev_token,
+            induction=content,
+            hypothesis="content",
+            n_queries=int(keep.sum()),
+            n_copy_queries=int(keep.sum()),
+        )
+
+    if prefix_len is None:
+        prefix_len = max(2, int((seq + 1) * 0.5))
+    triples = _query_triples(tokens, prefix_len)
+    return CopyLayout(
+        periodic=triples["periodic"],
+        duplicate=triples["duplicate"],
+        content=triples["content"],
+        prev_token=triples["prev_token"],
+        induction=triples["periodic"],
+        hypothesis="periodic",
+        n_queries=int(triples["periodic"].shape[0]),
+        n_copy_queries=int(triples["content"].shape[0]),
+    )
+
+
+def offset_profile(
+    patterns: list[torch.Tensor], layout: CopyLayout
+) -> list[np.ndarray]:
+    """Per-layer, per-head attention mass on every fixed offset ``q - d``.
+
+    Returns one ``(n_heads, n_offsets)`` array per layer, where entry
+    ``[h, d-1]`` is the mean attention mass head ``h`` puts on the key
+    ``q - d`` over the layout's query set.
+
+    This is the *positional ceiling* of the model, measured rather than
+    assumed: on the variable-distance task a head that copies by a fixed
+    offset shows up here as a large entry, and the content hypothesis has
+    to beat it. On the periodic task the two coincide, which is exactly the
+    ambiguity the 2026-10-19 audit found.
+    """
+    profile: list[np.ndarray] = []
+    for probs in patterns:
+        probs = probs.detach().cpu()
+        width = probs.shape[-1]
+        n_heads = probs.shape[1]
+        if layout.n_induction_queries == 0:
+            profile.append(np.zeros((n_heads, max(width - 1, 0)), dtype=float))
+            continue
+        b_idx = torch.as_tensor(layout.induction[:, 0], dtype=torch.long)
+        q_idx = torch.as_tensor(layout.induction[:, 1], dtype=torch.long)
+        out = np.zeros((n_heads, max(width - 1, 0)), dtype=float)
+        for d in range(1, width):
+            cols = q_idx - d
+            valid = cols >= 0
+            if not bool(valid.any()):
+                continue
+            vals = probs[b_idx[valid], :, q_idx[valid], cols[valid]]
+            out[:, d - 1] = vals.mean(dim=0).cpu().numpy()
+        profile.append(out)
+    return profile
+
+
+# ---------------------------------------------------------------------------
 # Model-family agnostic attention access
 # ---------------------------------------------------------------------------
 def model_device(model: nn.Module) -> torch.device:
@@ -331,6 +498,7 @@ def head_masses(
     patterns: list[torch.Tensor],
     tokens: torch.Tensor,
     prefix_len: int,
+    task: str = TASK_PERIODIC,
 ) -> dict[str, list[np.ndarray]]:
     """Per-layer, per-head attention masses for the four hypotheses.
 
@@ -338,8 +506,12 @@ def head_masses(
     per layer) of arrays (one per head). All four are on the same [0, 1]
     scale, so they are directly comparable with each other and with the
     detection threshold.
+
+    ``induction`` is the task's own copy hypothesis: the periodic offset on
+    the periodic task (unchanged since 2026-08-01) and the content offset
+    on the variable-distance task, where no fixed offset exists.
     """
-    triples = _query_triples(tokens, prefix_len)
+    layout = build_copy_layout(tokens, prefix_len, task=task)
     out: dict[str, list[np.ndarray]] = {
         "induction": [],
         "duplicate": [],
@@ -348,10 +520,10 @@ def head_masses(
     }
     for probs in patterns:
         probs = probs.detach().cpu()
-        out["induction"].append(_mean_mass(probs, triples["periodic"]))
-        out["duplicate"].append(_mean_mass(probs, triples["duplicate"]))
-        out["content"].append(_mean_mass(probs, triples["content"]))
-        out["prev_token"].append(_mean_mass(probs, triples["prev_token"]))
+        out["induction"].append(_mean_mass(probs, layout.induction))
+        out["duplicate"].append(_mean_mass(probs, layout.duplicate))
+        out["content"].append(_mean_mass(probs, layout.content))
+        out["prev_token"].append(_mean_mass(probs, layout.prev_token))
     return out
 
 
@@ -449,6 +621,9 @@ class DetectionReport:
     best_pair: tuple[int, int, int, int] = (-1, -1, -1, -1)
     n_periodic_queries: int = 0
     n_content_queries: int = 0
+    n_copy_queries: int = 0
+    hypothesis: str = TASK_PERIODIC
+    offsets: list[np.ndarray] = field(default_factory=list)
 
     @property
     def screen_count(self) -> int:
@@ -461,6 +636,35 @@ class DetectionReport:
     @property
     def best_composition(self) -> float:
         return max(self.composition_by_layer) if self.composition_by_layer else 0.0
+
+    @property
+    def peak_offset_mass(self) -> float:
+        """The best fixed-offset mass any head shows.
+
+        On the variable-distance task this is the ceiling of the
+        positional explanation: the content hypothesis has to beat it.
+        """
+        best = 0.0
+        for layer in self.offsets:
+            if layer.size:
+                best = max(best, float(layer.max()))
+        return best
+
+    @property
+    def best_offset(self) -> int:
+        """The fixed offset (``d``) that carries the most mass, or -1."""
+        best_val = 0.0
+        best_d = -1
+        for layer in self.offsets:
+            if not layer.size:
+                continue
+            flat = int(np.argmax(layer))
+            head, d = flat // layer.shape[1], flat % layer.shape[1]
+            value = float(layer[head, d])
+            if value > best_val:
+                best_val = value
+                best_d = d + 1
+        return best_d
 
     def peak(self, hypothesis: str) -> float:
         """The best per-head mass of one hypothesis across layers and heads."""
@@ -476,11 +680,14 @@ def detect_heads(
     prefix_len: int,
     mass_threshold: float = INDUCTION_MASS_THRESHOLD,
     composition_threshold: float = COMPOSITION_THRESHOLD,
+    task: str = TASK_PERIODIC,
 ) -> DetectionReport:
     """Screen on the induction mass, then confirm on the mechanism.
 
-    * **Screen**: a head is a *candidate* when its induction mass
-      (``q -> q-L+1``) is above ``mass_threshold``.
+    * **Screen**: a head is a *candidate* when its induction mass is above
+      ``mass_threshold``. On the periodic task that mass is the copy
+      offset ``q - L + 1``; on the variable-distance task it is the content
+      offset ``prev(q) + 1`` measured on the copy queries.
     * **Confirmation**: a candidate is *confirmed* when the layer it lives in
       is composed with an earlier layer at a K-composition score of at least
       ``composition_threshold``. The first layer has no earlier layer, so its
@@ -496,12 +703,26 @@ def detect_heads(
     if not patterns:
         return report
 
-    masses = head_masses(patterns, tokens, prefix_len)
+    layout = build_copy_layout(tokens, prefix_len, task=task)
+    masses = {
+        "induction": [],
+        "duplicate": [],
+        "content": [],
+        "prev_token": [],
+    }
+    for probs in patterns:
+        probs = probs.detach().cpu()
+        masses["induction"].append(_mean_mass(probs, layout.induction))
+        masses["duplicate"].append(_mean_mass(probs, layout.duplicate))
+        masses["content"].append(_mean_mass(probs, layout.content))
+        masses["prev_token"].append(_mean_mass(probs, layout.prev_token))
     report.masses = masses
     report.entropy = layer_entropy(patterns)
-    triples = _query_triples(tokens, prefix_len)
-    report.n_periodic_queries = int(triples["periodic"].shape[0])
-    report.n_content_queries = int(triples["content"].shape[0])
+    report.hypothesis = layout.hypothesis
+    report.n_periodic_queries = int(layout.periodic.shape[0])
+    report.n_content_queries = int(layout.content.shape[0])
+    report.n_copy_queries = int(layout.n_copy_queries)
+    report.offsets = offset_profile(patterns, layout)
 
     report.screen = [
         [int(h) for h in range(len(m)) if float(m[h]) > mass_threshold]
@@ -555,6 +776,7 @@ def detect_from_inputs(
     prefix_len: Optional[int] = None,
     mass_threshold: float = INDUCTION_MASS_THRESHOLD,
     composition_threshold: float = COMPOSITION_THRESHOLD,
+    task: str = TASK_PERIODIC,
 ) -> tuple[DetectionReport, list[torch.Tensor]]:
     """Detect heads on a raw batch of inputs.
 
@@ -564,14 +786,15 @@ def detect_from_inputs(
     """
     patterns = attention_patterns_for_inputs(model, inputs)
     tokens = inputs.detach().cpu()
-    if prefix_len is None:
+    if prefix_len is None and task != TASK_VARIABLE:
         prefix_len = prefix_length_for(int(inputs.shape[1]) + 1)
     report = detect_heads(
         patterns,
         tokens,
-        prefix_len,
+        prefix_len if prefix_len is not None else 0,
         mass_threshold=mass_threshold,
         composition_threshold=composition_threshold,
+        task=task,
     )
     return report, patterns
 
@@ -583,23 +806,26 @@ def detect_from_loader(
     mass_threshold: float = INDUCTION_MASS_THRESHOLD,
     composition_threshold: float = COMPOSITION_THRESHOLD,
     max_batches: int = DEFAULT_MAX_BATCHES,
+    task: str = TASK_PERIODIC,
 ) -> tuple[DetectionReport, list[torch.Tensor], torch.Tensor]:
     """Collect, measure and judge in one call.
 
     ``prefix_len`` defaults to the standard ``seq_len / 2`` layout; pass it
     explicitly whenever the data was generated with a different
-    ``prefix_ratio``.
+    ``prefix_ratio``. It is ignored on the variable-distance task, which
+    has no prefix.
     """
     patterns, tokens = collect_patterns_and_tokens(model, loader, max_batches)
-    if prefix_len is None:
+    if prefix_len is None and task != TASK_VARIABLE:
         seq_len = tokens.shape[1] + 1 if tokens.numel() else 0
         prefix_len = prefix_length_for(seq_len)
     report = detect_heads(
         patterns,
         tokens,
-        prefix_len,
+        prefix_len if prefix_len is not None else 0,
         mass_threshold=mass_threshold,
         composition_threshold=composition_threshold,
+        task=task,
     )
     return report, patterns, tokens
 
@@ -784,4 +1010,69 @@ def run_dissociation_probe(
         "content_wins": bool(best_content > best_period),
         "logit_diff_content_minus_period": logit_diff,
         "content_preferred_fraction": content_preferred,
+    }
+
+
+def run_content_vs_offset_probe(
+    model: nn.Module,
+    tokens: torch.Tensor,
+) -> dict[str, Any]:
+    """The native dissociation probe of the variable-distance task.
+
+    On the periodic task the content target and the fixed offset are the
+    same key, so only an off-distribution batch can tell the two
+    mechanisms apart (`run_dissociation_probe`). On the variable-distance
+    task the *training distribution itself* is the dissociation: the
+    distance between a token and its previous occurrence changes from
+    block to block, so a head that copies by a fixed offset cannot be right
+    everywhere, while a head that copies by content can.
+
+    The probe therefore measures, on the natural batch:
+
+    * the attention mass on the content key ``prev(q) + 1``;
+    * the attention mass on every fixed offset ``q - d``, per head.
+
+    ``content_wins`` is true when the best content head beats the best
+    fixed-offset head. The gap between the two is the claim, and it is
+    measured on the distribution the model was trained on — no
+    off-distribution batch is needed, and none is used.
+    """
+    patterns = attention_patterns_for_inputs(model, tokens.to(model_device(model)))
+    if not patterns:
+        return {
+            "peak_content_mass": 0.0,
+            "peak_offset_mass": 0.0,
+            "best_offset": -1,
+            "content_wins": False,
+            "content_mass": [],
+            "offset_mass": [],
+        }
+
+    layout = build_copy_layout(tokens, task=TASK_VARIABLE)
+    content: list[list[float]] = []
+    for probs in patterns:
+        probs = probs.detach().cpu()
+        content.append(_mean_mass(probs, layout.content).tolist())
+    profile = offset_profile(patterns, layout)
+
+    peak_content = max((max(v) for v in content), default=0.0)
+    peak_offset = 0.0
+    best_offset = -1
+    for layer in profile:
+        if not layer.size:
+            continue
+        flat = int(np.argmax(layer))
+        head, d = flat // layer.shape[1], flat % layer.shape[1]
+        value = float(layer[head, d])
+        if value > peak_offset:
+            peak_offset = value
+            best_offset = d + 1
+    return {
+        "peak_content_mass": float(peak_content),
+        "peak_offset_mass": float(peak_offset),
+        "best_offset": int(best_offset),
+        "content_wins": bool(peak_content > peak_offset),
+        "content_mass": content,
+        "offset_mass": [layer.tolist() for layer in profile],
+        "n_copy_queries": int(layout.n_copy_queries),
     }
