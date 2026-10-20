@@ -1,6 +1,6 @@
 # GPU runs: Kaggle / Colab
 
-The repository's remaining v1.0 work (issues #196, #168, #169) needs GPU
+The repository's remaining v1.1 work (issues #200 and #168) needs GPU
 hours. This repo has no GPU; the free tiers cover it. Both runtimes share
 **one contract**, so which one you use changes nothing downstream:
 
@@ -58,6 +58,7 @@ hours. This repo has no GPU; the free tiers cover it. Both runtimes share
 | Induction cascade | `kaggle_induction_standard.ipynb` | Does a head emerge at large scale, then standard (issue #169)? With a confirmed head: exp4 ablation + path patching, exp5 real-activation SAE | ~2–3h |
 | Capstone | `kaggle_capstone_20k.ipynb` | The planned 3×20k-step joint run with full instrumentation (issue #170) | ~30–40 min + resume |
 | Phase sweep | `kaggle_phase_sweep.ipynb` | The protocol ablation from the Nanda-faithful baseline (issue #168) | ~1.5–2h |
+| Content induction | `kaggle_induction_content.ipynb` | Does a **content-based** induction head form when the fixed-offset shortcut is removed (issue #200)? Emergence run, full-budget run, then the exp4/exp5 cascade on the same checkpoint | ~3–4h |
 
 Kaggle free: ~30 GPU-hours/week, ~9h sessions. Colab free: T4, variable
 sessions. Every long step is resumable — re-run its cell after a

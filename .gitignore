@@ -8,6 +8,10 @@ venv/
 # Failed local run logs (environment stalls; do not version)
 p59_*.log
 p59_*.err
+# Local de-risk / smoke logs from a local CPU run (not a result: the tracked
+# evidence is the manifest, and a local log is written on a dirty tree)
+derisk_*.log
+run.log
 
 # Generated figures (regenerated with make reproduce). Anchored to root only —
 # an unanchored `figures/` also matched portfolio/figures/, which silently

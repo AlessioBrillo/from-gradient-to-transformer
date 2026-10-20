@@ -1,5 +1,10 @@
 # CI gate: `make ci-check` minus the two commitlint targets (commit messages stay enforced by the
 # commit-msg hook and the conventional-commits workflow). Local: `ci-local`.
+#
+# `docs-audit` (added 2026-10-20) is the record ratchet: `verify-claims` checks that the
+# manifests exist and that every tag resolves, but not the prose around the tags, and on
+# 2026-10-20 the paper, the writeup, the skill tree and the README still stated claims
+# their own manifests had already falsified. See scripts/docs_audit.py.
 when:
   - event: [push, manual]
 
@@ -13,5 +18,5 @@ steps:
     commands:
       - apt-get update -q && apt-get install -y -q make
       - uv sync --frozen --all-extras
-      - make lint vault-check typecheck-new typecheck test-cov check-refs
+      - make lint vault-check typecheck-new typecheck test-cov check-refs docs-audit
       - uv run python -m src.results verify
