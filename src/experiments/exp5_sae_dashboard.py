@@ -726,8 +726,14 @@ def main() -> None:
         # Parameter count comes from the seeds themselves (see run_single_seed),
         # not from a throwaway probe: with --activations-from the real d_model is
         # the source checkpoint's, not --d-model.
+        #
+        # `result.per_seed` is a *list* of per-seed metric dicts (SeedAggregate),
+        # not a mapping: the old code called `.values()` on it and crashed with
+        # `AttributeError: 'list' object has no attribute 'values'` — after the
+        # whole SAE had been trained, which is exactly the path the Rung 5
+        # cascade takes (`--activations-from ... --seeds 42`).
         probe_params = [
-            m.get("n_parameters") for m in result.per_seed.values() if "n_parameters" in m
+            m["n_parameters"] for m in result.per_seed if "n_parameters" in m
         ]
         manifest = ResultsManifest.from_run(
             experiment="exp5_sae_dashboard",

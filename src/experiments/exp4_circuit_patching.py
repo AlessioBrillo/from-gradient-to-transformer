@@ -128,7 +128,7 @@ def _attn_module(model: nn.Module, layer: int) -> nn.Module:
 
 def _is_attention_only(model: nn.Module) -> bool:
     """True for the attention-only family (no MLP branch to keep clean)."""
-    return not hasattr(model.blocks[0], "attn")
+    return not hasattr(getattr(model, "blocks", [])[0], "attn")
 
 
 def _model_device(model: nn.Module) -> torch.device:
@@ -201,7 +201,7 @@ def compute_attention_patterns(
     # Only the hook cache is needed here; the logits are discarded.
     _, cache = _forward_with_cache(model, inputs[:8])
     probs = {}
-    for layer in range(len(model.blocks)):
+    for layer in range(len(getattr(model, "blocks", []))):
         prefix = f"blocks.{layer}.attn"
         attn_probs = cache[f"{prefix}.attn_probs"]
         probs[f"layer_{layer}"] = attn_probs.mean(dim=1)  # avg over heads
@@ -242,7 +242,7 @@ def detect_induction_heads(
 
 
 def train_model(
-    model: DecoderOnlyTransformer,
+    model: nn.Module,
     train_loader: DataLoader,
     val_loader: DataLoader,
     epochs: int = 2000,
@@ -452,7 +452,7 @@ def run_path_patching_to_logits(
     clean_inputs = clean_inputs.to(device)
     corrupted_inputs = corrupted_inputs.to(device)
     batch_size = min(batch_size, clean_inputs.size(0), corrupted_inputs.size(0))
-    n_layers = len(model.blocks)
+    n_layers = len(getattr(model, "blocks", []))
 
     with torch.no_grad():
         clean_logits, clean_cache = _forward_with_cache(model, clean_inputs[:batch_size])
@@ -820,7 +820,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
     val_batch, val_batch_answers = val_x[:n_pair], val_y[:n_pair, -1]
     corrupted, corrupted_answers = val_x[n_pair:2 * n_pair], val_y[n_pair:2 * n_pair, -1]
 
-    layers_to_patch = list(range(len(model.blocks)))
+    layers_to_patch = list(range(len(getattr(model, "blocks", []))))
     positions_to_patch = list(range(max(2, seq_len // 4), seq_len, 2))
     patching_results = run_activation_patching(
         model=model,
@@ -1196,12 +1196,13 @@ def main() -> None:
     logger.info("=" * 60)
     logger.info("Induction Head Detection")
     logger.info("=" * 60)
-    for layer in range(len(model.blocks)):
+    for layer in range(len(getattr(model, "blocks", []))):
         layer_heads = [(l, h) for l, h in induction_heads if l == layer]
         head_ids = [h for _, h in layer_heads]
         logger.info(f"  Layer {layer}: {len(layer_heads)} induction head(s): {head_ids}")
     total_found = len(induction_heads)
-    total_heads = len(model.blocks) * model.blocks[0].n_heads
+    blocks = getattr(model, "blocks", [])
+    total_heads = len(blocks) * getattr(blocks[0], "n_heads", 0) if blocks else 0
     logger.info(f"  Total induction heads: {total_found} / {total_heads}")
     if not induction_heads:
         logger.warning("No induction heads detected.")
@@ -1232,7 +1233,7 @@ def main() -> None:
     val_batch, val_batch_answers = val_x[:n_pair], val_y[:n_pair, -1]
     corrupted, corrupted_answers = val_x[n_pair:2 * n_pair], val_y[n_pair:2 * n_pair, -1]
 
-    layers_to_patch = list(range(len(model.blocks)))
+    layers_to_patch = list(range(len(getattr(model, "blocks", []))))
     positions_to_patch = list(range(max(2, seq_len // 4), seq_len, 2))
 
     patching_results = run_activation_patching(
@@ -1249,7 +1250,7 @@ def main() -> None:
     if patching_results:
         plot_patching_results(
             patching_results,
-            n_layers=len(model.blocks),
+            n_layers=len(getattr(model, "blocks", [])),
             n_positions=len(positions_to_patch),
             save_path=FIGURES_DIR / "exp4_patching_results.png",
         )

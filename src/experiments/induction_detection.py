@@ -64,7 +64,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Optional, cast
+from typing import Any, Optional, cast
 
 import numpy as np
 import torch
@@ -264,13 +264,14 @@ def attention_patterns_for_inputs(
     not implement a cache.
     """
     model.eval()
+    n_layers = len(getattr(model, "blocks", []))
     with torch.no_grad():
         if _supports(model, "cache"):
             _, cache = model(x, cache={})
             if cache:
                 return [
                     cache[f"blocks.{i}.attn.attn_probs"].detach().cpu()
-                    for i in range(len(model.blocks))
+                    for i in range(n_layers)
                 ]
         if _supports(model, "record_attn"):
             _, records = model(x, record_attn=True)
@@ -281,14 +282,14 @@ def attention_patterns_for_inputs(
             if cache:
                 return [
                     cache[f"blocks.{i}.attn.attn_probs"].detach().cpu()
-                    for i in range(len(model.blocks))
+                    for i in range(n_layers)
                 ]
     return []
 
 
 def collect_patterns_and_tokens(
     model: nn.Module,
-    loader: DataLoader,
+    loader: DataLoader[Any],
     max_batches: int = DEFAULT_MAX_BATCHES,
 ) -> tuple[list[torch.Tensor], torch.Tensor]:
     """Collect attention patterns and the input tokens they belong to.
@@ -577,7 +578,7 @@ def detect_from_inputs(
 
 def detect_from_loader(
     model: nn.Module,
-    loader: DataLoader,
+    loader: DataLoader[Any],
     prefix_len: Optional[int] = None,
     mass_threshold: float = INDUCTION_MASS_THRESHOLD,
     composition_threshold: float = COMPOSITION_THRESHOLD,
@@ -692,12 +693,12 @@ def make_dissociation_batch(
 
 def run_dissociation_probe(
     model: nn.Module,
-    batch: Optional[dict[str, torch.Tensor]] = None,
+    batch: Optional[dict[str, Any]] = None,
     vocab_size: int = 2048,
     seq_len: int = 64,
     num_samples: int = 32,
     seed: int = 0,
-) -> dict:
+) -> dict[str, Any]:
     """Does the model copy by *content* or by *position*?
 
     Returns a dict with, per layer and per head, the attention mass on the

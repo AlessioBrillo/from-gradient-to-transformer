@@ -54,14 +54,14 @@ lint:
 lint-fix:
 	uv run ruff check --fix src/ tests/ scripts/
 
-# Non-blocking: strict mode currently reports 196 errors (2026-10-11 count;
+# Non-blocking: strict mode currently reports 211 errors (2026-10-20 count;
 # the 2026-08-01 baseline was 154, +22 by 2026-08-18, +20 since through new
 # research code — see the progress log's MP-52 entry — not from a tool
 # upgrade: verified identical under mypy 1.20.2, 2.1.0, and 2.3.0. After fixing a
 # python_version mismatch that previously made mypy crash on numpy's stubs
 # before checking a single line of src/ — see pyproject.toml
 # [tool.mypy]). Mostly missing-generic-args pedantry (dict -> dict[str,
-# Any], DataLoader -> DataLoader[Any]), not caught bugs, but 196 is real
+# Any], DataLoader -> DataLoader[Any]), not caught bugs, but 211 is real
 # work, not something to silently claim fixed. Tracked as follow-up. Unlike
 # `|| true`, this still fails on a genuine mypy crash (exit 2) — see
 # .github/workflows/python-ci.yml for why that distinction matters.

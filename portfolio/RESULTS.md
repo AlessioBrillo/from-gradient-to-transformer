@@ -417,7 +417,8 @@ real figures and cross-check the numbers already documented. Findings:
 | K-composition score (L→L) | 0.080 ± 0.020 | 0.052 ± 0.008 | — |
 | L0 duplicate-token mass | 0.019 ± 0.002 | 0.200 ± 0.082 | — |
 | Final val accuracy | 0.5082 ± 0.0000 | 0.5081 ± 0.0000 | 0.5083 ± 0.0002 |
-| **Head ablation effect** (logit-diff drop) | 0.038 ± 0.026 | 0.078 ± 0.044 | **0.4445 ± 0.0425** |
+| **Head ablation — accuracy drop** (exp1, on its own model) | 0.038 ± 0.026 | 0.078 ± 0.044 | — |
+| **Head ablation — logit-diff drop** (exp4, same checkpoint) | — | — | **0.4445 ± 0.0425** |
 | **Path-patching effect** (direct effect on logits) | not run | not run | **0.8215 ± 0.1255** |
 | Activation-patching recovery (layer/position) | not run | not run | 0.0834 ± 0.0002 |
 | Dissociation probe — content mass | 0.031 ± 0.001 | 0.031 ± 0.000 | 0.0309 ± 0.0003 |
@@ -441,7 +442,10 @@ Reading the table:
   confirmed head costs **0.44** of the answer-minus-counterfactual logit
   difference, and path patching — which isolates the head's *direct* contribution
   to the logits — attributes **0.82** of it to that head. The head is the circuit
-  for this task.
+  for this task. (The smaller accuracy drops in the first two columns are exp1's
+  own ablation, measured as validation *accuracy*: the copy only buys accuracy
+  on the second half of the sequence, so a 0.04–0.08 accuracy drop and a 0.44
+  logit-difference drop are the same intervention measured on two scales.)
 - **But it is a positional copy.** The dissociation probe (a batch whose second
   half is a *permuted* copy of the prefix, so the content target and the fixed
   offset point at different keys) puts the model's mass on the **position**

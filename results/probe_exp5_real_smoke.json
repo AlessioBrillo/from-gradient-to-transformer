@@ -1,0 +1,99 @@
+{
+  "experiment": "exp5_sae_dashboard",
+  "seeds": [
+    42
+  ],
+  "args": {
+    "seed": 42,
+    "d_model": 64,
+    "n_features": 512,
+    "n_true_features": 20,
+    "feature_sparsity": 0.05,
+    "epochs": 200,
+    "lr": 0.001,
+    "l1_coeff": 0.001,
+    "num_samples": 5000,
+    "batch_size": 256,
+    "quick": true,
+    "manifest_path": "results/probe_exp5_real_smoke.json",
+    "activations_from": "results\\remote\\induction-standard\\output\\repo\\checkpoints\\induction_standard\\exp1_checkpoint_seed0.pt",
+    "source_vocab_size": 2048,
+    "source_seq_len": 64,
+    "source_d_model": 64,
+    "source_n_layers": 2,
+    "source_n_heads": 4
+  },
+  "per_seed_metrics": [
+    {
+      "reconstruction_mse": 0.0004949560344219208,
+      "fve": 0.9999743248023677,
+      "l0_sparsity": 10.278599739074707,
+      "dead_rate": 0.8203125,
+      "never_fires_rate": 0.8203125,
+      "n_parameters": 66112,
+      "d_model": 64.0
+    }
+  ],
+  "aggregate": {
+    "never_fires_rate": {
+      "mean": 0.8203125,
+      "std": 0.0,
+      "min": 0.8203125,
+      "max": 0.8203125,
+      "n": 1.0
+    },
+    "dead_rate": {
+      "mean": 0.8203125,
+      "std": 0.0,
+      "min": 0.8203125,
+      "max": 0.8203125,
+      "n": 1.0
+    },
+    "n_parameters": {
+      "mean": 66112.0,
+      "std": 0.0,
+      "min": 66112.0,
+      "max": 66112.0,
+      "n": 1.0
+    },
+    "d_model": {
+      "mean": 64.0,
+      "std": 0.0,
+      "min": 64.0,
+      "max": 64.0,
+      "n": 1.0
+    },
+    "reconstruction_mse": {
+      "mean": 0.0004949560344219208,
+      "std": 0.0,
+      "min": 0.0004949560344219208,
+      "max": 0.0004949560344219208,
+      "n": 1.0
+    },
+    "fve": {
+      "mean": 0.9999743248023677,
+      "std": 0.0,
+      "min": 0.9999743248023677,
+      "max": 0.9999743248023677,
+      "n": 1.0
+    },
+    "l0_sparsity": {
+      "mean": 10.278599739074707,
+      "std": 0.0,
+      "min": 10.278599739074707,
+      "max": 10.278599739074707,
+      "n": 1.0
+    }
+  },
+  "wall_clock_seconds": 71.28829700002098,
+  "git_sha": "c72c2f8",
+  "git_dirty": true,
+  "device": "cpu",
+  "torch_version": "2.12.1+cpu",
+  "numpy_version": "2.5.0",
+  "python_version": "3.14.7",
+  "n_parameters": 66112,
+  "created_at": "2026-10-20T06:32:24+00:00",
+  "notes": null,
+  "neuron_ablation": null
+}

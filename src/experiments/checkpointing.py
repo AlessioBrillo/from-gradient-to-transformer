@@ -44,15 +44,15 @@ def architecture_metadata(model: torch.nn.Module) -> dict[str, Any]:
         "n_layers": len(blocks),
     }
     if embed is not None:
-        meta["vocab_size"] = int(embed.num_embeddings)
-        meta["d_model"] = int(embed.embedding_dim)
+        meta["vocab_size"] = int(getattr(embed, "num_embeddings"))
+        meta["d_model"] = int(getattr(embed, "embedding_dim"))
     if attn is not None:
         meta["n_heads"] = int(getattr(attn, "n_heads", 0))
     pos_embed = getattr(model, "pos_embed", None)
     if pos_embed is not None:
-        meta["max_seq_len"] = int(pos_embed.num_embeddings)
+        meta["max_seq_len"] = int(getattr(pos_embed, "num_embeddings"))
     elif hasattr(model, "max_seq_len"):
-        meta["max_seq_len"] = int(model.max_seq_len)
+        meta["max_seq_len"] = int(getattr(model, "max_seq_len"))
     return meta
 
 
@@ -62,15 +62,15 @@ def save_training_checkpoint(
     model: torch.nn.Module,
     optimizer: torch.optim.Optimizer,
     scheduler: torch.optim.lr_scheduler.LRScheduler,
-    history: dict,
+    history: dict[str, Any],
     rng_state: Any,
-    arch: Optional[dict] = None,
+    arch: Optional[dict[str, Any]] = None,
 ) -> None:
     """Atomically write a resume checkpoint: a kill mid-save leaves the *old*
     valid checkpoint, not a truncated one."""
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
-    payload = {
+    payload: dict[str, Any] = {
         "epoch": epoch,
         "model": model.state_dict(),
         "optimizer": optimizer.state_dict(),
@@ -84,10 +84,13 @@ def save_training_checkpoint(
     tmp.replace(path)
 
 
-def load_training_checkpoint(path: Path, map_location: Any | None = None) -> Optional[dict]:
+def load_training_checkpoint(
+    path: Path, map_location: Any | None = None
+) -> Optional[dict[str, Any]]:
     """Load a checkpoint written by save_training_checkpoint. Returns None
     if the file does not exist, so `--resume` on a machine with nothing to
     resume degrades to a fresh, logged start rather than a crash."""
     if not path.exists():
         return None
-    return torch.load(path, map_location=map_location)
+    state: Optional[dict[str, Any]] = torch.load(path, map_location=map_location)
+    return state

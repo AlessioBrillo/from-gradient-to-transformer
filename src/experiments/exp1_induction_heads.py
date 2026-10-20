@@ -41,11 +41,15 @@ from src.experiments.induction_detection import (
     collect_patterns_and_tokens,
     detect_from_loader,
     head_masses,
-    k_composition_scores,
     layer_entropy,
     prefix_length_for,
     run_dissociation_probe,
 )
+
+# `k_composition_scores` is re-exported explicitly (the `as` form) because
+# exp6 imports it from this module, and mypy's implicit-reexport rule would
+# otherwise report it as "not explicitly exported".
+from src.experiments.induction_detection import k_composition_scores as k_composition_scores
 from src.experiments.runner import parse_seeds, run_seeds
 from src.reproducibility import set_seed
 from src.results import ResultsManifest, count_parameters, resolve_manifest_path
@@ -359,7 +363,7 @@ def compute_attention_entropy(
     detector found none.)
     """
     model.eval()
-    n_layers = len(model.blocks)
+    n_layers = len(getattr(model, "blocks", []))
     patterns, tokens = collect_patterns_and_tokens(model, loader, max_batches=max_batches)
     if not patterns:
         zeros = [0.0 for _ in range(n_layers)]
@@ -471,8 +475,8 @@ def train_model(
                     "model": "AttentionOnlyTransformer",
                     "vocab_size": model.embed.num_embeddings,
                     "d_model": model.embed.embedding_dim,
-                    "n_layers": len(model.blocks),
-                    "n_heads": model.blocks[0].n_heads,
+                    "n_layers": len(getattr(model, "blocks", [])),
+                    "n_heads": getattr(getattr(model, "blocks", [])[0], "n_heads", 0),
                     "lr": lr,
                     "weight_decay": weight_decay,
                     "epochs": epochs,

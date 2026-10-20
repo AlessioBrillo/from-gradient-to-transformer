@@ -117,7 +117,7 @@ that epoch/scale budget) still stands. See
 > are kept (with the old metric relabelled) because the accuracy comparison they
 > support is unaffected; the head-count rows are not measurements. See
 > `portfolio/RESULTS.md`'s Honesty Ledger, 2026-10-19.
-
+>
 > **2026-10-20 — and what the corrected detector found.** Standard scale on a GPU,
 > three seeds, 3000 epochs: **2–3 heads per seed**, copy-offset mass **0.945**,
 > previous-token control 0.046 — so heads *do* form at standard scale, within 50
