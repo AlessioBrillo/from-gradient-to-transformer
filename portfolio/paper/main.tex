@@ -404,20 +404,26 @@ $d_\text{model}=64$, 8$\times$ dictionary (512 features), 300 epochs,
 seed 42: FVE $97.5\%$, L0 $96.6$ ($18.9\%$ of dictionary active), dead
 rate $7.6\%$ (fixed $10^{-4}$ threshold). Reproduces exactly.
 
-\subsection{Real Activations (First Run)}
-Harvested from a trained induction-heads checkpoint via forward hook on
-\texttt{ln\_final} (MP-88 shakedown checkpoint, 2000 steps): FVE
-\textbf{99.97\%}, L0 \textbf{136.25 / 256} (53.2\% active), 0\%
-dead features. Reconstruction MSE $0.125$ (higher than synthetic's
-$0.001$ because the residual stream is wider).
+\subsection{Real Activations: Before and After a Confirmed Head}
+% manifest: results/exp5_real_activations.json
+The first real-activation run harvested from a 2000-step shakedown checkpoint
+(no confirmed head): FVE \textbf{99.97\%}, L0 \textbf{136.25 / 256}
+(53.2\% active), 0\% dead features, reconstruction MSE $0.125$ --- it
+reconstructed better than the synthetic baseline but far less sparsely.
 
-\textbf{Read honestly, not as a win.} The real-activation run reconstructs
-better but far less sparsely than synthetic (53\% vs 19\% active). A
-32-dimensional residual stream from a small, undertrained model (150--300
-epochs, no confirmed induction head) may simply not contain many
-genuinely sparse, disentangled features. This is an informative gap:
-re-running once Rung 1 has a confirmed-head checkpoint is the natural
-next step.
+Re-run on the standard-scale checkpoint with the confirmed head (50{,}000
+residual-stream samples, $d_\text{model}=64$, 8$\times$ dictionary, 1000
+epochs), the picture inverts: L0 \textbf{15.12 / 512} (\textbf{3.0\% active}),
+FVE \textbf{99.998\%}, reconstruction MSE $0.0004$ --- and \textbf{78.1\%} of
+the features never fire.
+
+\textbf{Read honestly, in both directions.} The old ``dense reconstruction''
+was a statement about an undertrained model with no circuit, not about the
+SAE: once the model has a circuit to write into its residual stream, the
+activations are sparse. What the new run leaves unresolved is the other
+half: with an 8$\times$ dictionary, four features in five never fire, i.e.
+the dictionary is far larger than this residual stream needs. The sparsity
+gap is closed; the dictionary-size choice is the remaining question.
 
 \section{Capstone: Joint Training and Reverse-Engineering}
 \label{sec:capstone}

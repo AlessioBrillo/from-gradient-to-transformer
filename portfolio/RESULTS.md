@@ -798,42 +798,56 @@ no ablation result to plot yet; the citation that used to point at a non-existen
 trained induction-heads checkpoint via a forward hook on `ln_final`, and the architecture
 gained the pre-encoder bias (`x - b_dec`) it was missing — Bricken et al.'s actual SAE, not
 an approximation of it. Dead-feature threshold fixed 2026-08-01 (see Honesty Ledger).
+[x] **2026-10-20 — the real-activation run landed on a checkpoint with a confirmed
+head**, which is the pending item this rung had been carrying: the SAE now sees a
+*circuit-bearing* residual stream, and the picture changes qualitatively (below).
 
-| Metric | Synthetic (d_model=64, 8× dict, manifest 2026-08-13) | Real (d_model=32, 8× dict, from a trained checkpoint) |
-|--------|-------|-------|
-| Dictionary size | 512 | 256 |
-| L0 sparsity | 96.60 / 512 (18.9%) | 136.25 / 256 (**53.2%**) |
-| Fraction of variance explained (FVE) | 0.9749 (97.5%) | **0.9997 (99.97%)** |
-| Reconstruction MSE | 0.00101 | 0.1251 |
-| Dead features (fixed 1e-4 threshold) | 39 / 512 (7.6%) | 0 / 256 (0%) |
+<!-- manifest: results/exp5_real_activations.json -->
 
-The synthetic row is manifest-backed from the 2026-08-13 run (seed 42, 300 epochs,
-`results/exp5_sae_dashboard.json`, git_sha a50f943, clean tree) — a dated replacement
-for the earlier 1000-epoch seed-42 numbers (L0 88.97, FVE 0.9722, 1/512 dead), which
-were never manifest-backed: the full 1000-epoch ×3-seed re-run is a recorded pending
-item. The real-activation row remains prose (its run's plots were never saved) and is
-re-run in the R4/R5 chain once Rung 1 has a confirmed-head checkpoint.
+| Metric | Synthetic (d_model=64, 8× dict, manifest 2026-08-13) | Real, old (d_model=32, from a 2000-step shakedown checkpoint) | Real, **new** (d_model=64, from the standard-scale confirmed-head checkpoint, 2026-10-20) |
+|--------|-------|-------|-------|
+| Dictionary size | 512 | 256 | 512 |
+| L0 sparsity | 96.60 / 512 (18.9%) | 136.25 / 256 (**53.2%**) | **15.12 / 512 (3.0%)** |
+| Fraction of variance explained (FVE) | 0.9749 (97.5%) | 0.9997 (99.97%) | **0.99998** |
+| Reconstruction MSE | 0.00101 | 0.1251 | 0.00041 |
+| Dead features (fixed 1e-4 threshold) | 39 / 512 (7.6%) | 0 / 256 (0%) | **400 / 512 (78.1%)** |
 
-**Read honestly, not as an unqualified win.** The real-activation run reconstructs *better*
-but *far less sparsely* than synthetic — 53% of the dictionary fires per input versus 17%
-for synthetic. That is not what a good SAE result looks like; it looks like a wide, dense
-linear autoencoder that happens to reconstruct well because a 32-dimensional residual
-stream from a small, undertrained model (150-300 epochs, no confirmed induction head — see
-Rung 1) may simply not contain many genuinely sparse, disentangled features yet for the SAE
-to find. This is exactly the "what did I add beyond the original?" distinctiveness gate
-(`07_capstone/research-plan.md`) this rung was missing: a real degradation in the metric
-that matters (sparsity, not just reconstruction) is a more informative result than a second
-clean synthetic number would have been. Re-running this once Rung 1 has a checkpoint with a
-confirmed induction head is the natural next step — right now the "real" activations come
-from a model that hasn't yet learned the mechanism this pipeline exists to study.
+**What changed, and why it matters.** The old real-activation row read *dense*: 53% of
+the dictionary firing per input, with a reconstruction MSE an order of magnitude worse
+than the synthetic baseline. This repository read that as "the residual stream of a
+small, undertrained model has no sparse structure to find". The new run replaces the
+model with the one Rung 1 actually trained (standard scale, 3000 epochs, confirmed head)
+and the picture inverts: **L0 15.1 of 512 (3.0%)** with FVE 99.998% and an MSE of 0.0004.
+The activations *are* sparse — but only once the model has a circuit to write into
+them. The old "dense reconstruction" was a statement about an undertrained model, not
+about the SAE.
+
+**And the remaining weakness is the other one.** With 8× the dictionary, **78% of the
+features never fire** — the dictionary is far larger than this residual stream needs.
+That is a dictionary-size choice, not a property of the model, and it is the honest
+"what did I add" reading of this rung: the sparsity gap is closed (53% → 3% L0), and
+what is left is an oversized dictionary, not a missing mechanism.
+
+**Read honestly, not as an unqualified win.** The *old* real-activation row
+reconstructed better but far less sparsely than synthetic — 53% of the dictionary fired
+per input versus 17% for synthetic — and this repository read that as "a 32-dimensional
+residual stream from a small, undertrained model may simply not contain many genuinely
+sparse, disentangled features". That was the "what did I add beyond the original?"
+distinctiveness gate (`07_capstone/research-plan.md`) this rung was missing: a real
+degradation in the metric that matters (sparsity, not just reconstruction) is a more
+informative result than a second clean synthetic number would have been. The
+2026-10-20 run answers that gate with the model the rung was waiting for: the sparsity
+problem is **gone** (53% → 3% L0) and what remains is a dictionary 8× too large, not a
+missing mechanism.
 
 **Reference**: Bricken et al., "Towards Monosemanticity" (2023); Cunningham et al., "Sparse Autoencoders Find Highly Interpretable Features in Language Models," ICLR 2024.
 
 **Figures**: `portfolio/figures/exp5_sparsity_tradeoff.png`,
 `portfolio/figures/exp5_feature_histogram.png` (synthetic). Real-activation figures
 (`exp5_sparsity_tradeoff_real.png`, `exp5_feature_histogram_real.png`) are not yet
-generated — the numbers above came from a run whose plots were never saved; struck rather
-than left dangling. The synthetic figures pre-date the 2026-08-13 manifest (they are the
+generated — the 2026-10-20 real-activation run was a manifest-producing run
+(`results/exp5_real_activations.json`, CPU, 52 min) and the figures remain a recorded
+Rung-5 pending item. The synthetic figures pre-date the 2026-08-13 manifest (they are the
 original seed-42 plots); regenerating them from the manifest-backed run is part of the
 recorded Rung-5 pending item.
 
@@ -898,7 +912,7 @@ every cell, so no reader has to infer them from an aggregate.
 | 2 — Grokking (primary flagship) | ✅ **REPRODUCED 2026-10-14** (the 2026-08-11 NO-GROK was a metric artifact) | Nanda protocol, P=113, GPU, 3 seeds: val accuracy 0.9999 ± 0.0002, **k_energy_90 = 5.7 ± 1.2 of 56 — sparse on 3/3 seeds**; the historical repo protocol re-reads the same way |
 | 3 — Superposition | ✅ Phase transition confirmed | Root cause found (no real bottleneck); rewritten, reproduces cleanly: 10/20 → 20/20 features represented |
 | 4 — Circuit Patching | ✅ **Cascade ran end to end on Rung 1's checkpoint** (2026-10-20) | Head ablation **0.4445 ± 0.0425**, path patching **0.8215 ± 0.1255** — the first end-to-end path-patching result against a real head; activation recovery 0.0834 |
-| 5 — SAE Dashboard | ✅ Synthetic reproduced; ⚠️ real-activation upgrade shipped | Real: 99.97% FVE but 53% L0 (dense, not sparse) — informative gap, not yet a clean win |
+| 5 — SAE Dashboard | ✅ Synthetic reproduced; ✅ **the real-activation gap closed** (2026-10-20) | On the confirmed-head checkpoint the SAE is now *sparse*: L0 15.1/512 (3.0%), FVE 99.998%, MSE 0.0004 — against 53% L0 for the old undertrained model. What remains is a dictionary 8× too large (78% dead features) |
 | 6 — ACDC | ❌ Deleted | Was fabricated data; removed 2026-08-01 rather than fixed |
 
 **What to trust right now, in order**: (1) Rung 2's sparse-circuit reproduction —
@@ -912,10 +926,10 @@ probe that says the copy is positional rather than content-based; the
 detector behind it is planted-tested, and the previous "0 / 8" was a detector
 artifact. (3) Rung 3's phase
 transition — reproduced cleanly, root cause understood, multi-seed manifest
-backs it. (4) Rung 5's
-synthetic FVE/MSE numbers — reproduced and architecturally simple; the
-real-activation numbers are real but need a better checkpoint (one with a confirmed
-induction head) before the sparsity gap means anything conclusive. (5) Rung 1's
+backs it. (4) Rung 5's real-activation SAE on the confirmed-head checkpoint:
+L0 3.0% with FVE 99.998% — the old "dense reconstruction" was a statement
+about the old undertrained model, and what remains is a dictionary 8× too
+large. (5) Rung 1's
 fixed-vs-fresh comparison — a real, large, matched effect, though at a scale still
 well below standard. (6) Rung 4's quick multi-seed re-run — activation patching
 runs cleanly; the standard-scale cascade above is the current number. The
