@@ -23,12 +23,13 @@ The capstone question (roadmap, Phase 7 gate): *"How does your transformer imple
   - Evidence: [[07_capstone/notes/grokking-verdict-p113|Grokking verdict P=113]]
 - [x] **Teachable artifact** — `notebooks/capstone_teaching_artifact_v23.ipynb` trains its own tiny joint model and runs the full loop **in CI** (`make reproduce-notebook`), so a notebook that CI never executes can never rot again
   - Evidence: `tests/test_teaching_artifact.py`
-- [x] **Honesty ledger maintained** — five audits, all entries kept visible: [[portfolio/RESULTS|Honesty Ledger]]
+- [x] **Honesty ledger maintained** — seven audits, all entries kept visible: [[portfolio/RESULTS|Honesty Ledger]]
 
 ## Still open (tracked in GitHub Issues, not checklist items)
 - [x] **3 seeds × 20k steps, capstone** — issue #170 (GPU: `make remote-run-capstone`); run executed 2026-10-14, dissociation persists at full budget (`results/capstone_20k.json`). W&B never connected (no credentials) — closed-with-reason.
-- [~] **Rung 1 standard-scale run + head validation, then the exp4/exp5 cascade** — issue #169 (GPU: `make remote-run-induction`); next GPU job, unblocks exp4 path patching and exp5 real-activation SAE.
-- [x] **Rung 2 P=113 positive control and NO-GROK re-verdict** — issue #167 (GPU: `make remote-run-grokking`); reversed 2026-10-14, sparse circuit reproduced on both protocols. Follow-ups: regenerate `exp2_*` figures from GPU re-run; re-measure P=59 positive control with energy metric (dedicated issue).
+- [~] **Rung 1 standard-scale run + head validation, then the exp4/exp5 cascade** — issue #169 (GPU: `make remote-run-induction`); the detector behind every previous head count was fixed on 2026-10-19 (it measured the previous-token offset; the counts are retracted), the run now uses the corrected detector with early stop, and the cascade analyses **the same checkpoint** at Rungs 4 and 5. GPU run in flight.
+- [x] **Rung 2 P=113 positive control and NO-GROK re-verdict** — issue #167 (GPU: `make remote-run-grokking`); reversed 2026-10-14, sparse circuit reproduced on both protocols. Follow-up closed: the `exp2_*` figures were regenerated from the GPU re-run (2026-10-17) and the P=59 positive control was re-measured with the energy metric (issue #196, 2026-10-19): **2 of 3 seeds sparse — MIXED**, not the SPARSE label a majority rule produces.
+- [ ] **Protocol-ablation phase diagram** — issue #168, moved to the v1.1 milestone on 2026-10-19 (the sweep is one to two weeks of GPU quota, and it must not delay #169). Its taxonomy was clarified before the first cell runs: SPARSE = 3/3, MIXED = 1–2/3, DENSE = 0/3, per-seed counts always reported.
 
 ## Links
 - [[07_capstone/research-plan|Capstone research plan]]

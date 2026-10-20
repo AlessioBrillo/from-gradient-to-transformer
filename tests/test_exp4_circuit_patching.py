@@ -213,6 +213,32 @@ class TestBatchRegimeAndPresets:
                 f"exp4 --standard disagrees with exp1 --standard on {key}"
             )
 
+    def test_standard_matches_exp1_standard_on_batching(self) -> None:
+        """The batch size is part of the config.
+
+        It was not: exp4's `--scale large` used the parser default (64)
+        while exp1's used 128, so the two "matched" runs took a different
+        number of optimizer steps over the same data (384k vs 192k). The
+        parity test above only compared the flags both presets set, so the
+        mismatch was invisible.
+        """
+        from src.experiments.exp1_induction_heads import apply_config_presets as exp1_presets
+
+        for argv in (["--standard"], ["--scale", "large"]):
+            mine = self._args(*argv)
+            theirs = exp1_presets.__globals__["build_parser"]().parse_args(list(argv))
+            apply_config_presets(mine)
+            exp1_presets(theirs)
+            assert mine.batch_size == theirs.batch_size, (
+                f"exp4 {argv} uses batch {mine.batch_size}, exp1 uses "
+                f"{theirs.batch_size} — the runs are not the same experiment"
+            )
+            # Same data, same batch size -> the same number of optimizer
+            # steps per epoch.
+            mine_steps = -(-mine.num_train // mine.batch_size)
+            theirs_steps = -(-theirs.num_train // theirs.batch_size)
+            assert mine_steps == theirs_steps
+
     def test_scale_large_matches_exp1_scale_large(self) -> None:
         from src.experiments.exp1_induction_heads import apply_config_presets as exp1_presets
 
@@ -249,3 +275,220 @@ class TestBatchRegimeAndPresets:
         args = self._args("--seeds", "0", "--manifest-path", "results/probe_exp4.json")
         assert args.manifest_path == "results/probe_exp4.json"
         assert self._args("--seeds", "0").manifest_path is None
+
+
+class TestInterventionsAcceptRawDatasetTensors:
+    """The interventions must accept the tensors the dataset produced.
+
+    The cascade hands them the validation tensors as they come out of the
+    dataset (CPU) while the model lives on the GPU. The interventions used
+    to assume the caller had already moved everything to the device, which
+    is a hard error on CUDA — and it is what killed the first GPU cascade
+    run, *after* the training it was supposed to analyse had completed.
+
+    On a CPU-only machine this test cannot fail (the model is on CPU too),
+    so it also asserts the contract directly: the intervention resolves the
+    model's own device rather than a global one.
+    """
+
+    def test_model_device_follows_the_model_not_a_global(self) -> None:
+        from src.experiments.exp4_circuit_patching import _model_device
+
+        model = DecoderOnlyTransformer(
+            vocab_size=16, d_model=16, n_layers=1, n_heads=2, max_seq_len=12
+        )
+        assert _model_device(model) == next(model.parameters()).device
+
+    def test_interventions_run_on_raw_dataset_tensors(self) -> None:
+        from src.experiments.exp1_induction_heads import make_repeated_token_data
+
+        dataset, _ = make_repeated_token_data(
+            vocab_size=16, seq_len=12, num_train=16, num_val=8, seed=0
+        )
+        raw_x, raw_y = dataset.tensors
+        model = DecoderOnlyTransformer(
+            vocab_size=16, d_model=16, n_layers=1, n_heads=2, max_seq_len=12
+        )
+        results = run_activation_patching(
+            model=model,
+            clean_inputs=raw_x[:8],
+            clean_answers=raw_y[:8, -1],
+            corrupted_inputs=raw_x[8:16],
+            corrupted_answers=raw_y[8:16, -1],
+            layers_to_patch=[0],
+            positions_to_patch=[4, 6],
+        )
+        assert results, "the intervention produced no measurements"
+        for vals in results.values():
+            assert "recovery" in vals
+
+
+class TestAttentionOnlyInterventions:
+    """The interventions must work on the model Rung 1 actually trains.
+
+    Rung 1's model is the attention-only transformer (no MLP), and the
+    cascade now analyses *that* model. The patching code used to assume
+    the decoder-only family (nested `blocks[i].attn`, an MLP branch), so
+    these tests are what keeps the two families honest.
+    """
+
+    @staticmethod
+    def _model():
+        from src.experiments.exp1_induction_heads import AttentionOnlyTransformer
+
+        torch.manual_seed(0)
+        return AttentionOnlyTransformer(
+            vocab_size=16, d_model=32, n_layers=2, n_heads=2, max_seq_len=12
+        )
+
+    def test_self_patching_is_a_no_op(self) -> None:
+        model = self._model()
+        clean, clean_y = _sample_batch(n=16, seed=1)
+        results = run_activation_patching(
+            model=model,
+            clean_inputs=clean,
+            clean_answers=clean_y[:, -1],
+            corrupted_inputs=clean,
+            corrupted_answers=clean_y[:, -1],
+            layers_to_patch=[0, 1],
+            positions_to_patch=[3, 6, 9],
+        )
+        for (layer, pos), vals in results.items():
+            assert abs(vals["patched_diff"] - vals["clean_diff"]) < 1e-4, (
+                f"self-patching at layer {layer}, pos {pos} should be a no-op"
+            )
+
+    def test_patching_a_different_run_changes_the_output(self) -> None:
+        model = self._model()
+        clean, clean_y = _sample_batch(n=16, seed=1)
+        corrupted, corrupted_y = _sample_batch(n=16, seed=2)
+        results = run_activation_patching(
+            model=model,
+            clean_inputs=clean,
+            clean_answers=clean_y[:, -1],
+            corrupted_inputs=corrupted,
+            corrupted_answers=corrupted_y[:, -1],
+            layers_to_patch=[0, 1],
+            positions_to_patch=list(range(2, 11)),
+        )
+        diffs = [abs(v["patched_diff"] - v["clean_diff"]) for v in results.values()]
+        assert max(diffs) > 1e-4, "the patch should reach the residual stream"
+
+    def test_path_patching_self_is_zero(self) -> None:
+        model = self._model()
+        clean, clean_y = _sample_batch(n=16, seed=1)
+        results = run_path_patching_to_logits(
+            model=model,
+            clean_inputs=clean,
+            clean_answers=clean_y[:, -1],
+            corrupted_inputs=clean,
+            corrupted_answers=clean_y[:, -1],
+            heads=[(0, 0), (1, 1)],
+        )
+        for (layer, head), vals in results.items():
+            assert abs(vals["patched_diff"] - vals["clean_diff"]) < 1e-4
+
+
+class TestFromCheckpoint:
+    """Rung 4 must analyse the model Rung 1 trained — the cascade.
+
+    Before this, exp4 trained its *own* model while the documentation
+    claimed the three rungs measured "one shared model": two different
+    architectures, two different step counts, one claim.
+    """
+
+    @staticmethod
+    def _train_exp1_checkpoint(tmp_path, seed: int = 0):
+        from types import SimpleNamespace
+
+        from torch.utils.data import DataLoader
+
+        from src.experiments.exp1_induction_heads import (
+            AttentionOnlyTransformer,
+            make_repeated_token_data,
+            train_model,
+        )
+
+        train, val = make_repeated_token_data(
+            vocab_size=32, seq_len=16, num_train=32, num_val=8, seed=seed
+        )
+        model = AttentionOnlyTransformer(
+            vocab_size=32, d_model=16, n_layers=2, n_heads=2, max_seq_len=16
+        )
+        train_model(
+            model=model,
+            train_loader=DataLoader(train, batch_size=8, shuffle=True),
+            val_loader=DataLoader(val, batch_size=8, shuffle=False),
+            epochs=2,
+            lr=1e-3,
+            weight_decay=0.1,
+            seed=seed,
+            checkpoint_dir=str(tmp_path),
+            checkpoint_every=1,
+            detect_every=0,
+        )
+        return SimpleNamespace(vocab_size=32, seq_len=16, d_model=16, n_layers=2, n_heads=2)
+
+    def _args(self, tmp_path):
+        return build_parser().parse_args(
+            [
+                "--from-checkpoint", str(tmp_path),
+                "--source-vocab-size", "32",
+                "--source-seq-len", "16",
+                "--source-d-model", "16",
+                "--source-n-layers", "2",
+                "--source-n-heads", "2",
+                "--num-train", "32",
+                "--batch-size", "8",
+            ]
+        )
+
+    def test_build_model_loads_the_checkpoint(self, tmp_path) -> None:
+        from pathlib import Path
+
+        from src.experiments.exp1_induction_heads import AttentionOnlyTransformer
+        from src.experiments.exp4_circuit_patching import _build_model
+
+        self._train_exp1_checkpoint(tmp_path)
+        args = self._args(tmp_path)
+        model, checkpoint = _build_model(args, 0)
+        assert isinstance(model, AttentionOnlyTransformer), (
+            "the cascade must analyse Rung 1's model family"
+        )
+        assert checkpoint is not None
+        assert Path(checkpoint["path"]).exists()
+        assert checkpoint["epoch"] > 0
+
+    def test_mismatched_source_flags_fail_loudly(self, tmp_path) -> None:
+        import pytest
+
+        from src.experiments.exp4_circuit_patching import _build_model
+
+        self._train_exp1_checkpoint(tmp_path)
+        args = self._args(tmp_path)
+        args.source_d_model = 32  # wrong
+        with pytest.raises(SystemExit):
+            _build_model(args, 0)
+
+    def test_missing_checkpoint_fails_loudly(self, tmp_path) -> None:
+        import pytest
+
+        from src.experiments.exp4_circuit_patching import _build_model
+
+        args = self._args(tmp_path / "nope")
+        with pytest.raises(SystemExit):
+            _build_model(args, 0)
+
+    def test_run_single_seed_analyses_the_loaded_model(self, tmp_path) -> None:
+        from src.experiments.exp4_circuit_patching import run_single_seed
+
+        self._train_exp1_checkpoint(tmp_path)
+        args = self._args(tmp_path)
+        metrics = run_single_seed(0, args)
+        assert set(metrics) >= {
+            "final_val_acc",
+            "total_induction_heads",
+            "mean_activation_recovery",
+            "probe_content_mass",
+        }
+        assert metrics["final_val_acc"] >= 0.0

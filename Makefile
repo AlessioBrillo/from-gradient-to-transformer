@@ -33,11 +33,16 @@ sync:
 	uv sync
 
 # --- Testing ---
+# `python -m pytest`, not the `pytest` console script: on Windows the
+# console-script shim is blocked by Application Control (os error 4551), so
+# `make test` failed on the dev machine while the Docker-based Woodpecker
+# gate (which runs the same targets) stayed green. The module invocation
+# works everywhere and changes nothing about what runs.
 test:
-	uv run pytest -v --tb=short
+	uv run python -m pytest -v --tb=short
 
 test-cov:
-	uv run pytest -v --tb=short --cov=src --cov-report=term-missing
+	uv run python -m pytest -v --tb=short --cov=src --cov-report=term-missing
 # --- Linting ---
 # scripts/ joined src/ and tests/ on 2026-10-11. It had been silently out of
 # scope, which is how a real NameError (fourier_ablation, undefined at
@@ -49,24 +54,28 @@ lint:
 lint-fix:
 	uv run ruff check --fix src/ tests/ scripts/
 
-# Non-blocking: strict mode currently reports 196 errors (2026-10-11 count;
+# Non-blocking: strict mode currently reports 211 errors (2026-10-20 count;
 # the 2026-08-01 baseline was 154, +22 by 2026-08-18, +20 since through new
 # research code — see the progress log's MP-52 entry — not from a tool
 # upgrade: verified identical under mypy 1.20.2, 2.1.0, and 2.3.0. After fixing a
 # python_version mismatch that previously made mypy crash on numpy's stubs
 # before checking a single line of src/ — see pyproject.toml
 # [tool.mypy]). Mostly missing-generic-args pedantry (dict -> dict[str,
-# Any], DataLoader -> DataLoader[Any]), not caught bugs, but 196 is real
+# Any], DataLoader -> DataLoader[Any]), not caught bugs, but 211 is real
 # work, not something to silently claim fixed. Tracked as follow-up. Unlike
 # `|| true`, this still fails on a genuine mypy crash (exit 2) — see
 # .github/workflows/python-ci.yml for why that distinction matters.
+# `python -m mypy`, not the `mypy` console script: on Windows the
+# console-script shims are blocked by Application Control (os error 4551),
+# so the local mirror of this gate could not run the very commands the
+# Woodpecker pipeline runs. The module invocation works everywhere.
 typecheck:
-	@uv run mypy src/ --ignore-missing-imports; code=$$?; \
+	@uv run python -m mypy src/ --ignore-missing-imports; code=$$?; \
 	if [ $$code -eq 2 ]; then echo "mypy crashed (exit 2) — failing."; exit 1; fi; \
 	exit 0
 
 typecheck-strict:
-	uv run mypy src/ --ignore-missing-imports
+	uv run python -m mypy src/ --ignore-missing-imports
 
 # Blocking: a small, deliberately-growing allowlist of modules held to
 # `mypy --strict` with zero tolerance from the day they were written. New
@@ -79,7 +88,7 @@ typecheck-strict:
 # errors in whatever these two files transitively import (caught in CI —
 # see .github/workflows/python-ci.yml's blocking step comment).
 typecheck-new:
-	uv run mypy src/results.py src/experiments/runner.py --ignore-missing-imports --follow-imports=silent
+	uv run python -m mypy src/results.py src/experiments/runner.py --ignore-missing-imports --follow-imports=silent
 
 # --- CI mirror (local replica of .github/workflows/python-ci.yml) ---
 # commitlint-head is part of the mirror since 2026-08-08: the PR-only
@@ -149,7 +158,7 @@ reproduce-quick:
 # executes is a notebook that rots, which is what happened to v22.
 reproduce-notebook:
 	@echo "=== Executing the capstone teaching artifact ==="
-	uv run pytest tests/test_teaching_artifact.py -v
+	uv run python -m pytest tests/test_teaching_artifact.py -v
 
 reproduce-grokking:
 	@echo "=== Rung 2: Grokking modular addition (FLAGSHIP) ==="
@@ -283,7 +292,10 @@ vault-check:
 # that the tracked documents actually cite. figures/ stays scratch.
 figures:
 	@echo "=== Rebuilding portfolio/figures/ from the manifests ==="
-	uv run python -m src.experiments.exp1_induction_heads --fresh-batches --vocab-size 256 --seq-len 16 --d-model 24 --n-layers 2 --n-heads 4 --epochs 150 --lr 0.001 --weight-decay 0.1 --batch-size 32 --num-train 256 --seeds 0,1,2
+	@echo "note: the exp1 arm writes a scratch manifest (probe_*_quick.json is gitignored),"
+	@echo "so regenerating the figures cannot overwrite the tracked flagship manifest with"
+	@echo "a dirty-tree record."
+	uv run python -m src.experiments.exp1_induction_heads --fresh-batches --vocab-size 256 --seq-len 16 --d-model 24 --n-layers 2 --n-heads 4 --epochs 150 --lr 0.001 --weight-decay 0.1 --batch-size 32 --num-train 256 --seeds 0,1,2 --manifest-path results/probe_exp1_figures_quick.json
 	uv run python -m src.experiments.exp3_superposition --epochs 600 --num-samples 8000 --batch-size 512 --single-sparsity 0.01 --seeds 0,1,2
 	uv run python -m src.experiments.exp4_circuit_patching --quick --seeds 0,1,2
 	uv run python -m src.experiments.exp5_sae_dashboard --quick

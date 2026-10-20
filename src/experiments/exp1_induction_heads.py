@@ -29,10 +29,27 @@ from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
 from src.experiments.checkpointing import (
+    architecture_metadata,
     checkpoint_path_for_seed,
     load_training_checkpoint,
     save_training_checkpoint,
 )
+from src.experiments.induction_detection import (
+    COMPOSITION_THRESHOLD,
+    INDUCTION_MASS_THRESHOLD,
+    attention_patterns_for_inputs,
+    collect_patterns_and_tokens,
+    detect_from_loader,
+    head_masses,
+    layer_entropy,
+    prefix_length_for,
+    run_dissociation_probe,
+)
+
+# `k_composition_scores` is re-exported explicitly (the `as` form) because
+# exp6 imports it from this module, and mypy's implicit-reexport rule would
+# otherwise report it as "not explicitly exported".
+from src.experiments.induction_detection import k_composition_scores as k_composition_scores
 from src.experiments.runner import parse_seeds, run_seeds
 from src.reproducibility import set_seed
 from src.results import ResultsManifest, count_parameters, resolve_manifest_path
@@ -181,7 +198,22 @@ class AttentionOnlyBlock(nn.Module):
         # arbitrary post-mixing subspace. See causal_ablation().
         self.head_mask: Optional[torch.Tensor] = None
 
-    def forward(self, x: torch.Tensor, past_attn: Optional[list] = None) -> torch.Tensor:
+    def forward(
+        self,
+        x: torch.Tensor,
+        past_attn: Optional[list] = None,
+        cache: Optional[dict] = None,
+        cache_prefix: str = "",
+    ) -> torch.Tensor:
+        """One attention-only block.
+
+        `cache` records the same tensors the `DecoderOnlyTransformer` records
+        (`resid_pre`, `attn.attn_probs`, `attn.V`, `attn.attn_out`,
+        `resid_mid`, `resid_post`), so the circuit-patching interventions
+        (exp4) can be written once against the cache protocol instead of
+        twice against two model families. `resid_mid == resid_post` here
+        because there is no MLP branch.
+        """
         residual = x
         x = self.ln(x)
         B, S, D = x.shape
@@ -204,8 +236,18 @@ class AttentionOnlyBlock(nn.Module):
             head_mask = self.head_mask.view(1, self.n_heads, 1, 1).to(out.device, out.dtype)
             out = out * head_mask
         out = out.transpose(1, 2).contiguous().view(B, S, D)
-        out = self.W_O(out)
-        return residual + out
+        attn_out = self.W_O(out)
+        block_out = residual + attn_out
+
+        if cache is not None:
+            cache[f"{cache_prefix}.resid_pre"] = residual.detach().cpu()
+            cache[f"{cache_prefix}.attn.attn_probs"] = attn_probs.detach().cpu()
+            cache[f"{cache_prefix}.attn.V"] = V.detach().cpu()
+            cache[f"{cache_prefix}.attn.attn_out"] = attn_out.detach().cpu()
+            cache[f"{cache_prefix}.resid_mid"] = block_out.detach().cpu()
+            cache[f"{cache_prefix}.resid_post"] = block_out.detach().cpu()
+
+        return block_out
 
 
 class AttentionOnlyTransformer(nn.Module):
@@ -227,15 +269,18 @@ class AttentionOnlyTransformer(nn.Module):
         self.unembed = nn.Linear(d_model, vocab_size, bias=False)
 
     def forward(
-        self, x: torch.Tensor, record_attn: bool = False
+        self,
+        x: torch.Tensor,
+        record_attn: bool = False,
+        cache: Optional[dict] = None,
     ) -> tuple[torch.Tensor, Optional[list]]:
         B, S = x.shape
         positions = torch.arange(S, device=x.device).unsqueeze(0)
         h = self.embed(x) + self.pos_embed(positions)
 
         attn_records = [] if record_attn else None
-        for block in self.blocks:
-            h = block(h, past_attn=attn_records)
+        for i, block in enumerate(self.blocks):
+            h = block(h, past_attn=attn_records, cache=cache, cache_prefix=f"blocks.{i}")
 
         h = self.ln_final(h)
         logits = self.unembed(h)
@@ -277,88 +322,71 @@ def evaluate(model: nn.Module, loader: DataLoader) -> tuple[float, float]:
 def _attention_patterns(model: nn.Module, x: torch.Tensor) -> Optional[list[torch.Tensor]]:
     """Per-layer attention probabilities, for either model protocol in this repo.
 
-    `AttentionOnlyTransformer` (exp1's own class) takes `record_attn=True` and
-    returns `(logits, [probs_per_layer])`. The shared
-    `DecoderOnlyTransformer` takes `return_cache=True` and returns
-    `(logits, cache)` with the same tensors under
-    `blocks.{i}.attn.attn_probs`.
+    Delegates to `src.experiments.induction_detection.attention_patterns_for_inputs`,
+    which owns the protocol dispatch (cache > record_attn > return_cache) and
+    the reason for that order: `AttentionOnlyTransformer` has *both* a
+    `blocks` attribute and a `record_attn` keyword, so an attribute check
+    alone picks the wrong branch for it — which silently returns no patterns
+    at all and then crashes `diagnose_induction_formation` on an empty list.
+    """
+    patterns = attention_patterns_for_inputs(model, x)
+    return patterns or None
 
-    The `record_attn` protocol is checked FIRST, on purpose. `AttentionOnlyTransformer`
-    has a `blocks` attribute *and* a `record_attn` keyword, so an attribute check
-    alone picks the wrong branch for it — which silently returns no patterns at
-    all and then crashes `diagnose_induction_formation` on an empty list.
+
+def compute_attention_entropy(
+    model: nn.Module,
+    loader: DataLoader,
+    prefix_len: Optional[int] = None,
+    max_batches: int = 4,
+) -> dict:
+    """Per-layer attention entropy and the four offset masses.
+
+    The masses are the *head-level* signals this repository measures, one
+    per hypothesis (see `src/experiments/induction_detection` for the offset
+    conventions):
+
+    * `induction_mass`  — mass on `q -> q-L+1`, the copy offset. This is the
+      detection signal, on the same [0, 1] scale as the 0.3 threshold.
+    * `duplicate_mass`  — mass on `q -> q-L`, the duplicate-token offset
+      (Nanda's Step 1).
+    * `content_mass`    — mass on `prev(q)+1`, the previous *occurrence* of
+      the same token plus one.
+    * `prev_token_mass` — mass on `q -> q-1`. This is the offset the old
+      detector measured and called "diag+1"; it is kept, explicitly
+      labelled, because it is the useful negative control: a head that only
+      does this is a previous-token head, not an induction head.
+
+    Each entry is the **max over heads** of that layer, so it stays on the
+    same [0, 1] scale as the per-head detection threshold. (The 2026-08-01
+    bug summed across heads instead, which put the number on a [0, n_heads]
+    scale and made the training curve claim heads were forming while the
+    detector found none.)
     """
     model.eval()
-    forward = getattr(model, "forward", None)
-    if forward is not None and "record_attn" in getattr(forward, "__code__", None).co_varnames:
-        _, attn_records = model(x, record_attn=True)
-        return attn_records
+    n_layers = len(getattr(model, "blocks", []))
+    patterns, tokens = collect_patterns_and_tokens(model, loader, max_batches=max_batches)
+    if not patterns:
+        zeros = [0.0 for _ in range(n_layers)]
+        return {
+            "entropy": list(zeros),
+            "induction_mass": list(zeros),
+            "duplicate_mass": list(zeros),
+            "content_mass": list(zeros),
+            "prev_token_mass": list(zeros),
+        }
 
-    if hasattr(model, "blocks"):
-        try:
-            _, cache = model(x, return_cache=True)
-        except TypeError:
-            return None
-        if cache is None:
-            return None
-        n_layers = len(model.blocks)
-        out = []
-        for i in range(n_layers):
-            key = f"blocks.{i}.attn.attn_probs"
-            if key not in cache:
-                return None
-            out.append(cache[key])
-        return out
+    if prefix_len is None:
+        seq_len = tokens.shape[1] + 1 if tokens.numel() else 0
+        prefix_len = prefix_length_for(seq_len)
 
-    return None
-
-
-def compute_attention_entropy(model: nn.Module, loader: DataLoader) -> dict:
-    """Compute per-layer attention entropy and diagonal+1 mass.
-
-    `diag1_mass` reports, per layer, the **max over heads** of the diagonal+1
-    attention mass — the strength of the single most induction-like head in
-    that layer. This is on the same [0, 1] scale as the per-head 0.3 detection
-    threshold used in `analyze_induction_heads`, so the two are directly
-    comparable (e.g. on the training-curve plot's threshold line).
-
-    Earlier versions summed diag1 mass across heads instead of taking the max,
-    which put this metric on a [0, n_heads] scale. That made the training
-    curve look like induction heads were forming (aggregate approaching 1.0)
-    even when no individual head crossed the 0.3 per-head threshold — the
-    2026-07-26 audit's "diag+1 mass ~1.0 but 0 heads detected" discrepancy.
-    """
-    model.eval()
-    n_layers = len(model.blocks)
-
-    total_entropy = [0.0 for _ in range(n_layers)]
-    total_diag1 = [0.0 for _ in range(n_layers)]
-    total_batches = 0
-    sample_size = 0
-
-    with torch.no_grad():
-        for x, _ in loader:
-            x = x.to(DEVICE)
-            attn_records = _attention_patterns(model, x)
-            if attn_records is None:
-                break
-            for l, probs in enumerate(attn_records):
-                ent = -(probs * (probs + 1e-8).log()).sum(-1)
-                total_entropy[l] += ent.mean(dim=(0, 2)).sum().item()
-                diag1 = probs[:, :, 1:, :-1].diagonal(dim1=-2, dim2=-1)
-                # Per-head mass, then the strongest head wins — not a sum.
-                total_diag1[l] += diag1.mean(dim=(0, -1)).max().item()
-            total_batches += 1
-            sample_size += 1
-            if sample_size >= 4:
-                break
-
-    if total_batches == 0:
-        return {"entropy": [0.0], "diag1_mass": [0.0]}
-    return {
-        "entropy": [e / total_batches for e in total_entropy],
-        "diag1_mass": [d / total_batches for d in total_diag1],
-    }
+    entropy = layer_entropy(patterns)
+    masses = head_masses(patterns, tokens, prefix_len)
+    out = {"entropy": entropy}
+    for name in ("induction", "duplicate", "content", "prev_token"):
+        out[f"{name}_mass"] = [
+            float(layer.max()) if len(layer) else 0.0 for layer in masses[name]
+        ]
+    return out
 
 
 def train_model(
@@ -375,6 +403,12 @@ def train_model(
     checkpoint_every: int = 0,
     resume_from: Optional[str] = None,
     schedule_epochs: Optional[int] = None,
+    detect_every: int = 50,
+    stop_on_confirmed: bool = False,
+    stop_rule: str = "mechanism",
+    detect_patience: int = 2,
+    prefix_len: Optional[int] = None,
+    composition_threshold: float = COMPOSITION_THRESHOLD,
 ) -> dict:
     """Train the model and return training curves.
 
@@ -404,7 +438,29 @@ def train_model(
     the partial call's own `epochs` as T_max anneals LR to the wrong peak and
     makes no resumed run equal to an uninterrupted one. Falsified by
     TestCheckpointResume (resume must reproduce an uninterrupted run
-    bit-for-bit)."""
+    bit-for-bit).
+
+    Detection cadence and early stop: every `detect_every` epochs the
+    detector runs on the validation set and the result is recorded in the
+    history (`induction_mass`, `prev_token_mass`, `composition_score`,
+    `confirmed`). With `stop_on_confirmed` the run stops as soon as the stop
+    rule fires at `detect_patience` consecutive checks — the positive case
+    is bounded by the mechanism rather than by the wall clock, while the
+    negative case still runs the *full* pre-registered budget (a shorter
+    budget would reproduce exactly the under-trained false negatives this
+    repository's audit history keeps finding).
+
+    The stop rule is `stop_rule`:
+
+    * `"mechanism"` (default) — stop only when a head in a layer **above
+      the first** is confirmed, i.e. when the two-step circuit (Nanda's
+      duplicate head + K-composition) is actually there. A copy head in the
+      first layer has no earlier layer to compose with, so it is confirmed
+      on the mass alone; on this periodic task the model forms exactly that
+      (a fixed-offset copy) within 50 epochs, and stopping there would
+      answer a different question than the rung asks.
+    * `"any"` — stop on any confirmed head, first layer included.
+    """
     set_seed(seed)
     model = model.to(DEVICE)
 
@@ -419,8 +475,8 @@ def train_model(
                     "model": "AttentionOnlyTransformer",
                     "vocab_size": model.embed.num_embeddings,
                     "d_model": model.embed.embedding_dim,
-                    "n_layers": len(model.blocks),
-                    "n_heads": model.blocks[0].n_heads,
+                    "n_layers": len(getattr(model, "blocks", [])),
+                    "n_heads": getattr(getattr(model, "blocks", [])[0], "n_heads", 0),
                     "lr": lr,
                     "weight_decay": weight_decay,
                     "epochs": epochs,
@@ -441,8 +497,16 @@ def train_model(
         "val_loss": [],
         "val_acc": [],
         "attn_entropy": [],
-        "diag1_mass": [],
+        "induction_mass": [],
+        "prev_token_mass": [],
+        "composition_score": [],
+        "confirmed": [],
+        "mechanism_confirmed": [],
+        "detect_checked": [],
     }
+    # A scalar, not a list: the epoch at which the mechanism was confirmed
+    # (-1 = never). It lives in the history so it survives a checkpoint.
+    history["confirmed_epoch"] = -1.0
 
     start_epoch = 0
     resume_ckpt = (
@@ -470,6 +534,8 @@ def train_model(
     if checkpoint_dir and checkpoint_every > 0:
         ckpt_path = checkpoint_path_for_seed(checkpoint_dir, "exp1", seed)
 
+    consecutive_confirmations = 0
+
     for epoch in tqdm(range(start_epoch, epochs), desc="Training"):
         epoch_loader = fresh_batches_fn(epoch) if fresh_batches_fn is not None else train_loader
 
@@ -490,22 +556,55 @@ def train_model(
         train_loss = epoch_loss / len(epoch_loader.dataset)
         val_loss, val_acc = evaluate(model, val_loader)
 
-        # Attention metrics every 50 epochs
-        if (epoch + 1) % 50 == 0:
-            attn_metrics = compute_attention_entropy(model, val_loader)
+        # Attention metrics and head detection, on the same cadence.
+        checked = bool(detect_every > 0 and (epoch + 1) % detect_every == 0)
+        confirmed = False
+        mechanism_confirmed = False
+        composition = 0.0
+        if checked:
+            report, _patterns, _tokens = detect_from_loader(
+                model,
+                val_loader,
+                prefix_len=prefix_len,
+                composition_threshold=composition_threshold,
+            )
+            attn_entropy = float(sum(report.entropy))
+            induction_mass = report.peak("induction")
+            prev_token_mass = report.peak("prev_token")
+            composition = report.best_composition
+            confirmed = report.confirmed_count > 0
+            # "the circuit is there": a confirmed head above the first layer
+            # (which is the only kind that needed the composition to be
+            # confirmed in the first place).
+            mechanism_confirmed = any(len(h) > 0 for h in report.confirmed[1:])
+        elif (epoch + 1) % 50 == 0:
+            # Detection off (`--detect-every 0`): the cheap metric-only
+            # cadence, kept so the training curves still show the signal.
+            attn_metrics = compute_attention_entropy(model, val_loader, prefix_len=prefix_len)
             attn_entropy = sum(attn_metrics["entropy"])
-            # Max over layers too, so this stays comparable to the single
-            # per-head 0.3 detection threshold plotted alongside it.
-            diag1_mass = max(attn_metrics["diag1_mass"])
+            induction_mass = max(attn_metrics["induction_mass"])
+            prev_token_mass = max(attn_metrics["prev_token_mass"])
         else:
             attn_entropy = history["attn_entropy"][-1] if history["attn_entropy"] else 0.0
-            diag1_mass = history["diag1_mass"][-1] if history["diag1_mass"] else 0.0
+            induction_mass = history["induction_mass"][-1] if history["induction_mass"] else 0.0
+            prev_token_mass = history["prev_token_mass"][-1] if history["prev_token_mass"] else 0.0
+            confirmed = bool(history["confirmed"][-1]) if history["confirmed"] else False
+            mechanism_confirmed = (
+                bool(history["mechanism_confirmed"][-1])
+                if history["mechanism_confirmed"]
+                else False
+            )
 
         history["train_loss"].append(train_loss)
         history["val_loss"].append(val_loss)
         history["val_acc"].append(val_acc)
         history["attn_entropy"].append(attn_entropy)
-        history["diag1_mass"].append(diag1_mass)
+        history["induction_mass"].append(induction_mass)
+        history["prev_token_mass"].append(prev_token_mass)
+        history["composition_score"].append(composition)
+        history["confirmed"].append(1.0 if confirmed else 0.0)
+        history["mechanism_confirmed"].append(1.0 if mechanism_confirmed else 0.0)
+        history["detect_checked"].append(1.0 if checked else 0.0)
 
         if _wandb is not None:
             _wandb.log(
@@ -514,17 +613,22 @@ def train_model(
                     "val/loss": val_loss,
                     "val/acc": val_acc,
                     "metrics/attn_entropy": attn_entropy,
-                    "metrics/diag1_mass": diag1_mass,
+                    "metrics/induction_mass": induction_mass,
+                    "metrics/prev_token_mass": prev_token_mass,
+                    "metrics/composition_score": composition,
                     "lr": scheduler.get_last_lr()[0],
                 },
                 step=epoch,
             )
 
-        if (epoch + 1) % 50 == 0:
+        if checked:
             logger.info(
                 f"Epoch {epoch + 1:4d} | train loss: {train_loss:.4f} | "
                 f"val loss: {val_loss:.4f} | val acc: {val_acc:.4f} | "
-                f"attn entropy: {attn_entropy:.2f} | diag+1: {diag1_mass:.3f}"
+                f"induction mass: {induction_mass:.3f} | "
+                f"prev-token mass (control): {prev_token_mass:.3f} | "
+                f"composition: {composition:.3f} | "
+                f"confirmed head: {'yes' if confirmed else 'no'}"
             )
 
         if ckpt_path is not None and (epoch + 1) % checkpoint_every == 0:
@@ -536,8 +640,39 @@ def train_model(
                 scheduler,
                 history,
                 torch.random.get_rng_state(),
+                arch=architecture_metadata(model),
             )
             logger.info(f"Checkpoint saved: {ckpt_path} (epoch {epoch + 1})")
+
+        if stop_on_confirmed and checked:
+            stop_fired = confirmed if stop_rule == "any" else mechanism_confirmed
+            consecutive_confirmations = consecutive_confirmations + 1 if stop_fired else 0
+            if consecutive_confirmations >= detect_patience:
+                history["confirmed_epoch"] = float(epoch + 1)
+                # The rolling checkpoint may not exist yet: the confirmation
+                # can land *before* the first `checkpoint_every` boundary (the
+                # standard run confirmed a head at epoch 100 with a 250-epoch
+                # checkpoint interval). Writing it here is what makes the
+                # cascade runnable — Rung 4 analyses the checkpoint of the
+                # model that was confirmed, not a stale one.
+                if ckpt_path is not None:
+                    save_training_checkpoint(
+                        ckpt_path,
+                        epoch,
+                        model,
+                        optimizer,
+                        scheduler,
+                        history,
+                        torch.random.get_rng_state(),
+                        arch=architecture_metadata(model),
+                    )
+                    logger.info(f"Checkpoint saved at the confirmation point: {ckpt_path}")
+                logger.info(
+                    f"Early stop: an induction head was confirmed at "
+                    f"{consecutive_confirmations} consecutive checks "
+                    f"(epoch {epoch + 1})."
+                )
+                break
 
     if _wandb is not None:
         _wandb.finish()
@@ -547,146 +682,131 @@ def train_model(
 # ---------------------------------------------------------------------------
 # Analysis
 # ---------------------------------------------------------------------------
-def analyze_induction_heads(model: nn.Module, loader: DataLoader) -> tuple[list, list]:
+def analyze_induction_heads(
+    model: nn.Module,
+    loader: DataLoader,
+    prefix_len: Optional[int] = None,
+    threshold: float = INDUCTION_MASS_THRESHOLD,
+    composition_threshold: float = COMPOSITION_THRESHOLD,
+) -> tuple[list, list]:
     """Identify induction heads by their attention patterns.
 
-    An induction head has the characteristic pattern where it strongly attends
-    from the current token position to the token *after* the previous occurrence
-    of the same token. We detect this by checking the attention probability
-    distribution for a diagonal + 1 offset pattern.
+    An induction head attends from the current query position `q` to the
+    token *after the previous occurrence of the current token*, which on this
+    task's `prefix + prefix` layout is the key `q - L + 1` (`L` = prefix
+    length). The detection is two-stage:
+
+    * **screen** — the head's induction mass (`q -> q-L+1`) is above
+      `threshold` (0.3, the per-head threshold this repository has used
+      since 2026-08-01);
+    * **confirmation** — the head's layer is composed with an earlier layer
+      at a K-composition score of at least `composition_threshold`.
+
+    The offset convention is the part that was wrong before 2026-10-19: the
+    old detector measured `q -> q-1` (a *previous-token* head) and called it
+    "diag+1", so every "0 / N heads" number this repository published was a
+    statement about the detector. See
+    `src/experiments/induction_detection` for the full derivation.
 
     Returns:
-        Tuple of (induction_head_indices, attention_patterns) where each
-        attention pattern is a list of numpy arrays per layer.
+        Tuple of (confirmed_head_indices_per_layer, attention_patterns).
     """
-    model.eval()
-    n_layers = len(model.blocks)
-    per_layer_patterns: list[list] = [[] for _ in range(n_layers)]
-
-    with torch.no_grad():
-        for x, _ in loader:
-            x = x.to(DEVICE)
-            attn_records = _attention_patterns(model, x)
-            if attn_records is not None:
-                for layer_idx, pattern in enumerate(attn_records):
-                    per_layer_patterns[layer_idx].append(pattern.cpu())
-            if sum(len(p) for p in per_layer_patterns) >= 32 * n_layers:
-                break
-
-    induction_heads_by_layer = []
-    all_patterns = []
-    for layer_idx, patterns in enumerate(per_layer_patterns):
-        if not patterns:
-            induction_heads_by_layer.append([])
-            all_patterns.append([])
-            continue
-
-        # Concatenate all batches for this layer: (B_total, n_heads, S, S)
-        cat = torch.cat(patterns, dim=0)
-        all_patterns.append(cat)
-        B, n_heads, S, _ = cat.shape
-
-        # Diagonal+1 mass: average over all positions and batches
-        diag = cat[:, :, 1:, :-1].diagonal(dim1=-2, dim2=-1).mean(dim=(0, -1))
-
-        threshold = 0.3
-        induction_heads = (diag > threshold).nonzero(as_tuple=True)[0].tolist()
-        induction_heads_by_layer.append(induction_heads)
-
-    return induction_heads_by_layer, all_patterns
+    report, patterns, _tokens = detect_from_loader(
+        model,
+        loader,
+        prefix_len=prefix_len,
+        mass_threshold=threshold,
+        composition_threshold=composition_threshold,
+    )
+    return report.confirmed, patterns
 
 
-def k_composition_scores(p0: torch.Tensor, p1: torch.Tensor) -> np.ndarray:
-    """K-composition scores between a layer-0 head set and a layer-1 head set.
+def analyze_induction_heads_full(
+    model: nn.Module,
+    loader: DataLoader,
+    prefix_len: Optional[int] = None,
+    threshold: float = INDUCTION_MASS_THRESHOLD,
+    composition_threshold: float = COMPOSITION_THRESHOLD,
+):
+    """The full detection report (masses, screen, confirmation, composition).
 
-    Nanda & Jacobsen (2023), "Attention as a Step Towards the Emergence of
-    the Induction Head", Step 2: in K-composition, the layer-1 head attends
-    from query position q to `prev(q) + 1`, where `prev(q)` is the position
-    the layer-0 duplicate-token head attended to at q (the previous
-    occurrence of the current token) and +1 is the position holding the
-    token to copy. The induction head is the composition of Step 1 (L0
-    duplicate head) and Step 2 (L1 K-composition).
-
-    Returns a (n_heads_0, n_heads_1) matrix: row h0's `prev` combined with
-    column h1's attention.
-
-    Self-attention guard: queries where `prev(q) + 1 == q` are excluded —
-    a head attending to itself would trivially score 1.0 on a shift-by-one
-    prev pattern without being an induction head at all. This makes the
-    detector falsifiable (see TestKComposition).
+    `analyze_induction_heads` is the two-value convenience wrapper; this one
+    carries the numbers the manifests report, so a caller never has to
+    recompute a metric the detector already measured.
     """
-    B, H0, S, _ = p0.shape
-    H1 = p1.shape[1]
-    if B == 0 or S == 0:
-        return np.zeros((H0, H1))
-
-    prev = p0.argmax(dim=-1)  # (B, H0, S): position L0 head h0 attended to at q
-    target = prev + 1  # (B, H0, S): position one token after it
-    qs = torch.arange(S, device=p0.device)
-    # Gate: in-bounds, and the L0 head must actually point at a *different*
-    # position than q — a head attending to itself is not a previous-
-    # occurrence signal, and a head attending to q-1 (prev+1 == q) is plain
-    # self-attention, not induction.
-    valid = (target < S) & (prev != qs) & (target != qs)
-
-    scores = np.zeros((H0, H1))
-    for h0 in range(H0):
-        idx = target[:, h0].clamp(max=S - 1)  # (B, S); OOB entries masked below
-        idx_gather = idx.unsqueeze(1).unsqueeze(-1).expand(B, H1, S, S)
-        vals = torch.gather(p1, -1, idx_gather)  # (B, H1, S, S)
-        diag = vals.diagonal(dim1=-2, dim2=-1)  # (B, H1, S): vals[b, h1, q, q]
-        mask = valid[:, h0]  # (B, S)
-        n_valid = int(mask.sum())
-        if n_valid:
-            masked = diag * mask[:, None, :].to(diag.dtype)  # (B, H1, S)
-            # .cpu() BEFORE .numpy(): exp6's compute_k_composition_scores moves
-            # the collected patterns back to the device, so on GPU this tensor
-            # is a cuda tensor and .numpy() raises TypeError ("can't convert
-            # cuda:0 device type tensor to numpy"). The CPU path took the
-            # .to(DEVICE) as a no-op, so every planted test passed while the
-            # GPU run died — found by the first capstone kernel on Kaggle.
-            scores[h0] = masked.sum(dim=(0, 2)).cpu().numpy() / max(n_valid, 1)
-    return scores
+    return detect_from_loader(
+        model,
+        loader,
+        prefix_len=prefix_len,
+        mass_threshold=threshold,
+        composition_threshold=composition_threshold,
+    )
 
 
-def diagnose_induction_formation(all_patterns: list) -> dict:
+# `k_composition_scores` used to live here; it now lives in
+# `src.experiments/induction_detection` (the single source of truth shared
+# by Rungs 1, 4 and 6) and is re-exported by this import so that
+# `from src.experiments.exp1_induction_heads import k_composition_scores`
+# — the import exp6 and the tests use — keeps working.
+def diagnose_induction_formation(
+    all_patterns: list,
+    tokens: Optional[torch.Tensor] = None,
+    prefix_len: Optional[int] = None,
+) -> dict:
     """The "how far did the model get" instrument for the two-step path
     (Nanda & Jacobsen 2023). Given collected per-layer attention patterns
     (list of (B, n_heads, S, S) tensors, one per layer), reports:
 
-    - Step 1: per-head diag+1 mass in the source layer (duplicate-token head);
+    - Step 1: per-head **duplicate-token** mass in the source layer — the
+      mass on `q -> q-L`, the key holding the previous occurrence of the
+      current token. (Before 2026-10-19 this was the `q -> q-1`
+      previous-token mass, which is a different head entirely.)
     - Step 2: the K-composition matrix between any layer pair (l_src, l_dest)
       with l_src < l_dest and its best pair;
     - peakedness of the source layer argmax: whether `prev` is a real, focused choice.
 
     A confirmed induction head needs both steps high. Supports arbitrary
     number of layers >= 2.
+
+    `tokens` (the input ids the patterns were collected on) is optional: with
+    it, Step 1 is the correct duplicate-offset mass; without it the
+    previous-token mass is reported instead and `step1_metric` says which
+    one it is. That fallback exists because exp6's K-composition helper
+    historically collected patterns without keeping the tokens — callers must
+    be able to tell the two apart instead of reading one as the other.
     """
+    empty = {
+        "step1_l0_duplicate_mass": [],
+        "step1_metric": "none",
+        "l0_peakedness": 0.0,
+        "step2_k_composition": 0.0,
+        "best_l0_head": -1,
+        "best_l1_head": -1,
+        "best_l_src": 0,
+        "best_l_dest": 1,
+    }
     if len(all_patterns) < 2:
-        return {
-            "step1_l0_duplicate_mass": [],
-            "l0_peakedness": 0.0,
-            "step2_k_composition": 0.0,
-            "best_l0_head": -1,
-            "best_l1_head": -1,
-            "best_l_src": 0,
-            "best_l_dest": 1,
-        }
+        return empty
 
     # A layer with no attention patterns at all arrives as an empty list, not a
     # tensor. Indexing that with [:, :, 1:, :-1] raises
     # "list indices must be integers or slices, not tuple" — which is what the
     # --seeds path hit whenever a layer produced no records.
     if any(not hasattr(p, "ndim") for p in all_patterns):
-        return {
-            "step1_l0_duplicate_mass": [],
-            "l0_peakedness": 0.0,
-            "step2_k_composition": 0.0,
-            "best_l0_head": -1,
-            "best_l1_head": -1,
-            "best_l_src": 0,
-            "best_l_dest": 1,
-        }
+        return empty
+
+    step1_metric = "prev_token"
+    if tokens is not None and tokens.numel():
+        if prefix_len is None:
+            seq_len = tokens.shape[1] + 1
+            prefix_len = prefix_length_for(seq_len)
+        step1_masses = head_masses(list(all_patterns), tokens, prefix_len)["duplicate"]
+        step1_metric = "duplicate"
+    else:
+        step1_masses = [
+            p[:, :, 1:, :-1].diagonal(dim1=-2, dim2=-1).mean(dim=(0, -1)).cpu().numpy()
+            for p in all_patterns
+        ]
 
     best_comp = -1.0
     best_pair = (0, 1, -1, -1)
@@ -695,7 +815,7 @@ def diagnose_induction_formation(all_patterns: list) -> dict:
 
     for l_src in range(len(all_patterns) - 1):
         p_src = all_patterns[l_src]
-        diag0 = p_src[:, :, 1:, :-1].diagonal(dim1=-2, dim2=-1).mean(dim=(0, -1))
+        diag0 = step1_masses[l_src]
         peakedness = p_src.max(dim=-1).values.mean(dim=(0, 2))
 
         for l_dest in range(l_src + 1, len(all_patterns)):
@@ -714,7 +834,7 @@ def diagnose_induction_formation(all_patterns: list) -> dict:
 
     if best_comp < 0:
         p0 = all_patterns[0]
-        diag0 = p0[:, :, 1:, :-1].diagonal(dim1=-2, dim2=-1).mean(dim=(0, -1))
+        diag0 = step1_masses[0]
         peakedness = p0.max(dim=-1).values.mean(dim=(0, 2))
         comp = k_composition_scores(all_patterns[0], all_patterns[1])
         if comp.size > 0:
@@ -730,6 +850,7 @@ def diagnose_induction_formation(all_patterns: list) -> dict:
     l_src, l_dest, h0, h1 = best_pair
     return {
         "step1_l0_duplicate_mass": best_l0_duplicate_mass,
+        "step1_metric": step1_metric,
         "l0_peakedness": best_peakedness,
         "step2_k_composition": best_comp,
         "best_l0_head": h0,
@@ -896,12 +1017,21 @@ def plot_training_curves(history: dict, save_path: Path) -> None:
     axes[1, 0].set_title("Attention Entropy (lower = more focused)", fontsize=13)
     axes[1, 0].grid(True, alpha=0.3)
 
-    axes[1, 1].plot(epochs, history["diag1_mass"], label="Diag+1 Mass", color="orange")
+    axes[1, 1].plot(
+        epochs, history["induction_mass"], label="Induction mass (q - L + 1)", color="orange"
+    )
+    axes[1, 1].plot(
+        epochs,
+        history["prev_token_mass"],
+        label="Prev-token mass (q - 1, control)",
+        color="gray",
+        alpha=0.7,
+    )
     axes[1, 1].set_xlabel("Epoch")
-    axes[1, 1].set_ylabel("Diagonal+1 mass")
-    axes[1, 1].set_title("Induction Head Signal (diag+1)", fontsize=13)
+    axes[1, 1].set_ylabel("Attention mass")
+    axes[1, 1].set_title("Induction Head Signal (copy offset)", fontsize=13)
     axes[1, 1].axhline(y=0.3, color="red", linestyle="--", alpha=0.3, label="Detection threshold")
-    axes[1, 1].legend()
+    axes[1, 1].legend(fontsize=9)
     axes[1, 1].grid(True, alpha=0.3)
 
     fig.tight_layout()
@@ -917,21 +1047,58 @@ def _headline_metrics(
     history: dict,
     induction_heads: list,
     diagnosis: dict,
+    report=None,
+    probe: Optional[dict] = None,
 ) -> dict[str, float]:
-    """The six headline numbers both the multi-seed manifest and the
-    single-seed `--standard` manifest report, derived from one analysis pass
-    — shared so the two reporting paths cannot drift apart. Ablation drops
-    are filled in by the caller (they need the model)."""
+    """The headline numbers both the multi-seed manifest and the single-seed
+    `--standard` manifest report, derived from one analysis pass — shared so
+    the two reporting paths cannot drift apart. Ablation drops are filled in
+    by the caller (they need the model).
+
+    The metric names changed with the detector (2026-10-19):
+    `peak_diag1_mass` — the previous-token mass, which the old detector
+    called the induction signal — is now reported as
+    `peak_prev_token_mass` (a control), and the induction signal itself is
+    `peak_induction_mass`, measured on the copy offset `q - L + 1`.
+    """
     total_induction = sum(len(h) for h in induction_heads)
-    peak_diag1 = float(np.max(history["diag1_mass"])) if history["diag1_mass"] else 0.0
-    return {
+    peak_induction = (
+        float(np.max(history["induction_mass"])) if history.get("induction_mass") else 0.0
+    )
+    peak_prev_token = (
+        float(np.max(history["prev_token_mass"])) if history.get("prev_token_mass") else 0.0
+    )
+    epochs_run = float(len(history["val_acc"]))
+    steps_per_epoch = float(history.get("steps_per_epoch", 0.0))
+    # Where the confirmed heads live. The split matters: a copy head in the
+    # *first* layer has no earlier layer to compose with (so it is confirmed
+    # on the mass alone), while a head in a later layer is confirmed only
+    # when the K-composition mechanism agrees — so "how many in layer 0" and
+    # "how many above it" are two different claims.
+    first_layer = len(induction_heads[0]) if induction_heads else 0
+    later_layers = total_induction - first_layer
+    metrics = {
         "final_val_acc": float(history["val_acc"][-1]),
         "total_induction_heads": float(total_induction),
-        "peak_diag1_mass": peak_diag1,
+        "total_mass_heads": float(report.screen_count if report is not None else total_induction),
+        "confirmed_heads_first_layer": float(first_layer),
+        "confirmed_heads_later_layers": float(later_layers),
+        "mechanism_confirmed": float(
+            bool(report is not None and any(len(h) > 0 for h in report.confirmed[1:]))
+        ),
+        "peak_induction_mass": peak_induction,
+        "peak_prev_token_mass": peak_prev_token,
         "k_composition_score": float(diagnosis["step2_k_composition"]),
         "l0_duplicate_head_mass": float(max(diagnosis["step1_l0_duplicate_mass"] or [0.0])),
         "mean_ablation_drop": 0.0,
+        "confirmed_epoch": float(history.get("confirmed_epoch", -1.0)),
+        "epochs_run": epochs_run,
+        "steps_run": epochs_run * steps_per_epoch,
+        "probe_content_mass": float((probe or {}).get("peak_content_mass", 0.0)),
+        "probe_period_mass": float((probe or {}).get("peak_period_mass", 0.0)),
+        "probe_content_wins": float(bool((probe or {}).get("content_wins", False))),
     }
+    return metrics
 
 
 def _write_single_manifest(
@@ -1021,12 +1188,34 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         checkpoint_dir=args.checkpoint_dir if args.checkpoint_every > 0 else None,
         checkpoint_every=args.checkpoint_every,
         resume_from=resume_from,
+        detect_every=getattr(args, "detect_every", 50),
+        stop_on_confirmed=getattr(args, "stop_on_confirmed", False),
+        stop_rule=getattr(args, "stop_rule", "mechanism"),
+        detect_patience=getattr(args, "detect_patience", 2),
+        prefix_len=prefix_length_for(args.seq_len),
     )
+    history["steps_per_epoch"] = float(len(train_loader))
 
-    induction_heads, all_patterns = analyze_induction_heads(model, val_loader)
-    diagnosis = diagnose_induction_formation(all_patterns)
+    prefix_len = prefix_length_for(args.seq_len)
+    report, all_patterns, tokens = analyze_induction_heads_full(
+        model, val_loader, prefix_len=prefix_len
+    )
+    induction_heads = report.confirmed
+    diagnosis = diagnose_induction_formation(all_patterns, tokens=tokens, prefix_len=prefix_len)
 
-    metrics = _headline_metrics(history, induction_heads, diagnosis)
+    probe = None
+    if getattr(args, "probe_dissociation", True):
+        probe = run_dissociation_probe(
+            model,
+            vocab_size=args.vocab_size,
+            seq_len=args.seq_len,
+            num_samples=min(64, max(16, args.num_train // 16)),
+            seed=seed,
+        )
+
+    metrics = _headline_metrics(
+        history, induction_heads, diagnosis, report=report, probe=probe
+    )
     # Record which batch regime produced these numbers. The fixed-vs-fresh
     # comparison is the one solid Rung 1 finding, and without this field a
     # manifest does not say which arm of the comparison it is.
@@ -1198,6 +1387,60 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Explicit checkpoint file to resume from (overrides --resume).",
     )
+    parser.add_argument(
+        "--detect-every",
+        type=int,
+        default=50,
+        help=(
+            "Run the head detector every N epochs (0 = never). The detector "
+            "measures the induction mass on the copy offset q-(L-1) and the "
+            "K-composition score; both land in the manifest and in the "
+            "training curves."
+        ),
+    )
+    parser.add_argument(
+        "--stop-on-confirmed",
+        action="store_true",
+        help=(
+            "Stop training as soon as the stop rule fires at "
+            "--detect-patience consecutive checks. The positive case is then "
+            "bounded by the mechanism; the negative case still runs the full "
+            "pre-registered budget."
+        ),
+    )
+    parser.add_argument(
+        "--stop-rule",
+        choices=["mechanism", "any"],
+        default="mechanism",
+        help=(
+            "What counts as 'confirmed' for the early stop. 'mechanism' (the "
+            "default) requires a confirmed head above the first layer, i.e. "
+            "the two-step circuit; 'any' also stops on a first-layer copy "
+            "head, which on this periodic task the model forms within 50 "
+            "epochs and which is not the circuit the rung is about."
+        ),
+    )
+    parser.add_argument(
+        "--detect-patience",
+        type=int,
+        default=2,
+        help=(
+            "Consecutive detector checks that must confirm a head before "
+            "--stop-on-confirmed fires (default 2: one check is noise)."
+        ),
+    )
+    parser.add_argument(
+        "--no-probe-dissociation",
+        dest="probe_dissociation",
+        action="store_false",
+        help=(
+            "Skip the content-vs-position dissociation probe. It is on by "
+            "default because, on this periodic task, an on-distribution "
+            "measurement cannot tell a content-matching copy circuit from a "
+            "positional one."
+        ),
+    )
+    parser.set_defaults(probe_dissociation=True)
     parser.add_argument(
         "--save-manifest",
         action="store_true",
@@ -1412,7 +1655,13 @@ def main() -> None:
             checkpoint_dir=args.checkpoint_dir if args.checkpoint_every > 0 else None,
             checkpoint_every=args.checkpoint_every,
             resume_from=run_resume_from,
+            detect_every=args.detect_every,
+            stop_on_confirmed=args.stop_on_confirmed,
+            stop_rule=args.stop_rule,
+            detect_patience=args.detect_patience,
+            prefix_len=prefix_length_for(args.seq_len),
         )
+        history["steps_per_epoch"] = float(len(train_loader))
 
         # Plot training curves
         plot_training_curves(
@@ -1427,7 +1676,7 @@ def main() -> None:
 
         # Loss bump detection
         val_accs = np.array(history["val_acc"])
-        diag1_mass = np.array(history["diag1_mass"])
+        induction_mass = np.array(history["induction_mass"])
         if len(val_accs) > 100:
             val_smooth = np.convolve(val_accs, np.ones(10) / 10, mode="valid")
             max_smooth_idx = np.argmax(val_smooth)
@@ -1437,28 +1686,33 @@ def main() -> None:
                 f"Peak smoothed val acc: {val_smooth[max_smooth_idx]:.4f} "
                 f"at epoch ~{max_smooth_idx * 10}"
             )
-        if len(diag1_mass) > 100:
-            peak_diag1 = np.argmax(diag1_mass)
-            diag1_at_end = diag1_mass[-1]
+        if len(induction_mass) > 100:
+            peak_induction = np.argmax(induction_mass)
+            induction_at_end = induction_mass[-1]
             logger.info(
-                f"Peak diag+1 mass at epoch {peak_diag1} (value: {diag1_mass[peak_diag1]:.3f}) | "
-                f"Final diag+1 mass: {diag1_at_end:.3f}"
+                f"Peak induction mass at epoch {peak_induction} "
+                f"(value: {induction_mass[peak_induction]:.3f}) | "
+                f"Final induction mass: {induction_at_end:.3f}"
             )
 
     # Analyze induction heads
-    induction_heads, all_patterns = analyze_induction_heads(model, val_loader)
+    prefix_len = prefix_length_for(args.seq_len)
+    report, all_patterns, tokens = analyze_induction_heads_full(
+        model, val_loader, prefix_len=prefix_len
+    )
+    induction_heads = report.confirmed
 
     # K-composition diagnostic (Nanda & Jacobsen): the "how far did the model
     # get" instrument — Step 1 (L0 duplicate-token head) and Step 2
     # (K-composition) are reported independently so a missing induction head
     # is measured, not just counted.
-    diagnosis = diagnose_induction_formation(all_patterns)
+    diagnosis = diagnose_induction_formation(all_patterns, tokens=tokens, prefix_len=prefix_len)
     if diagnosis["best_l0_head"] >= 0:
         step1 = max(diagnosis["step1_l0_duplicate_mass"])
         logger.info("-" * 60)
         logger.info("How far did the model get? (Nanda & Jacobsen two-step path)")
         logger.info(
-            f"Step 1 — L0 duplicate-token head: max diag+1 mass {step1:.3f} "
+            f"Step 1 — L0 duplicate-token head: max duplicate-offset mass {step1:.3f} "
             f"(peakedness {diagnosis['l0_peakedness']:.3f})"
         )
         logger.info(
@@ -1483,10 +1737,37 @@ def main() -> None:
 
     total_induction = sum(len(h) for h in induction_heads)
     logger.info(f"Total induction heads: {total_induction} / {args.n_layers * args.n_heads}")
+    logger.info(
+        f"Screen (induction mass > {INDUCTION_MASS_THRESHOLD}): "
+        f"{report.screen_count} | prev-token control peak: "
+        f"{report.peak('prev_token'):.3f} | induction peak: "
+        f"{report.peak('induction'):.3f} | best composition: "
+        f"{report.best_composition:.3f}"
+    )
+
+    # The dissociation probe: on the periodic training distribution a
+    # content-matching copy circuit and a positional copy circuit are the
+    # same function, so only this off-distribution batch can say which one
+    # the model actually learned.
+    probe = None
+    if args.probe_dissociation:
+        probe = run_dissociation_probe(
+            model,
+            vocab_size=args.vocab_size,
+            seq_len=args.seq_len,
+            num_samples=min(64, max(16, args.num_train // 16)),
+            seed=args.seed,
+        )
+        logger.info(
+            "Dissociation probe — content mass "
+            f"{probe['peak_content_mass']:.3f} vs period mass "
+            f"{probe['peak_period_mass']:.3f} -> "
+            f"{'CONTENT-based' if probe['content_wins'] else 'POSITIONAL'} copy"
+        )
 
     if total_induction == 0:
         logger.warning(
-            "No induction heads detected. Try: longer training, or lower threshold in detection."
+            "No induction head confirmed. Try: longer training, or lower threshold in detection."
         )
     else:
         logger.info("✓ Induction heads successfully identified!")
@@ -1507,7 +1788,9 @@ def main() -> None:
     # headline manifest, same file `--seeds` writes, so RESULTS.md's tag
     # always points at the newest honest run.
     if not args.no_train and args.save_manifest:
-        metrics = _headline_metrics(history, induction_heads, diagnosis)
+        metrics = _headline_metrics(
+            history, induction_heads, diagnosis, report=report, probe=probe
+        )
         drop_sum = 0.0
         n_drops = 0
         for layer_idx, heads in enumerate(induction_heads):

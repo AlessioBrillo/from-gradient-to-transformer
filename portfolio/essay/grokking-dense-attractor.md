@@ -106,8 +106,10 @@ does not hold — it was the classifier, not the phenomenon, that was decoupled 
 Not everything in this line of work reversed:
 
 - **P=59 positive control:** its NO-GROK label (k₉₉ = 58/59) was also read only through the L1
-  metric, so it carries the same defect. Its checkpoints are gone; re-measuring means a one-command
-  GPU job. Marked **metric-suspect**, not confirmed.
+  metric, so it carried the same defect. Re-measured on 2026-10-19 with the energy metric
+  (issue #196): **2 of 3 seeds sparse — MIXED**, not the SPARSE label a majority rule
+  produces (k_energy_90 = 5, 8 and 7 of 29; the classification convention is knife-edge
+  at 0.241 vs 0.276). A footnote now, not a second headline.
 - **Capstone joint training:** at 3×20k steps, induction accuracy plateaus at 0.5034 ± 0.0002
   while modular reaches 0.1699 ± 0.0286 — above chance but far from the solo-run 1.0. The
   dissociation persists at full budget. That is an honest negative, and it stands.
@@ -124,9 +126,11 @@ Verification: `uv run python -m src.results verify` → all claims check out.
 
 ## What's Next
 
-- Re-measure the P=59 positive control with the energy metric (dedicated GPU job)
 - Extend energy-metric coverage to the capstone joint-training run
-- Standard-scale Rung 1 induction run + head-validation cascade (exp4 path patching, exp5 real-activation SAE) — blocked until a head is confirmed
+- A content-based induction task (repeats at *varying* distances): the periodic task
+  admits a positional shortcut, and the dissociation probe — not a bigger model — is what
+  shows it
+- The protocol-ablation phase diagram (issue #168, v1.1)
 
 ## Links
 

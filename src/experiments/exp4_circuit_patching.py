@@ -1,11 +1,23 @@
 """Rung 4 — Circuit verification via activation patching on induction heads.
 
-Trains a decoder-only transformer on repeated-token prediction, identifies
+Trains (or loads) a transformer on repeated-token prediction, identifies
 induction heads, then runs activation patching to causally validate the
 circuit. Reports faithfulness and ablates individual components.
 
+The model this rung analyses is, by default, **the model Rung 1 trained**:
+`--from-checkpoint` loads exp1's rolling checkpoint instead of training a
+second, different model. That is what makes the "one shared model" cascade
+true — the previous behaviour (train a fresh `DecoderOnlyTransformer` here
+while claiming to match exp1's `AttentionOnlyTransformer` config) produced
+two different models under one claim, and the parity test that should have
+caught it only compared hyper-parameters, not architecture or step count.
+
 Usage:
     python -m src.experiments.exp4_circuit_patching --seed 42 [--quick]
+    python -m src.experiments.exp4_circuit_patching --from-checkpoint \
+        checkpoints/induction_standard/exp1_checkpoint_seed0.pt \
+        --source-vocab-size 2048 --source-seq-len 64 --source-d-model 64 \
+        --source-n-layers 2 --source-n-heads 4
 
 Output:
     - figures/exp4_attention_patterns.png
@@ -27,13 +39,22 @@ from torch import nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+from src.experiments.checkpointing import load_training_checkpoint
 from src.experiments.exp1_induction_heads import (
+    AttentionOnlyTransformer,
     _BatchesAction,
     _FreshBatchesAction,
     _make_fresh_batches_fn,
 )
 from src.experiments.exp1_induction_heads import (
     make_repeated_token_data as make_induction_data,
+)
+from src.experiments.induction_detection import (
+    COMPOSITION_THRESHOLD,
+    INDUCTION_MASS_THRESHOLD,
+    detect_from_inputs,
+    prefix_length_for,
+    run_dissociation_probe,
 )
 from src.experiments.runner import parse_seeds, run_seeds
 from src.models.decoder_only_transformer import DecoderOnlyTransformer
@@ -50,9 +71,125 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 
+# ---------------------------------------------------------------------------
+# Model-family adapters
+# ---------------------------------------------------------------------------
+# Rung 1 trains an `AttentionOnlyTransformer` (LayerNorm, learned positional
+# embeddings, no MLP); exp4's own training path uses the shared
+# `DecoderOnlyTransformer` (RMSNorm, RoPE, MLP). The interventions below are
+# written against the *cache* protocol both models implement, so the same
+# code validates either family — and `--from-checkpoint` can therefore point
+# at the very model Rung 1 trained.
+def _forward_varnames(model: nn.Module) -> tuple:
+    """The *parameters* of `model.forward`.
+
+    `__code__.co_varnames` would also list local variables — and
+    `DecoderOnlyTransformer.forward` has a local named `cache` while its
+    signature only offers `return_cache` — so the parameter list is the
+    only honest source here.
+    """
+    import inspect
+
+    forward = getattr(model, "forward", None)
+    if forward is None:
+        return ()
+    try:
+        return tuple(inspect.signature(forward).parameters)
+    except (TypeError, ValueError):  # pragma: no cover - exotic callables
+        return ()
+
+
+def _forward_with_cache(model: nn.Module, inputs: torch.Tensor) -> tuple:
+    """`(logits, cache)` for either model family.
+
+    `AttentionOnlyTransformer` fills the `cache` dict it is handed;
+    `DecoderOnlyTransformer` returns its own cache. Both use the same key
+    names (`blocks.{i}.resid_pre`, `blocks.{i}.attn.attn_probs`,
+    `blocks.{i}.attn.V`, `blocks.{i}.resid_mid`, `blocks.{i}.resid_post`).
+    """
+    if "cache" in _forward_varnames(model):
+        cache: dict = {}
+        out = model(inputs, cache=cache)
+        logits = out[0] if isinstance(out, tuple) else out
+        return logits, cache
+    out = model(inputs, return_cache=True)
+    return out[0], out[1]
+
+
+def _attn_module(model: nn.Module, layer: int) -> nn.Module:
+    """The attention module of a layer, for either family.
+
+    `DecoderOnlyTransformer` nests it (`blocks[i].attn`); the attention-only
+    block *is* the attention module (`blocks[i]`).
+    """
+    block = model.blocks[layer]
+    return getattr(block, "attn", block)
+
+
+def _is_attention_only(model: nn.Module) -> bool:
+    """True for the attention-only family (no MLP branch to keep clean)."""
+    return not hasattr(getattr(model, "blocks", [])[0], "attn")
+
+
+def _model_device(model: nn.Module) -> torch.device:
+    """The device the model lives on.
+
+    The interventions used to assume the caller had already moved every
+    tensor to `DEVICE`. The cascade does not: it hands the interventions the
+    validation tensors as the dataset produced them (CPU), while the model
+    lives on the GPU. That mismatch is a hard error on CUDA ("Expected all
+    tensors to be on the same device") and it is why the first GPU cascade
+    run died in the patching step.
+    """
+    try:
+        return next(model.parameters()).device
+    except StopIteration:  # pragma: no cover - parameterless models
+        return torch.device("cpu")
+
+
+def _install_resid_mid_patch(
+    model: nn.Module,
+    layer: int,
+    pos: int,
+    target_resid_mid: torch.Tensor,
+    resid_pre: torch.Tensor,
+):
+    """Hook that makes the layer's mid-residual equal `target_resid_mid` at
+    position `pos`.
+
+    Two families, one intervention:
+
+    * `DecoderOnlyTransformer` — the attention branch is its own module and
+      its output is added to the residual stream. Replacing that output with
+      `target - resid_pre` makes the mid-residual the target *and* lets the
+      MLP branch see the patched value.
+    * `AttentionOnlyTransformer` — the block's output *is*
+      `resid_pre + attn_out` (there is no MLP), so replacing the block
+      output at the target position is the exact analogue of the same
+      intervention.
+    """
+    attn_module = _attn_module(model, layer)
+    if _is_attention_only(model):
+
+        def hook(module, input, output):
+            out = output.clone()
+            out[:, pos : pos + 1, :] = target_resid_mid
+            return out
+
+    else:
+
+        def hook(module, input, output):
+            attn_out, kv = output
+            attn_out = attn_out.clone()
+            attn_out[:, pos : pos + 1, :] = target_resid_mid - resid_pre
+            return (attn_out, kv)
+
+    return attn_module.register_forward_hook(hook)
+
+
 @torch.no_grad()
 def compute_attention_patterns(
-    model: DecoderOnlyTransformer, inputs: torch.Tensor
+    model: nn.Module, inputs: torch.Tensor
 ) -> tuple[dict, dict]:
     """Per-layer attention probabilities averaged over heads, plus the raw cache.
 
@@ -62,9 +199,9 @@ def compute_attention_patterns(
     """
     model.eval()
     # Only the hook cache is needed here; the logits are discarded.
-    _, cache = model(inputs[:8], return_cache=True)
+    _, cache = _forward_with_cache(model, inputs[:8])
     probs = {}
-    for layer in range(model.n_layers):
+    for layer in range(len(getattr(model, "blocks", []))):
         prefix = f"blocks.{layer}.attn"
         attn_probs = cache[f"{prefix}.attn_probs"]
         probs[f"layer_{layer}"] = attn_probs.mean(dim=1)  # avg over heads
@@ -72,32 +209,40 @@ def compute_attention_patterns(
 
 
 def detect_induction_heads(
-    model: DecoderOnlyTransformer, inputs: torch.Tensor, threshold: float = 0.3
+    model: nn.Module,
+    inputs: torch.Tensor,
+    threshold: float = INDUCTION_MASS_THRESHOLD,
+    prefix_len: Optional[int] = None,
+    composition_threshold: float = COMPOSITION_THRESHOLD,
 ) -> list[tuple[int, int]]:
-    """Detect induction heads by diagonal+1 attention pattern."""
-    model.eval()
-    induction_heads = []
-    with torch.no_grad():
-        _, cache = model(inputs[:8], return_cache=True)
+    """Detect induction heads by their attention pattern.
 
-    for layer in range(model.n_layers):
-        prefix = f"blocks.{layer}.attn"
-        attn_probs = cache[f"{prefix}.attn_probs"]  # (B, n_heads, S, S_kv)
-        if attn_probs is None:
-            continue
-        B, n_heads, S, _ = attn_probs.shape
-        diag1 = attn_probs.diagonal(offset=1, dim1=-2, dim2=-1)
-        diag1_mass = diag1.mean(dim=-1)  # (B, n_heads)
-        avg_diag1 = diag1_mass.mean(dim=0)  # (n_heads,)
-        for head in range(n_heads):
-            if avg_diag1[head] > threshold and S > 1:
-                induction_heads.append((layer, head))
+    The detection is the shared one (`src.experiments.induction_detection`):
+    the head must put enough mass on the **copy offset** `q - (L-1)` — the
+    key holding the token after the previous occurrence of the current token
+    — and its layer must be composed with an earlier layer.
 
-    return induction_heads
+    The previous implementation measured `attn_probs.diagonal(offset=1)`,
+    the strict upper triangle of a causal softmax: exactly zero, always.
+    That is why this rung reported "0 / 4 induction heads" and skipped
+    ablation and path patching for every run it ever made.
+    """
+    report, _patterns = detect_from_inputs(
+        model,
+        inputs,
+        prefix_len=prefix_len,
+        mass_threshold=threshold,
+        composition_threshold=composition_threshold,
+    )
+    return [
+        (layer, head)
+        for layer, heads in enumerate(report.confirmed)
+        for head in heads
+    ]
 
 
 def train_model(
-    model: DecoderOnlyTransformer,
+    model: nn.Module,
     train_loader: DataLoader,
     val_loader: DataLoader,
     epochs: int = 2000,
@@ -184,7 +329,7 @@ def train_model(
 
 
 def run_activation_patching(
-    model: DecoderOnlyTransformer,
+    model: nn.Module,
     clean_inputs: torch.Tensor,
     clean_answers: torch.Tensor,
     corrupted_inputs: torch.Tensor,
@@ -223,15 +368,18 @@ def run_activation_patching(
     """
     model.eval()
     results: dict = {}
+    device = _model_device(model)
+    clean_inputs = clean_inputs.to(device)
+    corrupted_inputs = corrupted_inputs.to(device)
     batch_size = min(batch_size, clean_inputs.size(0), corrupted_inputs.size(0))
 
     with torch.no_grad():
-        clean_logits, clean_cache = model(clean_inputs[:batch_size], return_cache=True)
-        _, corrupted_cache = model(corrupted_inputs[:batch_size], return_cache=True)
+        clean_logits, clean_cache = _forward_with_cache(model, clean_inputs[:batch_size])
+        _, corrupted_cache = _forward_with_cache(model, corrupted_inputs[:batch_size])
 
-    answer = clean_answers[:batch_size].to(DEVICE)
-    counterfactual = corrupted_answers[:batch_size].to(DEVICE)
-    idx = torch.arange(batch_size, device=DEVICE)
+    answer = clean_answers[:batch_size].to(device)
+    counterfactual = corrupted_answers[:batch_size].to(device)
+    idx = torch.arange(batch_size, device=device)
 
     def logit_diff(logits: torch.Tensor) -> torch.Tensor:
         last_logits = logits[:, -1, :]
@@ -241,7 +389,6 @@ def run_activation_patching(
     logger.info(f"Clean logit diff (answer - counterfactual): {clean_diff:.4f}")
 
     for layer in tqdm(layers_to_patch, desc="Patching layers"):
-        attn_module = model.blocks[layer].attn
         resid_pre = clean_cache[f"blocks.{layer}.resid_pre"].to(DEVICE)
         corrupted_resid_mid = corrupted_cache[f"blocks.{layer}.resid_mid"].to(DEVICE)
 
@@ -249,22 +396,10 @@ def run_activation_patching(
             target = corrupted_resid_mid[:, pos:pos + 1, :]
             pre = resid_pre[:, pos:pos + 1, :]
 
-            def make_hook(
-                p_pos: int, target_resid_mid: torch.Tensor, resid_pre_slice: torch.Tensor
-            ):
-                def hook(module, input, output):
-                    attn_out, kv = output
-                    attn_out = attn_out.clone()
-                    attn_out[:, p_pos:p_pos + 1, :] = target_resid_mid - resid_pre_slice
-                    return (attn_out, kv)
-                return hook
-
-            hook_handle = attn_module.register_forward_hook(
-                make_hook(pos, target, pre)
-            )
+            hook_handle = _install_resid_mid_patch(model, layer, pos, target, pre)
 
             with torch.no_grad():
-                patched_logits, _ = model(clean_inputs[:batch_size])
+                patched_logits, _ = _forward_with_cache(model, clean_inputs[:batch_size])
 
             hook_handle.remove()
 
@@ -280,7 +415,7 @@ def run_activation_patching(
 
 
 def run_path_patching_to_logits(
-    model: DecoderOnlyTransformer,
+    model: nn.Module,
     clean_inputs: torch.Tensor,
     clean_answers: torch.Tensor,
     corrupted_inputs: torch.Tensor,
@@ -313,16 +448,19 @@ def run_path_patching_to_logits(
     """
     model.eval()
     results: dict = {}
+    device = _model_device(model)
+    clean_inputs = clean_inputs.to(device)
+    corrupted_inputs = corrupted_inputs.to(device)
     batch_size = min(batch_size, clean_inputs.size(0), corrupted_inputs.size(0))
-    n_layers = model.n_layers
+    n_layers = len(getattr(model, "blocks", []))
 
     with torch.no_grad():
-        clean_logits, clean_cache = model(clean_inputs[:batch_size], return_cache=True)
-        _, corrupted_cache = model(corrupted_inputs[:batch_size], return_cache=True)
+        clean_logits, clean_cache = _forward_with_cache(model, clean_inputs[:batch_size])
+        _, corrupted_cache = _forward_with_cache(model, corrupted_inputs[:batch_size])
 
-    answer = clean_answers[:batch_size].to(DEVICE)
-    counterfactual = corrupted_answers[:batch_size].to(DEVICE)
-    idx = torch.arange(batch_size, device=DEVICE)
+    answer = clean_answers[:batch_size].to(device)
+    counterfactual = corrupted_answers[:batch_size].to(device)
+    idx = torch.arange(batch_size, device=device)
 
     def logit_diff(logits: torch.Tensor) -> torch.Tensor:
         # Read at `pos`, not always the last position: since ln_final/unembed
@@ -335,7 +473,7 @@ def run_path_patching_to_logits(
     resid_final = clean_cache[f"blocks.{n_layers - 1}.resid_post"].to(DEVICE)
 
     for layer, head in tqdm(heads, desc="Path patching heads → logits"):
-        attn_module = model.blocks[layer].attn
+        attn_module = _attn_module(model, layer)
         d_head = attn_module.d_head
         w_o_head = attn_module.W_O.weight[:, head * d_head:(head + 1) * d_head]  # (d_model, d_head)
 
@@ -367,7 +505,7 @@ def run_path_patching_to_logits(
 
 
 def run_head_ablation(
-    model: DecoderOnlyTransformer,
+    model: nn.Module,
     inputs: torch.Tensor,
     answers: torch.Tensor,
     counterfactuals: torch.Tensor,
@@ -385,14 +523,16 @@ def run_head_ablation(
     """
     model.eval()
     results: dict = {}
+    device = _model_device(model)
+    inputs = inputs.to(device)
     batch_size = min(batch_size, inputs.size(0))
 
     with torch.no_grad():
         clean_logits, _ = model(inputs[:batch_size])
 
-    answer = answers[:batch_size].to(DEVICE)
-    counterfactual = counterfactuals[:batch_size].to(DEVICE)
-    idx = torch.arange(batch_size, device=DEVICE)
+    answer = answers[:batch_size].to(device)
+    counterfactual = counterfactuals[:batch_size].to(device)
+    idx = torch.arange(batch_size, device=device)
 
     def logit_diff(logits: torch.Tensor) -> torch.Tensor:
         last_logits = logits[:, -1, :]
@@ -401,7 +541,7 @@ def run_head_ablation(
     clean_diff = logit_diff(clean_logits).mean().item()
 
     for layer, head in tqdm(induction_heads, desc="Ablating heads"):
-        attn_module = model.blocks[layer].attn
+        attn_module = _attn_module(model, layer)
         mask = torch.ones(attn_module.n_heads)
         mask[head] = 0.0
         attn_module.head_mask = mask
@@ -514,59 +654,174 @@ def plot_head_ablation(
 # ---------------------------------------------------------------------------
 # Multi-seed headline run
 # ---------------------------------------------------------------------------
-def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
-    """Train one circuit-patching run end-to-end and return headline metrics
-    for one seed. Mirrors main()'s single-seed data/model/train/analysis
-    steps (detection, activation patching, head ablation, path patching),
-    minus plotting — used by `--seeds` to aggregate across seeds via
-    `src.experiments.runner.run_seeds`. Path patching only runs when at
-    least one induction head is detected for that seed (it needs a real
-    head to patch); its metric is 0.0 for seeds with none, same convention
-    as head ablation.
+def _checkpoint_for_seed(args: argparse.Namespace, seed: int) -> Optional[Path]:
+    """The checkpoint this seed should load, if any.
+
+    `--from-checkpoint` accepts either a file or a *directory* of exp1's
+    rolling per-seed checkpoints (`exp1_checkpoint_seed<N>.pt`), which is
+    what the GPU cascade produces.
     """
+    raw = getattr(args, "from_checkpoint", None)
+    if not raw:
+        return None
+    path = Path(raw)
+    if path.is_dir():
+        return path / f"exp1_checkpoint_seed{seed}.pt"
+    return path
+
+
+def _build_model(
+    args: argparse.Namespace, seed: int, load_weights: bool = True
+) -> tuple[nn.Module, Optional[dict]]:
+    """The model this rung analyses.
+
+    With `--from-checkpoint` it is **the model Rung 1 trained** (an
+    `AttentionOnlyTransformer`), loaded from disk and *not* retrained —
+    which is what makes the cascade a single model instead of two. Without
+    it, exp4 keeps its own training path (`DecoderOnlyTransformer`).
+
+    The state-dict load is strict: a mismatched architecture raises rather
+    than silently loading a partially-compatible model.
+
+    Returns the model and a small provenance dict (`path`, `epoch`) — the
+    epoch matters because the rolling checkpoint can be up to
+    `--checkpoint-every` epochs behind the run that wrote it, and the
+    manifest has to say which model was actually analysed.
+    """
+    checkpoint = _checkpoint_for_seed(args, seed)
+    if checkpoint is None:
+        model = DecoderOnlyTransformer(
+            vocab_size=args.vocab_size,
+            d_model=args.d_model,
+            n_layers=args.n_layers,
+            n_heads=args.n_heads,
+            max_seq_len=args.seq_len,
+        )
+        return model, None
+
+    model = AttentionOnlyTransformer(
+        vocab_size=args.source_vocab_size,
+        d_model=args.source_d_model,
+        n_layers=args.source_n_layers,
+        n_heads=args.source_n_heads,
+        max_seq_len=args.source_seq_len,
+    )
+    if not load_weights:
+        return model, {"path": str(checkpoint), "epoch": -1}
+    if not checkpoint.exists():
+        raise SystemExit(
+            f"--from-checkpoint: {checkpoint} does not exist. The cascade "
+            "needs exp1's rolling checkpoint (run exp1 with "
+            "--checkpoint-dir/--checkpoint-every first)."
+        )
+    state = load_training_checkpoint(checkpoint, map_location="cpu")
+    if state is None or "model" not in state:
+        raise SystemExit(f"--from-checkpoint: {checkpoint} is not a training checkpoint")
+    arch = state.get("arch")
+    if arch:
+        expected = {
+            "vocab_size": args.source_vocab_size,
+            "d_model": args.source_d_model,
+            "n_layers": args.source_n_layers,
+            "n_heads": args.source_n_heads,
+            "max_seq_len": args.source_seq_len,
+        }
+        mismatched = {
+            k: (arch.get(k), v) for k, v in expected.items() if arch.get(k) != v
+        }
+        if mismatched:
+            raise SystemExit(
+                f"--from-checkpoint: {checkpoint} was trained with {arch}, but "
+                f"--source-* says {expected}. Fix the source flags."
+            )
+    # Strict load: a checkpoint without metadata still fails loudly (on the
+    # shapes) rather than loading a partially-compatible model.
+    model.load_state_dict(state["model"])
+    epoch = int(state.get("epoch", -1)) + 1
+    logger.info(
+        f"Loaded checkpoint {checkpoint} (epoch {epoch}, no training in this rung)"
+    )
+    return model, {"path": str(checkpoint), "epoch": epoch}
+
+
+def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
+    """Train (or load) one circuit-patching run end-to-end and return
+    headline metrics for one seed. Mirrors main()'s single-seed
+    data/model/train/analysis steps (detection, activation patching, head
+    ablation, path patching), minus plotting — used by `--seeds` to aggregate
+    across seeds via `src.experiments.runner.run_seeds`. Path patching only
+    runs when at least one induction head is detected for that seed (it
+    needs a real head to patch); its metric is 0.0 for seeds with none, same
+    convention as head ablation.
+    """
+    model, checkpoint = _build_model(args, seed)
+    model.to(DEVICE)
+
+    # With a checkpoint, the data must be generated with the *source* config
+    # (vocab/seq_len), not with this rung's own flags.
+    if checkpoint is not None:
+        vocab_size = args.source_vocab_size
+        seq_len = args.source_seq_len
+    else:
+        vocab_size = args.vocab_size
+        seq_len = args.seq_len
     train_dataset, val_dataset = make_induction_data(
-        vocab_size=args.vocab_size,
-        seq_len=args.seq_len,
+        vocab_size=vocab_size,
+        seq_len=seq_len,
         num_train=args.num_train,
         seed=seed,
     )
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=256, shuffle=False)
 
-    model = DecoderOnlyTransformer(
-        vocab_size=args.vocab_size,
-        d_model=args.d_model,
-        n_layers=args.n_layers,
-        n_heads=args.n_heads,
-        max_seq_len=args.seq_len,
-    )
-    model.to(DEVICE)
-
     # Same fresh-batches regime as exp1's presets so the cascade measures
     # one shared model (see train_model's docstring).
     fresh_batches_fn = _make_fresh_batches_fn(args, seed) if args.fresh_batches else None
 
-    history = train_model(
-        model=model,
-        train_loader=train_loader,
-        val_loader=val_loader,
-        epochs=args.epochs,
-        lr=args.lr,
-        seed=seed,
-        gradient_clip=args.gradient_clip,
-        fresh_batches_fn=fresh_batches_fn,
-    )
+    if checkpoint is not None:
+        history = {"train_loss": [], "val_loss": [], "val_acc": []}
+        with torch.no_grad():
+            logits, _ = model(val_loader.dataset.tensors[0][:32].to(DEVICE))
+            labels = val_loader.dataset.tensors[1][:32].to(DEVICE)
+            history["val_acc"].append(
+                float((logits.argmax(-1) == labels).float().mean().item())
+            )
+            history["val_loss"].append(0.0)
+            history["train_loss"].append(0.0)
+    else:
+        history = train_model(
+            model=model,
+            train_loader=train_loader,
+            val_loader=val_loader,
+            epochs=args.epochs,
+            lr=args.lr,
+            weight_decay=args.weight_decay,
+            seed=seed,
+            gradient_clip=args.gradient_clip,
+            fresh_batches_fn=fresh_batches_fn,
+        )
 
     sample_inputs = next(iter(val_loader))[0][:8]
-    induction_heads = detect_induction_heads(model, sample_inputs)
+    prefix_len = prefix_length_for(seq_len)
+    induction_heads = detect_induction_heads(
+        model, sample_inputs, prefix_len=prefix_len
+    )
+
+    probe = run_dissociation_probe(
+        model,
+        vocab_size=vocab_size,
+        seq_len=seq_len,
+        num_samples=32,
+        seed=seed,
+    )
 
     val_x, val_y = val_dataset.tensors
     n_pair = min(32, val_x.size(0) // 2)
     val_batch, val_batch_answers = val_x[:n_pair], val_y[:n_pair, -1]
     corrupted, corrupted_answers = val_x[n_pair:2 * n_pair], val_y[n_pair:2 * n_pair, -1]
 
-    layers_to_patch = list(range(args.n_layers))
-    positions_to_patch = list(range(max(2, args.seq_len // 4), args.seq_len, 2))
+    layers_to_patch = list(range(len(getattr(model, "blocks", []))))
+    positions_to_patch = list(range(max(2, seq_len // 4), seq_len, 2))
     patching_results = run_activation_patching(
         model=model,
         clean_inputs=val_batch,
@@ -615,6 +870,10 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         "mean_activation_recovery": mean_activation_recovery,
         "mean_ablation_effect": mean_ablation_effect,
         "mean_path_patch_effect": mean_path_patch_effect,
+        "probe_content_mass": float(probe["peak_content_mass"]),
+        "probe_period_mass": float(probe["peak_period_mass"]),
+        "probe_content_wins": float(bool(probe["content_wins"])),
+        "checkpoint_epoch": float(checkpoint["epoch"]) if checkpoint else -1.0,
     }
 
 
@@ -653,11 +912,12 @@ def apply_config_presets(args: argparse.Namespace) -> None:
         args.n_heads = 4
         args.epochs = 3000
         args.num_train = 8192
+        args.batch_size = 64
         args.fresh_batches = True
         logger.info(
             "STANDARD MODE: canonical standard-scale config matching exp1 "
             "--standard (vocab=2048, seq=64, d_model=64, epochs=3000, "
-            "fresh batches)"
+            "batch=64, fresh batches)"
         )
 
     if args.scale == "large":
@@ -670,10 +930,11 @@ def apply_config_presets(args: argparse.Namespace) -> None:
         args.n_heads = 8
         args.epochs = 1500
         args.num_train = 16384
+        args.batch_size = 128
         args.fresh_batches = True
         logger.info(
             "SCALE=large: vocab=2048, seq=128, d_model=256, 4 layers, "
-            "8 heads, epochs=1500, fresh batches"
+            "8 heads, epochs=1500, batch=128, fresh batches"
         )
 
 
@@ -793,6 +1054,39 @@ def build_parser() -> argparse.ArgumentParser:
             "route its manifest away from the flagship file."
         ),
     )
+    parser.add_argument(
+        "--from-checkpoint",
+        type=str,
+        default=None,
+        help=(
+            "Analyse exp1's checkpoint instead of training a second model: "
+            "a file, or a directory holding the per-seed rolling "
+            "checkpoints (exp1_checkpoint_seed<N>.pt). This is what makes "
+            "the Rung 1 -> Rung 4 cascade measure ONE model; the "
+            "alternative (train here) is a different model under the same "
+            "claim."
+        ),
+    )
+    parser.add_argument(
+        "--source-vocab-size", type=int, default=2048,
+        help="The checkpoint's vocab size (must match how it was trained)",
+    )
+    parser.add_argument(
+        "--source-seq-len", type=int, default=64,
+        help="The checkpoint's sequence length (must match how it was trained)",
+    )
+    parser.add_argument(
+        "--source-d-model", type=int, default=64,
+        help="The checkpoint's d_model (must match how it was trained)",
+    )
+    parser.add_argument(
+        "--source-n-layers", type=int, default=2,
+        help="The checkpoint's layer count (must match how it was trained)",
+    )
+    parser.add_argument(
+        "--source-n-heads", type=int, default=4,
+        help="The checkpoint's head count (must match how it was trained)",
+    )
     parser.set_defaults(fresh_batches=False, batch_mode="fixed")
     return parser
 
@@ -820,13 +1114,10 @@ def main() -> None:
             f"MULTI-SEED MODE: {len(seeds)} seeds {seeds} (skipping plots)"
         )
         result = run_seeds(lambda s: run_single_seed(s, args), seeds)
-        probe_model = DecoderOnlyTransformer(
-            vocab_size=args.vocab_size,
-            d_model=args.d_model,
-            n_layers=args.n_layers,
-            n_heads=args.n_heads,
-            max_seq_len=args.seq_len,
-        )
+        # The parameter count must describe the model that was actually
+        # analysed (an attention-only model when --from-checkpoint points at
+        # Rung 1's checkpoint), not a throwaway probe of another family.
+        probe_model, _ = _build_model(args, seeds[0], load_weights=False)
         manifest = ResultsManifest.from_run(
             experiment="exp4_circuit_patching",
             seeds=seeds,
@@ -850,29 +1141,29 @@ def main() -> None:
         return
 
     # Data
+    model, checkpoint = _build_model(args, args.seed)
+    model.to(DEVICE)
+    if checkpoint is not None:
+        vocab_size = args.source_vocab_size
+        seq_len = args.source_seq_len
+    else:
+        vocab_size = args.vocab_size
+        seq_len = args.seq_len
+
     train_dataset, val_dataset = make_induction_data(
-        vocab_size=args.vocab_size,
-        seq_len=args.seq_len,
+        vocab_size=vocab_size,
+        seq_len=seq_len,
         num_train=args.num_train,
         seed=args.seed,
     )
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=256, shuffle=False)
-    logger.info(f"Data: train={args.num_train} sequences, seq_len={args.seq_len}")
+    logger.info(f"Data: train={args.num_train} sequences, seq_len={seq_len}")
 
-    # Model
-    model = DecoderOnlyTransformer(
-        vocab_size=args.vocab_size,
-        d_model=args.d_model,
-        n_layers=args.n_layers,
-        n_heads=args.n_heads,
-        max_seq_len=args.seq_len,
-    )
-    model.to(DEVICE)
     n_params = sum(p.numel() for p in model.parameters())
     logger.info(f"Model parameters: {n_params:,}")
 
-    if not args.no_train:
+    if not args.no_train and checkpoint is None:
         # Same fresh-batches regime as run_single_seed so the single-seed
         # and multi-seed paths cannot drift apart.
         fresh_batches_fn = _make_fresh_batches_fn(args, args.seed) if args.fresh_batches else None
@@ -882,6 +1173,7 @@ def main() -> None:
             val_loader=val_loader,
             epochs=args.epochs,
             lr=args.lr,
+            weight_decay=args.weight_decay,
             seed=args.seed,
             gradient_clip=args.gradient_clip,
             fresh_batches_fn=fresh_batches_fn,
@@ -898,19 +1190,32 @@ def main() -> None:
         save_path=FIGURES_DIR / "exp4_attention_patterns.png",
     )
 
-    induction_heads = detect_induction_heads(model, sample_inputs)
+    induction_heads = detect_induction_heads(
+        model, sample_inputs, prefix_len=prefix_length_for(seq_len)
+    )
     logger.info("=" * 60)
     logger.info("Induction Head Detection")
     logger.info("=" * 60)
-    for layer in range(args.n_layers):
+    for layer in range(len(getattr(model, "blocks", []))):
         layer_heads = [(l, h) for l, h in induction_heads if l == layer]
         head_ids = [h for _, h in layer_heads]
         logger.info(f"  Layer {layer}: {len(layer_heads)} induction head(s): {head_ids}")
     total_found = len(induction_heads)
-    total_heads = args.n_layers * args.n_heads
+    blocks = getattr(model, "blocks", [])
+    total_heads = len(blocks) * getattr(blocks[0], "n_heads", 0) if blocks else 0
     logger.info(f"  Total induction heads: {total_found} / {total_heads}")
     if not induction_heads:
         logger.warning("No induction heads detected.")
+
+    probe = run_dissociation_probe(
+        model, vocab_size=vocab_size, seq_len=seq_len, num_samples=32, seed=args.seed
+    )
+    logger.info(
+        "Dissociation probe — content mass "
+        f"{probe['peak_content_mass']:.3f} vs period mass "
+        f"{probe['peak_period_mass']:.3f} -> "
+        f"{'CONTENT-based' if probe['content_wins'] else 'POSITIONAL'} copy"
+    )
 
     # Activation patching
     logger.info("=" * 60)
@@ -928,8 +1233,8 @@ def main() -> None:
     val_batch, val_batch_answers = val_x[:n_pair], val_y[:n_pair, -1]
     corrupted, corrupted_answers = val_x[n_pair:2 * n_pair], val_y[n_pair:2 * n_pair, -1]
 
-    layers_to_patch = list(range(args.n_layers))
-    positions_to_patch = list(range(max(2, args.seq_len // 4), args.seq_len, 2))
+    layers_to_patch = list(range(len(getattr(model, "blocks", []))))
+    positions_to_patch = list(range(max(2, seq_len // 4), seq_len, 2))
 
     patching_results = run_activation_patching(
         model=model,
@@ -945,7 +1250,7 @@ def main() -> None:
     if patching_results:
         plot_patching_results(
             patching_results,
-            n_layers=args.n_layers,
+            n_layers=len(getattr(model, "blocks", [])),
             n_positions=len(positions_to_patch),
             save_path=FIGURES_DIR / "exp4_patching_results.png",
         )

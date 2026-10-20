@@ -105,8 +105,8 @@ def test_detector_verdict_is_reported_either_way(executed_notebook) -> None:
     text = _stream_texts(executed_notebook)
     verdicts = (
         "K-comp is VACUOUS",
-        "HEAD DETECTED",
-        "NO HEAD below the 0.3 threshold",
+        "HEAD CONFIRMED",
+        "NO HEAD confirmed at the 0.3 mass threshold",
     )
     assert any(v in text for v in verdicts), (
         f"no detector verdict printed. Output was:\n{text}"

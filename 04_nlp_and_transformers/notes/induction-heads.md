@@ -22,15 +22,45 @@ In a 2-layer model:
 - Layer 2: induction head uses the Layer 1 output to match prefixes and copy the correct continuation
 
 ## The Characteristic Attention Pattern
-An induction head's attention pattern shows a distinctive diagonal-offset:
-- Strong attention from position i to position i-1 (or more generally, to the position after the previous occurrence of the current token)
-- Visualized as a diagonal band in the attention pattern heatmap
+An induction head attends from the current query position `q` to **the position
+after the previous occurrence of the current token**. On the `prefix + prefix`
+task this repository uses, with a prefix of length `L`, that key is:
+
+```
+key(q) = q - L + 1        <- the induction (copy) offset
+key(q) = q - L            <- the duplicate-token offset (Nanda's Step 1)
+key(q) = q - 1            <- the previous-token head — NOT induction
+```
+
+The third line is the trap this repository fell into for a year: its detector
+measured the mass on `q - 1` and called it "diag+1", so every "0 / N induction
+heads" number it published was a statement about the detector (see the Honesty
+Ledger's 2026-10-19 entry in `portfolio/RESULTS.md`). A previous-token head is
+a real circuit — it is simply a different one, and it does not copy the
+repeated token.
+
+The pattern is visualized as a diagonal band in the attention heatmap, offset by
+`L - 1` from the main diagonal rather than by 1.
+
+### The caveat the periodic task hides
+On a *perfectly periodic* sequence (`prefix + prefix`) the previous occurrence of
+the current token is always exactly `L` positions back, so "copy from the
+previous occurrence of the same token" and "copy from the fixed offset `L-1`"
+are the **same function**. No in-distribution measurement can separate them —
+not the attention mass, not the K-composition score. The separation needs an
+off-distribution probe: a batch whose second half is a *permuted* copy of the
+prefix, where the content target and the fixed offset point at different keys.
+`src.experiments.induction_detection.run_dissociation_probe` runs it; until it
+has run on a given checkpoint, the defensible wording is "prefix-copying head
+at offset `L-1`", not "induction head".
 
 ## Training Dynamics
 Induction heads emerge partway through training, marked by:
 - A sudden drop in validation loss (the "bump" or phase change)
 - An increase in attention-pattern structure (from diffuse to diagonal)
-- The increase of a specific progress measure: "induction-head score" = attention mass on the diagonal+1 offset
+- The increase of a specific progress measure: "induction-head score" = the
+  attention mass on the **copy offset** `q-(L-1)` (the previous-token mass is
+  tracked next to it, as a control)
 
 ## Verification via Ablation
 To causally verify an induction head:
@@ -74,11 +104,33 @@ well-defined answer).
 
 **What fixing this did and didn't change:** re-running `--quick` scale (500 epochs) under
 the corrected vocabulary produced **zero warnings and still zero detected induction
-heads** — `diag1_mass` peaked at 0.125, well under the 0.3 threshold. The ambiguity bug was
+heads** — the previous-token mass peaked at 0.125, well under the 0.3 threshold. The
+ambiguity bug was
 real and worth fixing on correctness grounds, but it was not, by itself, the reason quick
 scale shows no heads; the 2026-08-01 audit's read (heads genuinely haven't formed yet at
 that epoch/scale budget) still stands. See
 [[06_production_ai/exercises/ex-03-induction-task-design]] for the full before/after.
+
+> **2026-10-19 — the head counts in this note are retracted.** The detector behind
+> every "0 / 8" above measured the previous-token offset (`q-1`) and called it the
+> induction signature; the copy offset on this task is `q-(L-1)`. The numbers above
+> are kept (with the old metric relabelled) because the accuracy comparison they
+> support is unaffected; the head-count rows are not measurements. See
+> `portfolio/RESULTS.md`'s Honesty Ledger, 2026-10-19.
+>
+> **2026-10-20 — and what the corrected detector found.** Standard scale on a GPU,
+> three seeds, 3000 epochs: **2–3 heads per seed**, copy-offset mass **0.945**,
+> previous-token control 0.046 — so heads *do* form at standard scale, within 50
+> epochs, and the retracted "0 / 8" was a detector artifact. But every confirmed
+> head is in the **first layer**, the K-composition between layers is **0.052**,
+> and the **dissociation probe** puts the model's mass on the **fixed offset**
+> (0.695) and not on the previous occurrence of the same token (0.031), 3/3 seeds.
+> The circuit is a single-head **prefix-copying** circuit, not the two-step
+> induction circuit — because the task is perfectly periodic and hands the model
+> that shortcut. The causal interventions land: ablating the head costs **0.44**
+> of the logit difference and path patching attributes **0.82** of its direct
+> effect on the logits to it. A content-based induction claim needs a task with
+> repeats at *varying* distances (v1.1).
 
 A second, independent question this pass added the tooling to test: does the fixed
 dataset (generated once, then only reshuffled across epochs) let the model **memorize**
@@ -96,8 +148,8 @@ identical except `--fresh-batches`:
 | Final train loss | 0.021 | 3.647 |
 | Final val loss | 24.31 | 3.648 |
 | Final val accuracy | **0.45%** (below 1/2048 random chance) | **53.5%** |
-| Peak diag+1 mass | 0.155 (epoch 99, then decays) | 0.145 (epoch 649, still rising at 800) |
-| Induction heads detected | 0 / 8 | 0 / 8 |
+| Peak previous-token mass (the old "diag+1") | 0.155 (epoch 99, then decays) | 0.145 (epoch 649, still rising at 800) |
+| Induction heads detected | *retracted — old detector* | *retracted — old detector* |
 
 Two clean, unambiguous, opposite failure modes:
 

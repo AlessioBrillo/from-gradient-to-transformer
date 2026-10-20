@@ -91,6 +91,15 @@ probability under the new config) and a training-budget/scale question (still op
 addressed separately by the standard-scale multi-seed run in
 [[portfolio/RESULTS]]).
 
+> **2026-10-19 — the "0 / 8" above is retracted.** The metric printed in that transcript
+> (`diag1_mass`, "diag+1") measured the attention mass on `q-1` — the *previous token* —
+> and called it the induction signature; the copy offset on this task is `q-(L-1)`. The
+> detector now lives in `src/experiments/induction_detection.py`, reports the induction
+> mass on the copy offset with the previous-token mass as a labelled control, and
+> confirms a head only when the K-composition mechanism agrees. The *task-design* half of
+> this exercise (the birthday-problem collision probability) is unaffected and still
+> stands: it was arithmetic, and the arithmetic was right.
+
 ## What I learned doing it
 
 The instinct to reach for "needs more scale" is dangerous because it's *always* a plausible

@@ -188,8 +188,8 @@ A matched 800-epoch comparison (identical config, only
 \midrule
 Final val accuracy & \textbf{0.45\%} $\pm$ 0.03\% (below chance) & \textbf{53.53\%} $\pm$ 0.03\% \\
 Final val loss & 24.31 (climbing) & 3.65 (flat, tracks train) \\
-Peak diag+1 mass & 0.217 $\pm$ 0.010 & 0.201 $\pm$ 0.012 \\
-Induction heads detected & \textbf{0 / 8} & \textbf{0 / 8} \\
+Peak previous-token mass (the old ``diag+1'') & 0.217 $\pm$ 0.010 & 0.201 $\pm$ 0.012 \\
+Induction heads detected & \emph{retracted} & \emph{retracted} \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -197,17 +197,91 @@ Induction heads detected & \textbf{0 / 8} & \textbf{0 / 8} \\
 The fixed dataset produces catastrophic overfitting: train loss collapses
 to near-zero while val loss climbs and val accuracy decays \emph{below}
 random chance. Fresh batches yield stable, substantial generalization
-(53.5\%) without a train/val gap, but still no induction heads detected
-(diag+1 mass $< 0.3$ threshold) at this scale. The trajectory is still
-rising at epoch 800 -- standard scale ($d_\text{model}=64$,
-$d_\text{mlp}=256$, $n_\text{heads}=4$, $\text{seq\_len}=64$) with more
-epochs is the credible path to a detected head.
+(53.5\%) without a train/val gap. The head counts are retracted for the
+reason given above: they were produced by a detector that measured the
+previous-token offset, so they are statements about the detector rather
+than about the model. The corrected detector reports the induction mass on
+the copy offset together with the previous-token mass as a control.
+
+\subsection{The Detector Measured the Wrong Offset}
+An audit on 2026-10-19 found that every ``$0 / N$ induction heads'' number
+reported above was a statement about the detector rather than about the
+model. On the repeated-token task the copy offset is $q-(L-1)$, where $L$
+is the prefix length: at a second-copy query $q$, the current token has
+its previous occurrence at $q-L$, and the token to copy sits one position
+later. The detector instead measured the mass on $q-1$ --- the
+\emph{previous token} --- and called it ``diag+1''; a head with that
+pattern is a different circuit and does not copy the repeated token. A
+second detector, in the circuit-patching rung, measured the strict upper
+triangle of a causal softmax, which is identically zero and could never
+fire on any model. The defect survived a year of audits because the
+planted tests planted the same wrong pattern, so the tests passed the
+bug.
+
+The corrected detector lives in one shared module used by all three rungs,
+measures the copy offset over the collision-free queries only, and
+confirms a head only when the K-composition mechanism agrees with the
+mass. One further caveat is stated explicitly because it bounds what any
+such measurement can claim: on a perfectly periodic task the previous
+occurrence of the current token is always at $q-L$, so copying by content
+and copying by a fixed offset are the same function on-distribution, and
+only an off-distribution dissociation probe (a second half that is a
+permuted copy of the prefix) can tell the two apart.
+
+\subsection{Standard Scale: A Head Forms, and It Copies by Position}
+% manifest: results/induction_standard.json
+% manifest: results/induction_standard_emergence.json
+% manifest: results/exp4_standard.json
+The corrected detector was then run on a GPU (Kaggle T4) at the canonical
+standard scale ($V=2048$, $\text{seq\_len}=64$, $d_\text{model}=64$, 2 layers,
+4 heads, fresh batches, 3000 epochs $=384$k optimizer steps per seed), three
+seeds:
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+ & Emergence run (early stop) & Full budget \\
+\midrule
+Confirmed heads (per seed) & 3, 3, 3 & 3, 2, 3 \\
+\quad in the first layer & 3, 3, 3 & 3, 2, 3 \\
+\quad above the first layer (mechanism) & 0 & 0 \\
+Peak induction mass (copy offset) & $0.947 \pm 0.003$ & $0.945 \pm 0.001$ \\
+Previous-token mass (control) & $0.033 \pm 0.013$ & $0.046 \pm 0.007$ \\
+K-composition score & $0.080 \pm 0.021$ & $0.052 \pm 0.008$ \\
+Final validation accuracy & $0.5082$ & $0.5081$ \\
+Dissociation probe: content mass & $0.031$ & $0.031$ \\
+Dissociation probe: period mass & $0.909$ & $0.695$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Three things follow. First, the retracted ``$0/8$'' really was a detector
+artifact: at standard scale the model forms a copy head within 50 epochs
+(the emergence run stops at epoch 100 after two consecutive confirmations),
+with a copy-offset mass of $0.95$ against a $0.3$ threshold, while the
+previous-token control stays at $0.03$--$0.05$. Second, the head is not the
+two-step circuit: every confirmed head sits in the first layer, where the
+detector can only confirm it on the mass, and the K-composition between
+layers is $0.05$--$0.08$, far below the $0.4$ confirmation bar. Third, and
+decisively, the copy is \emph{positional}: on the permuted batch the model's
+mass sits on the fixed-offset target ($0.70$) and not on the
+previous-occurrence target ($0.03$), on 3/3 seeds in both runs.
+
+The mechanism is therefore a single-head \emph{prefix-copying} circuit, and
+the reason is the task, not the model: on a perfectly periodic sequence the
+previous occurrence of the current token is always at $q-L$, so the two
+hypotheses coincide in-distribution and the model takes the cheaper one.
+The $0.508$ accuracy plateau is the same one the joint capstone run
+measured ($0.5034$): copying the periodic continuation is exactly right on
+the second half of the sequence and unpredictable on the first.
 
 \subsection{Multi-Seed Quick-Scale Manifest}
 Three seeds at quick scale ($V=256$, $\text{seq\_len}=16$,
 $d_\text{model}=24$, 2 layers, 4 heads, 150 epochs, fresh batches):
-val accuracy $0.0047 \pm 0.0012$, peak diag+1 mass $0.177 \pm 0.006$,
-\textbf{0 / 8 induction heads detected} (threshold 0.3).
+val accuracy $0.0047 \pm 0.0012$, peak previous-token mass
+$0.177 \pm 0.006$. The head count for this manifest is retracted (see
+above); the standard-scale run with the corrected detector is the
+outstanding measurement.
 
 \subsection{Causal Ablation Validity}
 The 2026-08-01 audit fixed two critical bugs in the ablation
@@ -280,16 +354,46 @@ effect on logits via \texttt{W\_O}'s per-head column blocks).
 Three seeds ($V=64$, $\text{seq\_len}=12$, $d_\text{model}=32$, 2 layers,
 2 heads, 500 epochs): val accuracy $0.489 \pm 0.014$, mean activation
 patching recovery $0.197 \pm 0.007$ (10 layer/position combos).
-\textbf{0 / 4 induction heads detected} (consistent with Rung 1 at
-comparable scale). Because 0 heads detected, head ablation and path
-patching were skipped -- path patching's implementation is validated only
-by unit tests (self-patch is zero, runs and returns expected keys).
+The head count for this manifest is \emph{retracted}: this rung's
+detector measured the strict upper triangle of a causal softmax, which is
+identically zero, so it could not fire on any model (see
+Sec.~\ref{sec:induction}). Head ablation and path patching were therefore
+skipped -- path patching's implementation was validated only by unit tests
+(self-patch is zero, runs and returns expected keys).
+
+\subsection{The Cascade, Run End to End}
+The circuit rung now analyses the \emph{same} checkpoint the induction rung
+trained (\texttt{--from-checkpoint}) instead of training a second, differently
+shaped model under the same claim. On the standard-scale checkpoint (epoch
+3000), three seeds:
+
+\begin{center}
+\begin{tabular}{lc}
+\toprule
+Intervention & Effect on the answer-minus-counterfactual logit difference \\
+\midrule
+Head ablation (zero the confirmed head) & $0.4445 \pm 0.0425$ \\
+Path patching (the head's \emph{direct} effect on the logits) & $0.8215 \pm 0.1255$ \\
+Activation patching (per layer/position recovery) & $0.0834 \pm 0.0002$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+This is the first end-to-end path-patching result in this work: the head
+the corrected detector finds is also the head that carries the task's
+answer --- path patching isolates its direct contribution to the logits with
+every other head, every MLP and the head's own indirect effects kept clean.
+What the interventions do not settle is the \emph{mechanism} of the copy: the
+dissociation probe says the head copies from a fixed offset rather than from
+the previous occurrence of the same token, and the K-composition between
+layers is $0.05$, so this is a single-head circuit on a periodic task, not
+the two-step induction circuit.
 
 \subsection{Interpretation}
 Activation patching finds a real, small, consistent recovery signal
 ($\sim 0.20$) even without a detected induction head -- some circuit
 sensitivity exists at these (layer, position) combinations, just not
-concentrated enough in one head to cross the 0.3 detection threshold.
+concentrated enough in one head to cross the detection threshold.
 
 \section{Sparse Autoencoder Feature Dashboard}
 \label{sec:sae}
@@ -300,20 +404,26 @@ $d_\text{model}=64$, 8$\times$ dictionary (512 features), 300 epochs,
 seed 42: FVE $97.5\%$, L0 $96.6$ ($18.9\%$ of dictionary active), dead
 rate $7.6\%$ (fixed $10^{-4}$ threshold). Reproduces exactly.
 
-\subsection{Real Activations (First Run)}
-Harvested from a trained induction-heads checkpoint via forward hook on
-\texttt{ln\_final} (MP-88 shakedown checkpoint, 2000 steps): FVE
-\textbf{99.97\%}, L0 \textbf{136.25 / 256} (53.2\% active), 0\%
-dead features. Reconstruction MSE $0.125$ (higher than synthetic's
-$0.001$ because the residual stream is wider).
+\subsection{Real Activations: Before and After a Confirmed Head}
+% manifest: results/exp5_real_activations.json
+The first real-activation run harvested from a 2000-step shakedown checkpoint
+(no confirmed head): FVE \textbf{99.97\%}, L0 \textbf{136.25 / 256}
+(53.2\% active), 0\% dead features, reconstruction MSE $0.125$ --- it
+reconstructed better than the synthetic baseline but far less sparsely.
 
-\textbf{Read honestly, not as a win.} The real-activation run reconstructs
-better but far less sparsely than synthetic (53\% vs 19\% active). A
-32-dimensional residual stream from a small, undertrained model (150--300
-epochs, no confirmed induction head) may simply not contain many
-genuinely sparse, disentangled features. This is an informative gap:
-re-running once Rung 1 has a confirmed-head checkpoint is the natural
-next step.
+Re-run on the standard-scale checkpoint with the confirmed head (50{,}000
+residual-stream samples, $d_\text{model}=64$, 8$\times$ dictionary, 1000
+epochs), the picture inverts: L0 \textbf{15.12 / 512} (\textbf{3.0\% active}),
+FVE \textbf{99.998\%}, reconstruction MSE $0.0004$ --- and \textbf{78.1\%} of
+the features never fire.
+
+\textbf{Read honestly, in both directions.} The old ``dense reconstruction''
+was a statement about an undertrained model with no circuit, not about the
+SAE: once the model has a circuit to write into its residual stream, the
+activations are sparse. What the new run leaves unresolved is the other
+half: with an 8$\times$ dictionary, four features in five never fire, i.e.
+the dictionary is far larger than this residual stream needs. The sparsity
+gap is closed; the dictionary-size choice is the remaining question.
 
 \section{Capstone: Joint Training and Reverse-Engineering}
 \label{sec:capstone}
@@ -370,8 +480,17 @@ metric: both the Nanda-faithful protocol (40{,}000 steps) and the historical
 repo protocol (5{,}000 epochs) produced the sparse Fourier circuit
 ($k_{\mathrm{energy},90}$ = 5.7 $\pm$ 1.2 and 8.7 $\pm$ 1.2 of 56, sparse on
 3/3 seeds each) on all three seeds. No phase-diagram boundary claim is made
-in this version; the systematic sweep remains open (issue \#168).
-
+in this version; the systematic sweep remains open (issue \#168), and was
+moved to the next milestone on 2026-10-19 so that the GPU quota it needs
+(one to two weeks) does not delay the standard-scale induction run. Its
+interpretation was clarified before the first cell runs: a cell is
+\emph{sparse} only when every seed is sparse (3/3, the bar the $P=113$
+positive control clears), \emph{mixed} when 1 or 2 of 3 are (a boundary
+cell, reported as such), and \emph{dense} when none are. The per-seed
+counts accompany every cell. The same taxonomy applied to the $P=59$
+positive control, re-measured 2026-10-19, reads \emph{mixed} (2 of 3
+seeds sparse: $k_{\mathrm{energy},90}$ = 5, 8 and 7 of 29), which is why
+that probe is a footnote here rather than a second headline.
 
 \subsection{Capstone Joint Training Dissociation}
 The capstone shakedown (2000 steps, $d_\text{model}=256$, 4L, 8H, $P=113$)
@@ -430,8 +549,18 @@ seeds -- the joint solution is \textbf{dense}, not a sparse Fourier circuit.
     representative of circuits in language models.
   \item \textbf{No induction heads at standard scale:} the fixed-vs-fresh
     comparison (53.5\% val acc, 800 epochs) is the trustworthy scale for
-    this paper; standard scale ($d_\text{model}=64$, 10k epochs) is a
-    follow-up, not a claim.
+    the earlier measurements; the standard-scale run with the corrected
+    detector ($d_\text{model}=64$, 3000 epochs, three seeds) is reported
+    above, and what it finds is a \emph{prefix-copying} head, not an
+    induction head.
+  \item \textbf{The head counts in this paper were retracted}
+    (2026-10-19): the detectors measured the previous-token offset, so
+    every ``$0 / N$'' figure was a statement about the detector. Even with
+    the corrected detector, a perfectly periodic task cannot separate
+    copying by content from copying by a fixed offset; the dissociation
+    probe does, and it says the copy here is positional. A task with
+    repeats at \emph{varying} distances is required to make the
+    content-based claim testable at all, and it is not in this version.
   \item \textbf{Grokking sparse circuit reproduced:} Rung 2 reached val
     accuracy 0.9999 $\pm$ 0.0002 with $k_{\mathrm{energy},90}$ = 5.7 $\pm$
     1.2 of 56 frequencies (sparse, 3/3 seeds) on both the Nanda-faithful and

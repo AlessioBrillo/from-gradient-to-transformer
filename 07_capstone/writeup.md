@@ -77,13 +77,20 @@ regime).
 
 ## 3. Induction heads
 
-**Verdict: no head detected at any scale run (0/8).**
+**Verdict: the head counts are retracted (2026-10-19) — the detector measured the
+previous-token offset, so "no head at any scale" was a statement about the
+detector, not about the models.**
 <!-- manifest: results/exp1_induction_heads.json -->
 
-Setup: 2-layer attention-only transformer on repeated random tokens. Peak
-per-head diag+1 attention mass reaches 0.177 ± 0.006 against the 0.3 detection
-threshold of Olsson et al. (2022). The extended 10k-epoch run did not cross it
-either — see [[04_nlp_and_transformers/notes/induction-extended-run]].
+Setup: 2-layer attention-only transformer on repeated random tokens. The old
+detector measured the attention mass on `q-1` (the previous token) and called
+it "diag+1"; the copy offset on this task is `q-(L-1)`. Its peak was
+0.177 ± 0.006 against a 0.3 threshold — but on the wrong offset, so it is not
+evidence about induction heads. The corrected detector
+(`src/experiments/induction_detection.py`) reports the induction mass on the
+copy offset with the previous-token mass as a control, and confirms a head only
+when the K-composition mechanism agrees; the standard-scale run with it is
+issue #169.
 
 The one solid, matched finding is **fixed versus fresh batches** at otherwise
 identical configs: validation accuracy **0.45% ± 0.03%** (fixed, reused every
@@ -118,10 +125,14 @@ al. (2022) predicts. See [[04_nlp_and_transformers/notes/superposition-and-featu
 <!-- manifest: results/exp4_circuit_patching.json -->
 
 Validation accuracy 0.489 ± 0.014; mean logit-difference recovery 0.197 ± 0.007
-across patched sites. **0/4 heads** detected in the model patched, which is why
-head ablation and path patching were not run: they have nothing to target. The
-retracted pre-fix recovery numbers were removed with their replacement, not left
-dangling. See [[04_nlp_and_transformers/notes/activation-patching]] and
+across patched sites. The **0/4 heads** figure is retracted with the rest
+(2026-10-19): this rung's detector measured the strict upper triangle of a
+causal softmax, which is identically zero and could never fire on any model.
+Head ablation and path patching were therefore never given a target; since
+2026-10-19 the rung analyses Rung 1's own checkpoint (`--from-checkpoint`)
+instead of training a second, differently shaped model. The retracted pre-fix
+recovery numbers were removed with their replacement, not left dangling. See
+[[04_nlp_and_transformers/notes/activation-patching]] and
 [[04_nlp_and_transformers/notes/path-patching]].
 
 ## 6. Sparse autoencoder extraction

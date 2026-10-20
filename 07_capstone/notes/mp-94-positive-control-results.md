@@ -17,6 +17,27 @@ consumes: [ADR-0028, 07_capstone/_MOC]
 > its provenance stay valid; the label does not. The checkpoints are gone, so the
 > re-measurement is a re-run (now a one-command GPU job), not a re-analysis.
 > See the Rung 2 section of portfolio/RESULTS.md for the reversal.
+>
+> **2026-10-19 — the probe was re-measured; the label is MIXED, not SPARSE.**
+> Issue #196 re-ran the P=59 probe with the post-audit energy metric:
+> `results/grokking_p59_repo_energy.json` (3 seeds, CPU, 5000 epochs,
+> batch 128, weight decay 1.0, cosine LR — the **repo protocol**, not the
+> Nanda-faithful one this note's body claims). Per seed:
+
+| Seed | val accuracy | k_energy_90 (of 29) | fraction | energy_sparse |
+|------|--------------|---------------------|----------|---------------|
+| 42 | 1.0000 | 5 | 0.172 | sparse |
+| 43 | 0.9918 | 8 | 0.276 | not sparse |
+| 44 | 0.9988 | 7 | 0.241 | sparse |
+
+**Verdict: 2 of 3 seeds sparse — MIXED.** The classification is knife-edge
+(the `is_sparse` convention is "90% of the energy in fewer than 25% of the
+frequencies": seed 44 sits at 0.241, seed 43 at 0.276), so the honest
+reading is "2/3, with one seed's solution slightly denser" — not the
+"SPARSE" label a majority rule would have produced. No re-run was attempted
+to move the label: re-running a seed until it agrees is selection, not
+measurement. The probe's job (a cheap positive control for the recipe) is
+done by P=113, which is 3/3 on both protocols.
 
 ## Experiment
 

@@ -81,9 +81,12 @@ Bug fix (2026-08-02): prefix must have no repeated tokens (birthday problem).
 |---|---|---|
 | Val acc | 0.45% (below chance!) | **53.5%** |
 | Val loss | 24.31 (climbing) | 3.65 (tracks train) |
-| Heads detected | 0/8 | 0/8 |
+| Heads detected | *retracted (2026-10-19)* | *retracted (2026-10-19)* |
 
-Fresh batches generalize; fixed batches catastrophically overfit. Still no head at this scale (diag+1 < 0.3).
+Fresh batches generalize; fixed batches catastrophically overfit. The head
+counts are retracted: the detector behind them measured the previous-token
+offset (`q-1`) and called it "diag+1" — the copy offset on this task is
+`q-(L-1)` — so they were statements about the detector, not about the model.
 
 ---
 

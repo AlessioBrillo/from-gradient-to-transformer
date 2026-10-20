@@ -5,6 +5,16 @@ created: 2026-08-21
 
 # Extended Induction Heads Run — 10k Epochs ×3 Seeds
 
+> **2026-10-19 — the counts in this note are retracted.** The detector behind
+> every "0/8" and every "diag+1 mass" below measured the **previous-token**
+> offset (`q-1`); the copy offset on this task is `q-(L-1)`. The run itself
+> (a 10k-epoch standard-scale run) is a valid training record, but its head
+> counts are not measurements of induction, and the run was *not* the
+> pre-emergence regime its purpose claimed: with the corrected detector, the
+> standard-scale model forms 2–3 copy heads within 50 epochs (see
+> [[04_nlp_and_transformers/notes/induction-heads]] and
+> [[docs/adr/0032-induction-detector-and-the-positional-shortcut]]).
+
 ## Purpose
 
 The standard-scale induction heads run (2026-08-14, 3000 epochs, fresh-batches) peaked at diag+1 mass 0.075 (threshold 0.3), with 0/8 heads detected. Nanda & Jacobsen (2023) show the two-step path: Step 1 (L0 duplicate-token head) forms first, then Step 2 (K-composition) crosses the threshold later. The 3000-epoch run may have been in the "pre-emergence" regime.

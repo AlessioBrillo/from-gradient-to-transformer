@@ -149,6 +149,17 @@ is meaningless without them.
   per-head — comparing a sum of several small numbers against a threshold meant for one
   number. That is why a curve that looked like it was approaching 1.0 coexisted with zero
   heads actually crossing 0.3: they were never the same unit.
+- **The offset the whole detector measured was wrong** (found 2026-10-19, one layer
+  deeper than the scale bug above): the detector measured the mass on `q-1` — the
+  *previous token* — and called it "diag+1". On the repeated-token task the copy offset
+  is `q-(L-1)`, so every "0 / N induction heads" figure this repository published was a
+  statement about the detector. A second detector (exp4's) measured the strict upper
+  triangle of a causal softmax and was identically zero. The planted tests planted the
+  same wrong pattern, which is why the defect survived: a test that encodes the bug
+  passes the bug. Fix: one shared detector
+  (`src/experiments/induction_detection.py`), mass on the copy offset with the
+  previous-token mass kept as a labelled control, confirmation by K-composition, and
+  planted tests rebuilt around the task layout.
 
 ## Limitations — what this note does *not* prove
 

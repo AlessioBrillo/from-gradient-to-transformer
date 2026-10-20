@@ -21,6 +21,22 @@ Ordered cheapest/highest-signal → more ambitious. Each is a defensible standal
 - **Compute:** minutes to a couple hours on one GPU.
 - **Headline:** "Induction heads emerge and I show, causally (ablation/patching), that they implement `[A][B]...[A]->[B]`."
 - **Reference:** Olsson, Elhage, Nanda et al., Transformer Circuits Thread (Anthropic), 2022.
+- **Measured 2026-10-20 (GPU, standard scale, 3 seeds):** the detector confirms a
+  head — three per seed, copy-offset mass 0.95, within 50 epochs — but the head is in
+  the **first layer** and the K-composition between layers is ~0.1, so there is **no
+  two-step circuit**. The dissociation probe (a second half that is a *permuted* copy
+  of the prefix) says the copy follows the **fixed offset**, not the previous
+  occurrence of the same token (period mass 0.91 vs content mass 0.03, 3/3 seeds).
+  **The task, as designed, admits a positional shortcut**: on a perfectly periodic
+  sequence the previous occurrence of the current token is always at `q-L`, so
+  "copy by content" and "copy by offset" are the same function in-distribution.
+  The honest name for what this rung measures is therefore *prefix-copying head at
+  offset L-1*, and the headline above is **not earned** by this task.
+- **Open question (v1.1):** a task that *forces* content matching — repeated
+  tokens at *varying* distances, so the copy distance is not predictable from the
+  position — is the only way to make the induction claim testable here. That is a
+  task-design increment, not a scale increment: no amount of epochs or parameters
+  removes a shortcut the task hands the model.
 
 ### Rung 2 — Grokking on Modular Addition (PRIMARY FLAGSHIP ★)
 
