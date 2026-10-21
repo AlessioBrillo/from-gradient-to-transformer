@@ -28,8 +28,15 @@ included:
 | 1 Prefix-copying heads | A head **does** form at standard scale (GPU, 3 seeds, 3000 epochs): 2–3 heads per seed, copy-offset mass 0.945, ablation effect 0.44, path-patch effect 0.82 — but the dissociation probe shows the copy follows a **fixed offset**, not the previous occurrence of the same token, so it is a *prefix-copying* head, not an induction head (the repeated-token task is perfectly periodic and hands the model that shortcut). The retracted "0 / 8" was a detector artifact: the detector measured the previous-token offset. The fixed-vs-fresh-batches comparison remains the one solid finding (53.5% vs 0.45% validation accuracy). |
 | 2 Grokking | ✅ **REPRODUCED 2026-10-14**: val accuracy 0.9999 ± 0.0002, sparse circuit (k_energy_90 = 5.7 ± 1.2 of 56) on both the Nanda protocol and the historical repo protocol, 3/3 seeds each. The 2026-08-11 NO-GROK was a metric artifact — retracted. |
 | 3 Superposition | Phase transition reproduced (10/20 → 20/20 features represented; pentagon geometry at sparsity ≤ 0.1). |
-| 4 Circuit patching | ✅ The cascade ran end to end on Rung 1's own checkpoint: head ablation 0.4445 ± 0.0425, path patching 0.8215 ± 0.1255 — the first end-to-end path-patching result against a real head. |
-| 5 SAE | Synthetic data reproduces; on real activations reconstruction is good but dense (53% of features active). |
+| 4 Circuit patching | ✅ The cascade ran end to end on Rung 1's own checkpoint: head ablation 0.4445 ± 0.0425, path patching 0.8215 ± 0.1255 — the first end-to-end path-patching result against a real head (a prefix-copying one: it validates the method, not yet an induction circuit). |
+| 5 SAE | Synthetic data reproduces; on real activations the dictionary is sparse (L0 3.0% of 512 active) but ~8× wider than the 64-dimensional residual stream, with 78% of its features never firing — the dictionary size, not the sparsity, is the open question. |
+
+The manifests behind that table: Rung 1
+<!-- manifest: results/induction_standard.json -->, Rung 2
+<!-- manifest: results/grokking_nanda_p113.json -->, Rung 3
+<!-- manifest: results/exp3_superposition.json -->, Rung 4
+<!-- manifest: results/exp4_standard.json -->, Rung 5
+<!-- manifest: results/exp5_real_activations.json -->.
 
 Read the Honesty Ledger in [`portfolio/RESULTS.md`](portfolio/RESULTS.md) before citing any
 number from this repository: seven audits have now examined these claims — six found numbers

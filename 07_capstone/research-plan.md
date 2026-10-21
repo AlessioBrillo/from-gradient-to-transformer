@@ -32,11 +32,20 @@ Ordered cheapest/highest-signal → more ambitious. Each is a defensible standal
   "copy by content" and "copy by offset" are the same function in-distribution.
   The honest name for what this rung measures is therefore *prefix-copying head at
   offset L-1*, and the headline above is **not earned** by this task.
-- **Open question (v1.1):** a task that *forces* content matching — repeated
+- **Open question (v1.1, issue #200):** a task that *forces* content matching — repeated
   tokens at *varying* distances, so the copy distance is not predictable from the
   position — is the only way to make the induction claim testable here. That is a
   task-design increment, not a scale increment: no amount of epochs or parameters
-  removes a shortcut the task hands the model.
+  removes a shortcut the task hands the model. The task is now specified and
+  frozen ([ADR-0033](../docs/adr/0033-content-based-induction-task.md), the
+  [pre-registration](notes/variable-distance-induction-preregistration.md)): a key
+  of 36 distinct tokens, four verbatim copy blocks of five with the source
+  windows and the block positions resampled per sequence, so the best single
+  fixed offset explains 17.6% of the copy queries while a content-matching head
+  can reach 100%. Seven criteria, three seeds, the same budget as the periodic
+  run, and a verdict computed from the manifest rather than by hand. The GPU
+  run is the one open item that can still change a headline claim in this
+  repository.
 
 ### Rung 2 — Grokking on Modular Addition (PRIMARY FLAGSHIP ★)
 

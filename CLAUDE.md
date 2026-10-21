@@ -55,12 +55,18 @@ make remote-run-grokking GPU_USER=<you>   # Rung 2 audit (issue #167)
 make remote-run-induction GPU_USER=<you>  # Rung 1/4/5 cascade (issue #169)
 make remote-run-capstone GPU_USER=<you>   # capstone 3x20k (issue #170)
 make remote-run-sweep GPU_USER=<you>      # phase-diagram protocol ablation (issue #168)
+make remote-run-induction-content GPU_USER=<you>  # content-based induction task (issue #200)
 make remote-pin PIN_FROM=<dir>            # validate + install downloaded manifests
 ```
 
 Everything runs from the repo root: `FIGURES_DIR`, `RESULTS_DIR` and
 `CHECKPOINTS_DIR` are CWD-relative by design. Run experiments as
 `uv run python -m src.experiments.<module>`.
+
+The record is audited, not just the code: `make verify-claims` checks that every
+public number has a committed manifest behind it, and `make docs-audit` checks
+that the *prose* around those numbers does not contradict them (a ratchet over
+the claims this repository has already retracted).
 
 This is **not** a distributable package — `pyproject.toml` has no
 `[build-system]` and the code is used in place via `uv run`.

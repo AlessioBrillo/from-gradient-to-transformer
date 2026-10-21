@@ -8,9 +8,18 @@ request, per-cell standard `ResultsManifest` JSON files that the honesty
 system (`make verify-claims`) can cite.
 
 Usage:
-    python scripts/phase_diagram_sweep.py --config configs/phase_diagram_sweep.yaml
+    python scripts/phase_diagram_sweep.py --config configs/phase_diagram_ablation.yaml
     python scripts/phase_diagram_sweep.py --config configs/phase_diagram_sweep_test.yaml \
         --emit-manifests results/ --dry-run   # prints the cells
+
+The default configuration is the **pre-registered protocol ablation** of
+issue #168 (`configs/phase_diagram_ablation.yaml`: ten cells, three seeds,
+20k steps each). The older `configs/phase_diagram_sweep.yaml` is a
+different, larger sweep (43 cells across a P-sweep) and has to be asked
+for explicitly: it was the default once, and the disagreement between
+"ten cells" in the issue and "forty-three" in the runner's default was a
+one-word fix that would have shipped a five-times-larger experiment than
+the one that was pre-registered.
 
 Design contract (issue #168): a sweep cell IS an exp2/exp6 run at that
 config, not a re-implementation that can drift from one. The solo path
@@ -666,9 +675,27 @@ def emit_cell_manifest(cell: SweepCell, result: CellResult, out_dir: Path) -> Pa
     return out_path
 
 
-def main():
+def build_parser() -> argparse.ArgumentParser:
+    """The sweep CLI, extracted from main() so the defaults are testable.
+
+    A default that is only documented in prose is a default nobody checks:
+    the ten-cell pre-registration of issue #168 lived next to a runner
+    whose default was a forty-three-cell sweep, and the disagreement was
+    invisible until the manifests were on disk.
+    """
     parser = argparse.ArgumentParser(description="Phase Diagram Sweep Runner")
-    parser.add_argument("--config", type=str, default="configs/phase_diagram_sweep.yaml")
+    parser.add_argument(
+        "--config",
+        type=str,
+        default="configs/phase_diagram_ablation.yaml",
+        help=(
+            "The sweep configuration. The default is the pre-registered "
+            "protocol ablation of issue #168 "
+            "(configs/phase_diagram_ablation.yaml, ten cells); the older, "
+            "larger P-sweep lives in configs/phase_diagram_sweep.yaml and "
+            "has to be named explicitly."
+        ),
+    )
     parser.add_argument("--manifest-path", type=str, default="results/phase_diagram.pt")
     parser.add_argument(
         "--max-cells", type=int, default=None, help="Limit number of cells (for testing)"
@@ -681,7 +708,11 @@ def main():
         default=None,
         help="Directory for per-cell citable ResultsManifest JSON files (e.g. results/)",
     )
-    args = parser.parse_args()
+    return parser
+
+
+def main():
+    args = build_parser().parse_args()
 
     logging.basicConfig(
         level=logging.INFO,

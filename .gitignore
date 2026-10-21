@@ -8,6 +8,15 @@ venv/
 # Failed local run logs (environment stalls; do not version)
 p59_*.log
 p59_*.err
+# Local de-risk / smoke logs from a local CPU run (not a result: the tracked
+# evidence is the manifest, and a local log is written on a dirty tree)
+derisk_*.log
+run.log
+
+# The local gate's own log (ci-local writes it; the gate's verdict is the
+# exit code, the log is scratch)
+ci_local_gate.log
+exp5_*_figures.log
 
 # Generated figures (regenerated with make reproduce). Anchored to root only —
 # an unanchored `figures/` also matched portfolio/figures/, which silently
@@ -39,6 +48,10 @@ paper.md
 # so src/results.py routes it to results/probe_<experiment>_quick.json instead
 # of the tracked results/<experiment>.json. Scratch by design.
 results/probe_*_quick.json
+
+# Scratch manifests of a figure-regeneration run: the tracked manifest is the
+# evidence, the scratch one exists only so the run cannot overwrite it.
+results/scratch_*.json
 
 # Remote-run staging: rendered Kaggle kernels and downloaded manifests wait
 # here until pin_remote_run.py validates and installs them into results/.

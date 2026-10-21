@@ -102,12 +102,17 @@ the writeup.
 - [x] Hook points at every sublayer (27 cache entries per forward pass)
 - [x] Tests: 10 passing (shape, gradient, causal mask, generation, cache)
 - [x] Pipeline runs end-to-end for at least one experiment (Rungs 1, 3, 4, 5 — see [[portfolio/RESULTS]])
-- [ ] Grokking reproduction with progress measures and Fourier analysis
+  <!-- manifest: results/exp3_superposition.json -->
+- [x] Grokking reproduction with progress measures and Fourier analysis (GPU, 3 seeds, both protocols)
+  <!-- manifest: results/grokking_nanda_p113.json -->
 - [x] At least one circuit verification (activation + path patching, `src/experiments/exp4_circuit_patching.py`, fixed 2026-08-01 — see [[05_llm_engineering/proofs/intervention-validity]])
-- [ ] Rungs 1–5 completed and results documented in [[portfolio/RESULTS]] (Rung 2 still pending)
-- [ ] Mini-paper (LaTeX) written with abstract, method, results, ablations, limitations, references to primary literature
-- [ ] Reproducibility harness: `uv sync && make reproduce` regenerates flagship figures
-- [ ] One interactive artifact: SAE feature dashboard on HF Spaces (Rung 5)
+  <!-- manifest: results/exp4_standard.json -->
+- [x] Rungs 1–5 completed and results documented in [[portfolio/RESULTS]] — Rung 2 reproduced, Rung 3 reproduced, Rung 4's cascade ran end to end, Rung 5's real-activation dictionary is sparse; **Rung 1's content-based claim is the open item** (issue #200)
+  <!-- manifest: results/induction_standard.json -->
+- [x] Mini-paper (LaTeX) written with abstract, method, results, ablations, limitations, references to primary literature — `portfolio/paper/main.tex`
+  <!-- manifest: results/grokking_nanda_p113.json -->
+- [x] Reproducibility harness: `uv sync && make reproduce` regenerates flagship figures
+- [ ] One interactive artifact: SAE feature dashboard on HF Spaces (Rung 5) — **descoped 2026-10-11**: the dashboard is a browsable product, and the science it would show (a sparse dictionary on a 64-dimensional residual stream, 78% of its features dead) is already in the manifests.
 
 ## Datasets (synthetic, generated on-the-fly)
 
@@ -120,12 +125,13 @@ the writeup.
 
 ## Hardware
 
-**Hardware.** Every manifest committed in this repository reports
-`device: cpu` — including the P=113 flagship and both capstone probes. The
-capstone at full scale (3 seeds × 20k steps) and the Rung 2 P=113 re-run are the
-two runs that need a GPU; they are issues #170 and #167. Everything else runs on
-a laptop. Tokenizer-adjacent experiments (superposition) run on CPU by design,
-not by necessity.
+**Hardware.** The flagship runs are GPU runs: `results/grokking_nanda_p113.json`
+(P=113, 3 seeds), `results/induction_standard.json` (Rung 1, 3 seeds) and
+`results/capstone_20k.json` (3 seeds × 20k steps) all report `device: cuda`.
+The Rungs 3/4/5 analyses and the phase-diagram sweep run on CPU by design, not
+by necessity. Everything is reproducible on a laptop *except* the three GPU
+manifests above; their notebooks are `notebooks/kaggle_*.ipynb` and their
+provenance (git sha, seeds, device) is inside the manifest.
 
 ## Reference Resources
 

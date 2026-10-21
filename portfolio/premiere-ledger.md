@@ -1,20 +1,29 @@
 # MP-92 Premiere Ledger — Atomic Launch Record
 
-**Launch date:** 2026-09-18  
-**Commit:** [to be filled at launch]  
-**Status:** PRE-DRAFT — URLs to be filled at atomic launch
+**Launch date:** 2026-09-18 (site and paper) — updated 2026-10-20 with the
+receipts that were actually observed
+**Commit:** the live site is built from `main` by `.github/workflows/pages.yml`
+**Status:** **PARTIALLY LAUNCHED** — three of the five channels are live, two
+were never published. The pre-draft below is kept, with the outcome recorded
+next to it, because the difference between "planned" and "shipped" is exactly
+the kind of thing this repository's ledger exists to keep visible.
 
 ---
 
 ## Five Channels (Same-Sitting Launch)
 
-| Channel | Pre-Draft Location | Live URL | Timestamp |
-|---------|-------------------|----------|-----------|
-| **Essay** | `portfolio/essay/grokking-dense-attractor.md` | `URL_TBD` | `TBD` |
-| **Thread** | `portfolio/threads/mp-92-premiere-thread.md` | `URL_TBD` | `TBD` |
-| **Site** | `.github/workflows/pages.yml` → GitHub Pages | `URL_TBD` | `TBD` |
-| **Space** | `portfolio/space/mp-92-space.md` | `URL_TBD` | `TBD` |
-| **Walkthrough** | `portfolio/walkthrough/mp-92-walkthrough.md` | `URL_TBD` | `TBD` |
+| Channel | Pre-Draft Location | Live URL | Status |
+|---------|-------------------|----------|--------|
+| **Essay** | `portfolio/essay/grokking-dense-attractor.md` | <https://alessiobrillo.github.io/from-gradient-to-transformer/portfolio/essay/grokking-dense-attractor.html> | **LIVE** (verified 2026-10-20, HTTP 200) |
+| **Thread** | `portfolio/threads/mp-92-premiere-thread.md` | — | **NOT PUBLISHED**: a launch draft, kept in the repository and deliberately excluded from the site build (`scripts/build_site.py` publishes README, RESULTS, the model card, the project pages and the essay — not the threads) |
+| **Site** | `.github/workflows/pages.yml` → GitHub Pages | <https://alessiobrillo.github.io/from-gradient-to-transformer/> | **LIVE** (verified 2026-10-20, HTTP 200) |
+| **Space** | `portfolio/space/mp-92-space.md` | — | **NOT PUBLISHED**: the HF Spaces demo was descoped on 2026-10-11 (no browsable artifact exists to host) |
+| **Walkthrough** | `portfolio/walkthrough/mp-92-walkthrough.md` | — | **NOT PUBLISHED**: a launch draft, excluded from the site build like the thread |
+
+**Also live** (not one of the five channels, but part of the same public
+surface): the mini-paper PDF,
+<https://alessiobrillo.github.io/from-gradient-to-transformer/paper.pdf>, and
+the per-rung project pages under `portfolio/projects/`.
 
 ---
 
@@ -27,52 +36,31 @@
    feat(portfolio): premiere launch — five channels live
    ```
 4. **Cross-links** — essay ↔ thread ↔ site ↔ Space/walkthrough
-5. **Ledger update** — this file updated with URLs + timestamps
-6. **verify-claims=0** — verified after commit
+5. **Release** — tag, then the announcement
 
----
+## What actually happened (2026-10-20 audit)
 
-## Manifest-Backed Numbers in Premiere
+The five-channel launch **did not happen as one sitting**, and the record says
+so rather than pretending otherwise:
 
-Every quantitative claim in the premiere cites a manifest:
+- steps 1–3 were never executed: there is no "premiere launch" commit, because
+  the three unpublished channels were never published;
+- the site, the essay and the paper PDF are live and are rebuilt from `main` by
+  the Pages workflow;
+- the thread and the walkthrough remain drafts in the repository, and the Space
+  was descoped with the dashboard (2026-10-11) — the three of them are
+  excluded from the site build on purpose, not by accident;
+- **the published essay is current**: it was rewritten on 2026-10-16 against
+  the post-audit manifests (val accuracy 0.9999 ± 0.0002, k_energy_90 = 5.7 of
+  56, 3/3 seeds) and it even names the content-based induction task as the
+  next step. The two *unpublished* drafts (the thread and the walkthrough) are
+  the ones that still carry the 2026-09-18 numbers — the pre-fix "0 heads" and
+  the pre-audit "dense" readings. They are not on the site, so they mislead
+  nobody, and they are rewritten or deleted as part of the closure pass rather
+  than left to rot in the repository.
 
-| Claim | Manifest |
-|-------|----------|
-| Rung 2: val 0.9999 ± 0.0002, k_energy_90 = 5.7 ± 1.2 of 56 (sparse) | `results/grokking_nanda_p113.json`, `results/grokking_repo_p113_energy.json` |
-| Rung 3: 19.67→20/20 features, pentagon | `results/exp3_superposition.json` |
-| Rung 1: 53.5% vs 0.45% fixed-vs-fresh | `results/exp1_induction_heads.json` |
-| Rung 4: ~0.20 recovery, 0 heads | `results/exp4_circuit_patching.json` |
-| Rung 5: 99.97% FVE, 53% L0 (real) | `results/exp5_sae_dashboard.json` |
-| Capstone: ind 0.504, mod 0.0047 | `results/probe_capstone_shakedown.json` |
-| Retune A/B: NO-MOVE (all < chance) | `results/probe_capstone_ab_*.json` |
+## Links
 
----
-
-## Verification
-
-```bash
-# Pre-launch
-uv run pytest -x -q          # 223 passed
-uv run ruff check src/ tests/  # clean
-uv run mypy src/results.py src/experiments/runner.py --strict  # clean
-uv run python -m src.results verify  # all manifests check out
-
-# Post-launch
-curl -I <site-url>           # HTTP 200
-git log --oneline -1         # premiere commit present
-```
-
----
-
-## Cross-References
-
-- Paper v20: `portfolio/paper/main.tex`
-- Teaching artifact v23: `notebooks/capstone_teaching_artifact_v23.ipynb`
-- Results ledger: `portfolio/RESULTS.md`
-- Continuum ledger: `docs/adr/0028-continuum-ledger-23.md`
-- Release report: `00_meta/92_micro-phase-92-release-report.md` (to be written)
-
----
-
-**Written:** 2026-09-18  
-**Status:** Pre-draft complete — awaiting atomic launch
+- [[portfolio/RESULTS]] — the authority on what is true; the essay is written
+  against it, the two unpublished drafts are not.
+- [[07_capstone/execution-log]] — the runs that rewrote the essay.

@@ -461,8 +461,25 @@ Reading the table:
 
 **What this does not claim**: that the model implements Olsson-style content-based
 induction. It does not, on this task. The content-based claim is not testable
-here — it needs a task with repeats at *varying* distances, which is a v1.1
-task-design increment (ADR-0032, decision 3).
+here — it needs a task with repeats at *varying* distances.
+
+### The content-based task (issue #200) — pre-registered, run pending
+
+The task that *does* contain the question is specified, frozen and waiting for
+its GPU run. The short version:
+
+| | |
+|---|---|
+| **The task** | A key of 36 distinct tokens; four verbatim copy blocks of five, with the source windows **and** the block positions resampled per sequence, so the distance between a token and its previous occurrence changes from block to block. Every token appears at most twice (the task is well posed), the filler is distinct and unpredictable, and the copy queries are derived **from the tokens alone** — the detector never has to trust the generator. |
+| **Why it separates the mechanisms** | The best *single fixed offset* explains **17.6%** of the copy queries (measured on the data before the run). A content-matching head can reach 100%. That gap is the claim, and it is a property of the data, not an assumption. |
+| **The verdict** | Seven pre-registered criteria (content mass ≥ 0.30, content mass above the best fixed offset by ≥ 0.10, copy accuracy ≥ 0.60, non-modal-distance accuracy ≥ 0.50, copy accuracy above the fixed-offset baseline by ≥ 0.20, ablation drop ≥ 0.10, path-patching effect ≥ 0.20), computed **from the manifest by the notebook**, per seed, with POSITIVE / PARTIAL / NEGATIVE read off the criteria. |
+| **The budget** | The same as the periodic run — 3 seeds × 3000 epochs = 384k optimizer steps per seed, GPU. A negative at that budget is a negative: the budget is not extended after the fact, and no seed is dropped. |
+| **Where it is** | [ADR-0033](../docs/adr/0033-content-based-induction-task.md), the [pre-registration](../07_capstone/notes/variable-distance-induction-preregistration.md), the notebook `notebooks/kaggle_induction_content.ipynb` (`make remote-run-induction-content`). |
+
+**Status: [ ] not run.** No number is reported here, because there is none
+yet. The experiment exists, its rules are frozen, and the run is the open
+item — the one measurement in this repository that can still change a
+headline claim.
 
 ### Quick scale (the historical scale, for continuity)
 
@@ -778,10 +795,13 @@ be an exact no-op for both activation and path patching
 must move the logit diff somewhere.
 
 **Outputs**: `portfolio/figures/exp4_attention_patterns.png`,
-`portfolio/figures/exp4_patching_results.png`. Head-ablation figure not yet generated — head
-ablation itself is skipped whenever 0 induction heads are detected (see above), so there is
-no ablation result to plot yet; the citation that used to point at a non-existent
-`exp4_head_ablation.png` is struck rather than left dangling.
+`portfolio/figures/exp4_patching_results.png`,
+`portfolio/figures/exp4_head_ablation.png` — all three regenerated on
+2026-10-20 from the **standard-scale checkpoint** (the GPU run's
+`exp1_checkpoint_seed0.pt`, epoch 3000), not from a quick-mode model: the
+head-ablation figure is the one that used to be missing, because head
+ablation is skipped whenever 0 induction heads are detected, and the cascade
+had never had a head to point at. It does now.
 
 **Reference**: Wang et al., "Interpretability in the Wild: a Circuit for Indirect Object Identification in GPT-2 small," ICLR 2023. Zhang & Nanda, "Towards Best Practices of Activation Patching," ICLR 2024 — the corrective paper for exactly the site/metric mistakes found here.
 
@@ -900,8 +920,8 @@ every cell, so no reader has to infer them from an aggregate.
 | 2 — Classical ML | ✅ Complete | complete-ml-pipeline |
 | 3 — Deep Learning | ✅ Complete | gradient-flow-and-architectures |
 | 4 — NLP & Transformers | ✅ Complete | circuit-analysis-complete |
-| 5 — LLM Engineering | [~] Instrumentation done (hooks, determinism, harvesting, circuit datasets proven; nnsight pending) | — |
-| 6 — Production AI | [~] Reproducibility harness built (multi-seed + manifests + `verify-claims` + figure-provenance gate 2026-08-07, kill drill + bit-identical checkpoint/resume, CI/mypy fixed, paper scaffold + `make paper` added) — W&B, Hugging Face Spaces, and the mini-paper prose are still open | [reproducible-from-clean-clone](../06_production_ai/proofs/reproducible-from-clean-clone.md) (GREEN 2026-08-27, transcript committed) |
+| 5 — LLM Engineering | [~] Instrumentation done (hooks, determinism, harvesting, circuit datasets proven; nnsight pending — not installed, and the capture protocol the repo uses does not need it) | — |
+| 6 — Production AI | [~] Reproducibility harness built (multi-seed + manifests + `verify-claims` + figure-provenance gate 2026-08-07, kill drill + bit-identical checkpoint/resume, CI/mypy fixed, paper compiled and shipped) — **W&B descoped 2026-09-08** (no credential ever worked; the manifests are the record), **HF Spaces descoped 2026-10-11** (the dashboard is a product, the science is in the manifests), **the mini-paper prose is written** (`portfolio/paper/main.tex`) | [reproducible-from-clean-clone](../06_production_ai/proofs/reproducible-from-clean-clone.md) (GREEN 2026-08-27, transcript committed) |
 | 7 — Capstone | ✅ Gate passed 2026-10-12 on the honest negative, **upgraded to the positive 2026-10-14** | [capstone-gate-honest-negative](../07_capstone/notes/capstone-gate-honest-negative.md) (dense mechanism defended with manifests) → superseded: the sparse circuit is real ([Rung 2](#rung-2--grokking-modular-addition-primary-flagship--reproduced-2026-10-14-the-2026-08-11-no-grok-was-a-metric-artifact)). The planned 3×20k joint run executed 2026-10-14: the modular/induction **dissociation persists at full budget** (induction 0.5034 ± 0.0002 — the same plateau as the 2k shakedown; modular 0.1699 ± 0.0286 vs 1.0 solo), recorded in the [capstone execution log](../07_capstone/execution-log.md), `results/capstone_20k.json` |
 
 ## Summary
@@ -914,6 +934,7 @@ every cell, so no reader has to infer them from an aggregate.
 | 4 — Circuit Patching | ✅ **Cascade ran end to end on Rung 1's checkpoint** (2026-10-20) | Head ablation **0.4445 ± 0.0425**, path patching **0.8215 ± 0.1255** — the first end-to-end path-patching result against a real head; activation recovery 0.0834 |
 | 5 — SAE Dashboard | ✅ Synthetic reproduced; ✅ **the real-activation gap closed** (2026-10-20) | On the confirmed-head checkpoint the SAE is now *sparse*: L0 15.1/512 (3.0%), FVE 99.998%, MSE 0.0004 — against 53% L0 for the old undertrained model. What remains is a dictionary 8× too large (78% dead features) |
 | 6 — ACDC | ❌ Deleted | Was fabricated data; removed 2026-08-01 rather than fixed |
+| 1b — Content-based induction (issue #200) | [ ] **Pre-registered, run pending** | The task that removes the positional shortcut (repeats at varying distances; the best fixed offset explains 17.6% of the copy queries), its seven criteria, its budget and its decision rule are frozen in [ADR-0033](../docs/adr/0033-content-based-induction-task.md) and the [pre-registration](../07_capstone/notes/variable-distance-induction-preregistration.md). It is the one measurement in this repository that can still change a headline claim — and it is reported whatever it says |
 
 **What to trust right now, in order**: (1) Rung 2's sparse-circuit reproduction —
 GPU, 3 seeds, both protocols, post-audit energy metric, manifests pinned with

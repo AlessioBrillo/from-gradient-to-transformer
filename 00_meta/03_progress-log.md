@@ -13,6 +13,58 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-10-20 — The content-based task, and an audit that reads the prose
+
+- **Studied**: the *task* behind Rung 1. The 2026-10-19 audit left one question
+  the periodic task cannot answer, and the answer is not "more epochs": on
+  `prefix + prefix` the previous occurrence of a token is *always* at `q-L`, so
+  "attend to `q-L+1`" and "attend to the token after the previous occurrence" are
+  the same function on the training distribution. The question needs a task in
+  which the two point at different keys.
+- **Built**:
+  - `src/experiments/induction_tasks.py` — the **variable-distance task**: a key
+    of 36 distinct tokens, four verbatim copy blocks of five, with the source
+    windows *and* the block positions resampled per sequence, so the distance
+    between a token and its previous occurrence changes from block to block.
+    Every token appears at most twice (the task is well posed), the filler is
+    distinct and unpredictable, and the copy queries are derived **from the
+    tokens alone** — the detector never has to trust the generator. The best
+    single fixed offset explains **17.6%** of the copy queries: the ceiling of
+    the positional explanation, measured before the run rather than assumed.
+  - The detector became task-agnostic (`CopyLayout`): the periodic path keeps
+    its historical query sets bit-for-bit — every manifest this repository has
+    written stays reproducible — and the variable path measures the content
+    hypothesis on the copy queries. `offset_profile` measures the attention mass
+    on *every* fixed offset, so the positional ceiling is a number in the
+    manifest. `run_content_vs_offset_probe` is the naming test of the new task:
+    there the dissociation is native, so the training distribution itself
+    separates the mechanisms and no off-distribution batch is needed.
+  - `exp1 --task {periodic,variable}`, the copy metrics (accuracy on the copy
+    queries, accuracy on the *non-modal* distance group — the behavioural
+    separator — and the fixed-offset baseline they have to beat), and the
+    cascade (exp4/exp5) learning the task of the checkpoint they analyse.
+  - **ADR-0033 and a pre-registration** (thresholds, budget, decision rule,
+    falsifiers, frozen before the run), and the GPU notebook that computes the
+    verdict from the manifest instead of by hand.
+  - `scripts/docs_audit.py` — the **record ratchet**. `make verify-claims`
+    checks that the manifests exist and that every tag resolves; it does not
+    read the prose, and on 2026-10-20 the paper's limitations, the writeup, the
+    skill tree and the README all still stated claims their own manifests had
+    already falsified. The audit keeps a list of known-false statements that
+    must stay false, and requires every current-facing document to name the
+    manifest behind the status it states.
+- **Found and fixed**: the record drift itself (the paper's limitations,
+  the writeup's Rung 4/5 verdicts, the skill tree's "not yet reproduced", the
+  capstone README's "every manifest reports device: cpu"), the phase sweep's
+  default configuration (a bare invocation would have run 43 cells instead of
+  the 10 that issue #168 pre-registered), and the missing "a task with varying
+  distances" that the 2026-10-20 entry above had already named as the next
+  experiment.
+- **Open question**: does a content-based induction head form on the new task?
+  The pre-registration says a negative is a negative and that the budget is
+  not extended after the fact. The GPU run is issue #200
+  (`make remote-run-induction-content`); the CPU de-risk has to pass first.
+
 ## 2026-10-20 — The GPU run: heads DO form at standard scale — and the probe says the copy is positional
 
 - **Ran** (the actual GPU hours, Kaggle, free tier): the standard-scale run of issue #169 with the corrected detector — `exp1 --standard --fresh-batches --seeds 0,1,2`, 384k optimizer steps per seed, on a T4. The pilot cell measured the GPU first (90 steps/s → 71 min per seed, 3.6 h for three seeds), so the budget was planned from a measurement rather than the notebook's old "~2h" guess.

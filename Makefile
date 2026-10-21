@@ -7,7 +7,9 @@
 	check-links vault-check reproduce-induction-batches reproduce-induction-fixed \
 	reproduce-induction-fresh reproduce-notebook \
 	reproduce-retune reproduce-retune-control reproduce-retune-offset reproduce-retune-reweight \
-	remote-dry-grokking remote-run-grokking remote-run-induction remote-run-capstone remote-run-sweep remote-pin
+	remote-dry-grokking remote-run-grokking remote-run-induction remote-run-capstone remote-run-sweep remote-pin \
+	docs-audit reproduce-induction-content reproduce-induction-content-quick \
+	remote-dry-induction-content remote-run-induction-content
 
 # --- Shell ---
 # The recipes are POSIX verbatim (the CI mirror); Windows GNU Make defaults
@@ -84,11 +86,14 @@ typecheck-strict:
 # and src/models/ were considered for this list and turned out NOT to be
 # clean — real pre-existing errors, not yet fixed — so they stay in the
 # non-blocking full-tree check instead of being wrongly promised here.)
+# The induction modules joined the list on 2026-10-20, when the content task
+# made the detector task-aware: a detector whose offsets are wrong is worse
+# than no detector, so its types are held to the strict bar from the start.
 # --follow-imports=silent: without it, mypy also fails this target on
 # errors in whatever these two files transitively import (caught in CI —
 # see .github/workflows/python-ci.yml's blocking step comment).
 typecheck-new:
-	uv run python -m mypy src/results.py src/experiments/runner.py --ignore-missing-imports --follow-imports=silent
+	uv run python -m mypy src/results.py src/experiments/runner.py src/experiments/induction_tasks.py src/experiments/induction_detection.py --ignore-missing-imports --follow-imports=silent
 
 # --- CI mirror (local replica of .github/workflows/python-ci.yml) ---
 # commitlint-head is part of the mirror since 2026-08-08: the PR-only
@@ -103,7 +108,7 @@ typecheck-new:
 # violation introduced by the new commit escapes it. The new-commit mirror
 # lints exactly what the push will add:
 #   npx --yes commitlint --from origin/dev --to HEAD --config commitlint.config.mjs
-ci-check: lint vault-check typecheck-new typecheck test-cov check-refs commitlint-new commitlint-head
+ci-check: lint vault-check typecheck-new typecheck test-cov check-refs docs-audit commitlint-new commitlint-head
 
 commitlint-new:
 	@echo "=== commitlint (unpushed commits origin/dev..HEAD, mirror of the PR range) ==="
@@ -203,6 +208,25 @@ reproduce-exp3-geometry:
 	@echo "=== Rung 3: pentagon geometry check (5 features -> 2 dims) ==="
 	uv run python -m src.experiments.exp3_superposition --geometry-check
 
+# --- Rung 1 on the content-based task (issue #200, ADR-0033) ---
+# The periodic task cannot separate copying by content from copying by a
+# fixed offset, so Rung 1's headline claim is measured on the
+# variable-distance task instead. The full protocol (task, thresholds,
+# budget, decision rule) is pre-registered in
+# 07_capstone/notes/variable-distance-induction-preregistration.md.
+#
+# The quick target is the CPU de-risk gate of that pre-registration: it
+# proves the pipeline, the detector and the metrics end to end before a GPU
+# hour is spent. The full target is the GPU run and is deliberately *not*
+# the one the CPU can do: 3000 epochs x 3 seeds is ~3.2h on a T4.
+reproduce-induction-content-quick:
+	@echo "=== Rung 1 (content task): CPU de-risk — pipeline, detector, metrics ==="
+	uv run python -m src.experiments.exp1_induction_heads --task variable --vocab-size 256 --seq-len 24 --d-model 64 --n-layers 2 --n-heads 4 --epochs 600 --lr 0.001 --weight-decay 0.1 --batch-size 64 --num-train 1024 --batches fresh --seeds 0 --detect-every 100
+
+reproduce-induction-content:
+	@echo "=== Rung 1 (content task): the pre-registered run (GPU, 3 seeds x 3000 epochs) ==="
+	uv run python -m src.experiments.exp1_induction_heads --task variable --standard --batches fresh --seeds 0,1,2 --checkpoint-dir checkpoints/induction_content --checkpoint-every 250 --resume --detect-every 50 --manifest-path results/induction_content.json
+
 # --- Retune A/B (Micro-Phase 89, Row 2) ---
 # Frozen 500-step arms, seed 0, warmup 100, probe manifests only.
 # Control: exact MP-88 shakedown config at short horizon.
@@ -275,6 +299,19 @@ verify-claims:
 check-refs:
 	uv run python scripts/check_refs.py
 
+# --- Record audit ---
+# `verify-claims` checks that the manifests exist and that every tag
+# resolves. It does not check the *prose* around the tags, and that is where
+# this repository's record drifted on 2026-10-20: the paper's limitations,
+# the writeup, the skill tree and the README still stated claims their own
+# manifests had already falsified, and the green CI could not see it.
+#
+# This target is the ratchet: a list of known-false statements that must
+# stay false, plus the requirement that every current-facing document names
+# the manifest behind the status it states. See scripts/docs_audit.py.
+docs-audit:
+	uv run python scripts/docs_audit.py
+
 # --- Vault gate (CLAUDE.md: "Every note links at least 2 other notes") ---
 # The rule was written down in CLAUDE.md but enforced by nothing, so 20 of 124
 # notes were silently in violation. `check_vault.py` checks link degree, tag
@@ -316,7 +353,8 @@ paper:
 	fi
 
 # --- Remote GPU runs (Kaggle/Colab; see docs/agents/gpu-runs.md) ---
-# The GPU work this repo still owes (issues #196, #168, #169) runs on free
+# The GPU work this repo still owes (issue #200: the content-based induction
+# task, and issue #168: the phase-diagram protocol ablation) runs on free
 # Kaggle/Colab GPUs through one contract: the notebook clones a pinned ref,
 # the experiment writes its own manifest via --seeds --manifest-path, the
 # driver downloads it, and pin_remote_run.py validates + installs it.
@@ -341,6 +379,14 @@ remote-run-grokking:
 remote-run-induction:
 	@echo "=== Rung 1/4/5: scaled induction run + head-validation cascade (GPU) ==="
 	uv run python scripts/kaggle_run.py --notebook notebooks/kaggle_induction_standard.ipynb --branch $(GPU_BRANCH) --user $(GPU_USER) --poll --download
+
+remote-dry-induction-content:
+	@echo "=== Validate the content-based induction GPU notebook without pushing ==="
+	uv run python scripts/kaggle_run.py --notebook notebooks/kaggle_induction_content.ipynb --branch $(GPU_BRANCH) --dry-run
+
+remote-run-induction-content:
+	@echo "=== Rung 1: content-based induction task, 3 seeds x 3000 epochs (GPU, issue #200) ==="
+	uv run python scripts/kaggle_run.py --notebook notebooks/kaggle_induction_content.ipynb --branch $(GPU_BRANCH) --user $(GPU_USER) --poll --download
 
 remote-run-capstone:
 	@echo "=== Capstone: 3 seeds x 20k steps (GPU) ==="

@@ -18,7 +18,9 @@ multi-seed manifest. See [RESULTS](RESULTS.md) for exact status per rung.
 | Research plan | [research-plan](../07_capstone/research-plan.md) |
 | Mini-paper | LaTeX source at [`paper/main.tex`](paper/main.tex); PDF compiled and shipped on the [live site](https://alessiobrillo.github.io/from-gradient-to-transformer/paper.pdf) (`make paper` compiles locally when a TeX toolchain is present) |
 | Model card | [model-card](model-card.md) |
-| Interactive demo (SAE feature browser) | descoped 2026-10-11: needs a confirmed induction-head checkpoint before real-activation SAE is meaningful (issue #169) |
+| Interactive demo (SAE feature browser) | descoped 2026-10-11: a browsable dashboard is a product, and the science it would show (a sparse dictionary on a 64-dimensional residual stream, with 78% of its features dead) is already in the manifests |
+<!-- manifest: results/grokking_nanda_p113.json -->
+<!-- manifest: results/exp5_real_activations.json -->
 | Experiment tracking | descoped 2026-10-11: no W&B credentials; manifests on disk are the record (issue #167/#169/#170) |
 | Code (experiments) | `src/experiments/` |
 | Code (capstone models) | `src/models/decoder_only_transformer.py` — `07_capstone/src/` is empty; see [_MOC](../07_capstone/_MOC.md) |
