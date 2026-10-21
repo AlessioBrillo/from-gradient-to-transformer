@@ -128,6 +128,67 @@ class TestActivationPatching:
         diffs = [abs(v["patched_diff"] - v["clean_diff"]) for v in results.values()]
         assert max(diffs) > 1e-4, "Patching should perturb the logit diff somewhere"
 
+    def test_the_metric_is_read_at_the_answer_s_position(self) -> None:
+        """The reported diff must be the one at the answer's position.
+
+        A loop variable named `pos` once shadowed this function's `pos`
+        parameter, so the metric was read at the *last patched* position
+        instead of the one the answer belongs to. The self-patching test
+        could not see it (a no-op is a no-op at every position) and the
+        unit tests used a position list that stayed in range; the CLI path
+        with a short sequence crashed instead, and the Pages workflow's
+        `make reproduce-quick` caught it.
+        """
+        model, clean, clean_answers, _, _ = self._setup()
+        with torch.no_grad():
+            logits, _ = model(clean)
+        answer = clean_answers
+        counterfactual = _sample_batch(n=16, seed=2)[1][:, -1]
+        idx = torch.arange(clean.size(0))
+        expected = (
+            logits[:, -1, :][idx, answer] - logits[:, -1, :][idx, counterfactual]
+        ).mean().item()
+        results = run_activation_patching(
+            model=model,
+            clean_inputs=clean,
+            clean_answers=answer,
+            corrupted_inputs=clean,
+            corrupted_answers=counterfactual,
+            layers_to_patch=[0],
+            positions_to_patch=[2, 3, 4],
+        )
+        for (layer, _pos), vals in results.items():
+            assert abs(vals["clean_diff"] - expected) < 1e-4, (
+                "the metric must be read at the answer's position, not at the "
+                "last patched one"
+            )
+
+    def test_an_explicit_read_position_is_honoured(self) -> None:
+        """The variable-distance task reads the logit diff at a copy query."""
+        model, clean, clean_answers, _, _ = self._setup()
+        read_pos = 4
+        with torch.no_grad():
+            logits, _ = model(clean)
+        answer = clean_answers
+        counterfactual = _sample_batch(n=16, seed=2)[1][:, -1]
+        idx = torch.arange(clean.size(0))
+        expected = (
+            logits[:, read_pos, :][idx, answer]
+            - logits[:, read_pos, :][idx, counterfactual]
+        ).mean().item()
+        results = run_activation_patching(
+            model=model,
+            clean_inputs=clean,
+            clean_answers=answer,
+            corrupted_inputs=clean,
+            corrupted_answers=counterfactual,
+            layers_to_patch=[0],
+            positions_to_patch=[2, 3],
+            pos=read_pos,
+        )
+        for (layer, _pos), vals in results.items():
+            assert abs(vals["clean_diff"] - expected) < 1e-4
+
 
 class TestPathPatching:
     def test_self_patching_has_zero_direct_effect(self) -> None:

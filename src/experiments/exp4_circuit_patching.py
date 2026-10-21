@@ -452,6 +452,14 @@ def run_activation_patching(
         # the periodic task; on the variable-distance task the copy
         # queries sit at different positions per sequence, so the caller
         # passes the position it patched (and read) at.
+        #
+        # The read position is captured in a local of its own: the patch
+        # loop below iterates over `positions_to_patch`, and a loop
+        # variable named `pos` shadows this parameter, so the metric ends
+        # up reading the *last patched* position instead of the one the
+        # answer belongs to. That bug reached `main` and was caught by the
+        # Pages workflow's `make reproduce-quick` (on a short sequence the
+        # last patched position is out of range for the logits).
         read_at = pos if pos >= 0 else logits.shape[1] - 1
         at_logits = logits[:, read_at, :]
         return at_logits[idx, answer] - at_logits[idx, counterfactual]
@@ -463,11 +471,13 @@ def run_activation_patching(
         resid_pre = clean_cache[f"blocks.{layer}.resid_pre"].to(DEVICE)
         corrupted_resid_mid = corrupted_cache[f"blocks.{layer}.resid_mid"].to(DEVICE)
 
-        for pos in positions_to_patch:
-            target = corrupted_resid_mid[:, pos:pos + 1, :]
-            pre = resid_pre[:, pos:pos + 1, :]
+        for patch_pos in positions_to_patch:
+            target = corrupted_resid_mid[:, patch_pos:patch_pos + 1, :]
+            pre = resid_pre[:, patch_pos:patch_pos + 1, :]
 
-            hook_handle = _install_resid_mid_patch(model, layer, pos, target, pre)
+            hook_handle = _install_resid_mid_patch(
+                model, layer, patch_pos, target, pre
+            )
 
             with torch.no_grad():
                 patched_logits, _ = _forward_with_cache(model, clean_inputs[:batch_size])
@@ -476,7 +486,7 @@ def run_activation_patching(
 
             patched_diff = logit_diff(patched_logits).mean().item()
             recovery = (patched_diff - clean_diff) / (-clean_diff) if clean_diff != 0 else 0.0
-            results[(layer, pos)] = {
+            results[(layer, patch_pos)] = {
                 "clean_diff": clean_diff,
                 "patched_diff": patched_diff,
                 "recovery": recovery,
