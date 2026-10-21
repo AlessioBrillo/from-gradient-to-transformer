@@ -13,6 +13,11 @@ p59_*.err
 derisk_*.log
 run.log
 
+# The local gate's own log (ci-local writes it; the gate's verdict is the
+# exit code, the log is scratch)
+ci_local_gate.log
+exp5_*_figures.log
+
 # Generated figures (regenerated with make reproduce). Anchored to root only —
 # an unanchored `figures/` also matched portfolio/figures/, which silently
 # swallowed the committed curated set (verified 2026-08-07, Micro-Phase 12 Step 1).
