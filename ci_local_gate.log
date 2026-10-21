@@ -1,0 +1,1579 @@
+# ci
+[gate:L0:0s] ▶  apt-get update -q && apt-get install -y -q make
+[gate:L1:0s] Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+[gate:L2:0s] Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+[gate:L3:1s] Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [34.8 kB]
+[gate:L4:1s] Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8790 kB]
+[gate:L5:3s] Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6924 B]
+[gate:L6:3s] Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [354 kB]
+[gate:L7:4s] Fetched 9393 kB in 5s (2063 kB/s)
+[gate:L8:5s] Reading package lists...
+[gate:L9:5s] Reading package lists...
+[gate:L10:6s] Building dependency tree...
+[gate:L11:6s] Reading state information...
+[gate:L12:6s] make is already the newest version (4.3-4.1).
+[gate:L13:6s] 0 upgraded, 0 newly installed, 0 to remove and 111 not upgraded.
+[gate:L14:6s] ▶  uv sync --frozen --all-extras
+[gate:L15:6s] Using CPython 3.12.12 interpreter at: /usr/local/bin/python3
+[gate:L16:6s] Creating virtual environment at: .venv
+[gate:L17:6s] warning: Failed to hardlink files; falling back to full copy. This may lead to degraded performance.
+[gate:L18:6s]          If the cache and target directories are on different filesystems, hardlinking may not be supported.
+[gate:L19:6s]          If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.
+[gate:L20:414s] Installed 155 packages in 6m 48s
+[gate:L21:414s]  + annotated-types==0.7.0
+[gate:L22:414s]  + anyio==4.14.1
+[gate:L23:414s]  + argon2-cffi==25.1.0
+[gate:L24:414s]  + argon2-cffi-bindings==25.1.0
+[gate:L25:414s]  + arrow==1.4.0
+[gate:L26:414s]  + ast-serialize==0.6.0
+[gate:L27:414s]  + asttokens==3.0.1
+[gate:L28:414s]  + async-lru==2.3.0
+[gate:L29:414s]  + attrs==26.1.0
+[gate:L30:414s]  + babel==2.18.0
+[gate:L31:414s]  + beautifulsoup4==4.15.0
+[gate:L32:414s]  + bleach==6.4.0
+[gate:L33:414s]  + certifi==2026.6.17
+[gate:L34:414s]  + cffi==2.0.0
+[gate:L35:414s]  + charset-normalizer==3.4.7
+[gate:L36:414s]  + click==8.4.2
+[gate:L37:414s]  + comm==0.2.3
+[gate:L38:414s]  + contourpy==1.3.3
+[gate:L39:414s]  + coverage==7.14.3
+[gate:L40:414s]  + cuda-bindings==13.3.1
+[gate:L41:414s]  + cuda-pathfinder==1.5.6
+[gate:L42:414s]  + cuda-toolkit==13.0.2
+[gate:L43:414s]  + cycler==0.12.1
+[gate:L44:414s]  + debugpy==1.8.21
+[gate:L45:414s]  + decorator==5.3.1
+[gate:L46:414s]  + defusedxml==0.7.1
+[gate:L47:414s]  + executing==2.2.1
+[gate:L48:414s]  + fastjsonschema==2.21.2
+[gate:L49:414s]  + filelock==3.29.4
+[gate:L50:414s]  + fonttools==4.63.0
+[gate:L51:414s]  + fqdn==1.5.1
+[gate:L52:414s]  + fsspec==2026.4.0
+[gate:L53:414s]  + gitdb==4.0.12
+[gate:L54:414s]  + gitpython==3.1.50
+[gate:L55:414s]  + h11==0.16.0
+[gate:L56:414s]  + httpcore==1.0.9
+[gate:L57:414s]  + httpx==0.28.1
+[gate:L58:414s]  + idna==3.18
+[gate:L59:414s]  + iniconfig==2.3.0
+[gate:L60:414s]  + ipykernel==7.3.0
+[gate:L61:414s]  + ipython==9.15.0
+[gate:L62:414s]  + ipython-pygments-lexers==1.1.1
+[gate:L63:414s]  + ipywidgets==8.1.8
+[gate:L64:414s]  + isoduration==20.11.0
+[gate:L65:414s]  + jedi==0.20.0
+[gate:L66:414s]  + jinja2==3.1.6
+[gate:L67:414s]  + json5==0.15.0
+[gate:L68:414s]  + jsonpointer==3.1.1
+[gate:L69:414s]  + jsonschema==4.26.0
+[gate:L70:414s]  + jsonschema-specifications==2025.9.1
+[gate:L71:414s]  + jupyter==1.1.1
+[gate:L72:414s]  + jupyter-builder==1.0.2
+[gate:L73:414s]  + jupyter-client==8.9.1
+[gate:L74:414s]  + jupyter-console==6.6.3
+[gate:L75:414s]  + jupyter-core==5.9.1
+[gate:L76:414s]  + jupyter-events==0.12.1
+[gate:L77:414s]  + jupyter-lsp==2.3.1
+[gate:L78:414s]  + jupyter-server==2.20.0
+[gate:L79:414s]  + jupyter-server-terminals==0.5.4
+[gate:L80:414s]  + jupyterlab==4.6.1
+[gate:L81:414s]  + jupyterlab-pygments==0.3.0
+[gate:L82:414s]  + jupyterlab-server==2.28.0
+[gate:L83:414s]  + jupyterlab-widgets==3.0.16
+[gate:L84:414s]  + kiwisolver==1.5.0
+[gate:L85:414s]  + lark==1.3.1
+[gate:L86:414s]  + librt==0.12.0
+[gate:L87:414s]  + markdown==3.11
+[gate:L88:414s]  + markupsafe==3.0.3
+[gate:L89:414s]  + matplotlib==3.11.0
+[gate:L90:414s]  + matplotlib-inline==0.2.2
+[gate:L91:414s]  + mistune==3.3.2
+[gate:L92:414s]  + mpmath==1.3.0
+[gate:L93:414s]  + mypy==2.1.0
+[gate:L94:414s]  + mypy-extensions==1.1.0
+[gate:L95:414s]  + nbclient==0.11.0
+[gate:L96:414s]  + nbconvert==7.17.1
+[gate:L97:414s]  + nbformat==5.10.4
+[gate:L98:414s]  + nest-asyncio2==1.7.2
+[gate:L99:414s]  + networkx==3.6.1
+[gate:L100:414s]  + notebook==7.6.0
+[gate:L101:414s]  + notebook-shim==0.2.4
+[gate:L102:414s]  + numpy==2.5.0
+[gate:L103:414s]  + nvidia-cublas==13.1.1.3
+[gate:L104:414s]  + nvidia-cuda-cupti==13.0.85
+[gate:L105:414s]  + nvidia-cuda-nvrtc==13.0.88
+[gate:L106:414s]  + nvidia-cuda-runtime==13.0.96
+[gate:L107:414s]  + nvidia-cudnn-cu13==9.20.0.48
+[gate:L108:414s]  + nvidia-cufft==12.0.0.61
+[gate:L109:414s]  + nvidia-cufile==1.15.1.6
+[gate:L110:414s]  + nvidia-curand==10.4.0.35
+[gate:L111:414s]  + nvidia-cusolver==12.0.4.66
+[gate:L112:414s]  + nvidia-cusparse==12.6.3.3
+[gate:L113:414s]  + nvidia-cusparselt-cu13==0.8.1
+[gate:L114:414s]  + nvidia-nccl-cu13==2.29.7
+[gate:L115:414s]  + nvidia-nvjitlink==13.0.88
+[gate:L116:414s]  + nvidia-nvshmem-cu13==3.4.5
+[gate:L117:414s]  + nvidia-nvtx==13.0.85
+[gate:L118:414s]  + packaging==26.2
+[gate:L119:414s]  + pandocfilters==1.5.1
+[gate:L120:414s]  + parso==0.8.7
+[gate:L121:414s]  + pathspec==1.1.1
+[gate:L122:414s]  + pexpect==4.9.0
+[gate:L123:414s]  + pillow==12.2.0
+[gate:L124:414s]  + platformdirs==4.10.0
+[gate:L125:414s]  + pluggy==1.6.0
+[gate:L126:414s]  + prometheus-client==0.25.0
+[gate:L127:414s]  + prompt-toolkit==3.0.52
+[gate:L128:414s]  + protobuf==7.35.1
+[gate:L129:414s]  + psutil==7.2.2
+[gate:L130:414s]  + ptyprocess==0.7.0
+[gate:L131:414s]  + pure-eval==0.2.3
+[gate:L132:414s]  + pycparser==3.0
+[gate:L133:414s]  + pydantic==2.13.4
+[gate:L134:414s]  + pydantic-core==2.46.4
+[gate:L135:414s]  + pygments==2.20.0
+[gate:L136:414s]  + pyparsing==3.3.2
+[gate:L137:414s]  + pytest==9.1.1
+[gate:L138:414s]  + pytest-cov==7.1.0
+[gate:L139:414s]  + python-dateutil==2.9.0.post0
+[gate:L140:414s]  + python-json-logger==4.1.0
+[gate:L141:414s]  + pyyaml==6.0.3
+[gate:L142:414s]  + pyzmq==27.1.0
+[gate:L143:414s]  + referencing==0.37.0
+[gate:L144:414s]  + requests==2.34.2
+[gate:L145:414s]  + rfc3339-validator==0.1.4
+[gate:L146:414s]  + rfc3986-validator==0.1.1
+[gate:L147:414s]  + rfc3987-syntax==1.1.0
+[gate:L148:414s]  + rpds-py==2026.6.3
+[gate:L149:414s]  + ruff==0.15.20
+[gate:L150:414s]  + send2trash==2.1.0
+[gate:L151:414s]  + sentry-sdk==2.64.0
+[gate:L152:414s]  + setuptools==81.0.0
+[gate:L153:414s]  + six==1.17.0
+[gate:L154:414s]  + smmap==5.0.3
+[gate:L155:414s]  + soupsieve==2.8.4
+[gate:L156:414s]  + stack-data==0.6.3
+[gate:L157:414s]  + sympy==1.14.0
+[gate:L158:414s]  + terminado==0.18.1
+[gate:L159:414s]  + tinycss2==1.5.1
+[gate:L160:414s]  + torch==2.12.1
+[gate:L161:414s]  + tornado==6.5.7
+[gate:L162:414s]  + tqdm==4.68.3
+[gate:L163:414s]  + traitlets==5.15.1
+[gate:L164:414s]  + triton==3.7.1
+[gate:L165:414s]  + typing-extensions==4.15.0
+[gate:L166:414s]  + typing-inspection==0.4.2
+[gate:L167:414s]  + tzdata==2026.2
+[gate:L168:414s]  + uri-template==1.3.0
+[gate:L169:414s]  + urllib3==2.7.0
+[gate:L170:414s]  + wandb==0.28.0
+[gate:L171:414s]  + wcwidth==0.8.2
+[gate:L172:414s]  + webcolors==25.10.0
+[gate:L173:414s]  + webencodings==0.5.1
+[gate:L174:414s]  + websocket-client==1.9.0
+[gate:L175:414s]  + widgetsnbextension==4.0.15
+[gate:L176:414s] ▶  make lint vault-check typecheck-new typecheck test-cov check-refs docs-audit
+[gate:L177:414s] uv run ruff check src/ tests/ scripts/
+[gate:L178:430s] All checks passed!
+[gate:L179:430s] uv run python scripts/check_vault.py
+[gate:L180:458s] check-vault: 154 files checked — links, tags and MOC coverage OK.
+[gate:L181:458s] uv run python scripts/check_links.py
+[gate:L182:1116s] check-links: 58 dead link(s) in the frozen 00_meta/ archive (reported, not enforced).
+[gate:L183:1116s] 
+[gate:L184:1116s] check-links: 1956 wikilink(s) checked — all resolve.
+[gate:L185:1116s] uv run python -m mypy src/results.py src/experiments/runner.py src/experiments/induction_tasks.py src/experiments/induction_detection.py --ignore-missing-imports --follow-imports=silent
+[gate:L186:1880s] Success: no issues found in 4 source files
+[gate:L187:2448s] src/models/tree_model.py:62: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L188:2448s] src/models/tree_model.py:75: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L189:2448s] src/models/tree_model.py:112: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L190:2448s] src/models/tree_model.py:118: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L191:2448s] src/models/tree_model.py:150: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L192:2449s] src/models/pca.py:61: error: Returning Any from function declared to return "ndarray[tuple[Any, ...], dtype[Any]]"  [no-any-return]
+[gate:L193:2449s] src/models/pca.py:71: error: Returning Any from function declared to return "ndarray[tuple[Any, ...], dtype[Any]]"  [no-any-return]
+[gate:L194:2449s] src/models/pca.py:157: error: Returning Any from function declared to return "ndarray[tuple[Any, ...], dtype[Any]]"  [no-any-return]
+[gate:L195:2449s] src/models/pca.py:161: error: Incompatible return value type (got "ndarray[tuple[Any, ...], dtype[Any]] | None", expected "ndarray[tuple[Any, ...], dtype[Any]]")  [return-value]
+[gate:L196:2449s] src/models/linear_model.py:12: error: Returning Any from function declared to return "ndarray[tuple[Any, ...], dtype[Any]]"  [no-any-return]
+[gate:L197:2449s] src/models/linear_model.py:114: error: Value of type "float" is not indexable  [index]
+[gate:L198:2449s] src/models/linear_model.py:115: error: Value of type "float" is not indexable  [index]
+[gate:L199:2449s] src/models/linear_model.py:118: error: Incompatible types in assignment (expression has type "float", variable has type "ndarray[tuple[Any, ...], dtype[Any]] | None")  [assignment]
+[gate:L200:2449s] src/models/linear_model.py:124: error: Returning Any from function declared to return "ndarray[tuple[Any, ...], dtype[Any]]"  [no-any-return]
+[gate:L201:2449s] src/models/linear_model.py:192: error: Value of type "float" is not indexable  [index]
+[gate:L202:2449s] src/models/linear_model.py:193: error: Value of type "float" is not indexable  [index]
+[gate:L203:2449s] src/models/linear_model.py:196: error: Incompatible types in assignment (expression has type "float", variable has type "ndarray[tuple[Any, ...], dtype[Any]] | None")  [assignment]
+[gate:L204:2449s] src/models/linear_model.py:213: error: Returning Any from function declared to return "ndarray[tuple[Any, ...], dtype[Any]]"  [no-any-return]
+[gate:L205:2449s] src/evaluation/metrics.py:135: error: "object" has no attribute "fit"  [attr-defined]
+[gate:L206:2449s] src/evaluation/metrics.py:136: error: "object" has no attribute "predict"  [attr-defined]
+[gate:L207:2606s] src/models/decoder_only_transformer.py:41: error: Returning Any from function declared to return "Tensor"  [no-any-return]
+[gate:L208:2606s] src/models/decoder_only_transformer.py:61: error: "Tensor" not callable  [operator]
+[gate:L209:2606s] src/models/decoder_only_transformer.py:121: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L210:2606s] src/models/decoder_only_transformer.py:149: error: Value of type "Tensor | Module" is not indexable  [index]
+[gate:L211:2606s] src/models/decoder_only_transformer.py:177: error: Incompatible return value type (got "tuple[Any, tuple[Tensor, Tensor]]", expected "Tensor")  [return-value]
+[gate:L212:2606s] src/models/decoder_only_transformer.py:190: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L213:2606s] src/models/decoder_only_transformer.py:200: error: Returning Any from function declared to return "Tensor"  [no-any-return]
+[gate:L214:2606s] src/models/decoder_only_transformer.py:221: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L215:2606s] src/models/decoder_only_transformer.py:319: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L216:2606s] src/models/decoder_only_transformer.py:342: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L217:2606s] src/models/decoder_only_transformer.py:369: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L218:2606s] src/models/decoder_only_transformer.py:423: error: Need type annotation for "out" (hint: "out: list[<type>] = ...")  [var-annotated]
+[gate:L219:2606s] src/models/decoder_only_transformer.py:441: error: Name "past_kv" already defined on line 426  [no-redef]
+[gate:L220:2609s] src/experiments/exp3_superposition.py:151: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L221:2609s] src/experiments/exp3_superposition.py:156: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L222:2609s] src/experiments/exp3_superposition.py:163: error: Need type annotation for "history"  [var-annotated]
+[gate:L223:2609s] src/experiments/exp3_superposition.py:176: error: Argument 1 to "len" has incompatible type "Dataset[Any]"; expected "Sized"  [arg-type]
+[gate:L224:2609s] src/experiments/exp3_superposition.py:184: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L225:2609s] src/experiments/exp3_superposition.py:199: error: Item "Tensor" of "Tensor | Module" has no attribute "weight"  [union-attr]
+[gate:L226:2609s] src/experiments/exp3_superposition.py:199: error: "Tensor" not callable  [operator]
+[gate:L227:2609s] src/experiments/exp3_superposition.py:243: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L228:2609s] src/experiments/exp3_superposition.py:266: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L229:2609s] src/experiments/exp3_superposition.py:273: error: Returning Any from function declared to return "bool"  [no-any-return]
+[gate:L230:2609s] src/experiments/exp2_grokking.py:89: error: Missing type arguments for generic type "list"  [type-arg]
+[gate:L231:2609s] src/experiments/exp2_grokking.py:93: error: Incompatible return value type (got "tuple[Tensor, Tensor]", expected "Tensor")  [return-value]
+[gate:L232:2609s] src/experiments/exp2_grokking.py:170: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L233:2609s] src/experiments/exp2_grokking.py:185: error: Need type annotation for "activations"  [var-annotated]
+[gate:L234:2609s] src/experiments/exp2_grokking.py:198: error: Unsupported target for indexed assignment ("dict[Any, Any] | None")  [index]
+[gate:L235:2609s] src/experiments/exp2_grokking.py:199: error: Unsupported target for indexed assignment ("dict[Any, Any] | None")  [index]
+[gate:L236:2609s] src/experiments/exp2_grokking.py:229: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L237:2609s] src/experiments/exp2_grokking.py:277: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L238:2609s] src/experiments/exp2_grokking.py:278: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L239:2609s] src/experiments/exp2_grokking.py:293: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L240:2609s] src/experiments/exp2_grokking.py:328: error: Incompatible import of "_wandb" (imported name has type Module, local name has type "object")  [assignment]
+[gate:L241:2609s] src/experiments/exp2_grokking.py:330: error: "None" has no attribute "init"  [attr-defined]
+[gate:L242:2609s] src/experiments/exp2_grokking.py:366: error: Need type annotation for "history"  [var-annotated]
+[gate:L243:2609s] src/experiments/exp2_grokking.py:427: error: "Tensor" not callable  [operator]
+[gate:L244:2609s] src/experiments/exp2_grokking.py:439: error: Item "Tensor" of "Tensor | Module" has no attribute "weight"  [union-attr]
+[gate:L245:2609s] src/experiments/exp2_grokking.py:439: error: "Tensor" not callable  [operator]
+[gate:L246:2609s] src/experiments/exp2_grokking.py:443: error: Item "Tensor" of "Tensor | Module" has no attribute "weight"  [union-attr]
+[gate:L247:2609s] src/experiments/exp2_grokking.py:443: error: "Tensor" not callable  [operator]
+[gate:L248:2609s] src/experiments/exp2_grokking.py:478: error: Item "Tensor" of "Tensor | Module" has no attribute "weight"  [union-attr]
+[gate:L249:2609s] src/experiments/exp2_grokking.py:478: error: "Tensor" not callable  [operator]
+[gate:L250:2609s] src/experiments/exp2_grokking.py:478: error: Argument 2 to "fourier_sparsity_progress" has incompatible type "Tensor | Module"; expected "int"  [arg-type]
+[gate:L251:2609s] src/experiments/exp2_grokking.py:533: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L252:2609s] src/experiments/exp2_grokking.py:574: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L253:2609s] src/experiments/exp2_grokking.py:604: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L254:2609s] src/experiments/exp2_grokking.py:697: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L255:2609s] src/experiments/exp2_grokking.py:718: error: No overload variant of "arange" matches argument type "Tensor | Module"  [call-overload]
+[gate:L256:2609s] src/experiments/exp2_grokking.py:718: note: Possible overload variants:
+[gate:L257:2609s] src/experiments/exp2_grokking.py:718: note:     def arange(start: int | float | bool, end: int | float | bool, step: int | float | bool, *, out: Tensor | None = ..., dtype: dtype | None = ..., device: str | device | int | None = ..., requires_grad: bool = ..., pin_memory: bool = ...) -> Tensor
+[gate:L258:2609s] src/experiments/exp2_grokking.py:718: note:     def arange(start: int | float | bool, end: int | float | bool, *, out: Tensor | None = ..., dtype: dtype | None = ..., device: str | device | int | None = ..., requires_grad: bool = ..., pin_memory: bool = ...) -> Tensor
+[gate:L259:2609s] src/experiments/exp2_grokking.py:718: note:     def arange(end: int | float | bool, *, out: Tensor | None = ..., dtype: dtype | None = ..., device: str | device | int | None = ..., requires_grad: bool = ..., pin_memory: bool = ...) -> Tensor
+[gate:L260:2609s] src/experiments/exp2_grokking.py:718: note:     def arange(end: int | float | bool | complex, *, out: Tensor | None = ..., dtype: dtype | None = ..., layout: layout | None = ..., device: str | device | int | None = ..., pin_memory: bool | None = ..., requires_grad: bool | None = ...) -> Tensor
+[gate:L261:2609s] src/experiments/exp2_grokking.py:718: note:     def arange(start: int | float | bool | complex, end: int | float | bool | complex, *, dtype: dtype | None = ..., layout: layout | None = ..., device: str | device | int | None = ..., pin_memory: bool | None = ..., requires_grad: bool | None = ...) -> Tensor
+[gate:L262:2609s] src/experiments/exp2_grokking.py:718: note:     def arange(start: int | float | bool | complex, end: int | float | bool | complex, step: int | float | bool | complex = ..., *, out: Tensor | None = ..., dtype: dtype | None = ..., layout: layout | None = ..., device: str | device | int | None = ..., pin_memory: bool | None = ..., requires_grad: bool | None = ...) -> Tensor
+[gate:L263:2609s] src/experiments/exp2_grokking.py:719: error: No overload variant of "arange" matches argument type "Tensor | Module"  [call-overload]
+[gate:L264:2609s] src/experiments/exp2_grokking.py:719: note: Possible overload variants:
+[gate:L265:2609s] src/experiments/exp2_grokking.py:719: note:     def arange(start: int | float | bool, end: int | float | bool, step: int | float | bool, *, out: Tensor | None = ..., dtype: dtype | None = ..., device: str | device | int | None = ..., requires_grad: bool = ..., pin_memory: bool = ...) -> Tensor
+[gate:L266:2609s] src/experiments/exp2_grokking.py:719: note:     def arange(start: int | float | bool, end: int | float | bool, *, out: Tensor | None = ..., dtype: dtype | None = ..., device: str | device | int | None = ..., requires_grad: bool = ..., pin_memory: bool = ...) -> Tensor
+[gate:L267:2609s] src/experiments/exp2_grokking.py:719: note:     def arange(end: int | float | bool, *, out: Tensor | None = ..., dtype: dtype | None = ..., device: str | device | int | None = ..., requires_grad: bool = ..., pin_memory: bool = ...) -> Tensor
+[gate:L268:2609s] src/experiments/exp2_grokking.py:719: note:     def arange(end: int | float | bool | complex, *, out: Tensor | None = ..., dtype: dtype | None = ..., layout: layout | None = ..., device: str | device | int | None = ..., pin_memory: bool | None = ..., requires_grad: bool | None = ...) -> Tensor
+[gate:L269:2609s] src/experiments/exp2_grokking.py:719: note:     def arange(start: int | float | bool | complex, end: int | float | bool | complex, *, dtype: dtype | None = ..., layout: layout | None = ..., device: str | device | int | None = ..., pin_memory: bool | None = ..., requires_grad: bool | None = ...) -> Tensor
+[gate:L270:2609s] src/experiments/exp2_grokking.py:719: note:     def arange(start: int | float | bool | complex, end: int | float | bool | complex, step: int | float | bool | complex = ..., *, out: Tensor | None = ..., dtype: dtype | None = ..., layout: layout | None = ..., device: str | device | int | None = ..., pin_memory: bool | None = ..., requires_grad: bool | None = ...) -> Tensor
+[gate:L271:2609s] src/experiments/exp2_grokking.py:721: error: No overload variant of "__rpow__" of "float" matches argument type Module  [operator]
+[gate:L272:2609s] src/experiments/exp2_grokking.py:721: note: Possible overload variants:
+[gate:L273:2609s] src/experiments/exp2_grokking.py:721: note:     def __rpow__(self, Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25], None = ..., /) -> float
+[gate:L274:2609s] src/experiments/exp2_grokking.py:721: note:     def __rpow__(self, Literal[-1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12, -13, -14, -15, -16, -17, -18, -19, -20], None = ..., /) -> complex
+[gate:L275:2609s] src/experiments/exp2_grokking.py:721: note:     def __rpow__(self, float, None = ..., /) -> Any
+[gate:L276:2609s] src/experiments/exp2_grokking.py:721: note: Left operand is of type "Tensor | Module"
+[gate:L277:2609s] src/experiments/exp2_grokking.py:724: error: No overload variant of "zeros" matches argument types "Tensor | Module", "Tensor | Module", "dtype"  [call-overload]
+[gate:L278:2609s] src/experiments/exp2_grokking.py:724: note: Possible overload variants:
+[gate:L279:2609s] src/experiments/exp2_grokking.py:724: note:     def zeros(size: Sequence[int | SymInt], *, out: Tensor | None = ..., dtype: dtype | None = ..., layout: layout | None = ..., device: str | device | int | None = ..., pin_memory: bool | None = ..., requires_grad: bool | None = ...) -> Tensor
+[gate:L280:2609s] src/experiments/exp2_grokking.py:724: note:     def zeros(*size: int | SymInt, out: Tensor | None = ..., dtype: dtype | None = ..., layout: layout | None = ..., device: str | device | int | None = ..., pin_memory: bool | None = ..., requires_grad: bool | None = ...) -> Tensor
+[gate:L281:2609s] src/experiments/exp2_grokking.py:724: note:     def zeros(size: Size | list[int] | tuple[int, ...], *, names: Sequence[str | EllipsisType | None] | None, dtype: dtype | None = ..., layout: layout | None = ..., device: str | device | int | None = ..., pin_memory: bool | None = ..., requires_grad: bool | None = ...) -> Tensor
+[gate:L282:2609s] src/experiments/exp2_grokking.py:724: note:     def zeros(*size: int, names: Sequence[str | EllipsisType | None] | None, dtype: dtype | None = ..., layout: layout | None = ..., device: str | device | int | None = ..., pin_memory: bool | None = ..., requires_grad: bool | None = ...) -> Tensor
+[gate:L283:2609s] src/experiments/exp2_grokking.py:732: error: Item "Tensor" of "Tensor | Module" has no attribute "weight"  [union-attr]
+[gate:L284:2609s] src/experiments/exp2_grokking.py:732: error: "Tensor" not callable  [operator]
+[gate:L285:2609s] src/experiments/exp2_grokking.py:736: error: Item "Tensor" of "Tensor | Module" has no attribute "weight"  [union-attr]
+[gate:L286:2609s] src/experiments/exp2_grokking.py:749: error: Item "Tensor" of "Tensor | Module" has no attribute "weight"  [union-attr]
+[gate:L287:2609s] src/experiments/exp2_grokking.py:749: error: Argument 1 to "to" of "TensorBase" has incompatible type "Any | device | Tensor | Module"; expected "dtype"  [arg-type]
+[gate:L288:2609s] src/experiments/exp2_grokking.py:756: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L289:2609s] src/experiments/exp2_grokking.py:757: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L290:2609s] src/experiments/exp2_grokking.py:759: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L291:2609s] src/experiments/exp2_grokking.py:810: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L292:2609s] src/experiments/exp2_grokking.py:826: error: Incompatible types in assignment (expression has type "int", variable has type "ndarray[tuple[int], dtype[signedinteger[_32Bit | _64Bit]]]")  [assignment]
+[gate:L293:2609s] src/experiments/exp2_grokking.py:855: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L294:2609s] src/experiments/exp2_grokking.py:924: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L295:2609s] src/experiments/exp2_grokking.py:926: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L296:2609s] src/experiments/exp2_grokking.py:978: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L297:2609s] src/experiments/exp2_grokking.py:1017: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L298:2610s] src/experiments/exp1_induction_heads.py:248: error: Missing type arguments for generic type "list"  [type-arg]
+[gate:L299:2610s] src/experiments/exp1_induction_heads.py:249: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L300:2610s] src/experiments/exp1_induction_heads.py:294: error: Returning Any from function declared to return "Tensor"  [no-any-return]
+[gate:L301:2610s] src/experiments/exp1_induction_heads.py:319: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L302:2610s] src/experiments/exp1_induction_heads.py:320: error: Missing type arguments for generic type "list"  [type-arg]
+[gate:L303:2610s] src/experiments/exp1_induction_heads.py:325: error: Need type annotation for "attn_records"  [var-annotated]
+[gate:L304:2610s] src/experiments/exp1_induction_heads.py:338: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L305:2610s] src/experiments/exp1_induction_heads.py:356: error: Argument 1 to "len" has incompatible type "Dataset[Any]"; expected "Sized"  [arg-type]
+[gate:L306:2610s] src/experiments/exp1_induction_heads.py:364: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L307:2610s] src/experiments/exp1_induction_heads.py:475: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L308:2610s] src/experiments/exp1_induction_heads.py:479: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L309:2610s] src/experiments/exp1_induction_heads.py:532: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L310:2610s] src/experiments/exp1_induction_heads.py:533: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L311:2610s] src/experiments/exp1_induction_heads.py:539: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L312:2610s] src/experiments/exp1_induction_heads.py:551: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L313:2610s] src/experiments/exp1_induction_heads.py:609: error: Incompatible import of "_wandb" (imported name has type Module, local name has type "object")  [assignment]
+[gate:L314:2610s] src/experiments/exp1_induction_heads.py:611: error: "None" has no attribute "init"  [attr-defined]
+[gate:L315:2610s] src/experiments/exp1_induction_heads.py:615: error: Item "Tensor" of "Tensor | Module" has no attribute "num_embeddings"  [union-attr]
+[gate:L316:2610s] src/experiments/exp1_induction_heads.py:616: error: Item "Tensor" of "Tensor | Module" has no attribute "embedding_dim"  [union-attr]
+[gate:L317:2610s] src/experiments/exp1_induction_heads.py:634: error: Need type annotation for "history"  [var-annotated]
+[gate:L318:2610s] src/experiments/exp1_induction_heads.py:648: error: Incompatible types in assignment (expression has type "float", target has type "list[Any]")  [assignment]
+[gate:L319:2610s] src/experiments/exp1_induction_heads.py:695: error: Argument 1 to "len" has incompatible type "Dataset[Any]"; expected "Sized"  [arg-type]
+[gate:L320:2610s] src/experiments/exp1_induction_heads.py:793: error: Incompatible types in assignment (expression has type "float", target has type "list[Any]")  [assignment]
+[gate:L321:2610s] src/experiments/exp1_induction_heads.py:829: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L322:2610s] src/experiments/exp1_induction_heads.py:834: error: Missing type arguments for generic type "list"  [type-arg]
+[gate:L323:2610s] src/experiments/exp1_induction_heads.py:868: error: Function is missing a return type annotation  [no-untyped-def]
+[gate:L324:2610s] src/experiments/exp1_induction_heads.py:870: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L325:2610s] src/experiments/exp1_induction_heads.py:898: error: Missing type arguments for generic type "list"  [type-arg]
+[gate:L326:2610s] src/experiments/exp1_induction_heads.py:902: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L327:2610s] src/experiments/exp1_induction_heads.py:1012: error: Missing type arguments for generic type "list"  [type-arg]
+[gate:L328:2610s] src/experiments/exp1_induction_heads.py:1012: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L329:2610s] src/experiments/exp1_induction_heads.py:1065: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L330:2610s] src/experiments/exp1_induction_heads.py:1070: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L331:2610s] src/experiments/exp1_induction_heads.py:1084: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L332:2610s] src/experiments/exp1_induction_heads.py:1110: error: Value of type "Tensor | Module" is not indexable  [index]
+[gate:L333:2610s] src/experiments/exp1_induction_heads.py:1111: error: Item "Tensor" of "Tensor | Any" has no attribute "n_heads"  [union-attr]
+[gate:L334:2610s] src/experiments/exp1_induction_heads.py:1113: error: Item "Tensor" of "Tensor | Any" has no attribute "head_mask"  [union-attr]
+[gate:L335:2610s] src/experiments/exp1_induction_heads.py:1134: error: Item "Tensor" of "Tensor | Any" has no attribute "head_mask"  [union-attr]
+[gate:L336:2610s] src/experiments/exp1_induction_heads.py:1139: error: Missing type arguments for generic type "list"  [type-arg]
+[gate:L337:2610s] src/experiments/exp1_induction_heads.py:1161: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L338:2610s] src/experiments/exp1_induction_heads.py:1217: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L339:2610s] src/experiments/exp1_induction_heads.py:1219: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L340:2610s] src/experiments/exp1_induction_heads.py:1241: error: Function is missing a type annotation for one or more parameters  [no-untyped-def]
+[gate:L341:2610s] src/experiments/exp1_induction_heads.py:1242: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L342:2610s] src/experiments/exp1_induction_heads.py:1243: error: Missing type arguments for generic type "list"  [type-arg]
+[gate:L343:2610s] src/experiments/exp1_induction_heads.py:1244: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L344:2610s] src/experiments/exp1_induction_heads.py:1246: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L345:2610s] src/experiments/exp1_induction_heads.py:1247: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L346:2610s] src/experiments/neuron_ablation.py:45: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L347:2610s] src/experiments/neuron_ablation.py:60: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L348:2610s] src/experiments/neuron_ablation.py:68: error: Function is missing a type annotation  [no-untyped-def]
+[gate:L349:2610s] src/experiments/neuron_ablation.py:92: error: Returning Any from function declared to return "Tensor"  [no-any-return]
+[gate:L350:2610s] src/experiments/neuron_ablation.py:92: error: No overload variant of "zeros" matches argument type "Tensor | Module"  [call-overload]
+[gate:L351:2610s] src/experiments/neuron_ablation.py:92: note: Possible overload variants:
+[gate:L352:2610s] src/experiments/neuron_ablation.py:92: note:     def zeros(size: Sequence[int | SymInt], *, out: Tensor | None = ..., dtype: dtype | None = ..., layout: layout | None = ..., device: str | device | int | None = ..., pin_memory: bool | None = ..., requires_grad: bool | None = ...) -> Tensor
+[gate:L353:2610s] src/experiments/neuron_ablation.py:92: note:     def zeros(*size: int | SymInt, out: Tensor | None = ..., dtype: dtype | None = ..., layout: layout | None = ..., device: str | device | int | None = ..., pin_memory: bool | None = ..., requires_grad: bool | None = ...) -> Tensor
+[gate:L354:2610s] src/experiments/neuron_ablation.py:92: note:     def zeros(size: Size | list[int] | tuple[int, ...], *, names: Sequence[str | EllipsisType | None] | None, dtype: dtype | None = ..., layout: layout | None = ..., device: str | device | int | None = ..., pin_memory: bool | None = ..., requires_grad: bool | None = ...) -> Tensor
+[gate:L355:2610s] src/experiments/neuron_ablation.py:92: note:     def zeros(*size: int, names: Sequence[str | EllipsisType | None] | None, dtype: dtype | None = ..., layout: layout | None = ..., device: str | device | int | None = ..., pin_memory: bool | None = ..., requires_grad: bool | None = ...) -> Tensor
+[gate:L356:2610s] src/experiments/neuron_ablation.py:115: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L357:2610s] src/experiments/neuron_ablation.py:134: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L358:2610s] src/experiments/neuron_ablation.py:171: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L359:2610s] src/experiments/neuron_ablation.py:220: error: Function is missing a return type annotation  [no-untyped-def]
+[gate:L360:2610s] src/experiments/neuron_ablation.py:220: note: Use "-> None" if function does not return a value
+[gate:L361:2610s] src/experiments/neuron_ablation.py:354: error: Call to untyped function "main" in typed context  [no-untyped-call]
+[gate:L362:2611s] src/experiments/exp6_capstone.py:88: error: Missing type arguments for generic type "list"  [type-arg]
+[gate:L363:2611s] src/experiments/exp6_capstone.py:100: error: Incompatible return value type (got "tuple[Tensor, Tensor]", expected "Tensor")  [return-value]
+[gate:L364:2611s] src/experiments/exp6_capstone.py:161: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L365:2611s] src/experiments/exp6_capstone.py:168: error: Function is missing a type annotation  [no-untyped-def]
+[gate:L366:2611s] src/experiments/exp6_capstone.py:173: error: Function is missing a return type annotation  [no-untyped-def]
+[gate:L367:2611s] src/experiments/exp6_capstone.py:196: error: Function is missing a type annotation  [no-untyped-def]
+[gate:L368:2611s] src/experiments/exp6_capstone.py:201: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L369:2611s] src/experiments/exp6_capstone.py:264: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L370:2611s] src/experiments/exp6_capstone.py:307: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L371:2611s] src/experiments/exp6_capstone.py:355: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L372:2611s] src/experiments/exp6_capstone.py:357: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L373:2611s] src/experiments/exp6_capstone.py:429: error: Incompatible types in assignment (expression has type "str", target has type "float")  [assignment]
+[gate:L374:2611s] src/experiments/exp6_capstone.py:439: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L375:2611s] src/experiments/exp6_capstone.py:445: error: Need type annotation for "activations"  [var-annotated]
+[gate:L376:2611s] src/experiments/exp6_capstone.py:449: error: Function is missing a type annotation  [no-untyped-def]
+[gate:L377:2611s] src/experiments/exp6_capstone.py:450: error: Function is missing a type annotation  [no-untyped-def]
+[gate:L378:2611s] src/experiments/exp6_capstone.py:459: error: Call to untyped function "make_hook" in typed context  [no-untyped-call]
+[gate:L379:2611s] src/experiments/exp6_capstone.py:469: error: Call to untyped function "make_hook" in typed context  [no-untyped-call]
+[gate:L380:2611s] src/experiments/exp6_capstone.py:505: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L381:2611s] src/experiments/exp6_capstone.py:562: error: Function is missing a type annotation  [no-untyped-def]
+[gate:L382:2611s] src/experiments/exp6_capstone.py:601: error: Need type annotation for "metrics_log"  [var-annotated]
+[gate:L383:2611s] src/experiments/exp6_capstone.py:692: error: Argument 2 to "compute_k_composition_scores" has incompatible type "RoundRobinDataLoader"; expected "DataLoader[Any]"  [arg-type]
+[gate:L384:2611s] src/experiments/exp6_capstone.py:991: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L385:2611s] src/experiments/exp6_capstone.py:1009: error: Returning Any from function declared to return "Path"  [no-any-return]
+[gate:L386:2611s] src/experiments/exp6_capstone.py:1082: error: Function is missing a type annotation  [no-untyped-def]
+[gate:L387:2611s] src/experiments/exp6_capstone.py:1105: error: Argument "n_parameters" to "from_run" of "ResultsManifest" has incompatible type "float | None"; expected "int | None"  [arg-type]
+[gate:L388:2611s] src/experiments/exp5_sae_dashboard.py:182: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L389:2611s] src/experiments/exp5_sae_dashboard.py:187: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L390:2611s] src/experiments/exp5_sae_dashboard.py:197: error: Need type annotation for "history"  [var-annotated]
+[gate:L391:2611s] src/experiments/exp5_sae_dashboard.py:248: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L392:2611s] src/experiments/exp5_sae_dashboard.py:318: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L393:2611s] src/experiments/exp5_sae_dashboard.py:319: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L394:2611s] src/experiments/exp5_sae_dashboard.py:385: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L395:2611s] src/experiments/exp5_sae_dashboard.py:491: error: Missing type arguments for generic type "tuple"  [type-arg]
+[gate:L396:2611s] src/experiments/exp4_circuit_patching.py:112: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L397:2611s] src/experiments/exp4_circuit_patching.py:141: error: Missing type arguments for generic type "tuple"  [type-arg]
+[gate:L398:2611s] src/experiments/exp4_circuit_patching.py:160: error: Missing type arguments for generic type "tuple"  [type-arg]
+[gate:L399:2611s] src/experiments/exp4_circuit_patching.py:169: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L400:2611s] src/experiments/exp4_circuit_patching.py:183: error: Value of type "Tensor | Module" is not indexable  [index]
+[gate:L401:2611s] src/experiments/exp4_circuit_patching.py:184: error: Incompatible return value type (got "Any | None", expected Module)  [return-value]
+[gate:L402:2611s] src/experiments/exp4_circuit_patching.py:184: error: Argument 3 to "getattr" has incompatible type "Tensor | Any"; expected "None"  [arg-type]
+[gate:L403:2611s] src/experiments/exp4_circuit_patching.py:208: error: Function is missing a return type annotation  [no-untyped-def]
+[gate:L404:2611s] src/experiments/exp4_circuit_patching.py:232: error: Function is missing a type annotation  [no-untyped-def]
+[gate:L405:2611s] src/experiments/exp4_circuit_patching.py:239: error: Function is missing a type annotation  [no-untyped-def]
+[gate:L406:2611s] src/experiments/exp4_circuit_patching.py:251: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L407:2611s] src/experiments/exp4_circuit_patching.py:310: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L408:2611s] src/experiments/exp4_circuit_patching.py:311: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L409:2611s] src/experiments/exp4_circuit_patching.py:317: error: Missing type arguments for generic type "DataLoader"  [type-arg]
+[gate:L410:2611s] src/experiments/exp4_circuit_patching.py:318: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L411:2611s] src/experiments/exp4_circuit_patching.py:336: error: Need type annotation for "history"  [var-annotated]
+[gate:L412:2611s] src/experiments/exp4_circuit_patching.py:349: error: Call to untyped function "backward" in typed context  [no-untyped-call]
+[gate:L413:2611s] src/experiments/exp4_circuit_patching.py:405: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L414:2611s] src/experiments/exp4_circuit_patching.py:435: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L415:2611s] src/experiments/exp4_circuit_patching.py:497: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L416:2611s] src/experiments/exp4_circuit_patching.py:521: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L417:2611s] src/experiments/exp4_circuit_patching.py:549: error: Item "Tensor" of "Tensor | Module" has no attribute "weight"  [union-attr]
+[gate:L418:2611s] src/experiments/exp4_circuit_patching.py:549: error: Value of type "Any | Tensor | Module" is not indexable  [index]
+[gate:L419:2611s] src/experiments/exp4_circuit_patching.py:564: error: "Tensor" not callable  [operator]
+[gate:L420:2611s] src/experiments/exp4_circuit_patching.py:565: error: "Tensor" not callable  [operator]
+[gate:L421:2611s] src/experiments/exp4_circuit_patching.py:586: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L422:2611s] src/experiments/exp4_circuit_patching.py:597: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L423:2611s] src/experiments/exp4_circuit_patching.py:618: error: No overload variant of "ones" matches argument type "Tensor | Module"  [call-overload]
+[gate:L424:2611s] src/experiments/exp4_circuit_patching.py:618: note: Possible overload variants:
+[gate:L425:2611s] src/experiments/exp4_circuit_patching.py:618: note:     def ones(size: Sequence[int | SymInt], *, out: Tensor | None = ..., dtype: dtype | None = ..., layout: layout | None = ..., device: str | device | int | None = ..., pin_memory: bool | None = ..., requires_grad: bool | None = ...) -> Tensor
+[gate:L426:2611s] src/experiments/exp4_circuit_patching.py:618: note:     def ones(*size: int | SymInt, out: Tensor | None = ..., dtype: dtype | None = ..., layout: layout | None = ..., device: str | device | int | None = ..., pin_memory: bool | None = ..., requires_grad: bool | None = ...) -> Tensor
+[gate:L427:2611s] src/experiments/exp4_circuit_patching.py:618: note:     def ones(size: Size | list[int] | tuple[int, ...], *, names: Sequence[str | EllipsisType | None] | None, dtype: dtype | None = ..., layout: layout | None = ..., device: str | device | int | None = ..., pin_memory: bool | None = ..., requires_grad: bool | None = ...) -> Tensor
+[gate:L428:2611s] src/experiments/exp4_circuit_patching.py:618: note:     def ones(*size: int, names: Sequence[str | EllipsisType | None] | None, dtype: dtype | None = ..., layout: layout | None = ..., device: str | device | int | None = ..., pin_memory: bool | None = ..., requires_grad: bool | None = ...) -> Tensor
+[gate:L429:2611s] src/experiments/exp4_circuit_patching.py:625: error: Incompatible types in assignment (expression has type "None", variable has type "Tensor | Module")  [assignment]
+[gate:L430:2611s] src/experiments/exp4_circuit_patching.py:639: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L431:2611s] src/experiments/exp4_circuit_patching.py:668: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L432:2611s] src/experiments/exp4_circuit_patching.py:702: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L433:2611s] src/experiments/exp4_circuit_patching.py:748: error: Missing type arguments for generic type "dict"  [type-arg]
+[gate:L434:2611s] src/experiments/exp4_circuit_patching.py:775: error: Incompatible types in assignment (expression has type "AttentionOnlyTransformer", variable has type "DecoderOnlyTransformer")  [assignment]
+[gate:L435:2611s] src/experiments/exp4_circuit_patching.py:859: error: Need type annotation for "history"  [var-annotated]
+[gate:L436:2611s] src/experiments/exp4_circuit_patching.py:861: error: "Dataset[tuple[Tensor, ...]]" has no attribute "tensors"  [attr-defined]
+[gate:L437:2611s] src/experiments/exp4_circuit_patching.py:862: error: "Dataset[tuple[Tensor, ...]]" has no attribute "tensors"  [attr-defined]
+[gate:L438:2617s] Found 216 errors in 12 files (checked 27 source files)
+[gate:L439:2617s] uv run python -m pytest -v --tb=short --cov=src --cov-report=term-missing
+[gate:L440:2653s] ============================= test session starts ==============================
+[gate:L441:2653s] platform linux -- Python 3.12.12, pytest-9.1.1, pluggy-1.6.0 -- /woodpecker/src/.venv/bin/python3
+[gate:L442:2653s] cachedir: .pytest_cache
+[gate:L443:2653s] rootdir: /woodpecker/src
+[gate:L444:2653s] configfile: pyproject.toml
+[gate:L445:2653s] testpaths: tests
+[gate:L446:2653s] plugins: anyio-4.14.1, cov-7.1.0
+[gate:L447:2820s] collecting ... collected 503 items
+[gate:L448:2820s] 
+[gate:L449:2820s] tests/test_bpe_tokenizer.py::TestBPETokenizer::test_train_encode_decode_roundtrip PASSED [  0%]
+[gate:L450:2821s] tests/test_bpe_tokenizer.py::TestBPETokenizer::test_vocab_size PASSED    [  0%]
+[gate:L451:2821s] tests/test_bpe_tokenizer.py::TestBPETokenizer::test_merges_learned PASSED [  0%]
+[gate:L452:2821s] tests/test_bpe_tokenizer.py::TestBPETokenizer::test_empty_text PASSED    [  0%]
+[gate:L453:2821s] tests/test_bpe_tokenizer.py::TestBPETokenizer::test_characters_outside_training PASSED [  0%]
+[gate:L454:2821s] tests/test_build_site.py::test_out_path_maps_markdown_to_html PASSED     [  1%]
+[gate:L455:2821s] tests/test_build_site.py::test_published_links_become_relative_html PASSED [  1%]
+[gate:L456:2821s] tests/test_build_site.py::test_unpublished_repo_files_link_to_github PASSED [  1%]
+[gate:L457:2821s] tests/test_build_site.py::test_external_and_anchor_links_are_untouched PASSED [  1%]
+[gate:L458:2823s] tests/test_build_site.py::test_site_has_an_index_and_the_results_page PASSED [  1%]
+[gate:L459:2823s] tests/test_build_site.py::test_site_ships_curated_figures_and_not_the_draft_launch_posts PASSED [  2%]
+[gate:L460:2823s] tests/test_build_site.py::test_no_published_page_links_to_a_markdown_file PASSED [  2%]
+[gate:L461:2823s] tests/test_capstone_energy_reanalysis.py::test_single_frequency_embedding_is_sparse PASSED [  2%]
+[gate:L462:2823s] tests/test_capstone_energy_reanalysis.py::test_real_checkpoint_energy_if_present SKIPPED [  2%]
+[gate:L463:2823s] tests/test_check_links.py::TestWikilinkRegex::test_alias_without_escape PASSED [  2%]
+[gate:L464:2823s] tests/test_check_links.py::TestWikilinkRegex::test_alias_with_table_escape PASSED [  3%]
+[gate:L465:2823s] tests/test_check_links.py::TestWikilinkRegex::test_anchor_link PASSED    [  3%]
+[gate:L466:2823s] tests/test_check_links.py::TestWikilinkRegex::test_plain_link PASSED     [  3%]
+[gate:L467:2823s] tests/test_check_links.py::TestResolveIsPlatformIndependent::test_escaped_pipe_link_resolves_like_plain_link PASSED [  3%]
+[gate:L468:2823s] tests/test_check_links.py::TestResolveIsPlatformIndependent::test_broken_link_is_still_detected PASSED [  3%]
+[gate:L469:2823s] tests/test_check_vault.py::test_clean_vault_has_no_problems PASSED       [  4%]
+[gate:L470:2824s] tests/test_check_vault.py::test_note_with_too_few_links_is_flagged PASSED [  4%]
+[gate:L471:2824s] tests/test_check_vault.py::test_index_files_are_exempt_from_link_degree PASSED [  4%]
+[gate:L472:2824s] tests/test_check_vault.py::test_missing_state_tag_is_flagged PASSED      [  4%]
+[gate:L473:2824s] tests/test_check_vault.py::test_bare_type_tag_is_flagged PASSED          [  4%]
+[gate:L474:2824s] tests/test_check_vault.py::test_phase_tag_mismatch_is_flagged PASSED     [  5%]
+[gate:L475:2824s] tests/test_check_vault.py::test_phase_seven_tag_is_accepted_in_capstone PASSED [  5%]
+[gate:L476:2824s] tests/test_check_vault.py::test_unindexed_note_is_flagged PASSED         [  5%]
+[gate:L477:2824s] tests/test_check_vault.py::test_moc_accepts_both_wikilink_and_plain_path_forms PASSED [  5%]
+[gate:L478:2824s] tests/test_check_vault.py::test_missing_frontmatter_is_flagged PASSED    [  5%]
+[gate:L479:2824s] tests/test_decoder_only_transformer.py::TestRMSNorm::test_scale_invariance PASSED [  6%]
+[gate:L480:2824s] tests/test_decoder_only_transformer.py::TestRMSNorm::test_output_shape PASSED [  6%]
+[gate:L481:2824s] tests/test_decoder_only_transformer.py::TestRotaryEmbedding::test_position_sensitivity PASSED [  6%]
+[gate:L482:2824s] tests/test_decoder_only_transformer.py::TestRotaryEmbedding::test_output_shape PASSED [  6%]
+[gate:L483:2824s] tests/test_decoder_only_transformer.py::TestRotaryEmbedding::test_relative_position_invariance PASSED [  6%]
+[gate:L484:2824s] tests/test_decoder_only_transformer.py::TestDecoderOnlyTransformer::test_output_shape PASSED [  7%]
+[gate:L485:2824s] tests/test_decoder_only_transformer.py::TestDecoderOnlyTransformer::test_gradient_flows PASSED [  7%]
+[gate:L486:2824s] tests/test_decoder_only_transformer.py::TestDecoderOnlyTransformer::test_causal_mask PASSED [  7%]
+[gate:L487:2824s] tests/test_decoder_only_transformer.py::TestDecoderOnlyTransformer::test_generation PASSED [  7%]
+[gate:L488:2824s] tests/test_decoder_only_transformer.py::TestDecoderOnlyTransformer::test_cache_contents PASSED [  7%]
+[gate:L489:2825s] tests/test_decoder_only_transformer.py::TestDecoderOnlyTransformer::test_kv_cache_semantics PASSED [  8%]
+[gate:L490:2825s] tests/test_decoder_only_transformer.py::TestDecoderOnlyTransformer::test_generate_sees_the_whole_prompt PASSED [  8%]
+[gate:L491:2825s] tests/test_decoder_only_transformer.py::TestDecoderOnlyTransformer::test_rope_position_advances_with_cache PASSED [  8%]
+[gate:L492:2825s] tests/test_decoder_only_transformer.py::TestDecoderOnlyTransformer::test_generate_with_kv_cache_reproduces PASSED [  8%]
+[gate:L493:2825s] tests/test_docs_audit.py::TestTheAuditPassesOnTheCurrentTree::test_no_stale_claim_is_back PASSED [  8%]
+[gate:L494:2827s] tests/test_docs_audit.py::TestTheAuditPassesOnTheCurrentTree::test_every_current_facing_document_names_its_manifests PASSED [  9%]
+[gate:L495:2828s] tests/test_docs_audit.py::TestTheAuditFires::test_a_retracted_statement_coming_back_is_caught PASSED [  9%]
+[gate:L496:2831s] tests/test_docs_audit.py::TestTheAuditFires::test_a_document_that_stops_naming_its_manifest_is_caught PASSED [  9%]
+[gate:L497:2831s] tests/test_docs_audit.py::TestTheAuditListIsSane::test_every_entry_names_a_file_that_exists PASSED [  9%]
+[gate:L498:2831s] tests/test_docs_audit.py::TestTheAuditListIsSane::test_every_entry_is_a_distinct_claim PASSED [  9%]
+[gate:L499:2831s] tests/test_docs_audit.py::TestTheAuditListIsSane::test_every_required_document_exists PASSED [ 10%]
+[gate:L500:2833s] tests/test_docs_audit.py::TestTheAuditListIsSane::test_every_required_manifest_exists_and_is_tracked PASSED [ 10%]
+[gate:L501:2838s] tests/test_docs_audit.py::test_the_audit_script_runs_as_a_program PASSED [ 10%]
+[gate:L502:2838s] tests/test_exp1_batch_modes.py::test_fresh_batches_flag_still_works PASSED [ 10%]
+[gate:L503:2838s] tests/test_exp1_batch_modes.py::test_batches_flag_selects_the_regime PASSED [ 10%]
+[gate:L504:2838s] tests/test_exp1_batch_modes.py::test_default_is_fixed_batches PASSED     [ 11%]
+[gate:L505:2838s] tests/test_exp1_batch_modes.py::test_contradictory_flags_last_one_wins PASSED [ 11%]
+[gate:L506:2838s] tests/test_exp1_batch_modes.py::test_batch_mode_reaches_the_metrics PASSED [ 11%]
+[gate:L507:2838s] tests/test_exp1_batch_modes.py::test_makefile_arms_share_every_other_hyperparameter PASSED [ 11%]
+[gate:L508:2838s] tests/test_exp1_batch_modes.py::test_arms_write_distinct_manifests PASSED [ 11%]
+[gate:L509:2838s] tests/test_exp1_batch_modes.py::test_arms_use_the_same_seeds PASSED      [ 12%]
+[gate:L510:2838s] tests/test_exp2_manifest_path.py::test_manifest_path_defaults_to_flagship PASSED [ 12%]
+[gate:L511:2838s] tests/test_exp2_manifest_path.py::test_manifest_path_override_accepted PASSED [ 12%]
+[gate:L512:2838s] tests/test_exp3_superposition.py::TestToyAutoencoder::test_shape PASSED  [ 12%]
+[gate:L513:2838s] tests/test_exp3_superposition.py::TestToyAutoencoder::test_gradient_flows PASSED [ 12%]
+[gate:L514:2976s] tests/test_exp3_superposition.py::TestToyAutoencoder::test_reconstruction_loss_decreases PASSED [ 13%]
+[gate:L515:2976s] tests/test_exp3_superposition.py::TestToyAutoencoder::test_decoder_reuses_encoder_weight_transpose PASSED [ 13%]
+[gate:L516:2976s] tests/test_exp3_superposition.py::TestToyAutoencoder::test_bottleneck_is_enforced_at_construction PASSED [ 13%]
+[gate:L517:2976s] tests/test_exp3_superposition.py::TestSparseFeatureDataset::test_shapes PASSED [ 13%]
+[gate:L518:2976s] tests/test_exp3_superposition.py::TestSparseFeatureDataset::test_sparsity_level PASSED [ 13%]
+[gate:L519:2976s] tests/test_exp3_superposition.py::TestSparseFeatureDataset::test_importance_decay PASSED [ 14%]
+[gate:L520:2976s] tests/test_exp3_superposition.py::TestSparseFeatureDataset::test_uniform_importance_by_default PASSED [ 14%]
+[gate:L521:2990s] tests/test_exp3_superposition.py::TestFeatureGeometryFalsification::test_model_is_a_bottleneck PASSED [ 14%]
+[gate:L522:3007s] tests/test_exp3_superposition.py::TestFeatureGeometryFalsification::test_dense_regime_drops_features PASSED [ 14%]
+[gate:L523:3116s] tests/test_exp3_superposition.py::TestFeatureGeometryFalsification::test_sparse_regime_represents_all_features PASSED [ 14%]
+[gate:L524:3116s] tests/test_exp3_superposition.py::TestFeatureGeometryFalsification::test_dimensionality_is_one_when_monosemantic PASSED [ 15%]
+[gate:L525:3116s] tests/test_exp3_superposition.py::TestPentagonGeometry::test_pentagon_directions_are_pentagon_like PASSED [ 15%]
+[gate:L526:3116s] tests/test_exp3_superposition.py::TestPentagonGeometry::test_collinear_directions_are_not_pentagon_like PASSED [ 15%]
+[gate:L527:3116s] tests/test_exp3_superposition.py::TestPentagonGeometry::test_clustered_directions_are_not_pentagon_like PASSED [ 15%]
+[gate:L528:3116s] tests/test_exp3_superposition.py::TestPentagonGeometry::test_compute_feature_angles_requires_2d PASSED [ 15%]
+[gate:L529:3116s] tests/test_exp4_circuit_patching.py::TestInductionHeadDetection::test_detection_on_small_model PASSED [ 16%]
+[gate:L530:3116s] tests/test_exp4_circuit_patching.py::TestInductionHeadDetection::test_detection_empty_on_untrained PASSED [ 16%]
+[gate:L531:3117s] tests/test_exp4_circuit_patching.py::TestHeadAblation::test_ablation_runs PASSED [ 16%]
+[gate:L532:3117s] tests/test_exp4_circuit_patching.py::TestActivationPatching::test_self_patching_is_a_no_op PASSED [ 16%]
+[gate:L533:3117s] tests/test_exp4_circuit_patching.py::TestActivationPatching::test_patching_a_different_run_changes_the_output PASSED [ 16%]
+[gate:L534:3117s] tests/test_exp4_circuit_patching.py::TestPathPatching::test_self_patching_has_zero_direct_effect PASSED [ 17%]
+[gate:L535:3118s] tests/test_exp4_circuit_patching.py::TestPathPatching::test_runs_and_returns_expected_keys PASSED [ 17%]
+[gate:L536:3118s] tests/test_exp4_circuit_patching.py::TestBatchRegimeAndPresets::test_parser_defaults_to_fixed_batches PASSED [ 17%]
+[gate:L537:3118s] tests/test_exp4_circuit_patching.py::TestBatchRegimeAndPresets::test_batches_fresh_writes_through PASSED [ 17%]
+[gate:L538:3118s] tests/test_exp4_circuit_patching.py::TestBatchRegimeAndPresets::test_standard_matches_exp1_standard_and_implies_fresh PASSED [ 17%]
+[gate:L539:3118s] tests/test_exp4_circuit_patching.py::TestBatchRegimeAndPresets::test_standard_matches_exp1_standard_on_batching PASSED [ 18%]
+[gate:L540:3118s] tests/test_exp4_circuit_patching.py::TestBatchRegimeAndPresets::test_scale_large_matches_exp1_scale_large PASSED [ 18%]
+[gate:L541:3118s] tests/test_exp4_circuit_patching.py::TestBatchRegimeAndPresets::test_conflicting_presets_are_rejected PASSED [ 18%]
+[gate:L542:3118s] tests/test_exp4_circuit_patching.py::TestBatchRegimeAndPresets::test_train_model_accepts_fresh_batches_fn PASSED [ 18%]
+[gate:L543:3118s] tests/test_exp4_circuit_patching.py::TestBatchRegimeAndPresets::test_manifest_path_flag_exists_and_routes_probes PASSED [ 18%]
+[gate:L544:3118s] tests/test_exp4_circuit_patching.py::TestInterventionsAcceptRawDatasetTensors::test_model_device_follows_the_model_not_a_global PASSED [ 19%]
+[gate:L545:3118s] tests/test_exp4_circuit_patching.py::TestInterventionsAcceptRawDatasetTensors::test_interventions_run_on_raw_dataset_tensors PASSED [ 19%]
+[gate:L546:3118s] tests/test_exp4_circuit_patching.py::TestAttentionOnlyInterventions::test_self_patching_is_a_no_op PASSED [ 19%]
+[gate:L547:3118s] tests/test_exp4_circuit_patching.py::TestAttentionOnlyInterventions::test_patching_a_different_run_changes_the_output PASSED [ 19%]
+[gate:L548:3119s] tests/test_exp4_circuit_patching.py::TestAttentionOnlyInterventions::test_path_patching_self_is_zero PASSED [ 19%]
+[gate:L549:3119s] tests/test_exp4_circuit_patching.py::TestFromCheckpoint::test_build_model_loads_the_checkpoint PASSED [ 20%]
+[gate:L550:3120s] tests/test_exp4_circuit_patching.py::TestFromCheckpoint::test_mismatched_source_flags_fail_loudly PASSED [ 20%]
+[gate:L551:3120s] tests/test_exp4_circuit_patching.py::TestFromCheckpoint::test_missing_checkpoint_fails_loudly PASSED [ 20%]
+[gate:L552:3122s] tests/test_exp4_circuit_patching.py::TestFromCheckpoint::test_run_single_seed_analyses_the_loaded_model PASSED [ 20%]
+[gate:L553:3123s] tests/test_exp6_capstone.py::test_checkpoint_written_and_readable PASSED [ 20%]
+[gate:L554:3124s] tests/test_exp6_capstone.py::test_resume_continues_from_checkpoint PASSED [ 21%]
+[gate:L555:3126s] tests/test_exp6_capstone.py::test_final_metrics_carry_the_energy_metric PASSED [ 21%]
+[gate:L556:3126s] tests/test_exp6_capstone.py::test_round_robin_alternates_tasks PASSED    [ 21%]
+[gate:L557:3126s] tests/test_exp6_capstone.py::test_round_robin_unequal_tail_does_not_silently_single_task PASSED [ 21%]
+[gate:L558:3126s] tests/test_exp6_capstone.py::test_harvest_activations_accepts_round_robin_batches PASSED [ 21%]
+[gate:L559:3126s] tests/test_exp6_fourier.py::test_fourier_decomposition_accepts_grad_requiring_input PASSED [ 22%]
+[gate:L560:3127s] tests/test_exp6_fourier.py::test_fourier_decomposition_matches_detached_input PASSED [ 22%]
+[gate:L561:3127s] tests/test_exp6_fourier.py::test_fourier_output_feeds_sparsity_analysis PASSED [ 22%]
+[gate:L562:3127s] tests/test_exp6_kcomp.py::test_kcomp_on_induction_returns_scores_not_zeros PASSED [ 22%]
+[gate:L563:3127s] tests/test_exp6_kcomp.py::test_kcomp_on_modular_only_is_vacuous PASSED   [ 22%]
+[gate:L564:3127s] tests/test_exp6_manifest_path.py::test_manifest_path_defaults_to_none_flagship PASSED [ 23%]
+[gate:L565:3128s] tests/test_exp6_manifest_path.py::test_manifest_path_override_accepted PASSED [ 23%]
+[gate:L566:3128s] tests/test_exp6_manifest_path.py::test_checkpoint_every_defaults_to_none_config PASSED [ 23%]
+[gate:L567:3128s] tests/test_exp6_manifest_path.py::test_steps_and_warmup_overrides_default_to_none PASSED [ 23%]
+[gate:L568:3128s] tests/test_exp6_manifest_path.py::test_steps_and_warmup_overrides_accepted PASSED [ 23%]
+[gate:L569:3128s] tests/test_exp6_manifest_path.py::test_resolve_manifest_path_never_touches_flagship PASSED [ 24%]
+[gate:L570:3128s] tests/test_exp6_resume.py::test_checkpoint_every_zero_is_a_noop_not_a_crash PASSED [ 24%]
+[gate:L571:3129s] tests/test_exp6_resume.py::test_checkpoint_every_negative_is_rejected PASSED [ 24%]
+[gate:L572:3130s] tests/test_exp6_resume.py::test_resume_without_checkpoint_dir_warns_and_starts_fresh PASSED [ 24%]
+[gate:L573:3132s] tests/test_exp6_resume.py::test_resume_missing_checkpoint_file_warns_and_starts_fresh PASSED [ 24%]
+[gate:L574:3132s] tests/test_exp6_retune.py::test_vocab_offset_defaults_to_zero PASSED     [ 25%]
+[gate:L575:3132s] tests/test_exp6_retune.py::test_vocab_offset_flag_accepted PASSED        [ 25%]
+[gate:L576:3132s] tests/test_exp6_retune.py::test_reweight_flags_default_to_none PASSED    [ 25%]
+[gate:L577:3132s] tests/test_exp6_retune.py::test_reweight_flags_accepted PASSED           [ 25%]
+[gate:L578:3132s] tests/test_exp6_retune.py::test_vocab_offset_eliminates_collision PASSED [ 25%]
+[gate:L579:3132s] tests/test_exp6_retune.py::test_vocab_offset_overflow_fails_loudly PASSED [ 26%]
+[gate:L580:3132s] tests/test_grokking.py::TestOneLayerTransformer::test_shape PASSED       [ 26%]
+[gate:L581:3132s] tests/test_grokking.py::TestOneLayerTransformer::test_gradient_flows PASSED [ 26%]
+[gate:L582:3133s] tests/test_grokking.py::TestOneLayerTransformer::test_fourier_decomposition PASSED [ 26%]
+[gate:L583:3133s] tests/test_grokking.py::TestGrokkingData::test_shapes PASSED             [ 26%]
+[gate:L584:3133s] tests/test_grokking.py::TestGrokkingData::test_pairs_disjoint PASSED     [ 27%]
+[gate:L585:3133s] tests/test_grokking.py::TestGrokkingData::test_target_classes_shared_across_splits PASSED [ 27%]
+[gate:L586:3133s] tests/test_grokking.py::TestFourierDecomposition::test_recovers_a_known_pure_frequency PASSED [ 27%]
+[gate:L587:3133s] tests/test_grokking.py::TestFourierDecomposition::test_random_embeddings_spread_mass_across_frequencies PASSED [ 27%]
+[gate:L588:3133s] tests/test_grokking.py::TestAnalyzeFourierSparsity::test_delta_spectrum_needs_only_one_frequency PASSED [ 27%]
+[gate:L589:3133s] tests/test_grokking.py::TestAnalyzeFourierSparsity::test_uniform_spectrum_needs_most_frequencies PASSED [ 28%]
+[gate:L590:3133s] tests/test_grokking.py::TestComputeProgressMeasures::test_phase1_end_detects_when_val_acc_first_exceeds_threshold PASSED [ 28%]
+[gate:L591:3133s] tests/test_grokking.py::TestComputeProgressMeasures::test_phase_boundaries_are_ordered PASSED [ 28%]
+[gate:L592:3133s] tests/test_grokking.py::TestProgressMeasures::test_sparse_fourier_embedding_scores_higher_than_dense PASSED [ 28%]
+[gate:L593:3133s] tests/test_grokking.py::TestProgressMeasures::test_weight_norm_progress_is_positive_and_finite PASSED [ 28%]
+[gate:L594:3134s] tests/test_grokking.py::TestProgressMeasures::test_progress_measures_tracked_during_training PASSED [ 29%]
+[gate:L595:3136s] tests/test_grokking.py::TestGrokkingCheckpointResume::test_resume_matches_uninterrupted PASSED [ 29%]
+[gate:L596:3139s] tests/test_grokking.py::TestGrokkingCheckpointResume::test_resume_twice_matches_uninterrupted PASSED [ 29%]
+[gate:L597:3140s] tests/test_grokking.py::TestGrokkingCheckpointResume::test_resume_missing_checkpoint_starts_fresh PASSED [ 29%]
+[gate:L598:3140s] tests/test_grokking.py::TestLRSchedule::test_constant_schedule_keeps_lr_flat PASSED [ 29%]
+[gate:L599:3140s] tests/test_grokking.py::TestLRSchedule::test_cosine_schedule_still_decays PASSED [ 30%]
+[gate:L600:3140s] tests/test_grokking.py::TestFourierEnergySparsity::test_noisy_sparse_embedding_is_sparse PASSED [ 30%]
+[gate:L601:3140s] tests/test_grokking.py::TestFourierEnergySparsity::test_legacy_l1_k99_calls_a_noisy_sparse_embedding_dense PASSED [ 30%]
+[gate:L602:3140s] tests/test_grokking.py::TestFourierEnergySparsity::test_random_embedding_is_dense PASSED [ 30%]
+[gate:L603:3140s] tests/test_grokking.py::TestFourierEnergySparsity::test_conjugate_pair_counts_once PASSED [ 30%]
+[gate:L604:3140s] tests/test_grokking.py::TestFourierEnergySparsity::test_dc_offset_is_ignored PASSED [ 31%]
+[gate:L605:3140s] tests/test_grokking.py::TestFourierEnergySparsity::test_top_frequencies_identify_the_planted_keys PASSED [ 31%]
+[gate:L606:3140s] tests/test_grokking.py::TestNandaProtocol::test_repo_protocol_keeps_legacy_defaults PASSED [ 31%]
+[gate:L607:3140s] tests/test_grokking.py::TestNandaProtocol::test_nanda_protocol_sets_faithful_settings PASSED [ 31%]
+[gate:L608:3140s] tests/test_grokking.py::TestNandaProtocol::test_no_layernorm_model_has_no_ln_parameters PASSED [ 31%]
+[gate:L609:3140s] tests/test_grokking.py::TestNandaProtocol::test_constant_schedule_with_linear_warmup PASSED [ 32%]
+[gate:L610:3140s] tests/test_grokking.py::TestNandaProtocol::test_grad_clip_none_never_calls_clip PASSED [ 32%]
+[gate:L611:3140s] tests/test_grokking.py::TestNandaProtocol::test_multi_seed_path_honours_flags_and_reports_energy_metrics PASSED [ 32%]
+[gate:L612:3140s] tests/test_grokking.py::TestFullBatchLoader::test_yields_whole_dataset_exactly_once PASSED [ 32%]
+[gate:L613:3140s] tests/test_grokking.py::TestFullBatchLoader::test_nanda_protocol_uses_it_and_can_be_iterated_repeatedly PASSED [ 32%]
+[gate:L614:3140s] tests/test_induction_detection.py::TestNearestPreviousOccurrence::test_finds_the_nearest_earlier_occurrence PASSED [ 33%]
+[gate:L615:3140s] tests/test_induction_detection.py::TestNearestPreviousOccurrence::test_no_occurrence_is_minus_one PASSED [ 33%]
+[gate:L616:3140s] tests/test_induction_detection.py::TestPrefixLength::test_matches_the_generator_layout PASSED [ 33%]
+[gate:L617:3140s] tests/test_induction_detection.py::TestDissociationBatch::test_content_and_period_keys_never_coincide PASSED [ 33%]
+[gate:L618:3140s] tests/test_induction_detection.py::TestDissociationBatch::test_content_key_is_the_previous_occurrence_plus_one PASSED [ 33%]
+[gate:L619:3140s] tests/test_induction_detection.py::TestDissociationBatch::test_rejects_an_odd_sequence_length PASSED [ 33%]
+[gate:L620:3140s] tests/test_induction_detection.py::TestDissociationBatch::test_rejects_a_vocabulary_smaller_than_the_prefix PASSED [ 34%]
+[gate:L621:3141s] tests/test_induction_detection.py::TestDissociationProbe::test_periodic_head_is_reported_as_positional PASSED [ 34%]
+[gate:L622:3141s] tests/test_induction_detection.py::TestDissociationProbe::test_previous_token_head_is_not_a_copy_head PASSED [ 34%]
+[gate:L623:3141s] tests/test_induction_detection.py::TestDissociationProbe::test_content_head_is_reported_as_content_based PASSED [ 34%]
+[gate:L624:3141s] tests/test_induction_detection.py::TestConfirmationRule::test_layer_zero_is_confirmed_on_the_mass_alone PASSED [ 34%]
+[gate:L625:3141s] tests/test_induction_detection.py::TestConfirmationRule::test_a_layer_one_head_needs_the_composition PASSED [ 35%]
+[gate:L626:3141s] tests/test_induction_detection.py::TestConfirmationRule::test_a_two_step_circuit_is_confirmed PASSED [ 35%]
+[gate:L627:3141s] tests/test_induction_detection.py::TestConfirmationRule::test_thresholds_are_the_documented_ones PASSED [ 35%]
+[gate:L628:3141s] tests/test_induction_detection.py::TestLayerEntropy::test_uniform_attention_has_high_entropy PASSED [ 35%]
+[gate:L629:3141s] tests/test_induction_detection.py::TestLayerEntropy::test_peaked_attention_has_low_entropy PASSED [ 35%]
+[gate:L630:3141s] tests/test_induction_heads.py::TestAttentionOnlyTransformer::test_shape PASSED [ 36%]
+[gate:L631:3141s] tests/test_induction_heads.py::TestAttentionOnlyTransformer::test_causal_mask PASSED [ 36%]
+[gate:L632:3141s] tests/test_induction_heads.py::TestCausalAblation::test_ablating_all_heads_collapses_to_no_attention_baseline PASSED [ 36%]
+[gate:L633:3141s] tests/test_induction_heads.py::TestCausalAblation::test_head_mask_is_restored_after_ablation PASSED [ 36%]
+[gate:L634:3141s] tests/test_induction_heads.py::TestCausalAblation::test_ablating_one_head_only_zeroes_that_head PASSED [ 36%]
+[gate:L635:3141s] tests/test_induction_heads.py::TestInductionData::test_shapes PASSED     [ 37%]
+[gate:L636:3141s] tests/test_induction_heads.py::TestInductionData::test_repeated_prefix PASSED [ 37%]
+[gate:L637:3141s] tests/test_induction_heads.py::TestInductionData::test_deterministic_seed PASSED [ 37%]
+[gate:L638:3141s] tests/test_induction_heads.py::TestPrefixDuplicateProbability::test_zero_for_trivially_short_prefix PASSED [ 37%]
+[gate:L639:3141s] tests/test_induction_heads.py::TestPrefixDuplicateProbability::test_matches_classic_birthday_problem PASSED [ 37%]
+[gate:L640:3141s] tests/test_induction_heads.py::TestPrefixDuplicateProbability::test_increases_with_prefix_length PASSED [ 38%]
+[gate:L641:3141s] tests/test_induction_heads.py::TestPrefixDuplicateProbability::test_pre_2026_08_02_defaults_were_ill_posed PASSED [ 38%]
+[gate:L642:3141s] tests/test_induction_heads.py::TestPrefixDuplicateProbability::test_current_defaults_are_reasonably_well_posed PASSED [ 38%]
+[gate:L643:3141s] tests/test_induction_heads.py::TestPrefixAmbiguityWarning::test_warns_when_collision_probability_is_high PASSED [ 38%]
+[gate:L644:3141s] tests/test_induction_heads.py::TestPrefixAmbiguityWarning::test_no_warning_when_well_posed PASSED [ 38%]
+[gate:L645:3141s] tests/test_induction_heads.py::TestKComposition::test_detects_hand_built_chain PASSED [ 39%]
+[gate:L646:3142s] tests/test_induction_heads.py::TestKComposition::test_rejects_self_attention PASSED [ 39%]
+[gate:L647:3142s] tests/test_induction_heads.py::TestKComposition::test_rejects_wrong_offset PASSED [ 39%]
+[gate:L648:3142s] tests/test_induction_heads.py::TestKComposition::test_rejects_random_patterns PASSED [ 39%]
+[gate:L649:3142s] tests/test_induction_heads.py::TestKComposition::test_scores_device_tensors SKIPPED [ 39%]
+[gate:L650:3142s] tests/test_induction_heads.py::TestKComposition::test_diagnose_returns_both_steps PASSED [ 40%]
+[gate:L651:3142s] tests/test_induction_heads.py::TestKComposition::test_diagnose_on_tiny_trained_model PASSED [ 40%]
+[gate:L652:3143s] tests/test_induction_heads.py::TestFreshBatches::test_fresh_batches_fn_called_once_per_epoch PASSED [ 40%]
+[gate:L653:3143s] tests/test_induction_heads.py::TestFreshBatches::test_without_fresh_batches_training_still_works PASSED [ 40%]
+[gate:L654:3148s] tests/test_induction_heads.py::TestCheckpointResume::test_resume_matches_uninterrupted PASSED [ 40%]
+[gate:L655:3157s] tests/test_induction_heads.py::TestCheckpointResume::test_resume_twice_matches_uninterrupted PASSED [ 41%]
+[gate:L656:3158s] tests/test_induction_heads.py::TestCheckpointResume::test_resume_missing_checkpoint_starts_fresh PASSED [ 41%]
+[gate:L657:3160s] tests/test_induction_heads.py::TestEarlyStopAndCheckpoint::test_stop_rule_any_fires_on_a_first_layer_copy_head PASSED [ 41%]
+[gate:L658:3161s] tests/test_induction_heads.py::TestEarlyStopAndCheckpoint::test_stop_rule_mechanism_ignores_a_first_layer_copy_head PASSED [ 41%]
+[gate:L659:3161s] tests/test_induction_heads.py::TestEarlyStopAndCheckpoint::test_the_confirmation_point_writes_the_checkpoint PASSED [ 41%]
+[gate:L660:3161s] tests/test_induction_heads.py::TestConfigPresets::test_defaults_are_untouched PASSED [ 42%]
+[gate:L661:3161s] tests/test_induction_heads.py::TestConfigPresets::test_scale_standard_matches_standard_flag PASSED [ 42%]
+[gate:L662:3161s] tests/test_induction_heads.py::TestConfigPresets::test_scale_large_sets_scaled_gpu_config PASSED [ 42%]
+[gate:L663:3161s] tests/test_induction_heads.py::TestConfigPresets::test_scale_large_differs_from_standard PASSED [ 42%]
+[gate:L664:3161s] tests/test_induction_heads.py::TestConfigPresets::test_conflicting_presets_are_rejected PASSED [ 42%]
+[gate:L665:3161s] tests/test_induction_heads.py::TestConfigPresets::test_scale_large_respects_explicit_checkpoint_interval PASSED [ 43%]
+[gate:L666:3161s] tests/test_induction_task_wiring.py::TestTaskSelection::test_the_default_is_the_periodic_task PASSED [ 43%]
+[gate:L667:3161s] tests/test_induction_task_wiring.py::TestTaskSelection::test_the_variable_task_derives_its_geometry PASSED [ 43%]
+[gate:L668:3161s] tests/test_induction_task_wiring.py::TestTaskSelection::test_the_standard_geometry_is_the_pre_registered_one PASSED [ 43%]
+[gate:L669:3162s] tests/test_induction_task_wiring.py::TestTaskSelection::test_explicit_geometry_wins PASSED [ 43%]
+[gate:L670:3162s] tests/test_induction_task_wiring.py::TestTaskSelection::test_the_data_follows_the_task PASSED [ 44%]
+[gate:L671:3162s] tests/test_induction_task_wiring.py::TestCopyMetrics::test_the_metrics_are_computed_on_the_copy_queries PASSED [ 44%]
+[gate:L672:3162s] tests/test_induction_task_wiring.py::TestCopyMetrics::test_the_ablation_can_be_restricted_to_the_copy_queries PASSED [ 44%]
+[gate:L673:3162s] tests/test_induction_task_wiring.py::TestCopyMetrics::test_a_content_oracle_scores_a_perfect_copy_accuracy PASSED [ 44%]
+[gate:L674:3162s] tests/test_induction_task_wiring.py::TestNamingTest::test_the_variable_task_probes_in_distribution PASSED [ 44%]
+[gate:L675:3162s] tests/test_induction_task_wiring.py::TestNamingTest::test_the_periodic_task_probes_off_distribution PASSED [ 45%]
+[gate:L676:3163s] tests/test_induction_task_wiring.py::TestPatchBatch::test_the_patch_batch_reads_a_copy_query PASSED [ 45%]
+[gate:L677:3163s] tests/test_induction_task_wiring.py::TestPatchBatch::test_the_counterfactual_is_a_different_token PASSED [ 45%]
+[gate:L678:3163s] tests/test_induction_tasks.py::TestTaskSpec::test_periodic_spec_keeps_its_own_convention PASSED [ 45%]
+[gate:L679:3163s] tests/test_induction_tasks.py::TestTaskSpec::test_variable_spec_reports_its_geometry PASSED [ 45%]
+[gate:L680:3163s] tests/test_induction_tasks.py::TestTaskSpec::test_variable_spec_rejects_a_layout_that_does_not_fit PASSED [ 46%]
+[gate:L681:3163s] tests/test_induction_tasks.py::TestTaskSpec::test_variable_spec_rejects_overlapping_source_windows PASSED [ 46%]
+[gate:L682:3163s] tests/test_induction_tasks.py::TestTaskSpec::test_unknown_task_is_rejected PASSED [ 46%]
+[gate:L683:3163s] tests/test_induction_tasks.py::TestVariableTaskInvariants::test_every_token_appears_at_most_twice PASSED [ 46%]
+[gate:L684:3163s] tests/test_induction_tasks.py::TestVariableTaskInvariants::test_a_copied_token_has_exactly_one_previous_occurrence PASSED [ 46%]
+[gate:L685:3164s] tests/test_induction_tasks.py::TestVariableTaskInvariants::test_the_copied_block_is_a_verbatim_slice_of_the_key PASSED [ 47%]
+[gate:L686:3164s] tests/test_induction_tasks.py::TestVariableTaskInvariants::test_copy_queries_are_derived_from_the_tokens_alone PASSED [ 47%]
+[gate:L687:3164s] tests/test_induction_tasks.py::TestVariableTaskInvariants::test_the_number_of_copy_queries_is_the_specified_one PASSED [ 47%]
+[gate:L688:3164s] tests/test_induction_tasks.py::TestVariableTaskInvariants::test_the_distance_varies PASSED [ 47%]
+[gate:L689:3164s] tests/test_induction_tasks.py::TestVariableTaskInvariants::test_the_best_fixed_offset_predictor_stays_far_below_a_content_head PASSED [ 47%]
+[gate:L690:3164s] tests/test_induction_tasks.py::TestVariableTaskInvariants::test_a_content_oracle_solves_every_copy_query PASSED [ 48%]
+[gate:L691:3164s] tests/test_induction_tasks.py::TestVariableTaskInvariants::test_the_task_is_reproducible PASSED [ 48%]
+[gate:L692:3164s] tests/test_induction_tasks.py::TestFixedOffsetBaseline::test_a_planted_fixed_offset_head_is_found PASSED [ 48%]
+[gate:L693:3164s] tests/test_induction_tasks.py::TestFixedOffsetBaseline::test_the_baseline_reports_the_query_count PASSED [ 48%]
+[gate:L694:3164s] tests/test_induction_tasks.py::TestDistanceBreakdown::test_the_nonmodal_accuracy_separates_a_fixed_offset_head PASSED [ 48%]
+[gate:L695:3164s] tests/test_induction_tasks.py::TestDistanceBreakdown::test_a_content_oracle_is_right_on_every_distance PASSED [ 49%]
+[gate:L696:3164s] tests/test_induction_tasks.py::TestDatasets::test_the_mask_matches_the_pairs PASSED [ 49%]
+[gate:L697:3164s] tests/test_induction_tasks.py::TestDatasets::test_the_periodic_task_is_bit_for_bit_the_old_data PASSED [ 49%]
+[gate:L698:3164s] tests/test_induction_tasks.py::TestDatasets::test_the_variable_task_holds_out_fresh_sequences PASSED [ 49%]
+[gate:L699:3164s] tests/test_kaggle_run.py::TestSetBranch::test_rewrites_the_branch_assignment PASSED [ 49%]
+[gate:L700:3164s] tests/test_kaggle_run.py::TestSetBranch::test_raises_without_a_branch_assignment PASSED [ 50%]
+[gate:L701:3164s] tests/test_kaggle_run.py::TestSetBranch::test_raises_on_missing_file PASSED [ 50%]
+[gate:L702:3164s] tests/test_kaggle_run.py::TestKernelDir::test_metadata_enables_gpu_and_internet PASSED [ 50%]
+[gate:L703:3164s] tests/test_kaggle_run.py::TestKernelDir::test_rendered_notebook_carries_the_pinned_ref PASSED [ 50%]
+[gate:L704:3253s] tests/test_kaggle_run.py::TestKernelDir::test_the_tracked_notebook_passes_validation PASSED [ 50%]
+[gate:L705:3253s] tests/test_kaggle_run.py::TestSlugNormalization::test_underscores_become_hyphens PASSED [ 51%]
+[gate:L706:3253s] tests/test_kaggle_run.py::TestSlugNormalization::test_already_normal_slug_unchanged PASSED [ 51%]
+[gate:L707:3253s] tests/test_kaggle_run.py::TestSlugNormalization::test_metadata_title_slugifies_to_the_id PASSED [ 51%]
+[gate:L708:3368s] tests/test_kaggle_run.py::TestSlugNormalization::test_dry_run_succeeds_on_a_pushed_ref PASSED [ 51%]
+[gate:L709:3475s] tests/test_kaggle_run.py::TestSlugNormalization::test_dry_run_rejects_a_nonexistent_ref PASSED [ 51%]
+[gate:L710:3475s] tests/test_kaggle_run.py::TestPreflight::test_missing_credentials_are_explained PASSED [ 52%]
+[gate:L711:3475s] tests/test_kaggle_run.py::TestPreflight::test_kgat_token_file_is_accepted PASSED [ 52%]
+[gate:L712:3475s] tests/test_kaggle_run.py::TestPreflight::test_kgat_env_var_is_accepted PASSED [ 52%]
+[gate:L713:3475s] tests/test_kaggle_run.py::TestPreflight::test_kaggle_is_invoked_as_a_module PASSED [ 52%]
+[gate:L714:3475s] tests/test_linear_model.py::TestLinearRegression::test_svd_shape PASSED  [ 52%]
+[gate:L715:3475s] tests/test_linear_model.py::TestLinearRegression::test_svd_recovery PASSED [ 53%]
+[gate:L716:3475s] tests/test_linear_model.py::TestLinearRegression::test_sgd_converges PASSED [ 53%]
+[gate:L717:3475s] tests/test_linear_model.py::TestLinearRegression::test_no_intercept PASSED [ 53%]
+[gate:L718:3475s] tests/test_linear_model.py::TestLinearRegression::test_predict_before_fit_raises PASSED [ 53%]
+[gate:L719:3475s] tests/test_linear_model.py::TestLinearRegression::test_shape_mismatch_raises PASSED [ 53%]
+[gate:L720:3475s] tests/test_linear_model.py::TestLinearRegression::test_not_2d_raises PASSED [ 54%]
+[gate:L721:3475s] tests/test_linear_model.py::TestLogisticRegression::test_shape PASSED    [ 54%]
+[gate:L722:3475s] tests/test_linear_model.py::TestLogisticRegression::test_binary_separable PASSED [ 54%]
+[gate:L723:3476s] tests/test_linear_model.py::TestLogisticRegression::test_predict_proba_range PASSED [ 54%]
+[gate:L724:3476s] tests/test_linear_model.py::TestLogisticRegression::test_auto_label_mapping PASSED [ 54%]
+[gate:L725:3476s] tests/test_linear_model.py::TestLogisticRegression::test_decision_function PASSED [ 55%]
+[gate:L726:3476s] tests/test_linear_model.py::TestLogisticRegression::test_multiclass_raises PASSED [ 55%]
+[gate:L727:3476s] tests/test_manifest_checkpoints_protocol.py::test_arch_for_protocol_mapping PASSED [ 55%]
+[gate:L728:3476s] tests/test_manifest_checkpoints_protocol.py::test_reanalysis_returns_energy_metric PASSED [ 55%]
+[gate:L729:3476s] tests/test_manifest_checkpoints_protocol.py::test_wrong_protocol_cannot_load_checkpoint PASSED [ 55%]
+[gate:L730:3476s] tests/test_manifest_checkpoints_protocol.py::test_nanda_protocol_loads_its_own_checkpoint PASSED [ 56%]
+[gate:L731:3476s] tests/test_manifest_routing.py::test_quick_run_never_writes_the_default_path PASSED [ 56%]
+[gate:L732:3476s] tests/test_manifest_routing.py::test_quick_run_lands_in_a_probe_path PASSED [ 56%]
+[gate:L733:3476s] tests/test_manifest_routing.py::test_canonical_run_uses_the_default_path PASSED [ 56%]
+[gate:L734:3476s] tests/test_manifest_routing.py::test_explicit_override_always_wins PASSED [ 56%]
+[gate:L735:3476s] tests/test_manifest_routing.py::test_quick_paths_are_distinct_per_experiment PASSED [ 57%]
+[gate:L736:3476s] tests/test_metrics.py::TestAccuracy::test_perfect PASSED                 [ 57%]
+[gate:L737:3476s] tests/test_metrics.py::TestAccuracy::test_half PASSED                    [ 57%]
+[gate:L738:3477s] tests/test_metrics.py::TestAccuracy::test_mismatch_raises PASSED         [ 57%]
+[gate:L739:3477s] tests/test_metrics.py::TestConfusionMatrix::test_binary PASSED           [ 57%]
+[gate:L740:3477s] tests/test_metrics.py::TestPrecisionRecallF1::test_perfect_binary PASSED [ 58%]
+[gate:L741:3477s] tests/test_metrics.py::TestPrecisionRecallF1::test_imperfect PASSED      [ 58%]
+[gate:L742:3477s] tests/test_metrics.py::TestRegressionMetrics::test_rmse_perfect PASSED   [ 58%]
+[gate:L743:3477s] tests/test_metrics.py::TestRegressionMetrics::test_mae_perfect PASSED    [ 58%]
+[gate:L744:3477s] tests/test_metrics.py::TestRegressionMetrics::test_r2_perfect PASSED     [ 58%]
+[gate:L745:3477s] tests/test_metrics.py::TestRocAuc::test_perfect_separation PASSED        [ 59%]
+[gate:L746:3477s] tests/test_metrics.py::TestRocAuc::test_random PASSED                    [ 59%]
+[gate:L747:3477s] tests/test_metrics.py::TestRocAuc::test_reversed PASSED                  [ 59%]
+[gate:L748:3477s] tests/test_metrics.py::TestCrossVal::test_regression PASSED              [ 59%]
+[gate:L749:3477s] tests/test_metrics.py::TestCrossVal::test_classification PASSED          [ 59%]
+[gate:L750:3477s] tests/test_metrics.py::TestCrossVal::test_invalid_metric_raises PASSED   [ 60%]
+[gate:L751:3477s] tests/test_micrograd.py::test_addition PASSED                            [ 60%]
+[gate:L752:3477s] tests/test_micrograd.py::test_multiplication PASSED                      [ 60%]
+[gate:L753:3477s] tests/test_micrograd.py::test_power PASSED                               [ 60%]
+[gate:L754:3477s] tests/test_micrograd.py::test_tanh PASSED                                [ 60%]
+[gate:L755:3477s] tests/test_micrograd.py::test_relu PASSED                                [ 61%]
+[gate:L756:3477s] tests/test_micrograd.py::test_chain_rule PASSED                          [ 61%]
+[gate:L757:3477s] tests/test_micrograd.py::test_scalar_mul PASSED                          [ 61%]
+[gate:L758:3477s] tests/test_micrograd.py::test_scalar_add PASSED                          [ 61%]
+[gate:L759:3477s] tests/test_micrograd.py::test_subtraction PASSED                         [ 61%]
+[gate:L760:3477s] tests/test_micrograd.py::test_division PASSED                            [ 62%]
+[gate:L761:3477s] tests/test_micrograd.py::test_sigmoid PASSED                             [ 62%]
+[gate:L762:3477s] tests/test_micrograd.py::test_neuron_forward PASSED                      [ 62%]
+[gate:L763:3478s] tests/test_neuron_ablation.py::TestLoadCheckpoint::test_load_checkpoint_creates_model_and_loads_weights PASSED [ 62%]
+[gate:L764:3478s] tests/test_neuron_ablation.py::TestAblateNeurons::test_ablate_neurons_zeroes_weights PASSED [ 62%]
+[gate:L765:3478s] tests/test_neuron_ablation.py::TestAblateNeurons::test_ablate_neurons_zeroes_bias PASSED [ 63%]
+[gate:L766:3478s] tests/test_neuron_ablation.py::TestEvaluateModel::test_evaluate_model_returns_accuracy PASSED [ 63%]
+[gate:L767:3479s] tests/test_neuron_ablation.py::TestComputeNeuronImportance::test_compute_neuron_importance_returns_tensor PASSED [ 63%]
+[gate:L768:3479s] tests/test_neuron_ablation.py::TestRunNeuronAblationSweep::test_run_neuron_ablation_sweep_returns_steps_and_accuracies PASSED [ 63%]
+[gate:L769:3482s] tests/test_neuron_ablation.py::TestRunFourierAblationForComparison::test_run_fourier_ablation_returns_steps_and_accuracies PASSED [ 63%]
+[gate:L770:3486s] tests/test_neuron_ablation.py::TestMainFunction::test_main_runs_without_error PASSED [ 64%]
+[gate:L771:3486s] tests/test_paper.py::test_braces_are_balanced PASSED                     [ 64%]
+[gate:L772:3487s] tests/test_paper.py::test_environments_are_closed PASSED                 [ 64%]
+[gate:L773:3487s] tests/test_paper.py::test_every_citation_key_exists PASSED               [ 64%]
+[gate:L774:3487s] tests/test_paper.py::test_no_bib_entry_is_uncited PASSED                 [ 64%]
+[gate:L775:3487s] tests/test_paper.py::test_no_escaped_backslash_citations PASSED          [ 65%]
+[gate:L776:3487s] tests/test_paper.py::test_citation_commands_are_well_formed PASSED       [ 65%]
+[gate:L777:3487s] tests/test_paper.py::test_figures_exist PASSED                           [ 65%]
+[gate:L778:3487s] tests/test_paper.py::test_paper_has_no_todo_scaffold PASSED              [ 65%]
+[gate:L779:3487s] tests/test_pca.py::TestPCA::test_shape PASSED                            [ 65%]
+[gate:L780:3487s] tests/test_pca.py::TestPCA::test_transform_shape PASSED                  [ 66%]
+[gate:L781:3487s] tests/test_pca.py::TestPCA::test_variance_sum PASSED                     [ 66%]
+[gate:L782:3487s] tests/test_pca.py::TestPCA::test_inverse_transform PASSED                [ 66%]
+[gate:L783:3487s] tests/test_pca.py::TestPCA::test_whiten PASSED                           [ 66%]
+[gate:L784:3487s] tests/test_pca.py::TestPCA::test_predict_before_fit_raises PASSED        [ 66%]
+[gate:L785:3487s] tests/test_pca.py::TestKMeans::test_shape PASSED                         [ 66%]
+[gate:L786:3487s] tests/test_pca.py::TestKMeans::test_separable_clusters PASSED            [ 67%]
+[gate:L787:3487s] tests/test_pca.py::TestKMeans::test_predict_after_fit PASSED             [ 67%]
+[gate:L788:3487s] tests/test_phase_diagram_ablation_config.py::TestPreRegisteredDesign::test_the_ablation_has_ten_cells PASSED [ 67%]
+[gate:L789:3487s] tests/test_phase_diagram_ablation_config.py::TestPreRegisteredDesign::test_every_cell_runs_20k_steps PASSED [ 67%]
+[gate:L790:3487s] tests/test_phase_diagram_ablation_config.py::TestPreRegisteredDesign::test_every_cell_is_a_p113_solo_nanda_cell PASSED [ 67%]
+[gate:L791:3487s] tests/test_phase_diagram_ablation_config.py::TestPreRegisteredDesign::test_every_cell_switches_on_at_most_one_deviation PASSED [ 68%]
+[gate:L792:3487s] tests/test_phase_diagram_ablation_config.py::TestPreRegisteredDesign::test_the_weight_decay_axis_is_present PASSED [ 68%]
+[gate:L793:3488s] tests/test_phase_diagram_ablation_config.py::TestPreRegisteredDesign::test_the_cell_ids_are_unique PASSED [ 68%]
+[gate:L794:3488s] tests/test_phase_diagram_ablation_config.py::TestPreRegisteredDesign::test_the_runner_reads_this_config_into_the_same_cells PASSED [ 68%]
+[gate:L795:3488s] tests/test_phase_diagram_ablation_config.py::TestPreRegisteredDesign::test_the_legacy_sweep_is_a_different_and_larger_design PASSED [ 68%]
+[gate:L796:3488s] tests/test_phase_diagram_ablation_config.py::TestDefaultConfiguration::test_the_default_is_the_pre_registered_ablation PASSED [ 69%]
+[gate:L797:3542s] tests/test_phase_diagram_ablation_config.py::TestDefaultConfiguration::test_the_help_names_the_legacy_sweep_as_explicit PASSED [ 69%]
+[gate:L798:3542s] tests/test_phase_diagram_sweep.py::TestExp2ArgsMapping::test_nanda_protocol_is_applied PASSED [ 69%]
+[gate:L799:3542s] tests/test_phase_diagram_sweep.py::TestExp2ArgsMapping::test_full_batch_epochs_equal_steps PASSED [ 69%]
+[gate:L800:3542s] tests/test_phase_diagram_sweep.py::TestExp2ArgsMapping::test_minibatch_budget_converted_to_epochs PASSED [ 69%]
+[gate:L801:3542s] tests/test_phase_diagram_sweep.py::TestExp2ArgsMapping::test_deviations_override_the_preset PASSED [ 70%]
+[gate:L802:3542s] tests/test_phase_diagram_sweep.py::TestExp2ArgsMapping::test_progress_interval_scales_with_budget PASSED [ 70%]
+[gate:L803:3542s] tests/test_phase_diagram_sweep.py::TestExp2ArgsMapping::test_checkpoint_dir_is_per_cell PASSED [ 70%]
+[gate:L804:3544s] tests/test_phase_diagram_sweep.py::TestSoloCellMatchesExp2::test_same_seed_and_config_give_identical_metrics PASSED [ 70%]
+[gate:L805:3545s] tests/test_phase_diagram_sweep.py::TestSoloCellMatchesExp2::test_solo_cell_carries_the_energy_metric PASSED [ 70%]
+[gate:L806:3545s] tests/test_phase_diagram_sweep.py::TestJointCellDelegation::test_cfg_matches_the_capstone_schema PASSED [ 71%]
+[gate:L807:3566s] tests/test_phase_diagram_sweep.py::TestJointCellDelegation::test_tiny_joint_cell_runs PASSED [ 71%]
+[gate:L808:3566s] tests/test_phase_diagram_sweep.py::TestBudgetUnits::test_grid_reads_steps_keys PASSED [ 71%]
+[gate:L809:3566s] tests/test_phase_diagram_sweep.py::TestBudgetUnits::test_legacy_epochs_keys_read_as_steps PASSED [ 71%]
+[gate:L810:3566s] tests/test_phase_diagram_sweep.py::TestBudgetUnits::test_no_cell_field_is_named_epochs PASSED [ 71%]
+[gate:L811:3571s] tests/test_phase_diagram_sweep.py::TestEmitCellManifest::test_emitted_manifest_loads_as_results_manifest PASSED [ 72%]
+[gate:L812:3573s] tests/test_phase_diagram_sweep.py::TestEmitCellManifest::test_unmeasured_metrics_are_dropped_not_fabricated PASSED [ 72%]
+[gate:L813:3577s] tests/test_phase_diagram_sweep.py::TestEmitCellManifest::test_emitted_manifest_carries_real_per_seed_values PASSED [ 72%]
+[gate:L814:3580s] tests/test_phase_diagram_sweep.py::TestEmitCellManifest::test_emitted_manifest_carries_the_energy_metric PASSED [ 72%]
+[gate:L815:3580s] tests/test_phase_diagram_sweep.py::TestEmitCellManifest::test_sparse_classification_prefers_energy_metric PASSED [ 72%]
+[gate:L816:3580s] tests/test_phase_diagram_sweep.py::TestEmitCellManifest::test_falls_back_to_l1_without_energy_metric PASSED [ 73%]
+[gate:L817:3580s] tests/test_phase_diagram_sweep.py::TestRegimeTaxonomy::test_three_of_three_is_sparse PASSED [ 73%]
+[gate:L818:3580s] tests/test_phase_diagram_sweep.py::TestRegimeTaxonomy::test_two_of_three_is_mixed_not_sparse PASSED [ 73%]
+[gate:L819:3580s] tests/test_phase_diagram_sweep.py::TestRegimeTaxonomy::test_one_of_three_is_mixed PASSED [ 73%]
+[gate:L820:3580s] tests/test_phase_diagram_sweep.py::TestRegimeTaxonomy::test_none_is_dense PASSED [ 73%]
+[gate:L821:3580s] tests/test_phase_diagram_sweep.py::TestGridReadsPerCellDeviations::test_grid_reads_per_cell_deviations PASSED [ 74%]
+[gate:L822:3580s] tests/test_phase_diagram_sweep.py::TestBatchSizePropagatesToExp2::test_batch_size_reaches_exp2_args PASSED [ 74%]
+[gate:L823:3581s] tests/test_pin_remote_run.py::TestValidateManifest::test_valid_manifest_passes PASSED [ 74%]
+[gate:L824:3581s] tests/test_pin_remote_run.py::TestValidateManifest::test_empty_aggregate_is_refused PASSED [ 74%]
+[gate:L825:3581s] tests/test_pin_remote_run.py::TestValidateManifest::test_seeds_must_match_per_seed_records PASSED [ 74%]
+[gate:L826:3581s] tests/test_pin_remote_run.py::TestValidateManifest::test_aggregate_n_must_match_seeds PASSED [ 75%]
+[gate:L827:3582s] tests/test_pin_remote_run.py::TestValidateManifest::test_dirty_tree_is_refused PASSED [ 75%]
+[gate:L828:3582s] tests/test_pin_remote_run.py::TestValidateManifest::test_unknown_sha_is_refused PASSED [ 75%]
+[gate:L829:3582s] tests/test_pin_remote_run.py::TestValidateManifest::test_non_manifest_json_is_refused PASSED [ 75%]
+[gate:L830:3582s] tests/test_pin_remote_run.py::TestZipExpansion::test_zip_is_expanded_and_validated PASSED [ 75%]
+[gate:L831:3625s] tests/test_pin_remote_run.py::TestZipExpansion::test_dry_run_pins_from_a_zip PASSED [ 76%]
+[gate:L832:3676s] tests/test_pin_remote_run.py::TestZipExpansion::test_dry_run_pins_from_the_zip_file_itself PASSED [ 76%]
+[gate:L833:3725s] tests/test_pin_remote_run.py::TestDryRunEntryPoint::test_dry_run_installs_nothing PASSED [ 76%]
+[gate:L834:3789s] tests/test_pin_remote_run.py::TestDryRunEntryPoint::test_invalid_manifest_fails_closed PASSED [ 76%]
+[gate:L835:3789s] tests/test_planted_induction_detector.py::TestPlantedCopyOffsetDetector::test_detects_planted_copy_head PASSED [ 76%]
+[gate:L836:3789s] tests/test_planted_induction_detector.py::TestPlantedCopyOffsetDetector::test_rejects_weak_head_below_threshold PASSED [ 77%]
+[gate:L837:3790s] tests/test_planted_induction_detector.py::TestPlantedCopyOffsetDetector::test_rejects_two_weak_heads_not_summed PASSED [ 77%]
+[gate:L838:3790s] tests/test_planted_induction_detector.py::TestPlantedCopyOffsetDetector::test_per_head_independence PASSED [ 77%]
+[gate:L839:3790s] tests/test_planted_induction_detector.py::TestWrongOffsetsRejected::test_previous_token_head_is_not_an_induction_head PASSED [ 77%]
+[gate:L840:3790s] tests/test_planted_induction_detector.py::TestWrongOffsetsRejected::test_duplicate_token_head_is_not_an_induction_head PASSED [ 77%]
+[gate:L841:3790s] tests/test_planted_induction_detector.py::TestWrongOffsetsRejected::test_off_by_one_past_the_copy_offset_is_rejected PASSED [ 78%]
+[gate:L842:3790s] tests/test_planted_induction_detector.py::TestWrongOffsetsRejected::test_uniform_not_detected PASSED [ 78%]
+[gate:L843:3790s] tests/test_planted_induction_detector.py::TestMassMetricScale::test_reports_max_over_heads_not_sum PASSED [ 78%]
+[gate:L844:3790s] tests/test_planted_induction_detector.py::TestMassMetricScale::test_tracks_planted_mass PASSED [ 78%]
+[gate:L845:3791s] tests/test_planted_induction_detector.py::TestMassMetricScale::test_stays_in_unit_range_across_layers PASSED [ 78%]
+[gate:L846:3791s] tests/test_planted_induction_detector.py::TestMassMetricScale::test_previous_token_mass_reports_the_old_metric PASSED [ 79%]
+[gate:L847:3791s] tests/test_planted_induction_detector.py::TestTheOldDetectorWasAntiCorrelatedWithTheTruth::test_old_metric_fires_on_a_previous_token_head PASSED [ 79%]
+[gate:L848:3791s] tests/test_planted_induction_detector.py::TestTheOldDetectorWasAntiCorrelatedWithTheTruth::test_old_metric_misses_a_real_copy_head PASSED [ 79%]
+[gate:L849:3791s] tests/test_planted_induction_detector.py::TestTheOldDetectorWasAntiCorrelatedWithTheTruth::test_the_new_detector_inverts_both PASSED [ 79%]
+[gate:L850:3794s] tests/test_planted_induction_detector.py::TestPlantedModelWeights::test_planted_copy_head_is_detected PASSED [ 79%]
+[gate:L851:3795s] tests/test_planted_induction_detector.py::TestPlantedModelWeights::test_planted_previous_token_head_is_not_detected PASSED [ 80%]
+[gate:L852:3800s] tests/test_planted_induction_detector.py::TestPlantedModelWeights::test_head_mass_matches_entropy_metric PASSED [ 80%]
+[gate:L853:3801s] tests/test_planted_induction_detector.py::TestPlantedModelWeights::test_self_attention_control_not_detected PASSED [ 80%]
+[gate:L854:3801s] tests/test_planted_induction_detector.py::TestPlantedModelWeights::test_uniform_control_not_detected PASSED [ 80%]
+[gate:L855:3802s] tests/test_planted_variable_task.py::TestVariableTaskDetection::test_a_content_head_is_detected PASSED [ 80%]
+[gate:L856:3802s] tests/test_planted_variable_task.py::TestVariableTaskDetection::test_a_fixed_offset_head_is_not_detected PASSED [ 81%]
+[gate:L857:3802s] tests/test_planted_variable_task.py::TestVariableTaskDetection::test_a_previous_token_head_is_not_detected PASSED [ 81%]
+[gate:L858:3803s] tests/test_planted_variable_task.py::TestVariableTaskDetection::test_the_offset_profile_finds_the_planted_offset PASSED [ 81%]
+[gate:L859:3803s] tests/test_planted_variable_task.py::TestVariableTaskDetection::test_the_content_head_beats_the_offset_profile PASSED [ 81%]
+[gate:L860:3803s] tests/test_planted_variable_task.py::TestVariableTaskDetection::test_the_queries_are_the_copy_queries PASSED [ 81%]
+[gate:L861:3803s] tests/test_planted_variable_task.py::TestContentVersusOffsetProbe::test_a_content_head_wins_the_native_probe PASSED [ 82%]
+[gate:L862:3803s] tests/test_planted_variable_task.py::TestContentVersusOffsetProbe::test_a_fixed_offset_head_loses_the_native_probe PASSED [ 82%]
+[gate:L863:3803s] tests/test_planted_variable_task.py::TestContentVersusOffsetProbe::test_the_probe_needs_no_off_distribution_batch PASSED [ 82%]
+[gate:L864:3803s] tests/test_remote_notebooks.py::test_notebooks_exist PASSED              [ 82%]
+[gate:L865:3899s] tests/test_remote_notebooks.py::test_notebook_passes_the_contract[kaggle_capstone_20k.ipynb] PASSED [ 82%]
+[gate:L866:3901s] tests/test_remote_notebooks.py::test_notebook_passes_the_contract[kaggle_grokking_p113.ipynb] FAILED [ 83%]
+[gate:L867:3901s] tests/test_remote_notebooks.py::test_notebook_passes_the_contract[kaggle_induction_content.ipynb] FAILED [ 83%]
+[gate:L868:3901s] tests/test_remote_notebooks.py::test_notebook_passes_the_contract[kaggle_induction_standard.ipynb] FAILED [ 83%]
+[gate:L869:3901s] tests/test_remote_notebooks.py::test_notebook_passes_the_contract[kaggle_phase_sweep.ipynb] PASSED [ 83%]
+[gate:L870:3901s] tests/test_remote_notebooks.py::TestValidateNotebook::test_missing_branch_assignment_is_a_problem PASSED [ 83%]
+[gate:L871:3955s] tests/test_remote_notebooks.py::TestValidateNotebook::test_unknown_flag_is_caught PASSED [ 84%]
+[gate:L872:3955s] tests/test_remote_notebooks.py::TestValidateNotebook::test_manifest_path_must_live_under_results PASSED [ 84%]
+[gate:L873:3955s] tests/test_remote_notebooks.py::TestValidateNotebook::test_colab_fallback_is_required PASSED [ 84%]
+[gate:L874:3955s] tests/test_remote_notebooks.py::TestValidateNotebook::test_absolute_host_path_is_caught PASSED [ 84%]
+[gate:L875:3955s] tests/test_reproducibility.py::test_set_seed_numpy PASSED                [ 84%]
+[gate:L876:3956s] tests/test_reproducibility.py::test_set_seed_torch PASSED                [ 85%]
+[gate:L877:3956s] tests/test_reproducibility.py::test_set_seed_different_seeds_differ PASSED [ 85%]
+[gate:L878:3959s] tests/test_results.py::TestGitProvenance::test_returns_sha_and_dirty_flag PASSED [ 85%]
+[gate:L879:3959s] tests/test_results.py::TestGitProvenance::test_untracked_code_file_is_dirty PASSED [ 85%]
+[gate:L880:3959s] tests/test_results.py::TestGitProvenance::test_modified_results_manifest_is_not_dirty PASSED [ 85%]
+[gate:L881:3959s] tests/test_results.py::TestGitProvenance::test_empty_status_is_clean PASSED [ 86%]
+[gate:L882:3959s] tests/test_results.py::TestCountParameters::test_counts_trainable_params PASSED [ 86%]
+[gate:L883:3959s] tests/test_results.py::TestCountParameters::test_counts_across_multiple_params PASSED [ 86%]
+[gate:L884:3962s] tests/test_results.py::TestResultsManifest::test_from_run_populates_environment_fields PASSED [ 86%]
+[gate:L885:3965s] tests/test_results.py::TestResultsManifest::test_save_and_load_roundtrip PASSED [ 86%]
+[gate:L886:3968s] tests/test_results.py::TestResultsManifest::test_non_json_safe_args_are_stringified PASSED [ 87%]
+[gate:L887:3970s] tests/test_results.py::TestVerifyClaims::test_clean_manifest_and_tagged_claims_pass PASSED [ 87%]
+[gate:L888:3970s] tests/test_results.py::TestVerifyClaims::test_missing_results_dir_is_a_problem PASSED [ 87%]
+[gate:L889:3973s] tests/test_results.py::TestVerifyClaims::test_untagged_claims_file_is_a_problem PASSED [ 87%]
+[gate:L890:3973s] tests/test_results.py::TestVerifyClaims::test_dangling_manifest_tag_is_a_problem PASSED [ 87%]
+[gate:L891:3976s] tests/test_results.py::TestVerifyClaims::test_dirty_manifest_is_flagged PASSED [ 88%]
+[gate:L892:3979s] tests/test_results.py::TestVerifyClaims::test_missing_claims_file_is_a_problem PASSED [ 88%]
+[gate:L893:3982s] tests/test_results.py::TestVerifyClaims::test_cited_figure_missing_from_disk_is_a_problem PASSED [ 88%]
+[gate:L894:3985s] tests/test_results.py::TestVerifyClaims::test_cited_figure_untracked_by_git_is_a_problem PASSED [ 88%]
+[gate:L895:3988s] tests/test_results.py::TestVerifyClaims::test_cited_figure_present_and_tracked_is_clean PASSED [ 88%]
+[gate:L896:3991s] tests/test_results.py::TestVerifyClaims::test_section_with_figures_but_no_manifest_tag_is_a_problem PASSED [ 89%]
+[gate:L897:3993s] tests/test_results.py::TestVerifyClaims::test_section_with_figures_and_its_own_tag_is_clean PASSED [ 89%]
+[gate:L898:3996s] tests/test_results.py::TestVerifyClaims::test_falsifies_against_the_2026_08_07_state PASSED [ 89%]
+[gate:L899:3997s] tests/test_results.py::TestGitTracked::test_tracked_repo_file_returns_true PASSED [ 89%]
+[gate:L900:3997s] tests/test_results.py::TestGitTracked::test_untracked_path_returns_false PASSED [ 89%]
+[gate:L901:4002s] tests/test_results.py::TestVerifyClaimsPaperAndManifestQuality::test_paper_with_valid_tag_and_tracked_figure_is_clean PASSED [ 90%]
+[gate:L902:4005s] tests/test_results.py::TestVerifyClaimsPaperAndManifestQuality::test_paper_tag_pointing_at_pt_file_is_a_problem PASSED [ 90%]
+[gate:L903:4008s] tests/test_results.py::TestVerifyClaimsPaperAndManifestQuality::test_paper_tag_pointing_at_missing_file_is_a_problem PASSED [ 90%]
+[gate:L904:4012s] tests/test_results.py::TestVerifyClaimsPaperAndManifestQuality::test_paper_figure_untracked_is_a_problem PASSED [ 90%]
+[gate:L905:4015s] tests/test_results.py::TestVerifyClaimsPaperAndManifestQuality::test_paper_figure_missing_is_a_problem PASSED [ 90%]
+[gate:L906:4019s] tests/test_results.py::TestVerifyClaimsPaperAndManifestQuality::test_cited_manifest_with_empty_aggregate_is_a_problem PASSED [ 91%]
+[gate:L907:4022s] tests/test_results.py::TestVerifyClaimsPaperAndManifestQuality::test_cited_manifest_untracked_is_a_problem PASSED [ 91%]
+[gate:L908:4026s] tests/test_results.py::TestVerifyClaimsPaperAndManifestQuality::test_cited_non_json_in_claims_file_is_a_problem PASSED [ 91%]
+[gate:L909:4029s] tests/test_results.py::TestVerifyClaimsPaperAndManifestQuality::test_latex_percent_comment_tag_is_recognised PASSED [ 91%]
+[gate:L910:4033s] tests/test_results.py::TestVerifyClaimsPaperAndManifestQuality::test_latex_percent_comment_tag_to_pt_is_still_a_problem PASSED [ 91%]
+[gate:L911:4033s] tests/test_runner.py::TestParseSeeds::test_parses_comma_separated PASSED [ 92%]
+[gate:L912:4033s] tests/test_runner.py::TestParseSeeds::test_strips_whitespace PASSED      [ 92%]
+[gate:L913:4033s] tests/test_runner.py::TestParseSeeds::test_single_seed PASSED            [ 92%]
+[gate:L914:4033s] tests/test_runner.py::TestRunSeeds::test_aggregates_mean_std_min_max PASSED [ 92%]
+[gate:L915:4033s] tests/test_runner.py::TestRunSeeds::test_single_seed_has_zero_std PASSED [ 92%]
+[gate:L916:4033s] tests/test_runner.py::TestRunSeeds::test_empty_seeds_raises PASSED       [ 93%]
+[gate:L917:4033s] tests/test_runner.py::TestRunSeeds::test_mismatched_metric_keys_raises PASSED [ 93%]
+[gate:L918:4033s] tests/test_runner.py::TestRunSeeds::test_fn_receives_the_seed PASSED     [ 93%]
+[gate:L919:4033s] tests/test_sae.py::TestSparseAutoencoder::test_shape PASSED              [ 93%]
+[gate:L920:4033s] tests/test_sae.py::TestSparseAutoencoder::test_sparsity PASSED           [ 93%]
+[gate:L921:4033s] tests/test_sae.py::TestSparseAutoencoder::test_gradient_flows PASSED     [ 94%]
+[gate:L922:4033s] tests/test_sae.py::TestSparseAutoencoder::test_decoder_normalization PASSED [ 94%]
+[gate:L923:4033s] tests/test_sae.py::TestActivationGenerator::test_shapes PASSED           [ 94%]
+[gate:L924:4033s] tests/test_sae.py::TestAnalyzeFeatures::test_dead_and_never_fires_counts PASSED [ 94%]
+[gate:L925:4033s] tests/test_sae.py::TestAnalyzeFeatures::test_l0_sparsity_matches_known_active_count PASSED [ 94%]
+[gate:L926:4033s] tests/test_sae.py::TestAnalyzeFeatures::test_dead_threshold_is_fixed_not_size_scaled PASSED [ 95%]
+[gate:L927:4034s] tests/test_sae.py::TestEvaluateReconstruction::test_perfect_reconstruction_gives_fve_one_mse_zero PASSED [ 95%]
+[gate:L928:4034s] tests/test_sae.py::TestEvaluateReconstruction::test_predicting_the_mean_gives_fve_zero PASSED [ 95%]
+[gate:L929:4034s] tests/test_sae.py::TestHarvestActivationsFromCheckpoint::test_harvests_real_shaped_activations PASSED [ 95%]
+[gate:L930:4034s] tests/test_sae.py::TestHarvestActivationsFromCheckpoint::test_harvests_from_rolling_resume_checkpoint PASSED [ 95%]
+[gate:L931:4034s] tests/test_sae.py::TestHarvestActivationsFromCheckpoint::test_wrong_architecture_raises PASSED [ 96%]
+[gate:L932:4034s] tests/test_sae.py::test_manifest_path_flag_exists PASSED                 [ 96%]
+[gate:L933:4252s] tests/test_teaching_artifact.py::test_no_notebook_errors PASSED          [ 96%]
+[gate:L934:4252s] tests/test_teaching_artifact.py::test_trains_and_reports_model_size PASSED [ 96%]
+[gate:L935:4252s] tests/test_teaching_artifact.py::test_fourier_sanity_check_passes PASSED [ 96%]
+[gate:L936:4252s] tests/test_teaching_artifact.py::test_detector_verdict_is_reported_either_way PASSED [ 97%]
+[gate:L937:4252s] tests/test_teaching_artifact.py::test_sae_runs_on_real_activations PASSED [ 97%]
+[gate:L938:4252s] tests/test_tree_model.py::TestDecisionTree::test_shape PASSED            [ 97%]
+[gate:L939:4252s] tests/test_tree_model.py::TestDecisionTree::test_perfect_fit PASSED      [ 97%]
+[gate:L940:4252s] tests/test_tree_model.py::TestDecisionTree::test_predict_before_fit_raises PASSED [ 97%]
+[gate:L941:4253s] tests/test_tree_model.py::TestDecisionTree::test_max_depth PASSED        [ 98%]
+[gate:L942:4253s] tests/test_tree_model.py::TestRandomForest::test_shape PASSED            [ 98%]
+[gate:L943:4254s] tests/test_tree_model.py::TestRandomForest::test_improves_over_single_tree PASSED [ 98%]
+[gate:L944:4254s] tests/test_tree_model.py::TestRandomForest::test_n_estimators PASSED     [ 98%]
+[gate:L945:4254s] tests/test_verify_claims_scope.py::test_untracked_dirty_manifest_is_ignored PASSED [ 98%]
+[gate:L946:4254s] tests/test_verify_claims_scope.py::test_tracked_dirty_manifest_is_still_a_problem PASSED [ 99%]
+[gate:L947:4254s] tests/test_verify_claims_scope.py::test_all_tracked_clean_manifests_pass PASSED [ 99%]
+[gate:L948:4254s] tests/test_workflows.py::TestPagesDeploysThePaper::test_pages_compiles_latex_before_building_site PASSED [ 99%]
+[gate:L949:4254s] tests/test_workflows.py::TestPagesDeploysThePaper::test_pages_verifies_the_pdf_reached_the_site PASSED [ 99%]
+[gate:L950:4254s] tests/test_workflows.py::TestPagesDeploysThePaper::test_pages_triggers_on_paper_sources PASSED [ 99%]
+[gate:L951:4273s] tests/test_workflows.py::TestPaperWorkflow::test_paper_workflow_guards_empty_bibliography PASSED [100%]
+[gate:L952:4273s] 
+[gate:L953:4273s] =================================== FAILURES ===================================
+[gate:L954:4273s] ________ test_notebook_passes_the_contract[kaggle_grokking_p113.ipynb] _________
+[gate:L955:4273s] tests/test_remote_notebooks.py:43: in test_notebook_passes_the_contract
+[gate:L956:4273s]     assert problems == [], f"{name} violates the remote-run contract:\n" + "\n".join(
+[gate:L957:4273s] E   AssertionError: kaggle_grokking_p113.ipynb violates the remote-run contract:
+[gate:L958:4273s] E       - src.experiments.exp2_grokking: flag --protocol does not exist
+[gate:L959:4273s] E       - src.experiments.exp2_grokking: flag --modulus does not exist
+[gate:L960:4273s] E       - src.experiments.exp2_grokking: flag --epochs does not exist
+[gate:L961:4273s] E       - src.experiments.exp2_grokking: flag --seeds does not exist
+[gate:L962:4273s] E       - src.experiments.exp2_grokking: flag --checkpoint-dir does not exist
+[gate:L963:4273s] E       - src.experiments.exp2_grokking: flag --checkpoint-every does not exist
+[gate:L964:4273s] E       - src.experiments.exp2_grokking: flag --resume does not exist
+[gate:L965:4273s] E       - src.experiments.exp2_grokking: flag --progress-interval does not exist
+[gate:L966:4273s] E       - src.experiments.exp2_grokking: flag --manifest-path does not exist
+[gate:L967:4273s] E       - src.experiments.exp2_grokking: flag --protocol does not exist
+[gate:L968:4273s] E       - src.experiments.exp2_grokking: flag --modulus does not exist
+[gate:L969:4273s] E       - src.experiments.exp2_grokking: flag --epochs does not exist
+[gate:L970:4273s] E       - src.experiments.exp2_grokking: flag --batch-size does not exist
+[gate:L971:4273s] E       - src.experiments.exp2_grokking: flag --seeds does not exist
+[gate:L972:4273s] E       - src.experiments.exp2_grokking: flag --checkpoint-dir does not exist
+[gate:L973:4273s] E       - src.experiments.exp2_grokking: flag --checkpoint-every does not exist
+[gate:L974:4273s] E       - src.experiments.exp2_grokking: flag --resume does not exist
+[gate:L975:4273s] E       - src.experiments.exp2_grokking: flag --manifest-path does not exist
+[gate:L976:4273s] E   assert ['src.experim...t exist', ...] == []
+[gate:L977:4273s] E     
+[gate:L978:4273s] E     Left contains 18 more items, first extra item: 'src.experiments.exp2_grokking: flag --protocol does not exist'
+[gate:L979:4273s] E     
+[gate:L980:4273s] E     Full diff:
+[gate:L981:4273s] E     - []
+[gate:L982:4273s] E     + [
+[gate:L983:4273s] E     +     'src.experiments.exp2_grokking: flag --protocol does not exist',
+[gate:L984:4273s] E     +     'src.experiments.exp2_grokking: flag --modulus does not exist',
+[gate:L985:4273s] E     +     'src.experiments.exp2_grokking: flag --epochs does not exist',
+[gate:L986:4273s] E     +     'src.experiments.exp2_grokking: flag --seeds does not exist',
+[gate:L987:4273s] E     +     'src.experiments.exp2_grokking: flag --checkpoint-dir does not exist',
+[gate:L988:4273s] E     +     'src.experiments.exp2_grokking: flag --checkpoint-every does not exist',
+[gate:L989:4273s] E     +     'src.experiments.exp2_grokking: flag --resume does not exist',
+[gate:L990:4273s] E     +     'src.experiments.exp2_grokking: flag --progress-interval does not exist',
+[gate:L991:4273s] E     +     'src.experiments.exp2_grokking: flag --manifest-path does not exist',
+[gate:L992:4273s] E     +     'src.experiments.exp2_grokking: flag --protocol does not exist',
+[gate:L993:4273s] E     +     'src.experiments.exp2_grokking: flag --modulus does not exist',
+[gate:L994:4273s] E     +     'src.experiments.exp2_grokking: flag --epochs does not exist',
+[gate:L995:4273s] E     +     'src.experiments.exp2_grokking: flag --batch-size does not exist',
+[gate:L996:4273s] E     +     'src.experiments.exp2_grokking: flag --seeds does not exist',
+[gate:L997:4273s] E     +     'src.experiments.exp2_grokking: flag --checkpoint-dir does not exist',
+[gate:L998:4273s] E     +     'src.experiments.exp2_grokking: flag --checkpoint-every does not exist',
+[gate:L999:4273s] E     +     'src.experiments.exp2_grokking: flag --resume does not exist',
+[gate:L1000:4273s] E     +     'src.experiments.exp2_grokking: flag --manifest-path does not exist',
+[gate:L1001:4273s] E     + ]
+[gate:L1002:4273s] ______ test_notebook_passes_the_contract[kaggle_induction_content.ipynb] _______
+[gate:L1003:4273s] tests/test_remote_notebooks.py:43: in test_notebook_passes_the_contract
+[gate:L1004:4273s]     assert problems == [], f"{name} violates the remote-run contract:\n" + "\n".join(
+[gate:L1005:4273s] E   AssertionError: kaggle_induction_content.ipynb violates the remote-run contract:
+[gate:L1006:4273s] E       - src.experiments.exp1_induction_heads: flag --task does not exist
+[gate:L1007:4273s] E       - src.experiments.exp1_induction_heads: flag --vocab-size does not exist
+[gate:L1008:4273s] E       - src.experiments.exp1_induction_heads: flag --seq-len does not exist
+[gate:L1009:4273s] E       - src.experiments.exp1_induction_heads: flag --d-model does not exist
+[gate:L1010:4273s] E       - src.experiments.exp1_induction_heads: flag --n-layers does not exist
+[gate:L1011:4273s] E       - src.experiments.exp1_induction_heads: flag --n-heads does not exist
+[gate:L1012:4273s] E       - src.experiments.exp1_induction_heads: flag --epochs does not exist
+[gate:L1013:4273s] E       - src.experiments.exp1_induction_heads: flag --batch-size does not exist
+[gate:L1014:4273s] E       - src.experiments.exp1_induction_heads: flag --num-train does not exist
+[gate:L1015:4273s] E       - src.experiments.exp1_induction_heads: flag --batches does not exist
+[gate:L1016:4273s] E       - src.experiments.exp1_induction_heads: flag --seeds does not exist
+[gate:L1017:4273s] E       - src.experiments.exp1_induction_heads: flag --detect-every does not exist
+[gate:L1018:4273s] E       - src.experiments.exp1_induction_heads: flag --manifest-path does not exist
+[gate:L1019:4273s] E       - src.experiments.exp1_induction_heads: flag --task does not exist
+[gate:L1020:4273s] E       - src.experiments.exp1_induction_heads: flag --standard does not exist
+[gate:L1021:4273s] E       - src.experiments.exp1_induction_heads: flag --batches does not exist
+[gate:L1022:4273s] E       - src.experiments.exp1_induction_heads: flag --seeds does not exist
+[gate:L1023:4273s] E       - src.experiments.exp1_induction_heads: flag --checkpoint-dir does not exist
+[gate:L1024:4273s] E       - src.experiments.exp1_induction_heads: flag --checkpoint-every does not exist
+[gate:L1025:4273s] E       - src.experiments.exp1_induction_heads: flag --resume does not exist
+[gate:L1026:4273s] E       - src.experiments.exp1_induction_heads: flag --detect-every does not exist
+[gate:L1027:4273s] E       - src.experiments.exp1_induction_heads: flag --stop-on-confirmed does not exist
+[gate:L1028:4273s] E       - src.experiments.exp1_induction_heads: flag --stop-rule does not exist
+[gate:L1029:4273s] E       - src.experiments.exp1_induction_heads: flag --manifest-path does not exist
+[gate:L1030:4273s] E       - src.experiments.exp1_induction_heads: flag --task does not exist
+[gate:L1031:4273s] E       - src.experiments.exp1_induction_heads: flag --standard does not exist
+[gate:L1032:4273s] E       - src.experiments.exp1_induction_heads: flag --batches does not exist
+[gate:L1033:4273s] E       - src.experiments.exp1_induction_heads: flag --seeds does not exist
+[gate:L1034:4273s] E       - src.experiments.exp1_induction_heads: flag --checkpoint-dir does not exist
+[gate:L1035:4273s] E       - src.experiments.exp1_induction_heads: flag --checkpoint-every does not exist
+[gate:L1036:4273s] E       - src.experiments.exp1_induction_heads: flag --resume does not exist
+[gate:L1037:4273s] E       - src.experiments.exp1_induction_heads: flag --detect-every does not exist
+[gate:L1038:4273s] E       - src.experiments.exp1_induction_heads: flag --manifest-path does not exist
+[gate:L1039:4273s] E       - src.experiments.exp4_circuit_patching: flag --from-checkpoint does not exist
+[gate:L1040:4273s] E       - src.experiments.exp4_circuit_patching: flag --source-vocab-size does not exist
+[gate:L1041:4273s] E       - src.experiments.exp4_circuit_patching: flag --source-seq-len does not exist
+[gate:L1042:4273s] E       - src.experiments.exp4_circuit_patching: flag --source-d-model does not exist
+[gate:L1043:4273s] E       - src.experiments.exp4_circuit_patching: flag --source-n-layers does not exist
+[gate:L1044:4273s] E       - src.experiments.exp4_circuit_patching: flag --source-n-heads does not exist
+[gate:L1045:4273s] E       - src.experiments.exp4_circuit_patching: flag --source-task does not exist
+[gate:L1046:4273s] E       - src.experiments.exp4_circuit_patching: flag --seeds does not exist
+[gate:L1047:4273s] E       - src.experiments.exp4_circuit_patching: flag --manifest-path does not exist
+[gate:L1048:4273s] E       - src.experiments.exp5_sae_dashboard: flag --activations-from does not exist
+[gate:L1049:4273s] E       - src.experiments.exp5_sae_dashboard: flag --source-vocab-size does not exist
+[gate:L1050:4273s] E       - src.experiments.exp5_sae_dashboard: flag --source-seq-len does not exist
+[gate:L1051:4273s] E       - src.experiments.exp5_sae_dashboard: flag --source-d-model does not exist
+[gate:L1052:4273s] E       - src.experiments.exp5_sae_dashboard: flag --source-n-layers does not exist
+[gate:L1053:4273s] E       - src.experiments.exp5_sae_dashboard: flag --source-n-heads does not exist
+[gate:L1054:4273s] E       - src.experiments.exp5_sae_dashboard: flag --source-task does not exist
+[gate:L1055:4273s] E       - src.experiments.exp5_sae_dashboard: flag --seeds does not exist
+[gate:L1056:4273s] E       - src.experiments.exp5_sae_dashboard: flag --manifest-path does not exist
+[gate:L1057:4273s] E   assert ['src.experim...t exist', ...] == []
+[gate:L1058:4273s] E     
+[gate:L1059:4273s] E     Left contains 51 more items, first extra item: 'src.experiments.exp1_induction_heads: flag --task does not exist'
+[gate:L1060:4273s] E     
+[gate:L1061:4273s] E     Full diff:
+[gate:L1062:4273s] E     - []
+[gate:L1063:4273s] E     + [
+[gate:L1064:4273s] E     +     'src.experiments.exp1_induction_heads: flag --task does not exist',
+[gate:L1065:4273s] E     +     'src.experiments.exp1_induction_heads: flag --vocab-size does not exist',
+[gate:L1066:4273s] E     +     'src.experiments.exp1_induction_heads: flag --seq-len does not exist',
+[gate:L1067:4273s] E     +     'src.experiments.exp1_induction_heads: flag --d-model does not exist',
+[gate:L1068:4273s] E     +     'src.experiments.exp1_induction_heads: flag --n-layers does not exist',
+[gate:L1069:4273s] E     +     'src.experiments.exp1_induction_heads: flag --n-heads does not exist',
+[gate:L1070:4273s] E     +     'src.experiments.exp1_induction_heads: flag --epochs does not exist',
+[gate:L1071:4273s] E     +     'src.experiments.exp1_induction_heads: flag --batch-size does not exist',
+[gate:L1072:4273s] E     +     'src.experiments.exp1_induction_heads: flag --num-train does not exist',
+[gate:L1073:4273s] E     +     'src.experiments.exp1_induction_heads: flag --batches does not exist',
+[gate:L1074:4273s] E     +     'src.experiments.exp1_induction_heads: flag --seeds does not exist',
+[gate:L1075:4273s] E     +     'src.experiments.exp1_induction_heads: flag --detect-every does not exist',
+[gate:L1076:4273s] E     +     'src.experiments.exp1_induction_heads: flag --manifest-path does not exist',
+[gate:L1077:4273s] E     +     'src.experiments.exp1_induction_heads: flag --task does not exist',
+[gate:L1078:4273s] E     +     'src.experiments.exp1_induction_heads: flag --standard does not exist',
+[gate:L1079:4273s] E     +     'src.experiments.exp1_induction_heads: flag --batches does not exist',
+[gate:L1080:4273s] E     +     'src.experiments.exp1_induction_heads: flag --seeds does not exist',
+[gate:L1081:4273s] E     +     'src.experiments.exp1_induction_heads: flag --checkpoint-dir does not '
+[gate:L1082:4273s] E     +     'exist',
+[gate:L1083:4273s] E     +     'src.experiments.exp1_induction_heads: flag --checkpoint-every does not '
+[gate:L1084:4273s] E     +     'exist',
+[gate:L1085:4273s] E     +     'src.experiments.exp1_induction_heads: flag --resume does not exist',
+[gate:L1086:4273s] E     +     'src.experiments.exp1_induction_heads: flag --detect-every does not exist',
+[gate:L1087:4273s] E     +     'src.experiments.exp1_induction_heads: flag --stop-on-confirmed does not '
+[gate:L1088:4273s] E     +     'exist',
+[gate:L1089:4273s] E     +     'src.experiments.exp1_induction_heads: flag --stop-rule does not exist',
+[gate:L1090:4273s] E     +     'src.experiments.exp1_induction_heads: flag --manifest-path does not exist',
+[gate:L1091:4273s] E     +     'src.experiments.exp1_induction_heads: flag --task does not exist',
+[gate:L1092:4273s] E     +     'src.experiments.exp1_induction_heads: flag --standard does not exist',
+[gate:L1093:4273s] E     +     'src.experiments.exp1_induction_heads: flag --batches does not exist',
+[gate:L1094:4273s] E     +     'src.experiments.exp1_induction_heads: flag --seeds does not exist',
+[gate:L1095:4273s] E     +     'src.experiments.exp1_induction_heads: flag --checkpoint-dir does not '
+[gate:L1096:4273s] E     +     'exist',
+[gate:L1097:4273s] E     +     'src.experiments.exp1_induction_heads: flag --checkpoint-every does not '
+[gate:L1098:4273s] E     +     'exist',
+[gate:L1099:4273s] E     +     'src.experiments.exp1_induction_heads: flag --resume does not exist',
+[gate:L1100:4273s] E     +     'src.experiments.exp1_induction_heads: flag --detect-every does not exist',
+[gate:L1101:4273s] E     +     'src.experiments.exp1_induction_heads: flag --manifest-path does not exist',
+[gate:L1102:4273s] E     +     'src.experiments.exp4_circuit_patching: flag --from-checkpoint does not '
+[gate:L1103:4273s] E     +     'exist',
+[gate:L1104:4273s] E     +     'src.experiments.exp4_circuit_patching: flag --source-vocab-size does not '
+[gate:L1105:4273s] E     +     'exist',
+[gate:L1106:4273s] E     +     'src.experiments.exp4_circuit_patching: flag --source-seq-len does not '
+[gate:L1107:4273s] E     +     'exist',
+[gate:L1108:4273s] E     +     'src.experiments.exp4_circuit_patching: flag --source-d-model does not '
+[gate:L1109:4273s] E     +     'exist',
+[gate:L1110:4273s] E     +     'src.experiments.exp4_circuit_patching: flag --source-n-layers does not '
+[gate:L1111:4273s] E     +     'exist',
+[gate:L1112:4273s] E     +     'src.experiments.exp4_circuit_patching: flag --source-n-heads does not '
+[gate:L1113:4273s] E     +     'exist',
+[gate:L1114:4273s] E     +     'src.experiments.exp4_circuit_patching: flag --source-task does not exist',
+[gate:L1115:4273s] E     +     'src.experiments.exp4_circuit_patching: flag --seeds does not exist',
+[gate:L1116:4273s] E     +     'src.experiments.exp4_circuit_patching: flag --manifest-path does not '
+[gate:L1117:4273s] E     +     'exist',
+[gate:L1118:4273s] E     +     'src.experiments.exp5_sae_dashboard: flag --activations-from does not '
+[gate:L1119:4273s] E     +     'exist',
+[gate:L1120:4273s] E     +     'src.experiments.exp5_sae_dashboard: flag --source-vocab-size does not '
+[gate:L1121:4273s] E     +     'exist',
+[gate:L1122:4273s] E     +     'src.experiments.exp5_sae_dashboard: flag --source-seq-len does not exist',
+[gate:L1123:4273s] E     +     'src.experiments.exp5_sae_dashboard: flag --source-d-model does not exist',
+[gate:L1124:4273s] E     +     'src.experiments.exp5_sae_dashboard: flag --source-n-layers does not exist',
+[gate:L1125:4273s] E     +     'src.experiments.exp5_sae_dashboard: flag --source-n-heads does not exist',
+[gate:L1126:4273s] E     +     'src.experiments.exp5_sae_dashboard: flag --source-task does not exist',
+[gate:L1127:4273s] E     +     'src.experiments.exp5_sae_dashboard: flag --seeds does not exist',
+[gate:L1128:4273s] E     +     'src.experiments.exp5_sae_dashboard: flag --manifest-path does not exist',
+[gate:L1129:4273s] E     + ]
+[gate:L1130:4273s] ______ test_notebook_passes_the_contract[kaggle_induction_standard.ipynb] ______
+[gate:L1131:4273s] tests/test_remote_notebooks.py:43: in test_notebook_passes_the_contract
+[gate:L1132:4273s]     assert problems == [], f"{name} violates the remote-run contract:\n" + "\n".join(
+[gate:L1133:4273s] E   AssertionError: kaggle_induction_standard.ipynb violates the remote-run contract:
+[gate:L1134:4273s] E       - src.experiments.exp1_induction_heads: flag --vocab-size does not exist
+[gate:L1135:4273s] E       - src.experiments.exp1_induction_heads: flag --seq-len does not exist
+[gate:L1136:4273s] E       - src.experiments.exp1_induction_heads: flag --d-model does not exist
+[gate:L1137:4273s] E       - src.experiments.exp1_induction_heads: flag --n-layers does not exist
+[gate:L1138:4273s] E       - src.experiments.exp1_induction_heads: flag --n-heads does not exist
+[gate:L1139:4273s] E       - src.experiments.exp1_induction_heads: flag --epochs does not exist
+[gate:L1140:4273s] E       - src.experiments.exp1_induction_heads: flag --batch-size does not exist
+[gate:L1141:4273s] E       - src.experiments.exp1_induction_heads: flag --num-train does not exist
+[gate:L1142:4273s] E       - src.experiments.exp1_induction_heads: flag --batches does not exist
+[gate:L1143:4273s] E       - src.experiments.exp1_induction_heads: flag --seeds does not exist
+[gate:L1144:4273s] E       - src.experiments.exp1_induction_heads: flag --detect-every does not exist
+[gate:L1145:4273s] E       - src.experiments.exp1_induction_heads: flag --manifest-path does not exist
+[gate:L1146:4273s] E       - src.experiments.exp1_induction_heads: flag --standard does not exist
+[gate:L1147:4273s] E       - src.experiments.exp1_induction_heads: flag --batches does not exist
+[gate:L1148:4273s] E       - src.experiments.exp1_induction_heads: flag --seeds does not exist
+[gate:L1149:4273s] E       - src.experiments.exp1_induction_heads: flag --checkpoint-dir does not exist
+[gate:L1150:4273s] E       - src.experiments.exp1_induction_heads: flag --checkpoint-every does not exist
+[gate:L1151:4273s] E       - src.experiments.exp1_induction_heads: flag --resume does not exist
+[gate:L1152:4273s] E       - src.experiments.exp1_induction_heads: flag --detect-every does not exist
+[gate:L1153:4273s] E       - src.experiments.exp1_induction_heads: flag --stop-on-confirmed does not exist
+[gate:L1154:4273s] E       - src.experiments.exp1_induction_heads: flag --stop-rule does not exist
+[gate:L1155:4273s] E       - src.experiments.exp1_induction_heads: flag --manifest-path does not exist
+[gate:L1156:4273s] E       - src.experiments.exp1_induction_heads: flag --standard does not exist
+[gate:L1157:4273s] E       - src.experiments.exp1_induction_heads: flag --batches does not exist
+[gate:L1158:4273s] E       - src.experiments.exp1_induction_heads: flag --seeds does not exist
+[gate:L1159:4273s] E       - src.experiments.exp1_induction_heads: flag --checkpoint-dir does not exist
+[gate:L1160:4273s] E       - src.experiments.exp1_induction_heads: flag --checkpoint-every does not exist
+[gate:L1161:4273s] E       - src.experiments.exp1_induction_heads: flag --resume does not exist
+[gate:L1162:4273s] E       - src.experiments.exp1_induction_heads: flag --detect-every does not exist
+[gate:L1163:4273s] E       - src.experiments.exp1_induction_heads: flag --manifest-path does not exist
+[gate:L1164:4273s] E       - src.experiments.exp4_circuit_patching: flag --from-checkpoint does not exist
+[gate:L1165:4273s] E       - src.experiments.exp4_circuit_patching: flag --source-vocab-size does not exist
+[gate:L1166:4273s] E       - src.experiments.exp4_circuit_patching: flag --source-seq-len does not exist
+[gate:L1167:4273s] E       - src.experiments.exp4_circuit_patching: flag --source-d-model does not exist
+[gate:L1168:4273s] E       - src.experiments.exp4_circuit_patching: flag --source-n-layers does not exist
+[gate:L1169:4273s] E       - src.experiments.exp4_circuit_patching: flag --source-n-heads does not exist
+[gate:L1170:4273s] E       - src.experiments.exp4_circuit_patching: flag --seeds does not exist
+[gate:L1171:4273s] E       - src.experiments.exp4_circuit_patching: flag --manifest-path does not exist
+[gate:L1172:4273s] E       - src.experiments.exp5_sae_dashboard: flag --activations-from does not exist
+[gate:L1173:4273s] E       - src.experiments.exp5_sae_dashboard: flag --source-vocab-size does not exist
+[gate:L1174:4273s] E       - src.experiments.exp5_sae_dashboard: flag --source-seq-len does not exist
+[gate:L1175:4273s] E       - src.experiments.exp5_sae_dashboard: flag --source-d-model does not exist
+[gate:L1176:4273s] E       - src.experiments.exp5_sae_dashboard: flag --source-n-layers does not exist
+[gate:L1177:4273s] E       - src.experiments.exp5_sae_dashboard: flag --source-n-heads does not exist
+[gate:L1178:4273s] E       - src.experiments.exp5_sae_dashboard: flag --d-model does not exist
+[gate:L1179:4273s] E       - src.experiments.exp5_sae_dashboard: flag --seeds does not exist
+[gate:L1180:4273s] E       - src.experiments.exp5_sae_dashboard: flag --manifest-path does not exist
+[gate:L1181:4273s] E   assert ['src.experim...t exist', ...] == []
+[gate:L1182:4273s] E     
+[gate:L1183:4273s] E     Left contains 47 more items, first extra item: 'src.experiments.exp1_induction_heads: flag --vocab-size does not exist'
+[gate:L1184:4273s] E     
+[gate:L1185:4273s] E     Full diff:
+[gate:L1186:4273s] E     - []
+[gate:L1187:4273s] E     + [
+[gate:L1188:4273s] E     +     'src.experiments.exp1_induction_heads: flag --vocab-size does not exist',
+[gate:L1189:4273s] E     +     'src.experiments.exp1_induction_heads: flag --seq-len does not exist',
+[gate:L1190:4273s] E     +     'src.experiments.exp1_induction_heads: flag --d-model does not exist',
+[gate:L1191:4273s] E     +     'src.experiments.exp1_induction_heads: flag --n-layers does not exist',
+[gate:L1192:4273s] E     +     'src.experiments.exp1_induction_heads: flag --n-heads does not exist',
+[gate:L1193:4273s] E     +     'src.experiments.exp1_induction_heads: flag --epochs does not exist',
+[gate:L1194:4273s] E     +     'src.experiments.exp1_induction_heads: flag --batch-size does not exist',
+[gate:L1195:4273s] E     +     'src.experiments.exp1_induction_heads: flag --num-train does not exist',
+[gate:L1196:4273s] E     +     'src.experiments.exp1_induction_heads: flag --batches does not exist',
+[gate:L1197:4273s] E     +     'src.experiments.exp1_induction_heads: flag --seeds does not exist',
+[gate:L1198:4273s] E     +     'src.experiments.exp1_induction_heads: flag --detect-every does not exist',
+[gate:L1199:4273s] E     +     'src.experiments.exp1_induction_heads: flag --manifest-path does not exist',
+[gate:L1200:4273s] E     +     'src.experiments.exp1_induction_heads: flag --standard does not exist',
+[gate:L1201:4273s] E     +     'src.experiments.exp1_induction_heads: flag --batches does not exist',
+[gate:L1202:4273s] E     +     'src.experiments.exp1_induction_heads: flag --seeds does not exist',
+[gate:L1203:4273s] E     +     'src.experiments.exp1_induction_heads: flag --checkpoint-dir does not '
+[gate:L1204:4273s] E     +     'exist',
+[gate:L1205:4273s] E     +     'src.experiments.exp1_induction_heads: flag --checkpoint-every does not '
+[gate:L1206:4273s] E     +     'exist',
+[gate:L1207:4273s] E     +     'src.experiments.exp1_induction_heads: flag --resume does not exist',
+[gate:L1208:4273s] E     +     'src.experiments.exp1_induction_heads: flag --detect-every does not exist',
+[gate:L1209:4273s] E     +     'src.experiments.exp1_induction_heads: flag --stop-on-confirmed does not '
+[gate:L1210:4273s] E     +     'exist',
+[gate:L1211:4273s] E     +     'src.experiments.exp1_induction_heads: flag --stop-rule does not exist',
+[gate:L1212:4273s] E     +     'src.experiments.exp1_induction_heads: flag --manifest-path does not exist',
+[gate:L1213:4273s] E     +     'src.experiments.exp1_induction_heads: flag --standard does not exist',
+[gate:L1214:4273s] E     +     'src.experiments.exp1_induction_heads: flag --batches does not exist',
+[gate:L1215:4273s] E     +     'src.experiments.exp1_induction_heads: flag --seeds does not exist',
+[gate:L1216:4273s] E     +     'src.experiments.exp1_induction_heads: flag --checkpoint-dir does not '
+[gate:L1217:4273s] E     +     'exist',
+[gate:L1218:4273s] E     +     'src.experiments.exp1_induction_heads: flag --checkpoint-every does not '
+[gate:L1219:4273s] E     +     'exist',
+[gate:L1220:4273s] E     +     'src.experiments.exp1_induction_heads: flag --resume does not exist',
+[gate:L1221:4273s] E     +     'src.experiments.exp1_induction_heads: flag --detect-every does not exist',
+[gate:L1222:4273s] E     +     'src.experiments.exp1_induction_heads: flag --manifest-path does not exist',
+[gate:L1223:4273s] E     +     'src.experiments.exp4_circuit_patching: flag --from-checkpoint does not '
+[gate:L1224:4273s] E     +     'exist',
+[gate:L1225:4273s] E     +     'src.experiments.exp4_circuit_patching: flag --source-vocab-size does not '
+[gate:L1226:4273s] E     +     'exist',
+[gate:L1227:4273s] E     +     'src.experiments.exp4_circuit_patching: flag --source-seq-len does not '
+[gate:L1228:4273s] E     +     'exist',
+[gate:L1229:4273s] E     +     'src.experiments.exp4_circuit_patching: flag --source-d-model does not '
+[gate:L1230:4273s] E     +     'exist',
+[gate:L1231:4273s] E     +     'src.experiments.exp4_circuit_patching: flag --source-n-layers does not '
+[gate:L1232:4273s] E     +     'exist',
+[gate:L1233:4273s] E     +     'src.experiments.exp4_circuit_patching: flag --source-n-heads does not '
+[gate:L1234:4273s] E     +     'exist',
+[gate:L1235:4273s] E     +     'src.experiments.exp4_circuit_patching: flag --seeds does not exist',
+[gate:L1236:4273s] E     +     'src.experiments.exp4_circuit_patching: flag --manifest-path does not '
+[gate:L1237:4273s] E     +     'exist',
+[gate:L1238:4273s] E     +     'src.experiments.exp5_sae_dashboard: flag --activations-from does not '
+[gate:L1239:4273s] E     +     'exist',
+[gate:L1240:4273s] E     +     'src.experiments.exp5_sae_dashboard: flag --source-vocab-size does not '
+[gate:L1241:4273s] E     +     'exist',
+[gate:L1242:4273s] E     +     'src.experiments.exp5_sae_dashboard: flag --source-seq-len does not exist',
+[gate:L1243:4273s] E     +     'src.experiments.exp5_sae_dashboard: flag --source-d-model does not exist',
+[gate:L1244:4273s] E     +     'src.experiments.exp5_sae_dashboard: flag --source-n-layers does not exist',
+[gate:L1245:4273s] E     +     'src.experiments.exp5_sae_dashboard: flag --source-n-heads does not exist',
+[gate:L1246:4273s] E     +     'src.experiments.exp5_sae_dashboard: flag --d-model does not exist',
+[gate:L1247:4273s] E     +     'src.experiments.exp5_sae_dashboard: flag --seeds does not exist',
+[gate:L1248:4273s] E     +     'src.experiments.exp5_sae_dashboard: flag --manifest-path does not exist',
+[gate:L1249:4273s] E     + ]
+[gate:L1250:4273s] ================================ tests coverage ================================
+[gate:L1251:4273s] _______________ coverage: platform linux, python 3.12.12-final-0 _______________
+[gate:L1252:4273s] 
+[gate:L1253:4273s] Name                                       Stmts   Miss Branch BrPart  Cover   Missing
+[gate:L1254:4273s] --------------------------------------------------------------------------------------
+[gate:L1255:4273s] src/__init__.py                                0      0      0      0   100%
+[gate:L1256:4273s] src/data/__init__.py                           0      0      0      0   100%
+[gate:L1257:4273s] src/data/datasets.py                          41     19      2      1    53%   10-15, 37-39, 67-76
+[gate:L1258:4273s] src/evaluation/__init__.py                     0      0      0      0   100%
+[gate:L1259:4273s] src/evaluation/metrics.py                    100     11     38     12    83%   14, 15->20, 33, 45, 60, 66, 72, 76, 86, 90, 141, 145
+[gate:L1260:4273s] src/experiments/__init__.py                    0      0      0      0   100%
+[gate:L1261:4273s] src/experiments/checkpointing.py              35      2     12      3    85%   46->49, 49->51, 54-55
+[gate:L1262:4273s] src/experiments/exp1_induction_heads.py      704    261    156     17    61%   397, 431->436, 469-470, 507-508, 516->520, 608-627, 723-728, 752, 820, 882, 936, 943, 947-953, 973->970, 976->970, 985-997, 1016-1062, 1146-1158, 1163-1208, 1333-1363, 1372-1463, 1510, 1763-1771, 1794->1796, 1833-2097
+[gate:L1263:4273s] src/experiments/exp2_grokking.py             603    261    102     12    56%   327-344, 393->395, 459, 485, 525, 625, 629, 714-751, 769-799, 838, 839->842, 860-920, 929-974, 987-1013, 1022-1072, 1102, 1104, 1204, 1366-1546
+[gate:L1264:4273s] src/experiments/exp3_superposition.py        240    153     36      2    34%   239-240, 271, 284-302, 314-324, 335-374, 389-408, 419-688
+[gate:L1265:4273s] src/experiments/exp4_circuit_patching.py     543    245    106     14    52%   93-96, 121-123, 153, 258-266, 331-392, 644-664, 674-698, 706-724, 739, 766-773, 783, 792, 794->812, 840-841, 869, 893-898, 929-950, 977-984, 987, 1206-1456
+[gate:L1266:4273s] src/experiments/exp5_sae_dashboard.py        306    163     38      3    44%   174, 192-238, 261-268, 357-381, 389-424, 504-507, 527->529, 544-584, 725-901
+[gate:L1267:4273s] src/experiments/exp6_capstone.py             475     83    142     18    78%   221, 392->390, 452, 465-472, 482, 484, 495->494, 612->611, 648-651, 655-663, 684, 706-707, 711, 738, 797, 891, 895, 1008, 1013-1120
+[gate:L1268:4273s] src/experiments/induction_detection.py       429     25    148     31    90%   151, 185, 202->195, 211, 225, 292, 322, 357-358, 398, 416, 439, 445->447, 454, 478, 488, 578, 630, 649->648, 660, 664->658, 673, 704, 741, 749->746, 751->738, 819->822, 872, 1000-1001, 1042, 1063, 1067->1061
+[gate:L1269:4273s] src/experiments/induction_tasks.py           260     15     68     14    91%   105, 107, 109, 131, 222, 258, 367, 369, 463-464, 528, 589, 593, 602, 638
+[gate:L1270:4273s] src/experiments/neuron_ablation.py           166      7     30      6    93%   70, 85, 92, 110, 205->204, 264-265, 296
+[gate:L1271:4273s] src/experiments/runner.py                     91     46     26      0    47%   37-44, 56-73, 80-87, 94-103, 108-115, 129-130
+[gate:L1272:4273s] src/models/__init__.py                         0      0      0      0   100%
+[gate:L1273:4273s] src/models/bpe_tokenizer.py                   72      1     30      1    98%   97
+[gate:L1274:4273s] src/models/decoder_only_transformer.py       211      8     56      5    95%   305, 384, 389-390, 430->433, 440-443
+[gate:L1275:4273s] src/models/linear_model.py                   133     20     50     11    81%   11, 18-23, 71, 85-87, 100, 114-115, 157, 159, 172, 187->189, 195-196, 201, 211
+[gate:L1276:4273s] src/models/pca.py                             83      6     16      3    91%   64-65, 69, 136->147, 154, 160-161
+[gate:L1277:4273s] src/models/tree_model.py                     136     24     44      7    78%   15-17, 21, 90, 94, 107, 116, 205-210, 231, 241-251
+[gate:L1278:4273s] src/reproducibility.py                        21      5      4      2    72%   34-35, 42, 44->exit, 47-48
+[gate:L1279:4273s] src/results.py                               180     32     68      5    83%   70-71, 221, 278-280, 288, 294, 378-380, 394, 399, 420-447
+[gate:L1280:4273s] src/training/__init__.py                       0      0      0      0   100%
+[gate:L1281:4273s] src/training/micrograd.py                    117     30     14      0    71%   20, 44, 57, 70, 88, 121-127, 150-169
+[gate:L1282:4273s] --------------------------------------------------------------------------------------
+[gate:L1283:4273s] TOTAL                                       4946   1417   1186    167    70%
+[gate:L1284:4273s] Required test coverage of 55.0% reached. Total coverage: 69.70%
+[gate:L1285:4273s] =========================== short test summary info ============================
+[gate:L1286:4273s] FAILED tests/test_remote_notebooks.py::test_notebook_passes_the_contract[kaggle_grokking_p113.ipynb] - AssertionError: kaggle_grokking_p113.ipynb violates the remote-run contract:
+[gate:L1287:4273s]     - src.experiments.exp2_grokking: flag --protocol does not exist
+[gate:L1288:4273s]     - src.experiments.exp2_grokking: flag --modulus does not exist
+[gate:L1289:4273s]     - src.experiments.exp2_grokking: flag --epochs does not exist
+[gate:L1290:4273s]     - src.experiments.exp2_grokking: flag --seeds does not exist
+[gate:L1291:4273s]     - src.experiments.exp2_grokking: flag --checkpoint-dir does not exist
+[gate:L1292:4273s]     - src.experiments.exp2_grokking: flag --checkpoint-every does not exist
+[gate:L1293:4273s]     - src.experiments.exp2_grokking: flag --resume does not exist
+[gate:L1294:4273s]     - src.experiments.exp2_grokking: flag --progress-interval does not exist
+[gate:L1295:4273s]     - src.experiments.exp2_grokking: flag --manifest-path does not exist
+[gate:L1296:4273s]     - src.experiments.exp2_grokking: flag --protocol does not exist
+[gate:L1297:4273s]     - src.experiments.exp2_grokking: flag --modulus does not exist
+[gate:L1298:4273s]     - src.experiments.exp2_grokking: flag --epochs does not exist
+[gate:L1299:4273s]     - src.experiments.exp2_grokking: flag --batch-size does not exist
+[gate:L1300:4273s]     - src.experiments.exp2_grokking: flag --seeds does not exist
+[gate:L1301:4273s]     - src.experiments.exp2_grokking: flag --checkpoint-dir does not exist
+[gate:L1302:4273s]     - src.experiments.exp2_grokking: flag --checkpoint-every does not exist
+[gate:L1303:4273s]     - src.experiments.exp2_grokking: flag --resume does not exist
+[gate:L1304:4273s]     - src.experiments.exp2_grokking: flag --manifest-path does not exist
+[gate:L1305:4273s] assert ['src.experim...t exist', ...] == []
+[gate:L1306:4273s]   
+[gate:L1307:4273s]   Left contains 18 more items, first extra item: 'src.experiments.exp2_grokking: flag --protocol does not exist'
+[gate:L1308:4273s]   
+[gate:L1309:4273s]   Full diff:
+[gate:L1310:4273s]   - []
+[gate:L1311:4273s]   + [
+[gate:L1312:4273s]   +     'src.experiments.exp2_grokking: flag --protocol does not exist',
+[gate:L1313:4273s]   +     'src.experiments.exp2_grokking: flag --modulus does not exist',
+[gate:L1314:4273s]   +     'src.experiments.exp2_grokking: flag --epochs does not exist',
+[gate:L1315:4273s]   +     'src.experiments.exp2_grokking: flag --seeds does not exist',
+[gate:L1316:4273s]   +     'src.experiments.exp2_grokking: flag --checkpoint-dir does not exist',
+[gate:L1317:4273s]   +     'src.experiments.exp2_grokking: flag --checkpoint-every does not exist',
+[gate:L1318:4273s]   +     'src.experiments.exp2_grokking: flag --resume does not exist',
+[gate:L1319:4273s]   +     'src.experiments.exp2_grokking: flag --progress-interval does not exist',
+[gate:L1320:4273s]   +     'src.experiments.exp2_grokking: flag --manifest-path does not exist',
+[gate:L1321:4273s]   +     'src.experiments.exp2_grokking: flag --protocol does not exist',
+[gate:L1322:4273s]   +     'src.experiments.exp2_grokking: flag --modulus does not exist',
+[gate:L1323:4273s]   +     'src.experiments.exp2_grokking: flag --epochs does not exist',
+[gate:L1324:4273s]   +     'src.experiments.exp2_grokking: flag --batch-size does not exist',
+[gate:L1325:4273s]   +     'src.experiments.exp2_grokking: flag --seeds does not exist',
+[gate:L1326:4273s]   +     'src.experiments.exp2_grokking: flag --checkpoint-dir does not exist',
+[gate:L1327:4273s]   +     'src.experiments.exp2_grokking: flag --checkpoint-every does not exist',
+[gate:L1328:4273s]   +     'src.experiments.exp2_grokking: flag --resume does not exist',
+[gate:L1329:4273s]   +     'src.experiments.exp2_grokking: flag --manifest-path does not exist',
+[gate:L1330:4273s]   + ]
+[gate:L1331:4273s] FAILED tests/test_remote_notebooks.py::test_notebook_passes_the_contract[kaggle_induction_content.ipynb] - AssertionError: kaggle_induction_content.ipynb violates the remote-run contract:
+[gate:L1332:4273s]     - src.experiments.exp1_induction_heads: flag --task does not exist
+[gate:L1333:4273s]     - src.experiments.exp1_induction_heads: flag --vocab-size does not exist
+[gate:L1334:4273s]     - src.experiments.exp1_induction_heads: flag --seq-len does not exist
+[gate:L1335:4273s]     - src.experiments.exp1_induction_heads: flag --d-model does not exist
+[gate:L1336:4273s]     - src.experiments.exp1_induction_heads: flag --n-layers does not exist
+[gate:L1337:4273s]     - src.experiments.exp1_induction_heads: flag --n-heads does not exist
+[gate:L1338:4273s]     - src.experiments.exp1_induction_heads: flag --epochs does not exist
+[gate:L1339:4273s]     - src.experiments.exp1_induction_heads: flag --batch-size does not exist
+[gate:L1340:4273s]     - src.experiments.exp1_induction_heads: flag --num-train does not exist
+[gate:L1341:4273s]     - src.experiments.exp1_induction_heads: flag --batches does not exist
+[gate:L1342:4273s]     - src.experiments.exp1_induction_heads: flag --seeds does not exist
+[gate:L1343:4273s]     - src.experiments.exp1_induction_heads: flag --detect-every does not exist
+[gate:L1344:4273s]     - src.experiments.exp1_induction_heads: flag --manifest-path does not exist
+[gate:L1345:4273s]     - src.experiments.exp1_induction_heads: flag --task does not exist
+[gate:L1346:4273s]     - src.experiments.exp1_induction_heads: flag --standard does not exist
+[gate:L1347:4273s]     - src.experiments.exp1_induction_heads: flag --batches does not exist
+[gate:L1348:4273s]     - src.experiments.exp1_induction_heads: flag --seeds does not exist
+[gate:L1349:4273s]     - src.experiments.exp1_induction_heads: flag --checkpoint-dir does not exist
+[gate:L1350:4273s]     - src.experiments.exp1_induction_heads: flag --checkpoint-every does not exist
+[gate:L1351:4273s]     - src.experiments.exp1_induction_heads: flag --resume does not exist
+[gate:L1352:4273s]     - src.experiments.exp1_induction_heads: flag --detect-every does not exist
+[gate:L1353:4273s]     - src.experiments.exp1_induction_heads: flag --stop-on-confirmed does not exist
+[gate:L1354:4273s]     - src.experiments.exp1_induction_heads: flag --stop-rule does not exist
+[gate:L1355:4273s]     - src.experiments.exp1_induction_heads: flag --manifest-path does not exist
+[gate:L1356:4273s]     - src.experiments.exp1_induction_heads: flag --task does not exist
+[gate:L1357:4273s]     - src.experiments.exp1_induction_heads: flag --standard does not exist
+[gate:L1358:4273s]     - src.experiments.exp1_induction_heads: flag --batches does not exist
+[gate:L1359:4273s]     - src.experiments.exp1_induction_heads: flag --seeds does not exist
+[gate:L1360:4273s]     - src.experiments.exp1_induction_heads: flag --checkpoint-dir does not exist
+[gate:L1361:4273s]     - src.experiments.exp1_induction_heads: flag --checkpoint-every does not exist
+[gate:L1362:4273s]     - src.experiments.exp1_induction_heads: flag --resume does not exist
+[gate:L1363:4273s]     - src.experiments.exp1_induction_heads: flag --detect-every does not exist
+[gate:L1364:4273s]     - src.experiments.exp1_induction_heads: flag --manifest-path does not exist
+[gate:L1365:4273s]     - src.experiments.exp4_circuit_patching: flag --from-checkpoint does not exist
+[gate:L1366:4273s]     - src.experiments.exp4_circuit_patching: flag --source-vocab-size does not exist
+[gate:L1367:4273s]     - src.experiments.exp4_circuit_patching: flag --source-seq-len does not exist
+[gate:L1368:4273s]     - src.experiments.exp4_circuit_patching: flag --source-d-model does not exist
+[gate:L1369:4273s]     - src.experiments.exp4_circuit_patching: flag --source-n-layers does not exist
+[gate:L1370:4273s]     - src.experiments.exp4_circuit_patching: flag --source-n-heads does not exist
+[gate:L1371:4273s]     - src.experiments.exp4_circuit_patching: flag --source-task does not exist
+[gate:L1372:4273s]     - src.experiments.exp4_circuit_patching: flag --seeds does not exist
+[gate:L1373:4273s]     - src.experiments.exp4_circuit_patching: flag --manifest-path does not exist
+[gate:L1374:4273s]     - src.experiments.exp5_sae_dashboard: flag --activations-from does not exist
+[gate:L1375:4273s]     - src.experiments.exp5_sae_dashboard: flag --source-vocab-size does not exist
+[gate:L1376:4273s]     - src.experiments.exp5_sae_dashboard: flag --source-seq-len does not exist
+[gate:L1377:4273s]     - src.experiments.exp5_sae_dashboard: flag --source-d-model does not exist
+[gate:L1378:4273s]     - src.experiments.exp5_sae_dashboard: flag --source-n-layers does not exist
+[gate:L1379:4273s]     - src.experiments.exp5_sae_dashboard: flag --source-n-heads does not exist
+[gate:L1380:4273s]     - src.experiments.exp5_sae_dashboard: flag --source-task does not exist
+[gate:L1381:4273s]     - src.experiments.exp5_sae_dashboard: flag --seeds does not exist
+[gate:L1382:4273s]     - src.experiments.exp5_sae_dashboard: flag --manifest-path does not exist
+[gate:L1383:4273s] assert ['src.experim...t exist', ...] == []
+[gate:L1384:4273s]   
+[gate:L1385:4273s]   Left contains 51 more items, first extra item: 'src.experiments.exp1_induction_heads: flag --task does not exist'
+[gate:L1386:4273s]   
+[gate:L1387:4273s]   Full diff:
+[gate:L1388:4273s]   - []
+[gate:L1389:4273s]   + [
+[gate:L1390:4273s]   +     'src.experiments.exp1_induction_heads: flag --task does not exist',
+[gate:L1391:4273s]   +     'src.experiments.exp1_induction_heads: flag --vocab-size does not exist',
+[gate:L1392:4273s]   +     'src.experiments.exp1_induction_heads: flag --seq-len does not exist',
+[gate:L1393:4273s]   +     'src.experiments.exp1_induction_heads: flag --d-model does not exist',
+[gate:L1394:4273s]   +     'src.experiments.exp1_induction_heads: flag --n-layers does not exist',
+[gate:L1395:4273s]   +     'src.experiments.exp1_induction_heads: flag --n-heads does not exist',
+[gate:L1396:4273s]   +     'src.experiments.exp1_induction_heads: flag --epochs does not exist',
+[gate:L1397:4273s]   +     'src.experiments.exp1_induction_heads: flag --batch-size does not exist',
+[gate:L1398:4273s]   +     'src.experiments.exp1_induction_heads: flag --num-train does not exist',
+[gate:L1399:4273s]   +     'src.experiments.exp1_induction_heads: flag --batches does not exist',
+[gate:L1400:4273s]   +     'src.experiments.exp1_induction_heads: flag --seeds does not exist',
+[gate:L1401:4273s]   +     'src.experiments.exp1_induction_heads: flag --detect-every does not exist',
+[gate:L1402:4273s]   +     'src.experiments.exp1_induction_heads: flag --manifest-path does not exist',
+[gate:L1403:4273s]   +     'src.experiments.exp1_induction_heads: flag --task does not exist',
+[gate:L1404:4273s]   +     'src.experiments.exp1_induction_heads: flag --standard does not exist',
+[gate:L1405:4273s]   +     'src.experiments.exp1_induction_heads: flag --batches does not exist',
+[gate:L1406:4273s]   +     'src.experiments.exp1_induction_heads: flag --seeds does not exist',
+[gate:L1407:4273s]   +     'src.experiments.exp1_induction_heads: flag --checkpoint-dir does not '
+[gate:L1408:4273s]   +     'exist',
+[gate:L1409:4273s]   +     'src.experiments.exp1_induction_heads: flag --checkpoint-every does not '
+[gate:L1410:4273s]   +     'exist',
+[gate:L1411:4273s]   +     'src.experiments.exp1_induction_heads: flag --resume does not exist',
+[gate:L1412:4273s]   +     'src.experiments.exp1_induction_heads: flag --detect-every does not exist',
+[gate:L1413:4273s]   +     'src.experiments.exp1_induction_heads: flag --stop-on-confirmed does not '
+[gate:L1414:4273s]   +     'exist',
+[gate:L1415:4273s]   +     'src.experiments.exp1_induction_heads: flag --stop-rule does not exist',
+[gate:L1416:4273s]   +     'src.experiments.exp1_induction_heads: flag --manifest-path does not exist',
+[gate:L1417:4273s]   +     'src.experiments.exp1_induction_heads: flag --task does not exist',
+[gate:L1418:4273s]   +     'src.experiments.exp1_induction_heads: flag --standard does not exist',
+[gate:L1419:4273s]   +     'src.experiments.exp1_induction_heads: flag --batches does not exist',
+[gate:L1420:4273s]   +     'src.experiments.exp1_induction_heads: flag --seeds does not exist',
+[gate:L1421:4273s]   +     'src.experiments.exp1_induction_heads: flag --checkpoint-dir does not '
+[gate:L1422:4273s]   +     'exist',
+[gate:L1423:4273s]   +     'src.experiments.exp1_induction_heads: flag --checkpoint-every does not '
+[gate:L1424:4273s]   +     'exist',
+[gate:L1425:4273s]   +     'src.experiments.exp1_induction_heads: flag --resume does not exist',
+[gate:L1426:4273s]   +     'src.experiments.exp1_induction_heads: flag --detect-every does not exist',
+[gate:L1427:4273s]   +     'src.experiments.exp1_induction_heads: flag --manifest-path does not exist',
+[gate:L1428:4273s]   +     'src.experiments.exp4_circuit_patching: flag --from-checkpoint does not '
+[gate:L1429:4273s]   +     'exist',
+[gate:L1430:4273s]   +     'src.experiments.exp4_circuit_patching: flag --source-vocab-size does not '
+[gate:L1431:4273s]   +     'exist',
+[gate:L1432:4273s]   +     'src.experiments.exp4_circuit_patching: flag --source-seq-len does not '
+[gate:L1433:4273s]   +     'exist',
+[gate:L1434:4273s]   +     'src.experiments.exp4_circuit_patching: flag --source-d-model does not '
+[gate:L1435:4273s]   +     'exist',
+[gate:L1436:4273s]   +     'src.experiments.exp4_circuit_patching: flag --source-n-layers does not '
+[gate:L1437:4273s]   +     'exist',
+[gate:L1438:4273s]   +     'src.experiments.exp4_circuit_patching: flag --source-n-heads does not '
+[gate:L1439:4273s]   +     'exist',
+[gate:L1440:4273s]   +     'src.experiments.exp4_circuit_patching: flag --source-task does not exist',
+[gate:L1441:4273s]   +     'src.experiments.exp4_circuit_patching: flag --seeds does not exist',
+[gate:L1442:4273s]   +     'src.experiments.exp4_circuit_patching: flag --manifest-path does not '
+[gate:L1443:4273s]   +     'exist',
+[gate:L1444:4273s]   +     'src.experiments.exp5_sae_dashboard: flag --activations-from does not '
+[gate:L1445:4273s]   +     'exist',
+[gate:L1446:4273s]   +     'src.experiments.exp5_sae_dashboard: flag --source-vocab-size does not '
+[gate:L1447:4273s]   +     'exist',
+[gate:L1448:4273s]   +     'src.experiments.exp5_sae_dashboard: flag --source-seq-len does not exist',
+[gate:L1449:4273s]   +     'src.experiments.exp5_sae_dashboard: flag --source-d-model does not exist',
+[gate:L1450:4273s]   +     'src.experiments.exp5_sae_dashboard: flag --source-n-layers does not exist',
+[gate:L1451:4273s]   +     'src.experiments.exp5_sae_dashboard: flag --source-n-heads does not exist',
+[gate:L1452:4273s]   +     'src.experiments.exp5_sae_dashboard: flag --source-task does not exist',
+[gate:L1453:4273s]   +     'src.experiments.exp5_sae_dashboard: flag --seeds does not exist',
+[gate:L1454:4273s]   +     'src.experiments.exp5_sae_dashboard: flag --manifest-path does not exist',
+[gate:L1455:4274s]   + ]
+[gate:L1456:4274s] FAILED tests/test_remote_notebooks.py::test_notebook_passes_the_contract[kaggle_induction_standard.ipynb] - AssertionError: kaggle_induction_standard.ipynb violates the remote-run contract:
+[gate:L1457:4274s]     - src.experiments.exp1_induction_heads: flag --vocab-size does not exist
+[gate:L1458:4274s]     - src.experiments.exp1_induction_heads: flag --seq-len does not exist
+[gate:L1459:4274s]     - src.experiments.exp1_induction_heads: flag --d-model does not exist
+[gate:L1460:4274s]     - src.experiments.exp1_induction_heads: flag --n-layers does not exist
+[gate:L1461:4274s]     - src.experiments.exp1_induction_heads: flag --n-heads does not exist
+[gate:L1462:4274s]     - src.experiments.exp1_induction_heads: flag --epochs does not exist
+[gate:L1463:4274s]     - src.experiments.exp1_induction_heads: flag --batch-size does not exist
+[gate:L1464:4274s]     - src.experiments.exp1_induction_heads: flag --num-train does not exist
+[gate:L1465:4274s]     - src.experiments.exp1_induction_heads: flag --batches does not exist
+[gate:L1466:4274s]     - src.experiments.exp1_induction_heads: flag --seeds does not exist
+[gate:L1467:4274s]     - src.experiments.exp1_induction_heads: flag --detect-every does not exist
+[gate:L1468:4274s]     - src.experiments.exp1_induction_heads: flag --manifest-path does not exist
+[gate:L1469:4274s]     - src.experiments.exp1_induction_heads: flag --standard does not exist
+[gate:L1470:4274s]     - src.experiments.exp1_induction_heads: flag --batches does not exist
+[gate:L1471:4274s]     - src.experiments.exp1_induction_heads: flag --seeds does not exist
+[gate:L1472:4274s]     - src.experiments.exp1_induction_heads: flag --checkpoint-dir does not exist
+[gate:L1473:4274s]     - src.experiments.exp1_induction_heads: flag --checkpoint-every does not exist
+[gate:L1474:4274s]     - src.experiments.exp1_induction_heads: flag --resume does not exist
+[gate:L1475:4274s]     - src.experiments.exp1_induction_heads: flag --detect-every does not exist
+[gate:L1476:4274s]     - src.experiments.exp1_induction_heads: flag --stop-on-confirmed does not exist
+[gate:L1477:4274s]     - src.experiments.exp1_induction_heads: flag --stop-rule does not exist
+[gate:L1478:4274s]     - src.experiments.exp1_induction_heads: flag --manifest-path does not exist
+[gate:L1479:4274s]     - src.experiments.exp1_induction_heads: flag --standard does not exist
+[gate:L1480:4274s]     - src.experiments.exp1_induction_heads: flag --batches does not exist
+[gate:L1481:4274s]     - src.experiments.exp1_induction_heads: flag --seeds does not exist
+[gate:L1482:4274s]     - src.experiments.exp1_induction_heads: flag --checkpoint-dir does not exist
+[gate:L1483:4274s]     - src.experiments.exp1_induction_heads: flag --checkpoint-every does not exist
+[gate:L1484:4274s]     - src.experiments.exp1_induction_heads: flag --resume does not exist
+[gate:L1485:4274s]     - src.experiments.exp1_induction_heads: flag --detect-every does not exist
+[gate:L1486:4274s]     - src.experiments.exp1_induction_heads: flag --manifest-path does not exist
+[gate:L1487:4274s]     - src.experiments.exp4_circuit_patching: flag --from-checkpoint does not exist
+[gate:L1488:4274s]     - src.experiments.exp4_circuit_patching: flag --source-vocab-size does not exist
+[gate:L1489:4274s]     - src.experiments.exp4_circuit_patching: flag --source-seq-len does not exist
+[gate:L1490:4274s]     - src.experiments.exp4_circuit_patching: flag --source-d-model does not exist
+[gate:L1491:4274s]     - src.experiments.exp4_circuit_patching: flag --source-n-layers does not exist
+[gate:L1492:4274s]     - src.experiments.exp4_circuit_patching: flag --source-n-heads does not exist
+[gate:L1493:4274s]     - src.experiments.exp4_circuit_patching: flag --seeds does not exist
+[gate:L1494:4274s]     - src.experiments.exp4_circuit_patching: flag --manifest-path does not exist
+[gate:L1495:4274s]     - src.experiments.exp5_sae_dashboard: flag --activations-from does not exist
+[gate:L1496:4274s]     - src.experiments.exp5_sae_dashboard: flag --source-vocab-size does not exist
+[gate:L1497:4274s]     - src.experiments.exp5_sae_dashboard: flag --source-seq-len does not exist
+[gate:L1498:4274s]     - src.experiments.exp5_sae_dashboard: flag --source-d-model does not exist
+[gate:L1499:4274s]     - src.experiments.exp5_sae_dashboard: flag --source-n-layers does not exist
+[gate:L1500:4274s]     - src.experiments.exp5_sae_dashboard: flag --source-n-heads does not exist
+[gate:L1501:4274s]     - src.experiments.exp5_sae_dashboard: flag --d-model does not exist
+[gate:L1502:4274s]     - src.experiments.exp5_sae_dashboard: flag --seeds does not exist
+[gate:L1503:4274s]     - src.experiments.exp5_sae_dashboard: flag --manifest-path does not exist
+[gate:L1504:4274s] assert ['src.experim...t exist', ...] == []
+[gate:L1505:4274s]   
+[gate:L1506:4274s]   Left contains 47 more items, first extra item: 'src.experiments.exp1_induction_heads: flag --vocab-size does not exist'
+[gate:L1507:4274s]   
+[gate:L1508:4274s]   Full diff:
+[gate:L1509:4274s]   - []
+[gate:L1510:4274s]   + [
+[gate:L1511:4274s]   +     'src.experiments.exp1_induction_heads: flag --vocab-size does not exist',
+[gate:L1512:4274s]   +     'src.experiments.exp1_induction_heads: flag --seq-len does not exist',
+[gate:L1513:4274s]   +     'src.experiments.exp1_induction_heads: flag --d-model does not exist',
+[gate:L1514:4274s]   +     'src.experiments.exp1_induction_heads: flag --n-layers does not exist',
+[gate:L1515:4274s]   +     'src.experiments.exp1_induction_heads: flag --n-heads does not exist',
+[gate:L1516:4274s]   +     'src.experiments.exp1_induction_heads: flag --epochs does not exist',
+[gate:L1517:4274s]   +     'src.experiments.exp1_induction_heads: flag --batch-size does not exist',
+[gate:L1518:4274s]   +     'src.experiments.exp1_induction_heads: flag --num-train does not exist',
+[gate:L1519:4274s]   +     'src.experiments.exp1_induction_heads: flag --batches does not exist',
+[gate:L1520:4274s]   +     'src.experiments.exp1_induction_heads: flag --seeds does not exist',
+[gate:L1521:4274s]   +     'src.experiments.exp1_induction_heads: flag --detect-every does not exist',
+[gate:L1522:4274s]   +     'src.experiments.exp1_induction_heads: flag --manifest-path does not exist',
+[gate:L1523:4274s]   +     'src.experiments.exp1_induction_heads: flag --standard does not exist',
+[gate:L1524:4274s]   +     'src.experiments.exp1_induction_heads: flag --batches does not exist',
+[gate:L1525:4274s]   +     'src.experiments.exp1_induction_heads: flag --seeds does not exist',
+[gate:L1526:4274s]   +     'src.experiments.exp1_induction_heads: flag --checkpoint-dir does not '
+[gate:L1527:4274s]   +     'exist',
+[gate:L1528:4274s]   +     'src.experiments.exp1_induction_heads: flag --checkpoint-every does not '
+[gate:L1529:4274s]   +     'exist',
+[gate:L1530:4274s]   +     'src.experiments.exp1_induction_heads: flag --resume does not exist',
+[gate:L1531:4274s]   +     'src.experiments.exp1_induction_heads: flag --detect-every does not exist',
+[gate:L1532:4274s]   +     'src.experiments.exp1_induction_heads: flag --stop-on-confirmed does not '
+[gate:L1533:4274s]   +     'exist',
+[gate:L1534:4274s]   +     'src.experiments.exp1_induction_heads: flag --stop-rule does not exist',
+[gate:L1535:4274s]   +     'src.experiments.exp1_induction_heads: flag --manifest-path does not exist',
+[gate:L1536:4274s]   +     'src.experiments.exp1_induction_heads: flag --standard does not exist',
+[gate:L1537:4274s]   +     'src.experiments.exp1_induction_heads: flag --batches does not exist',
+[gate:L1538:4274s]   +     'src.experiments.exp1_induction_heads: flag --seeds does not exist',
+[gate:L1539:4274s]   +     'src.experiments.exp1_induction_heads: flag --checkpoint-dir does not '
+[gate:L1540:4274s]   +     'exist',
+[gate:L1541:4274s]   +     'src.experiments.exp1_induction_heads: flag --checkpoint-every does not '
+[gate:L1542:4274s]   +     'exist',
+[gate:L1543:4274s]   +     'src.experiments.exp1_induction_heads: flag --resume does not exist',
+[gate:L1544:4274s]   +     'src.experiments.exp1_induction_heads: flag --detect-every does not exist',
+[gate:L1545:4274s]   +     'src.experiments.exp1_induction_heads: flag --manifest-path does not exist',
+[gate:L1546:4274s]   +     'src.experiments.exp4_circuit_patching: flag --from-checkpoint does not '
+[gate:L1547:4274s]   +     'exist',
+[gate:L1548:4274s]   +     'src.experiments.exp4_circuit_patching: flag --source-vocab-size does not '
+[gate:L1549:4274s]   +     'exist',
+[gate:L1550:4274s]   +     'src.experiments.exp4_circuit_patching: flag --source-seq-len does not '
+[gate:L1551:4274s]   +     'exist',
+[gate:L1552:4274s]   +     'src.experiments.exp4_circuit_patching: flag --source-d-model does not '
+[gate:L1553:4274s]   +     'exist',
+[gate:L1554:4274s]   +     'src.experiments.exp4_circuit_patching: flag --source-n-layers does not '
+[gate:L1555:4274s]   +     'exist',
+[gate:L1556:4274s]   +     'src.experiments.exp4_circuit_patching: flag --source-n-heads does not '
+[gate:L1557:4274s]   +     'exist',
+[gate:L1558:4274s]   +     'src.experiments.exp4_circuit_patching: flag --seeds does not exist',
+[gate:L1559:4274s]   +     'src.experiments.exp4_circuit_patching: flag --manifest-path does not '
+[gate:L1560:4274s]   +     'exist',
+[gate:L1561:4274s]   +     'src.experiments.exp5_sae_dashboard: flag --activations-from does not '
+[gate:L1562:4274s]   +     'exist',
+[gate:L1563:4274s]   +     'src.experiments.exp5_sae_dashboard: flag --source-vocab-size does not '
+[gate:L1564:4274s]   +     'exist',
+[gate:L1565:4274s]   +     'src.experiments.exp5_sae_dashboard: flag --source-seq-len does not exist',
+[gate:L1566:4274s]   +     'src.experiments.exp5_sae_dashboard: flag --source-d-model does not exist',
+[gate:L1567:4274s]   +     'src.experiments.exp5_sae_dashboard: flag --source-n-layers does not exist',
+[gate:L1568:4274s]   +     'src.experiments.exp5_sae_dashboard: flag --source-n-heads does not exist',
+[gate:L1569:4274s]   +     'src.experiments.exp5_sae_dashboard: flag --d-model does not exist',
+[gate:L1570:4274s]   +     'src.experiments.exp5_sae_dashboard: flag --seeds does not exist',
+[gate:L1571:4274s]   +     'src.experiments.exp5_sae_dashboard: flag --manifest-path does not exist',
+[gate:L1572:4274s]   + ]
+[gate:L1573:4274s] ============ 3 failed, 498 passed, 2 skipped in 1620.92s (0:27:00) =============
+[gate:L1574:4292s] make: *** [Makefile:47: test-cov] Error 1
+uuid=01M5DV8SVPSMZPZFDN7NCGYGF5: exit code 2
+
+{"level":"fatal","error":"uuid=01M5DV8SVPSMZPZFDN7NCGYGF5: exit code 2","time":"2026-10-21T02:56:51+02:00","message":"error running cli"}

@@ -37,6 +37,7 @@ import shutil
 import subprocess
 import sys
 import time
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -108,8 +109,22 @@ def code_cells(nb: dict[str, Any]) -> list[str]:
 # lies about what the code can do)
 # ---------------------------------------------------------------------------
 
+@lru_cache(maxsize=None)
 def _module_flags(module: str) -> set[str]:
-    """The flags `python -m <module> --help` accepts."""
+    """The flags `python -m <module> --help` accepts.
+
+    Cached: every notebook is validated against every module it mentions,
+    and each miss costs a fresh interpreter that imports torch (~300 MB).
+    On a loaded machine that is the difference between a green gate and an
+    out-of-memory kill — and a killed `--help` used to look like a notebook
+    full of unknown flags.
+
+    A non-zero exit means the module could not be introspected at all, and
+    that has to be reported as *that* rather than as a list of "flag --x does
+    not exist" messages: an empty output (the process was killed, or it
+    died on an import) used to look like a typo in the notebook, which sends
+    the reader looking in the wrong place.
+    """
     proc = subprocess.run(
         [sys.executable, "-m", module, "--help"],
         capture_output=True,
@@ -117,6 +132,12 @@ def _module_flags(module: str) -> set[str]:
         cwd=REPO_ROOT,
         timeout=300,
     )
+    if proc.returncode != 0:
+        tail = (proc.stderr or proc.stdout or "").strip().splitlines()[-3:]
+        raise RuntimeError(
+            f"`python -m {module} --help` exited {proc.returncode}"
+            + (f": {' | '.join(tail)}" if tail else " (no output)")
+        )
     return set(FLAG_RE.findall(proc.stdout + proc.stderr))
 
 

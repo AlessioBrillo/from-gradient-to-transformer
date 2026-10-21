@@ -69,6 +69,24 @@ class TestValidateNotebook:
         problems = validate_notebook(nb)
         assert any("--definitely-not-a-flag" in p for p in problems)
 
+    def test_a_module_that_cannot_be_introspected_says_so(self) -> None:
+        """A dead `--help` is not a notebook full of unknown flags.
+
+        The lint used to report "flag --x does not exist" for every flag of
+        a module whose `--help` had produced no output — which is what a
+        killed process (an out-of-memory kill on a loaded machine) looks
+        like. The message has to name the process failure instead, or the
+        reader goes looking for a typo that is not there.
+        """
+        nb = self._nb(
+            'BRANCH = "main"',
+            "!uv run python -m src.experiments.definitely_not_a_module --seeds 0",
+        )
+        problems = validate_notebook(nb)
+        assert any(
+            "does not import" in p or "--help` exited" in p for p in problems
+        ), problems
+
     def test_manifest_path_must_live_under_results(self) -> None:
         nb = self._nb(
             'BRANCH = "main"',
