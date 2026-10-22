@@ -13,6 +13,42 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-10-22 — The CPU de-risk, the detector's granularity, and the Rung 5 figures
+
+- **Studied**: whether the content-based task is *learnable* before spending a GPU
+  session on it, and what the pre-registered thresholds would do with the answer.
+- **Built / measured** (the pre-registration's CPU gate, run before the GPU run and
+  recorded in the pre-registration *before* the run, so that nothing about it can be
+  read as a post-hoc adjustment):
+  - **The quick geometry learns, and it learns by content.** Copy accuracy **0.5288**
+    on the copy queries against a **0.2051** ceiling for the best fixed offset, and
+    **0.4521** on the queries whose distance is *not* the modal one — the group where
+    a positional head scores ~0. The mechanism works.
+  - **The detector does not fire at that scale**: the best head's content mass is
+    **0.146** (screen 0.30) and the K-composition **0.183** (bar 0.40), 0 heads
+    confirmed of 8. The likely reading is a *distributed* copy — several heads at
+    ~0.15 each, none crossing a per-head threshold. The thresholds were **not**
+    changed: 0.30 is the convention this repository has used since 2026-08-01, and
+    the pre-registration says the run can end in PARTIAL or "NEGATIVE (unexplained)"
+    when the behaviour and the screen disagree. It is written down, in advance.
+  - **A second probe, on the standard geometry** (vocab 2048, 400 CPU epochs): the
+    model is still at the uniform prediction (train loss 7.6246 against ln 2048 =
+    7.62, copy accuracy 0.0004 against a chance of 0.0005). The standard task is
+    not yet learning at that budget; the pre-registered run is ~7.5× the optimizer
+    steps and 4× the data per epoch, on a GPU.
+- **Closed the Rung 5 figure item**: the real-activation figures are regenerated
+  from the very checkpoint the tracked manifest names, with the manifest's own
+  configuration — and the re-run reproduces the manifest's numbers (L0 15.12/512,
+  400/512 dead, FVE 0.99998). The synthetic figures are regenerated from the
+  2026-08-13 manifest's configuration (FVE 0.9749, 39/512 dead). A figure that
+  cannot be regenerated from the evidence is a claim.
+- **Bug found by the CI, fixed**: the Pages workflow's `make reproduce-quick`
+  failed on `main` after the v1.1 increment — my `run_activation_patching` took the
+  answer's position as `pos` and the patch loop used a variable with the same
+  name, so the metric was read at the *last patched* position. On the quick config
+  that crashed; on the standard config it would have measured the wrong position
+  and looked right. Two tests now pin the semantics, and both fail against the bug.
+
 ## 2026-10-20 — The content-based task, and an audit that reads the prose
 
 - **Studied**: the *task* behind Rung 1. The 2026-10-19 audit left one question
