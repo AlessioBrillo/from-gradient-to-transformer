@@ -89,11 +89,15 @@ typecheck-strict:
 # The induction modules joined the list on 2026-10-20, when the content task
 # made the detector task-aware: a detector whose offsets are wrong is worse
 # than no detector, so its types are held to the strict bar from the start.
+# The circuit-level measurement (copy_circuit.py) and the verdict module
+# (content_verdict.py) joined it on 2026-10-22: the verdict decides what the
+# repository claims, so its criteria are typed like the code that measures
+# them.
 # --follow-imports=silent: without it, mypy also fails this target on
 # errors in whatever these two files transitively import (caught in CI —
 # see .github/workflows/python-ci.yml's blocking step comment).
 typecheck-new:
-	uv run python -m mypy src/results.py src/experiments/runner.py src/experiments/induction_tasks.py src/experiments/induction_detection.py --ignore-missing-imports --follow-imports=silent
+	uv run python -m mypy src/results.py src/experiments/runner.py src/experiments/induction_tasks.py src/experiments/induction_detection.py src/experiments/copy_circuit.py src/experiments/content_verdict.py --ignore-missing-imports --follow-imports=silent
 
 # --- CI mirror (local replica of .github/workflows/python-ci.yml) ---
 # commitlint-head is part of the mirror since 2026-08-08: the PR-only
@@ -213,19 +217,36 @@ reproduce-exp3-geometry:
 # fixed offset, so Rung 1's headline claim is measured on the
 # variable-distance task instead. The full protocol (task, thresholds,
 # budget, decision rule) is pre-registered in
-# 07_capstone/notes/variable-distance-induction-preregistration.md.
+# 07_capstone/notes/variable-distance-induction-preregistration.md, and the
+# 2026-10-22 addendum amends it (vocabulary 256, the mechanism report).
 #
-# The quick target is the CPU de-risk gate of that pre-registration: it
-# proves the pipeline, the detector and the metrics end to end before a GPU
-# hour is spent. The full target is the GPU run and is deliberately *not*
-# the one the CPU can do: 3000 epochs x 3 seeds is ~3.2h on a T4.
+# The quick target is the CPU smoke pass: it proves the pipeline, the
+# detector and the metrics end to end before a GPU hour is spent, and it
+# writes a scratch manifest (results/probe_* is gitignored by design). The
+# derisk target is the *pre-registration's* CPU gate: the same geometry at
+# the full de-risk budget, with a **tracked** manifest, because a gate whose
+# evidence is a gitignored log is not a gate. The full target is the GPU
+# run and is deliberately *not* the one the CPU can do: 3000 epochs x 3
+# seeds is ~5h on a T4.
 reproduce-induction-content-quick:
-	@echo "=== Rung 1 (content task): CPU de-risk — pipeline, detector, metrics ==="
-	uv run python -m src.experiments.exp1_induction_heads --task variable --vocab-size 256 --seq-len 24 --d-model 64 --n-layers 2 --n-heads 4 --epochs 600 --lr 0.001 --weight-decay 0.1 --batch-size 64 --num-train 1024 --batches fresh --seeds 0 --detect-every 100
+	@echo "=== Rung 1 (content task): CPU smoke — pipeline, detector, metrics ==="
+	uv run python -m src.experiments.exp1_induction_heads --task variable --vocab-size 256 --seq-len 24 --d-model 64 --n-layers 2 --n-heads 4 --epochs 600 --lr 0.001 --weight-decay 0.1 --batch-size 64 --num-train 1024 --batches fresh --seeds 0 --detect-every 100 --save-manifest --manifest-path results/probe_induction_content_quick.json
+
+reproduce-induction-content-derisk:
+	@echo "=== Rung 1 (content task): the pre-registration's CPU gate, with a tracked manifest ==="
+	uv run python -m src.experiments.exp1_induction_heads --task variable --vocab-size 256 --seq-len 24 --d-model 64 --n-layers 2 --n-heads 4 --epochs 1500 --lr 0.001 --weight-decay 0.1 --batch-size 64 --num-train 1024 --batches fresh --seeds 0 --detect-every 250 --save-manifest --manifest-path results/induction_content_derisk.json
 
 reproduce-induction-content:
 	@echo "=== Rung 1 (content task): the pre-registered run (GPU, 3 seeds x 3000 epochs) ==="
-	uv run python -m src.experiments.exp1_induction_heads --task variable --standard --batches fresh --seeds 0,1,2 --checkpoint-dir checkpoints/induction_content --checkpoint-every 250 --resume --detect-every 50 --manifest-path results/induction_content.json
+	uv run python -m src.experiments.exp1_induction_heads --content-standard --seeds 0,1,2 --checkpoint-dir checkpoints/induction_content --checkpoint-every 250 --resume --detect-every 50 --manifest-path results/induction_content.json
+
+# The verdict of issue #200, computed by the tested module (not by a
+# notebook cell): the seven frozen criteria, joined across the exp1 and
+# exp4 manifests. The exp4 manifest is optional — without it the causal
+# criterion is *not measured* and the run says so.
+content-verdict:
+	@echo "=== The content task's verdict (the seven pre-registered criteria) ==="
+	uv run python -m src.experiments.content_verdict --exp1 results/induction_content.json --exp4 results/exp4_content.json
 
 # --- Retune A/B (Micro-Phase 89, Row 2) ---
 # Frozen 500-step arms, seed 0, warmup 100, probe manifests only.
