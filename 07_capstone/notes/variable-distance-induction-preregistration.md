@@ -147,6 +147,75 @@ spent looking for it.
 - A negative here does not retract the periodic result; it closes the
   question the periodic task could not answer.
 
+## Addendum — 2026-10-22: the CPU de-risk, and what it says about the thresholds
+
+The CPU gate above was run before the GPU run, and its result is recorded
+here **before** the GPU run happens, so that nothing about it can be read as
+a post-hoc adjustment.
+
+**The gate passes.** (1) The content oracle solves 100% of the copy queries
+and the fixed-offset oracle 20.5% (`tests/test_induction_tasks.py`).
+(2) The planted detector tests pass: a planted content head is detected, a
+planted fixed-offset head and a planted previous-token head are not
+(`tests/test_planted_variable_task.py`). (3) The end-to-end run completes and
+writes a manifest with the new fields.
+
+**The de-risk run** (CPU, the *quick* geometry: seq_len 24, key 15, two
+blocks of three, vocab 256, d_model 64, 1500 epochs, fresh batches, one
+seed):
+
+| Measurement | Value | Chance / baseline |
+|---|---|---|
+| Overall validation accuracy | 0.1065 | 0.0039 (1/256) |
+| **Copy accuracy** (on the copy queries) | **0.5288** | 0.2051 (best fixed offset) |
+| **Copy accuracy, non-modal distance group** | **0.4521** | ~0 for a fixed-offset head |
+| Content mass (per head, best) | 0.146 | screen 0.30 |
+| K-composition | 0.183 | confirmation 0.40 |
+| Confirmed heads | 0 / 8 | |
+
+**What it says.** The task *is* learnable, and the copy is not a fixed
+offset: the model reaches 0.53 on the copy queries against a 0.21 ceiling
+for the best fixed offset, and 0.45 on the queries whose distance is *not*
+the most frequent one — the group where a positional head scores ~0. The
+behaviour is content-based.
+
+**What it also says, and this is the part that matters for the GPU run.**
+The *detector* does not fire: the best head's content mass is 0.146, below
+the 0.30 screen, and the K-composition is 0.183, below the 0.40
+confirmation bar. The most likely reading is that at this scale the copy is
+**distributed over the heads** rather than concentrated in one: eight heads
+at ~0.15 each can carry the copy while no single head crosses a per-head
+threshold. That is the same drift the periodic task showed (the period mass
+fell 0.909 → 0.695 with budget while the content mass stayed at 0.031).
+
+**The thresholds are not changed.** The criteria above are frozen, and
+0.30 is the per-head convention this repository has used since 2026-08-01
+(a convention, not a derived boundary — see [[portfolio/RESULTS]]). The
+consequence is stated plainly: **the GPU run can end in PARTIAL or in
+"NEGATIVE (unexplained)" even if the model copies by content**, because the
+behavioural criteria and the detector's screen can disagree. If they do, the
+verdict says so, the word "induction head" is not used, and the
+distribution over heads is the first thing to measure. That is a result
+about the detector's granularity, and it is reported as one — not repaired
+by lowering a bar that was written down before the data existed.
+
+**A second probe, the same day, on the standard geometry** (CPU, seq_len 64,
+key 36, four blocks of five, vocab 2048, d_model 64, 400 epochs, 2048
+sequences per epoch, fresh batches, one seed): the model is still at the
+uniform prediction at the end of the budget — train loss 7.6246 against
+ln(2048) = 7.62, copy accuracy 0.0004 against a chance of 0.0005, content
+mass 0.022, no confirmed head. The standard geometry is *not* yet learning at
+400 CPU epochs, while the quick geometry (vocab 256, four copy queries per
+sequence instead of twenty) had reached a copy accuracy of 0.53 by epoch
+1500.
+
+Two readings, and the record does not pick one yet: the standard task may
+simply need its full budget (the pre-registered run is ~7.5× the optimizer
+steps and 4× the data per epoch, on a GPU), or the larger vocabulary may
+make the early phase much slower to leave. What this does *not* change is
+the protocol: the GPU run is the pre-registered one, at its budget, with the
+criteria above, and a negative there is a negative at that budget.
+
 ## Links
 
 - [[portfolio/RESULTS]] — the authority on what is true; the Rung 1 section
@@ -157,6 +226,7 @@ spent looking for it.
   the fixed-offset oracle are the two controls.
 - [[docs/adr/0032-induction-detector-and-the-positional-shortcut]] — the
   audit that found the detector bug and the shortcut.
+- [[docs/adr/0033-content-based-induction-task]] — the design decision.
 - [[07_capstone/research-plan]] — the ladder this rung belongs to.
 - [[04_nlp_and_transformers/notes/induction-heads]] — the mechanism's
   background.

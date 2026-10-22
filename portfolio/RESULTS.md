@@ -863,13 +863,16 @@ missing mechanism.
 **Reference**: Bricken et al., "Towards Monosemanticity" (2023); Cunningham et al., "Sparse Autoencoders Find Highly Interpretable Features in Language Models," ICLR 2024.
 
 **Figures**: `portfolio/figures/exp5_sparsity_tradeoff.png`,
-`portfolio/figures/exp5_feature_histogram.png` (synthetic). Real-activation figures
-(`exp5_sparsity_tradeoff_real.png`, `exp5_feature_histogram_real.png`) are not yet
-generated — the 2026-10-20 real-activation run was a manifest-producing run
-(`results/exp5_real_activations.json`, CPU, 52 min) and the figures remain a recorded
-Rung-5 pending item. The synthetic figures pre-date the 2026-08-13 manifest (they are the
-original seed-42 plots); regenerating them from the manifest-backed run is part of the
-recorded Rung-5 pending item.
+`portfolio/figures/exp5_feature_histogram.png` (synthetic),
+`portfolio/figures/exp5_sparsity_tradeoff_real.png`,
+`portfolio/figures/exp5_feature_histogram_real.png` (real activations).
+
+The real-activation figures were a recorded pending item until 2026-10-22:
+they are regenerated from **the same checkpoint the tracked manifest names**
+(the GPU run's `exp1_checkpoint_seed0.pt`, epoch 3000) with the manifest's
+own configuration, and the re-run reproduces the manifest's numbers exactly
+(L0 15.12/512, 400/512 dead, 78.1%). A figure that cannot be regenerated
+from the evidence is a claim, not a figure.
 
 ---
 
