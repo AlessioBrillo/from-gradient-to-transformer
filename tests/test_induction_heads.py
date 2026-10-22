@@ -745,3 +745,122 @@ class TestConfigPresets:
         args = self._args("--scale", "large", "--checkpoint-every", "100")
         apply_config_presets(args)
         assert args.checkpoint_every == 100
+
+    def test_the_content_standard_is_the_standard_config_with_a_smaller_vocab(self) -> None:
+        """The 2026-10-22 amendment, pinned.
+
+        The periodic task's 2048 answered a constraint the content task does
+        not have (its prefix is sampled with replacement, its key is not), and
+        the standard-geometry CPU probe was still at the uniform prediction
+        after 400 epochs at 2048. Everything else is the standard config.
+        """
+        args = self._args("--content-standard")
+        apply_config_presets(args)
+        assert args.vocab_size == 256
+        assert args.task == "variable"
+        assert args.seq_len == 64
+        assert args.d_model == 64
+        assert (args.n_layers, args.n_heads) == (2, 4)
+        assert args.epochs == 3000
+        assert args.num_train == 8192
+        assert args.batch_size == 64
+        assert args.fresh_batches is True
+        assert args.checkpoint_every == 250
+        assert args.save_manifest is True
+
+    def test_the_content_standard_cannot_be_combined_with_another_preset(self) -> None:
+        for other in (("--standard",), ("--quick",), ("--scale", "large")):
+            with pytest.raises(SystemExit):
+                args = self._args("--content-standard", *other)
+                apply_config_presets(args)
+
+    def test_the_content_standard_is_not_the_periodic_standard(self) -> None:
+        standard = self._args("--standard")
+        content = self._args("--content-standard")
+        apply_config_presets(standard)
+        apply_config_presets(content)
+        assert content.vocab_size != standard.vocab_size
+        for key in (
+            "seq_len", "d_model", "n_layers", "n_heads", "epochs",
+            "num_train", "batch_size",
+        ):
+            assert getattr(content, key) == getattr(standard, key)
+
+
+class TestTheCircuitReport:
+    """The secondary, circuit-level report of the copy mechanism.
+
+    The per-head screen cannot see a copy that is spread over several heads,
+    so Rung 1 measures the circuit as a whole: the aggregate content mass,
+    the group ablation and the single-head ablations next to it. The report
+    is secondary — the seven frozen criteria still decide the verdict.
+    """
+
+    def _setup(self):
+        from src.experiments.induction_detection import detect_from_loader
+        from src.experiments.induction_tasks import TaskSpec, task_datasets
+
+        spec = TaskSpec.variable(
+            vocab_size=32, seq_len=24, key_len=12, copy_blocks=2, copy_block_len=3
+        )
+        _train, val = task_datasets(spec, 32, 32, seed=5)
+        loader = DataLoader(val, batch_size=16, shuffle=False)
+        model = AttentionOnlyTransformer(
+            vocab_size=32, d_model=16, n_layers=2, n_heads=2, max_seq_len=24
+        )
+        report, _patterns, tokens = detect_from_loader(
+            model, loader, task="variable"
+        )
+        return model, loader, report, tokens
+
+    def test_the_report_is_empty_on_the_periodic_task(self) -> None:
+        """On the periodic task the content key and the fixed offset coincide:
+        there is no contrast to measure."""
+        from src.experiments.exp1_induction_heads import _circuit_report
+
+        model, loader, report, tokens = self._setup()
+        assert (
+            _circuit_report(
+                model, loader, report, tokens, "periodic", {"copy_accuracy": 0.1}
+            )
+            == {}
+        )
+
+    def test_the_report_carries_the_mechanism_fields(self) -> None:
+        from src.experiments.exp1_induction_heads import _circuit_report
+
+        model, loader, report, tokens = self._setup()
+        metrics = _circuit_report(
+            model, loader, report, tokens, "variable", {"copy_accuracy": 0.1}
+        )
+        for key in (
+            "content_mass_total",
+            "content_mass_top_share",
+            "content_mass_heads_for_80pct",
+            "offset_mass_total",
+            "n_candidate_heads",
+            "group_ablation_drop",
+            "max_single_ablation_drop",
+            "dla_content_minus_offset",
+            "dla_observed_logit_diff",
+            "mechanism_kind",
+        ):
+            assert key in metrics, f"{key} missing from the circuit report"
+            assert isinstance(metrics[key], float)
+
+    def test_the_group_ablation_restores_the_heads(self) -> None:
+        """A leaked mask would ablate those heads for the rest of the run."""
+        from src.experiments.exp1_induction_heads import causal_ablation_group
+
+        model, loader, _report, _tokens = self._setup()
+        causal_ablation_group(model, loader, [(0, 0), (1, 1)], restrict_to_copy=True)
+        for block in model.blocks:
+            assert block.head_mask is None
+
+    def test_the_single_head_ablation_restores_the_head(self) -> None:
+        from src.experiments.exp1_induction_heads import causal_ablation
+
+        model, loader, _report, _tokens = self._setup()
+        causal_ablation(model, loader, 0, 1, restrict_to_copy=True)
+        for block in model.blocks:
+            assert block.head_mask is None

@@ -40,6 +40,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from src.experiments.checkpointing import load_training_checkpoint
+from src.experiments.copy_circuit import candidate_heads, content_triples
 from src.experiments.exp1_induction_heads import (
     AttentionOnlyTransformer,
     _BatchesAction,
@@ -59,6 +60,7 @@ from src.experiments.induction_tasks import (
     TASK_VARIABLE,
     TaskSpec,
     copy_query_batch,
+    copy_query_minimal_pair_batch,
     task_datasets,
 )
 from src.experiments.runner import parse_seeds, run_seeds
@@ -303,6 +305,60 @@ def detect_induction_heads(
         for layer, heads in enumerate(report.confirmed)
         for head in heads
     ]
+
+
+# How many sequences the detection reads. The periodic task's cascade was
+# measured on 8 and its numbers are in the record, so it stays 8; the
+# variable-distance task needs more, because its copy queries sit at
+# different positions in every sequence and the *group* of heads is what the
+# mechanism report measures.
+DETECTION_SAMPLES = {TASK_PERIODIC: 8, TASK_VARIABLE: 64}
+
+# The two counterfactual designs of the intervention.
+COUNTERFACTUAL_DISJOINT = "disjoint"
+COUNTERFACTUAL_MINIMAL_PAIR = "minimal-pair"
+COUNTERFACTUAL_MODES = (COUNTERFACTUAL_DISJOINT, COUNTERFACTUAL_MINIMAL_PAIR)
+
+
+def detect_copy_circuit(
+    model: nn.Module,
+    inputs: torch.Tensor,
+    threshold: float = INDUCTION_MASS_THRESHOLD,
+    composition_threshold: float = COMPOSITION_THRESHOLD,
+    prefix_len: Optional[int] = None,
+    task: str = TASK_PERIODIC,
+) -> dict:
+    """The confirmed heads **and** the candidate group of one model.
+
+    The confirmed heads are the per-head screen's answer (a head whose mass
+    is above 0.30 and whose layer is composed with an earlier one). The
+    candidate group is the pre-registered rule "content mass at least three
+    times the chance level" — it is what a *distributed* copy needs, because
+    a copy spread over several heads falls below the per-head screen in each
+    of them.
+
+    Returns a dict with the confirmed heads, the candidate group and the
+    detection report itself.
+    """
+    report, _patterns = detect_from_inputs(
+        model,
+        inputs,
+        prefix_len=prefix_len,
+        mass_threshold=threshold,
+        composition_threshold=composition_threshold,
+        task=task,
+    )
+    confirmed = [
+        (layer, head)
+        for layer, heads in enumerate(report.confirmed)
+        for head in heads
+    ]
+    triples = content_triples(inputs)
+    return {
+        "confirmed": confirmed,
+        "candidates": candidate_heads(report, triples),
+        "report": report,
+    }
 
 
 def train_model(
@@ -583,6 +639,84 @@ def run_path_patching_to_logits(
         }
 
     return results
+
+
+def run_group_path_patching_to_logits(
+    model: nn.Module,
+    clean_inputs: torch.Tensor,
+    clean_answers: torch.Tensor,
+    corrupted_inputs: torch.Tensor,
+    corrupted_answers: torch.Tensor,
+    heads: list[tuple[int, int]],
+    pos: int = -1,
+    batch_size: int = 32,
+) -> dict:
+    """Path-patch a *group* of heads' direct contributions to the logits.
+
+    `run_path_patching_to_logits` swaps one head's direct term; this one
+    swaps the **sum** of the group's. It is the intervention a distributed
+    circuit needs: if the copy is carried by several heads, no single patch
+    moves the answer (each head holds a fraction of it) while the group's
+    patch does — and the size of the group's effect next to the size of the
+    single-head effects is what separates "one head" from "a group of
+    heads".
+
+    Returns a dict with the clean difference, the patched difference and the
+    effect (1 = the group's direct term carries the whole answer).
+    """
+    model.eval()
+    device = _model_device(model)
+    clean_inputs = clean_inputs.to(device)
+    corrupted_inputs = corrupted_inputs.to(device)
+    batch_size = min(batch_size, clean_inputs.size(0), corrupted_inputs.size(0))
+    n_layers = len(getattr(model, "blocks", []))
+
+    with torch.no_grad():
+        clean_logits, clean_cache = _forward_with_cache(model, clean_inputs[:batch_size])
+        _, corrupted_cache = _forward_with_cache(model, corrupted_inputs[:batch_size])
+
+    answer = clean_answers[:batch_size].to(device)
+    counterfactual = corrupted_answers[:batch_size].to(device)
+    idx = torch.arange(batch_size, device=device)
+
+    def logit_diff(logits: torch.Tensor) -> torch.Tensor:
+        read_at = pos if pos >= 0 else logits.shape[1] - 1
+        at_logits = logits[:, read_at, :]
+        return at_logits[idx, answer] - at_logits[idx, counterfactual]
+
+    clean_diff = logit_diff(clean_logits).mean().item()
+    resid_final = clean_cache[f"blocks.{n_layers - 1}.resid_post"].to(DEVICE)
+
+    direct_delta = torch.zeros_like(resid_final[:, pos, :])
+    for layer, head in heads:
+        attn_module = _attn_module(model, layer)
+        d_head = attn_module.d_head
+        w_o_head = attn_module.W_O.weight[:, head * d_head:(head + 1) * d_head]
+
+        probs_clean = clean_cache[f"blocks.{layer}.attn.attn_probs"].to(DEVICE)
+        v_clean = clean_cache[f"blocks.{layer}.attn.V"].to(DEVICE)
+        probs_corrupt = corrupted_cache[f"blocks.{layer}.attn.attn_probs"].to(DEVICE)
+        v_corrupt = corrupted_cache[f"blocks.{layer}.attn.V"].to(DEVICE)
+
+        head_out_clean = (probs_clean[:, head] @ v_clean[:, head])[:, pos, :]
+        head_out_corrupt = (probs_corrupt[:, head] @ v_corrupt[:, head])[:, pos, :]
+        direct_delta = direct_delta + (head_out_corrupt - head_out_clean) @ w_o_head.T
+
+    patched_resid_final = resid_final.clone()
+    patched_resid_final[:, pos, :] = patched_resid_final[:, pos, :] + direct_delta
+
+    with torch.no_grad():
+        h = model.ln_final(patched_resid_final)
+        patched_logits = model.unembed(h)
+
+    patched_diff = logit_diff(patched_logits).mean().item()
+    effect = (clean_diff - patched_diff) / clean_diff if clean_diff != 0 else 0.0
+    return {
+        "clean_diff": clean_diff,
+        "patched_diff": patched_diff,
+        "effect": effect,
+        "n_heads": len(heads),
+    }
 
 
 def run_head_ablation(
@@ -890,17 +1024,37 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
 
     sample_inputs = next(iter(val_loader))[0][:8]
     prefix_len = prefix_length_for(seq_len)
-    induction_heads = detect_induction_heads(
-        model, sample_inputs, prefix_len=prefix_len, task=task
+    # The detection reads more sequences on the variable-distance task (see
+    # DETECTION_SAMPLES): its copy queries sit at different positions in
+    # every sequence, and the candidate group is a distribution over heads.
+    detect_inputs = next(iter(val_loader))[0][: DETECTION_SAMPLES.get(task, 8)]
+    circuit = detect_copy_circuit(
+        model, detect_inputs, prefix_len=prefix_len, task=task
     )
+    induction_heads = circuit["confirmed"]
+    candidate_group = circuit["candidates"]
 
     probe = _run_task_probe(
         model, task, vocab_size, seq_len, seed, tokens=sample_inputs
     )
 
+    counterfactual_mode = getattr(args, "counterfactual", COUNTERFACTUAL_DISJOINT)
+    if counterfactual_mode not in COUNTERFACTUAL_MODES:
+        raise SystemExit(
+            f"--counterfactual must be one of {COUNTERFACTUAL_MODES}, "
+            f"got {counterfactual_mode!r}"
+        )
     val_x, val_y = val_dataset.tensors
     if task == TASK_VARIABLE:
-        patch = copy_query_batch(val_x, val_y, vocab_size=vocab_size)
+        if counterfactual_mode == COUNTERFACTUAL_MINIMAL_PAIR:
+            # The minimal pair: the same sequence with one token changed, so
+            # the intervention is not diluted by everything the two sequences
+            # differ in.
+            patch = copy_query_minimal_pair_batch(
+                val_x, val_y, vocab_size=vocab_size, seed=seed
+            )
+        else:
+            patch = copy_query_batch(val_x, val_y, vocab_size=vocab_size)
         val_batch = patch["clean_inputs"]
         val_batch_answers = patch["clean_answers"]
         corrupted = patch["corrupted_inputs"]
@@ -961,12 +1115,34 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
             np.mean([v["effect"] for v in path_results.values()])
         )
 
+    # The group intervention: the candidate group is patched as a whole, so
+    # a copy carried by several heads is not invisible to the cascade. It
+    # runs even when no head passed the per-head screen — that is exactly
+    # the case it exists for.
+    group_path_patch_effect = 0.0
+    if candidate_group:
+        group_result = run_group_path_patching_to_logits(
+            model=model,
+            clean_inputs=val_batch,
+            clean_answers=val_batch_answers,
+            corrupted_inputs=corrupted,
+            corrupted_answers=corrupted_answers,
+            heads=candidate_group,
+            pos=read_pos,
+        )
+        group_path_patch_effect = float(group_result["effect"])
+
     return {
         "final_val_acc": float(history["val_acc"][-1]),
         "total_induction_heads": float(len(induction_heads)),
+        "n_candidate_heads": float(len(candidate_group)),
         "mean_activation_recovery": mean_activation_recovery,
         "mean_ablation_effect": mean_ablation_effect,
         "mean_path_patch_effect": mean_path_patch_effect,
+        "group_path_patch_effect": group_path_patch_effect,
+        "counterfactual_minimal_pair": float(
+            counterfactual_mode == COUNTERFACTUAL_MINIMAL_PAIR
+        ),
         "probe_content_mass": float(probe["peak_content_mass"]),
         "probe_period_mass": float(probe["peak_period_mass"]),
         "probe_content_wins": float(bool(probe["content_wins"])),
@@ -1207,6 +1383,20 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--source-copy-block-len", type=int, default=None,
         help="Variable task only: the checkpoint's copy block length.",
+    )
+    parser.add_argument(
+        "--counterfactual",
+        choices=list(COUNTERFACTUAL_MODES),
+        default=COUNTERFACTUAL_DISJOINT,
+        help=(
+            "How the corrupted half of the intervention is built. 'disjoint' "
+            "takes it from a different sequence (the historical design, and "
+            "the one the 2026-10-20 numbers were measured with); "
+            "'minimal-pair' changes exactly one token of the same sequence — "
+            "the token at the source of the copy — so the intervention is not "
+            "diluted by everything the two sequences differ in. The "
+            "variable-distance task only."
+        ),
     )
     parser.set_defaults(fresh_batches=False, batch_mode="fixed")
     return parser
