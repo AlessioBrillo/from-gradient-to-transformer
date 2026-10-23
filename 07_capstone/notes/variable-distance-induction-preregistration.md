@@ -316,6 +316,52 @@ positions, not from the model).
 * *single head* — one head alone costs ≥ 0.20;
 * *none* — the group costs ≤ 0.05 and the attribution does not favour the
   content;
+### The CPU gate's numbers, traced to a manifest
+
+The gate was re-run with `--save-manifest`, and both manifests are tracked:
+`results/induction_content_derisk.json` (quick geometry) and
+`results/induction_content_derisk_standard.json` (standard geometry, once the
+second run finishes). Every number below is quoted from the quick-run manifest;
+the standard-geometry numbers will be added here when its run finishes —
+before the GPU session starts.
+
+**Quick geometry** (vocab 256, seq_len 24, key 15, two blocks of three,
+d_model 64, 2 layers, 4 heads, fresh batches, 1500 epochs, one seed,
+`results/induction_content_derisk.json`):
+
+| Measurement | Value | Chance / baseline |
+|---|---|---|
+| Copy accuracy (copy queries) | 0.9988 | 0.193 (best fixed offset) |
+| Copy accuracy, non-modal distance group | 0.9988 | ~0 for a fixed-offset head |
+| Content mass (per head, best) | 0.154 | screen 0.30 |
+| Offset mass (best fixed offset, per head, best) | 0.330 | |
+| Content mass, total over heads | 0.695 | |
+| Top head's share of the content mass | 0.221 | 1.0 = one head does all of it |
+| Heads covering 80% of the content mass | 5 | 1 = a single-head circuit |
+| First-order attribution to content minus position | 5.87 | sign favours content |
+| Group ablation drop (candidate group) | 0.0 | ≥ 0.20 = the group carries the copy |
+| Max single-head ablation drop | 0.0 | ≥ 0.20 = one head carries the copy |
+| Confirmed heads | 0 / 8 | |
+| Mechanism kind | undetermined (code 3) | — |
+
+**What it says.** The task is learnable — 0.999 copy accuracy on the copy
+queries against a 0.19 fixed-offset ceiling — and the behaviour is clearly
+content-based. But the detector does not fire: the best head's content mass is
+0.154, below the 0.30 screen, and no head is confirmed. The aggregate content
+mass over all heads is 0.695, spread over five heads to cover 80% of it —
+exactly the distributed copy the per-head screen cannot see. The group ablation
+of the candidate group costs 0.0 (the candidates are not the carriers), so the
+classification is "undetermined": the behaviour is content-based, but neither
+the per-head detector nor the current candidate rule identifies *which* heads
+carry it. That is precisely why the mechanism report is **secondary** and why
+the run can end in PARTIAL or "NEGATIVE (unexplained)" even though the model
+copies by content. The thresholds are not changed.
+
+*In attesa: i numeri del run a geometria standard (vocab 256, seq_len 64,
+key 36, quattro blocchi di cinque, 600 epoch, `results/induction_content_derisk_standard.json`)
+vengono aggiunti qui appena il run finisce — il server si è riavviato a metà
+dell'esecuzione e va rieseguito — prima che parta il run GPU.*
+
 * *undetermined* — anything else (for instance a group that costs a lot
   **and** a head that costs a lot: a redundant circuit).
 
