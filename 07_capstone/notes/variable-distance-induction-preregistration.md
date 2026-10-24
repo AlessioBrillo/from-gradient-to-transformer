@@ -311,10 +311,10 @@ positions, not from the model).
 
 **The classification thresholds** (also fixed in advance):
 
-* *distributed* — the group ablation costs ≥ 0.20 of the copy accuracy and
+- *distributed* — the group ablation costs ≥ 0.20 of the copy accuracy and
   no single head costs more than 0.10;
-* *single head* — one head alone costs ≥ 0.20;
-* *none* — the group costs ≤ 0.05 and the attribution does not favour the
+- *single head* — one head alone costs ≥ 0.20;
+- *none* — the group costs ≤ 0.05 and the attribution does not favour the
   content;
 ### The CPU gate's numbers, traced to a manifest
 
@@ -362,7 +362,7 @@ key 36, quattro blocchi di cinque, 600 epoch, `results/induction_content_derisk_
 vengono aggiunti qui appena il run finisce — il server si è riavviato a metà
 dell'esecuzione e va rieseguito — prima che parta il run GPU.*
 
-* *undetermined* — anything else (for instance a group that costs a lot
+- *undetermined* — anything else (for instance a group that costs a lot
   **and** a head that costs a lot: a redundant circuit).
 
 **What the report may say.** It may say that the copy is content-based and
