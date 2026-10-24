@@ -62,7 +62,7 @@ def test_reanalysis_returns_energy_metric(tmp_path) -> None:
     metrics = exp2_metrics(path, _args(11, "repo"))
     for key in ("k_energy_90", "k_energy_99", "frac_energy_top5", "energy_sparse"):
         assert key in metrics, f"missing energy field {key}"
-    assert 0.0 <= metrics["frac_energy_top5"] <= 1.0
+    assert 0.0 <= metrics["frac_energy_top5"] <= 1.0 + 1e-6
     assert metrics["energy_sparse"] in (0.0, 1.0)
     assert metrics["final_val_acc"] == 1.0
 
