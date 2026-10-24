@@ -126,7 +126,7 @@ NN_name/
 - [x] **Phase 4 — NLP & Transformers** (LOAD-BEARING for MI — QK/OV circuits, induction heads, activation patching, logit lens, TransformerLens)
 - [x] **Phase 5 — LLM Engineering** (model instrumentation: hooks, deterministic inference, activation harvesting, circuit datasets)
 - [x] **Phase 6 — Production AI** (reframed: reproducible research infra — pinned env, manifests, `verify-claims` in CI; W&B closed-with-reason, the compiled paper PDF now ships with the site)
-- [~] **Phase 7 — Capstone: train + reverse-engineer** (model built, rungs 1-5 implemented; Rung 2 reproduced on GPU 2026-10-14; the planned 3×20k joint run executed 2026-10-14 — the modular/induction dissociation persists at full budget; the standard-scale induction run is in progress)
+- [~] **Phase 7 — Capstone: train + reverse-engineer** (model built, rungs 1-5 implemented; Rung 2 reproduced on GPU 2026-10-14; the planned 3×20k joint run executed 2026-10-14 — the modular/induction dissociation persists at full budget; the standard-scale induction run landed 2026-10-20 and found a *prefix-copying* head, so the content-based task of issue #200 is the open measurement)
 
 See [03_progress-log](00_meta/03_progress-log.md) for the dated journal and [02_skill-tree](00_meta/02_skill-tree.md) for the complete skill tree.
 

@@ -298,6 +298,31 @@ in this version, and this paper therefore does not claim an induction head:
 it claims a prefix-copying head, and it says why the difference is
 structural.
 
+The audit of that instrument, on 2026-10-22, found that the run as written
+could not have produced a verdict: the cell that evaluated the criteria read
+the path-patching metric --- which the circuit-patching rung measures, not
+the training one --- out of the wrong manifest, and raised a \texttt{KeyError}
+on the first seed, after the GPU session had been spent. The criteria now
+live in a tested module that joins the two manifests per seed and reports a
+missing measurement as missing: a run whose manifest does not carry the
+measurement gets the status \emph{incomplete} and no verdict at all, because
+``the model has no content-based induction head'' and ``this manifest never
+measured one'' are different claims. The same audit amended the protocol
+before the run --- the vocabulary drops from $2048$ to $256$ (the periodic
+task's vocabulary answered a collision constraint that this task does not
+have, since its key is sampled without replacement), the emergence run stops
+on the first confirmed head rather than on a two-step circuit that this
+architecture may never produce, and the causal intervention now uses a
+\emph{minimal pair} --- the same sequence with the source token changed ---
+rather than a second, unrelated sequence. A \emph{secondary} mechanism report
+accompanies the verdict and never replaces it: it measures the copy at the
+level of the circuit (the aggregate attention mass on the content key, the
+ablation of the whole candidate group next to the single-head ablations, and
+the first-order logit attribution of every head to the content-versus-position
+contrast), because a copy distributed over several heads falls below the
+per-head screen in each of them. If the seven criteria are not met, this
+paper will not claim an induction head, whatever that report says.
+
 \subsection{Multi-Seed Quick-Scale Manifest}
 Three seeds at quick scale ($V=256$, $\text{seq\_len}=16$,
 $d_\text{model}=24$, 2 layers, 4 heads, 150 epochs, fresh batches):

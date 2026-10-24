@@ -34,6 +34,13 @@ from src.experiments.checkpointing import (
     load_training_checkpoint,
     save_training_checkpoint,
 )
+from src.experiments.copy_circuit import (
+    candidate_heads,
+    classify_mechanism,
+    content_triples,
+    content_vs_position_attribution,
+    mass_summary,
+)
 from src.experiments.induction_detection import (
     COMPOSITION_THRESHOLD,
     INDUCTION_MASS_THRESHOLD,
@@ -1111,7 +1118,26 @@ def causal_ablation(
     mask = torch.ones(block.n_heads)
     mask[head] = 0.0
     block.head_mask = mask
+    try:
+        return _accuracy_under_mask(model, loader, restrict_to_copy)
+    finally:
+        # The mask must never survive an exception: a leaked mask would
+        # silently ablate that head for the rest of the run.
+        block.head_mask = None
 
+
+def _accuracy_under_mask(
+    model: nn.Module,
+    loader: DataLoader,
+    restrict_to_copy: bool,
+) -> float:
+    """The accuracy the model gets with the heads that are currently masked.
+
+    With ``restrict_to_copy`` the accuracy is measured on the **copy
+    queries** only: on the variable-distance task the filler positions are
+    unpredictable, so an overall accuracy is mostly a measure of how much of
+    the sequence is noise.
+    """
     correct = 0
     total = 0
     with torch.no_grad():
@@ -1130,9 +1156,48 @@ def causal_ablation(
             else:
                 total += y.numel()
             correct += int(ok.sum().item())
-
-    block.head_mask = None
     return correct / total if total else 0.0
+
+
+def causal_ablation_group(
+    model: nn.Module,
+    loader: DataLoader,
+    heads: list[tuple[int, int]],
+    restrict_to_copy: bool = False,
+) -> float:
+    """Ablate a *set* of heads at once, and return the accuracy.
+
+    The single-head ablation answers "does this head matter?". The group
+    ablation answers the question a distributed circuit raises: "does the
+    *group* matter, and does any single member of it?". A large drop when
+    the whole group is removed, next to a small drop when any one of its
+    members is removed, is the signature of a copy that is carried by the
+    group rather than by one head.
+
+    The group is the *candidate* set of
+    `src.experiments.copy_circuit.candidate_heads` — fixed by the rule
+    "content mass at least three times the chance level", which reads the
+    data and the attention masses, never the outcome.
+    """
+    if not heads:
+        return _accuracy_under_mask(model, loader, restrict_to_copy)
+    model.eval()
+    per_layer: dict[int, list[int]] = {}
+    for layer, head in heads:
+        per_layer.setdefault(layer, []).append(head)
+    saved: dict[int, Optional[torch.Tensor]] = {}
+    try:
+        for layer, head_list in per_layer.items():
+            block = model.blocks[layer]
+            saved[layer] = block.head_mask
+            mask = torch.ones(block.n_heads)
+            for head in head_list:
+                mask[head] = 0.0
+            block.head_mask = mask
+        return _accuracy_under_mask(model, loader, restrict_to_copy)
+    finally:
+        for layer, previous in saved.items():
+            model.blocks[layer].head_mask = previous
 
 
 def plot_induction_pattern(
@@ -1321,6 +1386,149 @@ def _headline_metrics(
     return metrics
 
 
+# How many sequences of the detected batch the logit attribution runs on.
+# The attribution needs a forward pass with a cache, and the cache holds the
+# attention probabilities of every sequence it sees: 256 sequences of length
+# 64 is already thousands of queries, far more than the attribution needs.
+ATTRIBUTION_SEQUENCES = 256
+
+
+def _circuit_report(
+    model: nn.Module,
+    val_loader: DataLoader,
+    report,
+    tokens: torch.Tensor,
+    task: str,
+    copy_stats: dict,
+) -> dict[str, float]:
+    """The secondary, circuit-level measurement of the copy mechanism.
+
+    This is the measurement the per-head screen cannot make. The screen
+    asks "how much attention mass does *this* head put on the content key?",
+    and a copy distributed over several heads falls below it in every one of
+    them while the circuit as a whole is strong. So the report measures:
+
+    * the **aggregate** content mass and how concentrated it is;
+    * the **group ablation**: the drop in copy accuracy when the whole
+      candidate group is removed at once;
+    * the **single-head** drops of the same candidates, next to it — a large
+      group drop with small single drops is a distributed circuit;
+    * the **first-order logit attribution** of every head to the
+      content-vs-position contrast.
+
+    The candidate group is fixed by a rule that reads the data and the
+    attention masses, never the outcome (see
+    `src.experiments.copy_circuit.candidate_heads`).
+
+    Only the variable-distance task has a content-vs-position contrast to
+    measure — on the periodic task the two coincide — so the report is
+    empty elsewhere.
+    """
+    if task != TASK_VARIABLE:
+        return {}
+
+    triples = content_triples(tokens)
+    metrics: dict[str, float] = mass_summary(report, triples)
+    candidates = candidate_heads(report, triples)
+    metrics["n_candidate_heads"] = float(len(candidates))
+
+    base_copy = float(copy_stats.get("copy_accuracy", 0.0))
+    single_drops: list[float] = []
+    for layer, head in candidates:
+        ablated = causal_ablation(model, val_loader, layer, head, restrict_to_copy=True)
+        single_drops.append(base_copy - ablated)
+    group_accuracy = causal_ablation_group(
+        model, val_loader, candidates, restrict_to_copy=True
+    )
+    metrics["group_ablation_drop"] = float(base_copy - group_accuracy)
+    metrics["max_single_ablation_drop"] = (
+        float(max(single_drops)) if single_drops else 0.0
+    )
+    metrics["mean_single_ablation_drop"] = (
+        float(sum(single_drops) / len(single_drops)) if single_drops else 0.0
+    )
+
+    subset = min(int(tokens.shape[0]), ATTRIBUTION_SEQUENCES)
+    triples_subset = triples[triples[:, 0] < subset]
+    best_offset = int(copy_stats.get("fixed_offset_best_d", -1))
+    if best_offset <= 0:
+        best_offset = int(report.best_offset)
+    attribution = content_vs_position_attribution(
+        model, tokens[:subset], triples_subset, best_offset
+    )
+    metrics["dla_content_minus_offset"] = float(attribution["dla_total"])
+    metrics["dla_top_head_share"] = float(attribution["dla_top_head_share"])
+    metrics["dla_positive_share"] = float(attribution["dla_positive_share"])
+    metrics["dla_observed_logit_diff"] = float(attribution["dla_observed_logit_diff"])
+    metrics["dla_n_queries"] = float(attribution["dla_n_queries"])
+
+    code, label = classify_mechanism(metrics)
+    metrics["mechanism_kind"] = float(code)
+    logger.info(
+        "Circuit report - content mass total %.4f (top head %.0f%%, %d heads "
+        "cover 80%%) | group ablation drop %.4f | max single drop %.4f | "
+        "attribution %.4f -> %s",
+        metrics["content_mass_total"],
+        100.0 * metrics["content_mass_top_share"],
+        int(metrics["content_mass_heads_for_80pct"]),
+        metrics["group_ablation_drop"],
+        metrics["max_single_ablation_drop"],
+        metrics["dla_content_minus_offset"],
+        label,
+    )
+    return metrics
+
+
+def _seed_metrics(
+    model: nn.Module,
+    val_loader: DataLoader,
+    history: dict,
+    induction_heads: list,
+    diagnosis: dict,
+    report,
+    probe: Optional[dict],
+    copy_stats: dict,
+    tokens: torch.Tensor,
+    task: str,
+) -> dict[str, float]:
+    """The metrics of one seed: the headline numbers, the ablation drops and
+    the circuit-level report.
+
+    One function, so the single-seed (`--standard`) reporting path and the
+    multi-seed (`--seeds`) reporting path cannot drift apart — the two used
+    to duplicate the ablation loop, and a change to one of them was a
+    change the other never saw.
+    """
+    metrics = _headline_metrics(
+        history,
+        induction_heads,
+        diagnosis,
+        report=report,
+        probe=probe,
+        copy_stats=copy_stats,
+    )
+    drop_sum = 0.0
+    n_drops = 0
+    copy_drop_sum = 0.0
+    for layer_idx, heads in enumerate(induction_heads):
+        for head_idx in heads:
+            ablated_acc = causal_ablation(model, val_loader, layer_idx, head_idx)
+            drop_sum += history["val_acc"][-1] - ablated_acc
+            copy_ablated = causal_ablation(
+                model, val_loader, layer_idx, head_idx, restrict_to_copy=True
+            )
+            copy_drop_sum += copy_stats["copy_accuracy"] - copy_ablated
+            n_drops += 1
+    metrics["mean_ablation_drop"] = float(drop_sum / n_drops) if n_drops else 0.0
+    metrics["mean_copy_ablation_drop"] = (
+        float(copy_drop_sum / n_drops) if n_drops else 0.0
+    )
+    metrics.update(
+        _circuit_report(model, val_loader, report, tokens, task, copy_stats)
+    )
+    return metrics
+
+
 def _write_single_manifest(
     args: argparse.Namespace,
     metrics: dict[str, float],
@@ -1432,34 +1640,22 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
 
     copy_stats = analyze_copy_metrics(model, val_loader)
 
-    metrics = _headline_metrics(
+    metrics = _seed_metrics(
+        model,
+        val_loader,
         history,
         induction_heads,
         diagnosis,
-        report=report,
-        probe=probe,
-        copy_stats=copy_stats,
+        report,
+        probe,
+        copy_stats,
+        tokens,
+        task,
     )
     # Record which batch regime produced these numbers. The fixed-vs-fresh
     # comparison is the one solid Rung 1 finding, and without this field a
     # manifest does not say which arm of the comparison it is.
     metrics["batch_mode"] = 0.0 if not args.fresh_batches else 1.0
-    drop_sum = 0.0
-    n_drops = 0
-    copy_drop_sum = 0.0
-    for layer_idx, heads in enumerate(induction_heads):
-        for head_idx in heads:
-            ablated_acc = causal_ablation(model, val_loader, layer_idx, head_idx)
-            drop_sum += history["val_acc"][-1] - ablated_acc
-            n_drops += 1
-            copy_ablated = causal_ablation(
-                model, val_loader, layer_idx, head_idx, restrict_to_copy=True
-            )
-            copy_drop_sum += copy_stats["copy_accuracy"] - copy_ablated
-    metrics["mean_ablation_drop"] = float(drop_sum / n_drops) if n_drops else 0.0
-    metrics["mean_copy_ablation_drop"] = (
-        float(copy_drop_sum / n_drops) if n_drops else 0.0
-    )
     return metrics
 
 
@@ -1532,6 +1728,23 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument("--seq-len", type=int, default=64, help="Sequence length")
+    parser.add_argument(
+        "--content-standard",
+        action="store_true",
+        help=(
+            "The content task's standard-scale config, as amended on "
+            "2026-10-22 before the GPU run (see the pre-registration's "
+            "addendum). It is the standard config with one change: the "
+            "vocabulary is 256 instead of 2048. The 2048 of the periodic "
+            "task answered a constraint the content task does not have — "
+            "the periodic prefix is sampled *with replacement*, so a large "
+            "vocabulary is what keeps the prefix collision-free, while the "
+            "content task samples its key *without* replacement. The "
+            "standard-geometry CPU probe of 2026-10-22 was still at the "
+            "uniform prediction after 400 epochs at 2048, and the amended "
+            "geometry is the one the run has to answer the question."
+        ),
+    )
     parser.add_argument(
         "--task",
         choices=[TASK_PERIODIC, TASK_VARIABLE],
@@ -1776,6 +1989,42 @@ def apply_config_presets(args: argparse.Namespace) -> None:
         raise SystemExit(
             "--standard and --scale large select different configs; "
             "pass only --scale large (or only --standard)."
+        )
+
+    if args.content_standard and (args.standard or args.quick or args.scale):
+        raise SystemExit(
+            "--content-standard is its own config: it cannot be combined with "
+            "--standard, --quick or --scale. The content task's standard "
+            "config differs from the periodic one in the vocabulary, and a "
+            "preset that silently overrode another would be a run whose "
+            "config nobody chose."
+        )
+
+    if args.content_standard:
+        # The content task's standard config (the 2026-10-22 amendment).
+        # Everything is the standard config except the vocabulary: 256
+        # instead of 2048, because the periodic task's 2048 answered a
+        # constraint this task does not have (the periodic prefix is sampled
+        # with replacement, the content key is not).
+        args.vocab_size = 256
+        args.seq_len = 64
+        args.d_model = 64
+        args.n_layers = 2
+        args.n_heads = 4
+        args.epochs = 3000
+        args.num_train = 8192
+        args.batch_size = 64
+        args.fresh_batches = True
+        args.task = TASK_VARIABLE
+        if args.checkpoint_every == 0:
+            args.checkpoint_every = 250
+        args.save_model = True
+        args.save_manifest = True
+        logger.info(
+            "CONTENT STANDARD MODE: the content task's standard config "
+            "(vocab=256, seq=64, d_model=64, fresh-batches, epochs=3000) "
+            f"// stateful: checkpointing every {args.checkpoint_every} epochs, "
+            "model + manifest saved"
         )
 
     if args.standard:
@@ -2070,29 +2319,17 @@ def main() -> None:
     # headline manifest, same file `--seeds` writes, so RESULTS.md's tag
     # always points at the newest honest run.
     if not args.no_train and args.save_manifest:
-        metrics = _headline_metrics(
+        metrics = _seed_metrics(
+            model,
+            val_loader,
             history,
             induction_heads,
             diagnosis,
-            report=report,
-            probe=probe,
-            copy_stats=copy_stats,
-        )
-        drop_sum = 0.0
-        n_drops = 0
-        copy_drop_sum = 0.0
-        for layer_idx, heads in enumerate(induction_heads):
-            for head_idx in heads:
-                ablated_acc = causal_ablation(model, val_loader, layer_idx, head_idx)
-                drop_sum += history["val_acc"][-1] - ablated_acc
-                n_drops += 1
-                copy_ablated = causal_ablation(
-                    model, val_loader, layer_idx, head_idx, restrict_to_copy=True
-                )
-                copy_drop_sum += copy_stats["copy_accuracy"] - copy_ablated
-        metrics["mean_ablation_drop"] = float(drop_sum / n_drops) if n_drops else 0.0
-        metrics["mean_copy_ablation_drop"] = (
-            float(copy_drop_sum / n_drops) if n_drops else 0.0
+            report,
+            probe,
+            copy_stats,
+            tokens,
+            task,
         )
         _write_single_manifest(args, metrics, time.monotonic() - t_run_start)
 

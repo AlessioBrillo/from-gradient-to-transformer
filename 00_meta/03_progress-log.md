@@ -13,6 +13,54 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-10-22 (b) — The instrument audit: the content run could not have produced a verdict
+
+- **Studied**: the content task's *instrument* rather than its model — the
+  notebook that decides the verdict, the CPU gate that was supposed to back
+  it, and the protocol the GPU session would have run.
+- **Built / measured**:
+  - **The verdict is now a module.** `src/experiments/content_verdict.py` holds
+    the seven frozen criteria, joins the exp1 and exp4 manifests per seed
+    (criterion 7 lives in exp4, and the old notebook cell read it out of exp1
+    — a `KeyError` on the first seed, after the session was spent), and
+    refuses to guess: a missing measurement is `MISSING`, a run whose manifest
+    does not carry it is `INCOMPLETE` and gets **no verdict**. The notebook is
+    a thin driver now, and the artifacts are zipped **before** the verdict.
+  - **The circuit-level measurement.** `src/experiments/copy_circuit.py`
+    measures what the per-head screen cannot: the aggregate content mass and
+    its concentration, the **group ablation** next to the single-head
+    ablations, and the first-order **logit attribution** of every head to the
+    content-vs-position contrast. The candidate group is fixed by a rule that
+    reads the data and the attention masses and never the outcome. The
+    planted tests pin the sign: a content head votes for the content answer, a
+    fixed-offset head votes against it.
+  - **The counterfactual is a minimal pair**: the same sequence with the
+    source token changed, instead of a different sequence. The 2026-10-20
+    cascade's activation recovery (0.0834) was measuring "this sequence
+    against that one" — everything except the circuit.
+  - **The protocol is amended before the run** (the pre-registration's second
+    addendum, the seven criteria untouched): the vocabulary 2048 → 256
+    (`--content-standard`), because the periodic task's 2048 answered a
+    constraint the content task does not have and the standard-geometry probe
+    was still at the uniform prediction after 400 epochs; and the emergence
+    run's stop rule `mechanism` → `any`, because the two-step rule waits for a
+    head *above* layer 0 and the periodic circuit was entirely in layer 0 — it
+    would never have fired, and the emergence run would have silently cost a
+    second full budget.
+- **Corrected in the record** (the eighth Honesty Ledger entry): the CPU gate
+  claimed a manifest that was never written (both de-risk runs ran with
+  `save_manifest: False`, and the logs are gitignored), and the addendum
+  omitted the probe's contrary verdict — `content mass 0.122 vs positional
+  0.253 -> POSITIONAL copy` — from the very run it described. Both are true
+  and they are not the same kind of statement: the behaviour is the model's
+  answer, the probe is a per-head maximum. The gate is re-run with a tracked
+  manifest.
+- **Open question**: will the content copy be carried by one head or by a
+  group of them? The de-risk says the behaviour is content-based while the
+  best head holds 0.146 of the content mass, under a 0.30 screen — the
+  per-head screen cannot see a distributed circuit, and that is the question
+  the mechanism report now answers. The GPU run is still the open item.
+
 ## 2026-10-22 — The CPU de-risk, the detector's granularity, and the Rung 5 figures
 
 - **Studied**: whether the content-based task is *learnable* before spending a GPU

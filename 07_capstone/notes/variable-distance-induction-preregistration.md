@@ -216,6 +216,183 @@ make the early phase much slower to leave. What this does *not* change is
 the protocol: the GPU run is the pre-registered one, at its budget, with the
 criteria above, and a negative there is a negative at that budget.
 
+## Addendum — 2026-10-22 (b): four corrections, decided before the GPU run
+
+This addendum is written **before** the GPU run and after the audit of the
+2026-10-22 de-risk itself. It changes the *protocol* in four ways, and it
+does not change a single one of the seven criteria.
+
+### 1. The record above was wrong twice, and here is the correction
+
+**(a) The gate's item (3) was not backed.** The addendum above says "the
+end-to-end run completes and writes a manifest with the new fields". It did
+not write one: both de-risk runs were launched without `--save-manifest`
+(`'save_manifest': False, 'manifest_path': None` in both logs), no
+`results/*content*.json` exists, and the two logs are gitignored — so the
+numbers 0.5288 / 0.4521 / 0.146 / 0.183 were not traceable from a clone.
+The gate is re-run with a **tracked** manifest
+(`results/induction_content_derisk.json`, `make reproduce-induction-content-derisk`)
+and the numbers below are quoted from it.
+
+**(b) The probe's verdict was omitted.** The same de-risk run printed
+`Dissociation probe — content mass 0.122 vs positional mass 0.253 ->
+POSITIONAL copy`. The addendum above reports the *behaviour* (copy accuracy
+0.53 against a 0.21 ceiling) and does not report this. Both are true, and
+they are not the same kind of statement: the behaviour is the model's
+answer, the probe is a **per-head attention maximum** compared with another
+per-head maximum. A circuit that spreads the copy over several heads puts
+~0.12 on the content key in each head while a head that does nothing for
+the answer can still hold 0.25 on some offset. The addendum's sentence
+"the behaviour is content-based" stands; the sentence it should have
+qualified — "and the probe still says POSITIONAL" — was missing, and the
+qualification is the whole reason for the mechanism report below.
+
+### 2. The vocabulary: 2048 → 256
+
+The periodic task's 2048 answered a constraint the content task does not
+have. The periodic prefix is sampled **with replacement**, so at 2048 the
+probability of a duplicate token inside the prefix is what keeps the task
+well posed (that is the `prefix_duplicate_probability` machinery). The
+content task's key is sampled **without replacement**: 44 distinct tokens
+are enough (36 key + 8 filler) and the constraint does not exist.
+
+The evidence that 2048 was a liability, not a gift: the standard-geometry
+probe (400 CPU epochs, 2048 sequences per epoch) was still at the *uniform*
+prediction — train loss 7.6246 against ln(2048) = 7.6246, copy accuracy
+0.0004 — while the *quick* geometry at **vocab 256** had reached a copy
+accuracy of 0.53. A vocabulary that puts the model at chance for 400 epochs
+is a budget question with a 30× multiplier attached (the pre-registered run
+is 384k steps against the probe's 12.8k).
+
+**The amended standard config** (`--content-standard`, pinned in
+`src/experiments/exp1_induction_heads.py` and tested in
+`tests/test_induction_heads.py`): `vocab_size=256`, `seq_len=64`,
+`key_len=36`, `copy_blocks=4`, `copy_block_len=5`, `d_model=64`, 2 layers,
+4 heads, attention only, fresh batches every epoch, 3000 epochs, batch 64,
+8192 sequences per epoch, 3 seeds. Everything except the vocabulary is
+unchanged. The trade-off is stated plainly: the content run is **not**
+like-for-like with the periodic run on the vocabulary axis, and it is not
+comparable on the task axis either — which is why the comparison that
+matters is *within* this task (content against the best fixed offset, on
+the same data).
+
+### 3. The emergence run's stop rule: `mechanism` → `any`
+
+`--stop-rule mechanism` stops when a head is confirmed **above the first
+layer** (the two-step circuit). On the periodic task the whole circuit was
+in layer 0, and the de-risk confirmed no head at all — so the two-step rule
+had a good chance of never firing, silently turning the emergence run into a
+second full-budget run and doubling the GPU bill. The question the
+emergence run asks is "when does a copy head appear?", and `--stop-rule any`
+answers it at the first confirmation (twice in a row, as before). The full
+run records `confirmed_epoch` anyway, so nothing is lost.
+
+### 4. The secondary mechanism report (and what it may and may not say)
+
+The criteria above are **unchanged** and still decide the verdict. What is
+added is a *report*, always produced, that describes the circuit:
+
+| Measurement | What it is | How it is computed |
+|---|---|---|
+| `content_mass_total` | the attention mass the whole circuit puts on the content key | the sum over every head of every layer |
+| `content_mass_top_share` | the top head's share of it | 1.0 = one head does all of it |
+| `content_mass_heads_for_80pct` | how wide the circuit is | the heads that cover 80% of the total |
+| `offset_mass_total` | the same sum for the best fixed offset | the ceiling of the positional explanation, on the same queries |
+| `group_ablation_drop` | the causal version: the drop in copy accuracy when the **whole candidate group** is ablated | an intervention, not a correlation |
+| `max_single_ablation_drop` | the drop of the best single member of the group | next to the group drop, it separates "one head" from "a group" |
+| `dla_content_minus_offset` | the first-order logit attribution of every head to the content-vs-position contrast | the head's OV output projected on the difference of the two unembedding directions |
+| `mechanism_kind` | the classification, as a code (0 none, 1 single head, 2 distributed, 3 undetermined) | `src/experiments/copy_circuit.classify_mechanism` |
+
+**The candidate group is fixed by a rule that reads the data and the
+attention masses, never the outcome**: a head is a candidate when its
+content mass is at least **3× the chance level**, and the chance level is
+what a uniform head would put on that key (computed from the copy queries'
+positions, not from the model).
+
+**The classification thresholds** (also fixed in advance):
+
+- *distributed* — the group ablation costs ≥ 0.20 of the copy accuracy and
+  no single head costs more than 0.10;
+- *single head* — one head alone costs ≥ 0.20;
+- *none* — the group costs ≤ 0.05 and the attribution does not favour the
+  content;
+### The CPU gate's numbers, traced to a manifest
+
+The gate was re-run with `--save-manifest`, and both manifests are tracked:
+`results/induction_content_derisk.json` (quick geometry) and
+`results/induction_content_derisk_standard.json` (standard geometry, once the
+second run finishes). Every number below is quoted from the quick-run manifest;
+the standard-geometry numbers will be added here when its run finishes —
+before the GPU session starts.
+
+**Quick geometry** (vocab 256, seq_len 24, key 15, two blocks of three,
+d_model 64, 2 layers, 4 heads, fresh batches, 1500 epochs, one seed,
+`results/induction_content_derisk.json`):
+
+| Measurement | Value | Chance / baseline |
+|---|---|---|
+| Copy accuracy (copy queries) | 0.9988 | 0.193 (best fixed offset) |
+| Copy accuracy, non-modal distance group | 0.9988 | ~0 for a fixed-offset head |
+| Content mass (per head, best) | 0.154 | screen 0.30 |
+| Offset mass (best fixed offset, per head, best) | 0.330 | |
+| Content mass, total over heads | 0.695 | |
+| Top head's share of the content mass | 0.221 | 1.0 = one head does all of it |
+| Heads covering 80% of the content mass | 5 | 1 = a single-head circuit |
+| First-order attribution to content minus position | 5.87 | sign favours content |
+| Group ablation drop (candidate group) | 0.0 | ≥ 0.20 = the group carries the copy |
+| Max single-head ablation drop | 0.0 | ≥ 0.20 = one head carries the copy |
+| Confirmed heads | 0 / 8 | |
+| Mechanism kind | undetermined (code 3) | — |
+
+**What it says.** The task is learnable — 0.999 copy accuracy on the copy
+queries against a 0.19 fixed-offset ceiling — and the behaviour is clearly
+content-based. But the detector does not fire: the best head's content mass is
+0.154, below the 0.30 screen, and no head is confirmed. The aggregate content
+mass over all heads is 0.695, spread over five heads to cover 80% of it —
+exactly the distributed copy the per-head screen cannot see. The group ablation
+of the candidate group costs 0.0 (the candidates are not the carriers), so the
+classification is "undetermined": the behaviour is content-based, but neither
+the per-head detector nor the current candidate rule identifies *which* heads
+carry it. That is precisely why the mechanism report is **secondary** and why
+the run can end in PARTIAL or "NEGATIVE (unexplained)" even though the model
+copies by content. The thresholds are not changed.
+
+*In attesa: i numeri del run a geometria standard (vocab 256, seq_len 64,
+key 36, quattro blocchi di cinque, 600 epoch, `results/induction_content_derisk_standard.json`)
+vengono aggiunti qui appena il run finisce — il server si è riavviato a metà
+dell'esecuzione e va rieseguito — prima che parta il run GPU.*
+
+- *undetermined* — anything else (for instance a group that costs a lot
+  **and** a head that costs a lot: a redundant circuit).
+
+**What the report may say.** It may say that the copy is content-based and
+carried by a group of heads rather than by one. It may not change the
+verdict: a run whose seven criteria are not met is **not** a positive
+induction result, whatever the report says. The sentence the repository may
+publish in that case is the one the decision rule already allows —
+"NEGATIVE (unexplained): the model solves the task by a mechanism the
+detector does not identify" — with the report attached as the description
+of that mechanism. The word "induction head" is not used.
+
+### 5. The counterfactual of the causal cascade: the minimal pair
+
+The 2026-10-20 cascade built the corrupted half of the intervention from a
+*different* sequence, so the contrast it measured was "the answer of this
+sequence against the answer of another sequence" — which every mechanism
+has to lose. That is why its activation-patching recovery is 0.0834, a
+number that is hard to read as "this circuit carries the answer".
+
+The content run uses a **minimal pair**: the same sequence with exactly one
+token changed — the token at the source of the copy (`prev(q) + 1`). The
+replacement token is drawn from the ids that do **not** occur in the
+sequence, so the corrupted sequence keeps every token unique and the read
+position stays a copy query: only the answer changes. The intervention is
+then "the head's direct contribution carries the *content* of the source",
+which is the claim the criterion is about.
+
+The criterion (7) is unchanged. The design is expected to make the effect
+**larger**, so the criterion is at least as strict as it was.
+
 ## Links
 
 - [[portfolio/RESULTS]] — the authority on what is true; the Rung 1 section

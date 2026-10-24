@@ -31,6 +31,8 @@ from src.experiments.induction_tasks import (
     copy_accuracy_by_distance,
     copy_mask_for_pairs,
     copy_queries,
+    copy_query_batch,
+    copy_query_minimal_pair_batch,
     fixed_offset_baseline,
     make_task_batch,
     make_variable_tokens,
@@ -218,7 +220,6 @@ class TestDatasets:
         mask = copy_mask_for_pairs(x, y)
         assert mask.shape == x.shape
         assert mask.sum() > 0
-
     def test_the_periodic_task_is_bit_for_bit_the_old_data(self) -> None:
         """Every manifest in this repository depends on this."""
         from src.experiments.exp1_induction_heads import make_repeated_token_data
@@ -236,3 +237,98 @@ class TestDatasets:
     def test_the_variable_task_holds_out_fresh_sequences(self) -> None:
         train, val = task_datasets(VARIABLE, 16, 16, seed=17)
         assert not torch.equal(train.tensors[0], val.tensors[0])
+
+
+class TestMinimalPair:
+    """The minimal pair: the same sequence with exactly one token changed.
+
+    The 2026-10-20 cascade compared a sequence against a *different*
+    sequence, and the activation-patching recovery it measured (0.0834) is
+    hard to read as "this circuit carries the answer" — the two sequences
+    differ in everything. The minimal pair removes the confound, and these
+    tests are what says it really does.
+    """
+
+    def _batch(self, n: int = 64, seed: int = 3):
+        _train, val = task_datasets(SMALL, n, n, seed=seed)
+        x, y = val.tensors
+        return x, y
+
+    def test_only_one_token_changes(self) -> None:
+        x, y = self._batch()
+        patch = copy_query_minimal_pair_batch(x, y, vocab_size=SMALL.vocab_size, seed=0)
+        clean = patch["clean_inputs"]
+        corrupted = patch["corrupted_inputs"]
+        assert clean.shape == corrupted.shape
+        changed = (clean != corrupted).sum(dim=1)
+        assert bool((changed == 1).all()), "exactly one token may change"
+
+    def test_the_changed_token_is_the_source_of_the_copy(self) -> None:
+        x, y = self._batch()
+        patch = copy_query_minimal_pair_batch(x, y, vocab_size=SMALL.vocab_size, seed=0)
+        pos = int(patch["pos"])
+        full = torch.cat([x, y[:, -1:]], dim=1)
+        geom = copy_queries(full.numpy())
+        for row, source in enumerate(patch["source_positions"]):
+            b = int(patch["selected_indices"][row])
+            assert geom["mask"][b, pos]
+            assert int(geom["content_key"][b, pos]) == int(source)
+            # the clean answer is the token at the source ...
+            assert int(patch["clean_answers"][row]) == int(full[b, source])
+            # ... and the counterfactual is the token that replaced it
+            assert int(patch["corrupted_answers"][row]) == int(
+                patch["corrupted_inputs"][row, source]
+            )
+            assert int(patch["clean_answers"][row]) != int(
+                patch["corrupted_answers"][row]
+            )
+
+    def test_the_replacement_is_absent_from_the_sequence(self) -> None:
+        """Otherwise the corrupted sequence would create a coincidence."""
+        x, y = self._batch()
+        patch = copy_query_minimal_pair_batch(x, y, vocab_size=SMALL.vocab_size, seed=0)
+        full = torch.cat([x, y[:, -1:]], dim=1)
+        for row, source in enumerate(patch["source_positions"]):
+            b = int(patch["selected_indices"][row])
+            present = set(full[b].tolist())
+            replacement = int(patch["corrupted_inputs"][row, source])
+            assert replacement not in present - {int(full[b, source])}
+
+    def test_the_read_position_stays_a_copy_query(self) -> None:
+        """The intervention must not change *what* is asked, only the answer."""
+        x, y = self._batch()
+        patch = copy_query_minimal_pair_batch(x, y, vocab_size=SMALL.vocab_size, seed=0)
+        pos = int(patch["pos"])
+        # The query token at `pos` is untouched, so the previous occurrence
+        # of that token — and therefore the question — is untouched too.
+        assert torch.equal(
+            patch["corrupted_inputs"][:, pos], patch["clean_inputs"][:, pos]
+        )
+        full = torch.cat([x, y[:, -1:]], dim=1)
+        geom = copy_queries(full.numpy())
+        for row in range(patch["clean_inputs"].shape[0]):
+            b = int(patch["selected_indices"][row])
+            assert geom["mask"][b, pos]
+
+    def test_the_two_designs_are_interchangeable(self) -> None:
+        """The caller sees the same keys, whichever design it asks for."""
+        x, y = self._batch()
+        disjoint = copy_query_batch(x, y, vocab_size=SMALL.vocab_size)
+        minimal = copy_query_minimal_pair_batch(
+            x, y, vocab_size=SMALL.vocab_size, seed=0
+        )
+        for key in (
+            "clean_inputs",
+            "clean_answers",
+            "corrupted_inputs",
+            "corrupted_answers",
+        ):
+            assert key in disjoint
+            assert key in minimal
+        assert disjoint["pos"] == minimal["pos"]
+
+    def test_a_batch_without_copy_queries_is_rejected(self) -> None:
+        x = torch.zeros((8, 12), dtype=torch.long)
+        y = torch.ones((8, 12), dtype=torch.long)
+        with pytest.raises(ValueError):
+            copy_query_minimal_pair_batch(x, y, vocab_size=64, seed=0)

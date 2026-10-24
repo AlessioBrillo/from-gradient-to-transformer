@@ -40,38 +40,42 @@ class TestTheAuditPassesOnTheCurrentTree:
 
 class TestTheAuditFires:
     def test_a_retracted_statement_coming_back_is_caught(self, tmp_path: Path) -> None:
-        """The ratchet has to fire on the real file, not on a copy."""
+        """The ratchet has to fire on the real file, not on a copy.
+
+        The file is restored **byte for byte**: writing back the decoded
+        text would rewrite the line endings, and a test run that leaves the
+        tree dirty makes every manifest written afterwards claim
+        `git_dirty: true` for a tree nobody changed.
+        """
         target = REPO_ROOT / STALE_CLAIMS[0][0]
-        original = target.read_text(encoding="utf-8")
+        original = target.read_bytes()
+        text = original.decode("utf-8")
         sentence = STALE_CLAIMS[0][1]
-        assert sentence not in original  # the tree is clean
+        assert sentence not in text  # the tree is clean
         try:
-            target.write_text(
-                original + "\n" + sentence + "\n", encoding="utf-8"
-            )
+            target.write_bytes((text + "\n" + sentence + "\n").encode("utf-8"))
             problems = check_stale_claims()
             assert any(STALE_CLAIMS[0][1] in p for p in problems)
         finally:
-            target.write_text(original, encoding="utf-8")
+            target.write_bytes(original)
         assert check_stale_claims() == []
 
     def test_a_document_that_stops_naming_its_manifest_is_caught(
         self, tmp_path: Path
     ) -> None:
         target = REPO_ROOT / "CONTEXT.md"
-        original = target.read_text(encoding="utf-8")
+        original = target.read_bytes()
         try:
             # Drop one required tag and the audit has to notice.
-            target.write_text(
-                original.replace(
-                    "<!-- manifest: results/exp4_standard.json -->", "", 1
-                ),
-                encoding="utf-8",
+            target.write_bytes(
+                original.decode("utf-8")
+                .replace("<!-- manifest: results/exp4_standard.json -->", "", 1)
+                .encode("utf-8"),
             )
             problems = check_required_manifests()
             assert any("exp4_standard.json" in p for p in problems)
         finally:
-            target.write_text(original, encoding="utf-8")
+            target.write_bytes(original)
         assert check_required_manifests() == []
 
 

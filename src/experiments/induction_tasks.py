@@ -612,6 +612,98 @@ def copy_query_batch(
     }
 
 
+def copy_query_minimal_pair_batch(
+    x: torch.Tensor,
+    y: torch.Tensor,
+    vocab_size: int,
+    seed: int = 0,
+) -> dict[str, Any]:
+    """A **minimal pair**: the same sequence, with exactly one token changed.
+
+    Why this exists
+    ---------------
+    `copy_query_batch` builds the corrupted half of the intervention from a
+    *different* sequence: the clean batch and the corrupted batch share
+    nothing but the read position. The contrast that is measured is then
+    "the answer of this sequence against the answer of another sequence",
+    which every mechanism has to lose — and the measurement of a circuit's
+    effect is diluted by everything the two sequences differ in. That is
+    why the 2026-10-20 cascade's activation-patching recovery was 0.0834:
+    a number that is hard to read as "this circuit carries the answer".
+
+    The minimal pair removes the confound. The corrupted sequence is the
+    clean one with **one** token changed: the token at the *source* of the
+    copy, ``prev(q) + 1`` — the position the model has to read in order to
+    answer at ``q``. Everything else (the query token, the rest of the
+    context, the position of the read) is byte-identical, so a model that
+    answers with the source token must answer with the *new* token, and a
+    model that answers with anything else must not move.
+
+    The replacement token is chosen among the ids that do **not** appear in
+    the sequence, so the corrupted sequence keeps every token unique and the
+    "previous occurrence" of the query token is untouched: the read
+    position stays a copy query, and only its answer changes.
+
+    Returns the same keys as `copy_query_batch` (plus `source_positions`),
+    so the two designs are interchangeable for the caller.
+    """
+    if vocab_size <= 0:
+        raise ValueError("copy_query_minimal_pair_batch needs a vocabulary size")
+    full = torch.cat([x, y[:, -1:]], dim=1)
+    arr = full.numpy()
+    geom = copy_queries(arr)
+    mask = geom["mask"]
+    counts = mask.sum(axis=0)
+    if int(counts.max()) == 0:
+        raise ValueError("no copy query found in this batch")
+    pos = int(np.argmax(counts))
+    selected = np.nonzero(mask[:, pos])[0]
+    if len(selected) < 4:
+        raise ValueError("not enough sequences share a copy-query position")
+
+    rng = np.random.default_rng(seed)
+    corrupted = x[selected].clone()
+    answers: list[int] = []
+    counterfactuals: list[int] = []
+    source_positions: list[int] = []
+
+    for row, b in enumerate(selected):
+        source = int(geom["content_key"][b, pos])
+        if source < 0 or source >= x.shape[1]:
+            raise ValueError(
+                f"the source of the copy query at {pos} is out of the input "
+                f"({source}) — the minimal pair needs a source inside x"
+            )
+        clean_answer = int(arr[b, source])
+        present = set(arr[b].tolist())
+        replacement = -1
+        for _ in range(64):
+            candidate = int(rng.integers(0, vocab_size))
+            if candidate not in present:
+                replacement = candidate
+                break
+        if replacement < 0:
+            raise ValueError(
+                "no token outside the sequence to build a minimal pair with — "
+                "the vocabulary is too small for this batch"
+            )
+        corrupted[row, source] = replacement
+        answers.append(clean_answer)
+        counterfactuals.append(replacement)
+        source_positions.append(source)
+
+    return {
+        "clean_inputs": x[selected],
+        "clean_answers": torch.tensor(answers, dtype=torch.long),
+        "corrupted_inputs": corrupted,
+        "corrupted_answers": torch.tensor(counterfactuals, dtype=torch.long),
+        "pos": pos,
+        "n_sequences": int(len(selected)),
+        "source_positions": source_positions,
+        "selected_indices": [int(i) for i in selected],
+    }
+
+
 def copy_accuracy_by_distance(
     tokens: np.ndarray,
     copy_mask: np.ndarray,

@@ -13,12 +13,100 @@ smoke tests (`make reproduce-quick`) and a full-scale mode (`make reproduce`).
 
 ## Honesty Ledger
 
-Seven audits have now caught real problems in this repository's causal claims and
+Eight audits have now caught real problems in this repository's causal claims and
 evidence base. Six found claims that were wrong or unbacked; the seventh found a
-claim that was **right and had been called wrong by its own metric**. All entries
-stay here — the point of this section is to make it easy to see the trend (are
-correctness problems getting caught faster, or accumulating?), not to keep only
-the latest one.
+claim that was **right and had been called wrong by its own metric**; the eighth
+found that the experiment which was supposed to close the last open question
+**could not have produced an answer at all**. All entries stay here — the point of
+this section is to make it easy to see the trend (are correctness problems getting
+caught faster, or accumulating?), not to keep only the latest one.
+
+### 2026-10-22 — The content-task run could not have produced a verdict: a `KeyError`, a gate with no manifest, and a probe that contradicted the addendum
+
+The eighth audit, and the one that reaches furthest forward: it is about the
+experiment that is supposed to **close** Rung 1's open question, and it found
+that the experiment as written would have spent a GPU session and then died
+before it could say anything.
+
+**What was broken.** Six things, each of them independent of the others:
+
+1. **The verdict cell could not compute the verdict.** The seven criteria lived
+   in a notebook cell, and criterion 7 (`mean_path_patch_effect`) was read out
+   of the **exp1** manifest — a metric only the **exp4** manifest carries. The
+   cell raised `KeyError` on the first seed. The cell that printed the cascade's
+   numbers had the same bug: it read `mean_ablation_effect`,
+   `mean_path_patch_effect`, `mean_activation_recovery` and `checkpoint_epoch`
+   out of the exp1 manifest. Step 2b was the last cell before the download, so
+   the session's artifacts would have been lost with the crash.
+2. **The CPU gate had no evidence.** The gate's third item — "the end-to-end run
+   completes and writes a manifest with the new fields" — was not backed: both
+   de-risk runs were launched without `--save-manifest` (`'save_manifest': False,
+   'manifest_path': None` in both logs), no `results/*content*.json` exists, and
+   the two logs are gitignored. The numbers the addendum quotes (0.5288, 0.4521,
+   0.146, 0.183) were not traceable from a clone — the 2026-10-11 failure mode
+   again, on the note that was written to prevent it.
+3. **The addendum omitted the measurement that contradicted it.** The same
+   de-risk run printed `content mass 0.122 vs positional mass 0.253 ->
+   POSITIONAL copy`. The addendum reported the *behaviour* (copy accuracy 0.53
+   against a 0.21 fixed-offset ceiling) and did not report the probe. Both are
+   true and they are not the same kind of statement — the behaviour is the
+   model's answer, the probe is a per-head attention maximum — but the omission
+   hid the exact tension the run has to resolve.
+4. **The per-head screen cannot see a distributed circuit.** The de-risk's best
+   head held 0.146 of the content mass against a 0.30 screen, with 0/8 heads
+   confirmed, *while the model copied by content*. A copy spread over k heads
+   puts ~1/k of the mass in each head: every one of them falls below the screen
+   while the sum does not. There was no aggregate measurement, no group
+   ablation and no attribution in the repository — the addendum itself said the
+   distribution over the heads was "the first thing to measure", and nothing
+   measured it.
+5. **The emergence run could have cost twice the budget.** `--stop-rule
+   mechanism` waits for a head *above* the first layer, and the periodic task's
+   whole circuit was in layer 0 — so the rule had a good chance of never
+   firing, silently turning the emergence run into a second full-budget run.
+6. **The vocabulary answered a constraint this task does not have.** The
+   periodic task needs 2048 because its prefix is sampled *with replacement*;
+   the content task's key is sampled *without* replacement, and 44 distinct
+   tokens suffice. The standard-geometry CPU probe was still at the *uniform*
+   prediction after 400 epochs at 2048 (train loss 7.6246 against
+   ln(2048) = 7.6246), while the quick geometry at **vocab 256** had reached a
+   copy accuracy of 0.53.
+
+**What it invalidates.** Nothing that has been published — the content task
+has not run yet. What it invalidates is the *plan*: the pre-registration's
+addendum of 2026-10-22 (a) claimed a manifest that does not exist, (b) omitted
+the probe's contrary verdict, and (c) left the GPU run with a verdict code that
+could not execute and a stop rule that could not fire.
+
+**What it changed, measured before the GPU run.** The instrument is now
+testable, and the protocol is amended in the pre-registration's second
+addendum — *before* the run, with the seven criteria untouched:
+
+- `src/experiments/content_verdict.py` holds the seven frozen criteria, joins
+  the exp1 and exp4 manifests per seed, and never guesses: a criterion whose
+  measurement is missing is reported missing, and a run whose manifest does not
+  carry the measurement gets the status `INCOMPLETE` and **no verdict** — "the
+  model has no content-based induction head" and "this manifest never measured
+  one" are different statements.
+- `src/experiments/copy_circuit.py` adds the circuit-level measurement: the
+  aggregate content mass and its concentration, the **group ablation** next to
+  the single-head ablations, and the first-order **logit attribution** of every
+  head to the content-vs-position contrast. The candidate group is fixed by a
+  rule that reads the data and the attention masses and never the outcome.
+- The cascade's counterfactual is a **minimal pair** (one token changed, in the
+  same sequence) instead of a different sequence, and the cascade now runs when
+  the *behaviour* is content-based — not only when a per-head detector fires.
+- The emergence run stops on `--stop-rule any`, and the content task's
+  standard config is a pinned preset (`--content-standard`) with the vocabulary
+  amended to 256.
+- The notebook's artifacts are zipped **before** the verdict, and the verdict
+  cell is the last one: a verdict that crashes must not cost the session.
+
+**What it does not change.** The seven criteria, their thresholds and the
+decision rule are untouched, and the mechanism report is explicitly
+**secondary**: it describes the circuit, it does not decide the verdict. The
+periodic task's numbers, the Rung 2/3/5 results and the 2026-10-19 audit's
+verdicts are untouched — this audit is about the instrument of the *next* run.
 
 ### 2026-10-19 — The induction detector measured the *previous-token* head: every "0 / N heads" was a statement about the detector
 
@@ -472,14 +560,17 @@ its GPU run. The short version:
 |---|---|
 | **The task** | A key of 36 distinct tokens; four verbatim copy blocks of five, with the source windows **and** the block positions resampled per sequence, so the distance between a token and its previous occurrence changes from block to block. Every token appears at most twice (the task is well posed), the filler is distinct and unpredictable, and the copy queries are derived **from the tokens alone** — the detector never has to trust the generator. |
 | **Why it separates the mechanisms** | The best *single fixed offset* explains **17.6%** of the copy queries (measured on the data before the run). A content-matching head can reach 100%. That gap is the claim, and it is a property of the data, not an assumption. |
-| **The verdict** | Seven pre-registered criteria (content mass ≥ 0.30, content mass above the best fixed offset by ≥ 0.10, copy accuracy ≥ 0.60, non-modal-distance accuracy ≥ 0.50, copy accuracy above the fixed-offset baseline by ≥ 0.20, ablation drop ≥ 0.10, path-patching effect ≥ 0.20), computed **from the manifest by the notebook**, per seed, with POSITIVE / PARTIAL / NEGATIVE read off the criteria. |
-| **The budget** | The same as the periodic run — 3 seeds × 3000 epochs = 384k optimizer steps per seed, GPU. A negative at that budget is a negative: the budget is not extended after the fact, and no seed is dropped. |
-| **Where it is** | [ADR-0033](../docs/adr/0033-content-based-induction-task.md), the [pre-registration](../07_capstone/notes/variable-distance-induction-preregistration.md), the notebook `notebooks/kaggle_induction_content.ipynb` (`make remote-run-induction-content`). |
+| **The verdict** | Seven pre-registered criteria (content mass ≥ 0.30, content mass above the best fixed offset by ≥ 0.10, copy accuracy ≥ 0.60, non-modal-distance accuracy ≥ 0.50, copy accuracy above the fixed-offset baseline by ≥ 0.20, ablation drop ≥ 0.10, path-patching effect ≥ 0.20), computed **by code** — `src/experiments/content_verdict.py`, which joins the exp1 and exp4 manifests per seed (`make content-verdict`). The criteria and their thresholds are frozen; a criterion whose measurement is missing is reported missing, and a run whose manifest does not carry it gets the status `INCOMPLETE` and **no verdict**. |
+| **The mechanism report** | A *secondary* report, always produced, that describes the circuit rather than deciding the verdict: the aggregate content mass and its concentration, the **group ablation** (the drop in copy accuracy when the whole candidate group is removed) next to the single-head ablations, and the first-order **logit attribution** of every head to the content-vs-position contrast. The candidate group is fixed by a rule that reads the data and the attention masses and never the outcome. |
+| **The budget** | 3 seeds × 3000 epochs = 384k optimizer steps per seed, GPU. A negative at that budget is a negative: the budget is not extended after the fact, and no seed is dropped. |
+| **The amendments (2026-10-22, before the run)** | The vocabulary drops from 2048 to **256** (`--content-standard`): the periodic task's 2048 answered a constraint this task does not have, and the standard-geometry CPU probe was still at the uniform prediction after 400 epochs at 2048. The emergence run stops on `--stop-rule any` (the two-step rule waits for a head above layer 0, and the periodic circuit was entirely in layer 0, so it would never have fired). The cascade's counterfactual is a **minimal pair** — one token changed, in the same sequence — instead of a different sequence. The seven criteria are untouched. |
+| **Where it is** | [ADR-0033](../docs/adr/0033-content-based-induction-task.md), the [pre-registration](../07_capstone/notes/variable-distance-induction-preregistration.md) (with its two addenda), the notebook `notebooks/kaggle_induction_content.ipynb` (`make remote-run-induction-content`). |
 
 **Status: [ ] not run.** No number is reported here, because there is none
-yet. The experiment exists, its rules are frozen, and the run is the open
-item — the one measurement in this repository that can still change a
-headline claim.
+yet. The experiment exists, its rules are frozen, the instrument is tested (the
+verdict is a module, not a notebook cell — see the Honesty Ledger's 2026-10-22
+entry), and the run is the open item — the one measurement in this repository
+that can still change a headline claim.
 
 ### Quick scale (the historical scale, for continuity)
 
