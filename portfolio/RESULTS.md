@@ -13,13 +13,14 @@ smoke tests (`make reproduce-quick`) and a full-scale mode (`make reproduce`).
 
 ## Honesty Ledger
 
-Eight audits have now caught real problems in this repository's causal claims and
-evidence base. Six found claims that were wrong or unbacked; the seventh found a
-claim that was **right and had been called wrong by its own metric**; the eighth
+Nine audits have now caught real problems in this repository's causal claims and
+evidence base. Seven found claims that were wrong or unbacked; the eighth found a
+claim that was **right and had been called wrong by its own metric**; the ninth
 found that the experiment which was supposed to close the last open question
-**could not have produced an answer at all**. All entries stay here — the point of
-this section is to make it easy to see the trend (are correctness problems getting
-caught faster, or accumulating?), not to keep only the latest one.
+**could not have produced a verdict at all** — and fixed the instrument before
+the run. All entries stay here — the point of this section is to make it easy to
+see the trend (are correctness problems getting caught faster, or accumulating?),
+not to keep only the latest one.
 
 ### 2026-10-22 — The content-task run could not have produced a verdict: a `KeyError`, a gate with no manifest, and a probe that contradicted the addendum
 
@@ -107,6 +108,59 @@ decision rule are untouched, and the mechanism report is explicitly
 **secondary**: it describes the circuit, it does not decide the verdict. The
 periodic task's numbers, the Rung 2/3/5 results and the 2026-10-19 audit's
 verdicts are untouched — this audit is about the instrument of the *next* run.
+
+### 2026-10-25 — The content-task instrument cannot measure its own question: wrong chance level, invalid shares, an empty candidate group, and a missing standard-geometry de-risk
+
+The ninth audit, and the one that reaches furthest forward again: it is about
+the experiment that is supposed to **close** Rung 1's open question, and it
+found that the instrument as shipped would have produced a vacuous mechanism
+report on the very case it exists to measure — a distributed copy.
+
+**What was broken.** Six things, each independent of the others:
+
+1. **The chance level used the wrong position.** `chance_content_mass`
+   divided by `key + 1` instead of `q + 1`: the uniform mass at query `q` is
+   spread over the `q + 1` positions the causal mask allows, not over
+   `key + 1`. The old formula overstated the bar, so on the quick geometry
+   the candidate screen selected zero heads (`n_candidate_heads = 0`), and
+   the group ablation was a no-op. The addendum's reading
+   "the candidates are not the carriers" is retracted — there were no
+   candidates. Fixed in `src/experiments/copy_circuit.py`; the old manifest
+   (`results/induction_content_derisk.json`) is kept as evidence of the bug.
+
+2. **Attribution shares could exceed 1.** `dla_positive_share` and
+   `dla_top_head_share` divided by the signed total, so they could exceed
+   1 (observed 1.0698 on the de-risk manifest). They now divide by
+   `sum(|v|)` and stay in `[0, 1]`.
+
+3. **No aggregate measurement before the fix.** The de-risk had no
+   `content_mass_excess`, `content_mass_ratio`, or group-concentration
+   numbers — the sum over heads (0.695) looked meaningless without a chance
+   baseline. Added to `mass_summary`.
+
+4. **An empty candidate group is not "no circuit."** `classify_mechanism`
+   now returns `undetermined — no candidate passed the 3x chance screen`
+   when `n_candidate_heads == 0`, instead of falling through to "none".
+
+5. **Fabricated zeros for unmeasured path patching.** `exp4_circuit_patching`
+   wrote `0.0` for `mean_path_patch_effect` when no head was confirmed — a
+   causal measurement that was never taken. The keys are now omitted and the
+   verdict reports `NOT MEASURED`.
+
+6. **The standard-geometry CPU de-risk was missing.** `results/induction_content_derisk_standard.json`
+   did not exist; the prior 600-epoch attempt was killed at epoch 30. The run
+   is re-added as `make reproduce-induction-content-derisk-standard`.
+
+**What it changes, measured before the GPU run.** The instrument now has a
+correct chance level, valid shares, an explicit empty-group semantics, an
+exploratory mass-covering group (top 80% of content mass), and no fabricated
+zeros. The pre-registration's addendum (c), dated 2026-10-25, records all of
+this with both new manifests. The seven criteria and their thresholds are
+untouched, and the mechanism report remains **secondary**.
+
+**What it does not change.** The seven criteria, their thresholds and the
+decision rule are untouched. No number is re-tuned after seeing the de-risk
+data.
 
 ### 2026-10-19 — The induction detector measured the *previous-token* head: every "0 / N heads" was a statement about the detector
 

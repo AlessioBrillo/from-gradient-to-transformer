@@ -115,15 +115,15 @@ def chance_content_mass(triples: np.ndarray) -> float:
     """The attention mass a *uniform* head would put on the content key.
 
     The chance level of attending to one specific key at query ``q`` is
-    ``1 / (key + 1)`` — the key is one of the ``key + 1`` positions the
-    causal mask allows. Averaged over the queries, this is the bar a head
-    has to clear to be more than noise, and it is a property of the *data*,
-    so the candidate rule cannot be tuned on the outcome.
+    ``1 / (q + 1)`` — the key is one of the ``q + 1`` positions the causal
+    mask allows (positions ``0 .. q``). Averaged over the queries, this is
+    the bar a head has to clear to be more than noise, and it is a property
+    of the *data*, so the candidate rule cannot be tuned on the outcome.
     """
     if triples.size == 0:
         return 0.0
-    keys = triples[:, 2].astype(np.float64)
-    return float(np.mean(1.0 / (keys + 1.0)))
+    qs = triples[:, 1].astype(np.float64)
+    return float(np.mean(1.0 / (qs + 1.0)))
 
 
 # ---------------------------------------------------------------------------
@@ -151,6 +151,7 @@ def mass_summary(report: DetectionReport, triples: np.ndarray) -> dict[str, floa
         for head_idx, value in enumerate(masses):
             per_head.append((layer_idx, head_idx, float(value)))
     total = float(sum(v for _, _, v in per_head))
+    n_heads = len(per_head)
 
     top_share = 0.0
     heads_for_80 = 0
@@ -166,13 +167,17 @@ def mass_summary(report: DetectionReport, triples: np.ndarray) -> dict[str, floa
                 break
 
     offset_total, offset_best = _best_offset_total(report)
+    chance = chance_content_mass(triples)
+    chance_total = n_heads * chance
     return {
         "content_mass_total": total,
         "content_mass_top_share": top_share,
         "content_mass_heads_for_80pct": float(heads_for_80),
         "offset_mass_total": float(offset_total),
         "offset_best_offset": float(offset_best),
-        "content_chance_mass": chance_content_mass(triples),
+        "content_chance_mass": chance,
+        "content_mass_excess": float(total - chance_total),
+        "content_mass_ratio": float(total / chance_total) if chance_total > 0 else 0.0,
     }
 
 
@@ -219,6 +224,42 @@ def candidate_heads(
             if float(value) >= bar:
                 out.append((layer_idx, head_idx))
     return out
+
+
+def mass_covering_heads(
+    report: DetectionReport,
+    triples: np.ndarray,
+    coverage: float = 0.8,
+) -> list[tuple[int, int]]:
+    """The smallest set of heads that covers ``coverage`` of the content mass.
+
+    Ordered by descending content mass. This is an **exploratory** grouping:
+    it reads the attention masses, but it is not the pre-registered candidate
+    rule — that is `candidate_heads`, fixed at `CHANCE_FACTOR` times the
+    chance level, and it never depends on the outcome. `mass_covering_heads`
+    exists so the mechanism report can describe a distributed circuit even
+    when the pre-registered rule selects few or no heads. It is explicitly
+    **not used for the verdict**.
+    """
+    per_head: list[tuple[int, int, float]] = []
+    for layer_idx, masses in enumerate(report.masses.get("content", [])):
+        for head_idx, value in enumerate(masses):
+            per_head.append((layer_idx, head_idx, float(value)))
+    if not per_head:
+        return []
+    total = float(sum(v for _, _, v in per_head))
+    if total <= 0:
+        return []
+    ordered = sorted(per_head, key=lambda t: t[2], reverse=True)
+    running = 0.0
+    target = coverage * total
+    chosen: list[tuple[int, int]] = []
+    for layer_idx, head_idx, value in ordered:
+        running += value
+        chosen.append((layer_idx, head_idx))
+        if running >= target:
+            break
+    return chosen
 
 
 # ---------------------------------------------------------------------------
@@ -371,13 +412,14 @@ def content_vs_position_attribution(
         ).mean().item()
 
     total = float(sum(per_head.values()))
+    total_abs = float(sum(abs(v) for v in per_head.values()))
     top_head = ""
     top_share = 0.0
     if per_head:
-        top_head = max(per_head, key=lambda k: per_head[k])
-        top_share = float(per_head[top_head] / total) if total > 0 else 0.0
+        top_head = max(per_head, key=lambda k: abs(per_head[k]))
+        top_share = float(abs(per_head[top_head]) / total_abs) if total_abs > 0 else 0.0
     positive = float(sum(v for v in per_head.values() if v > 0))
-    positive_share = float(positive / total) if total > 0 else 0.0
+    positive_share = float(positive / total_abs) if total_abs > 0 else 0.0
 
     return {
         "dla_total": total,
@@ -429,6 +471,15 @@ def classify_mechanism(metrics: dict[str, float]) -> tuple[int, str]:
     group = float(metrics.get("group_ablation_drop", 0.0))
     single = float(metrics.get("max_single_ablation_drop", 0.0))
     attribution = float(metrics.get("dla_content_minus_offset", 0.0))
+    n_candidates = metrics.get("n_candidate_heads", None)
+
+    # An empty candidate group means the 3x chance screen selected no head:
+    # the group ablation is a no-op, so 0.0 is not a causal measurement.
+    if n_candidates is not None and float(n_candidates) == 0.0:
+        return MECHANISM_UNDETERMINED, (
+            MECHANISM_LABELS[MECHANISM_UNDETERMINED]
+            + " — no candidate passed the 3x chance screen"
+        )
 
     if group >= DISTRIBUTED_GROUP_DROP and single <= DISTRIBUTED_MAX_SINGLE_DROP:
         code = MECHANISM_DISTRIBUTED

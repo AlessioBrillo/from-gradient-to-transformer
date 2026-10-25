@@ -341,6 +341,8 @@ d_model 64, 2 layers, 4 heads, fresh batches, 1500 epochs, one seed,
 | First-order attribution to content minus position | 5.87 | sign favours content |
 | Group ablation drop (candidate group) | 0.0 | ≥ 0.20 = the group carries the copy |
 | Max single-head ablation drop | 0.0 | ≥ 0.20 = one head carries the copy |
+| Exploratory group size (top 80% mass) | 5 | not used for the verdict |
+| Exploratory group ablation drop | 0.0 | not used for the verdict |
 | Confirmed heads | 0 / 8 | |
 | Mechanism kind | undetermined (code 3) | — |
 
@@ -350,17 +352,21 @@ content-based. But the detector does not fire: the best head's content mass is
 0.154, below the 0.30 screen, and no head is confirmed. The aggregate content
 mass over all heads is 0.695, spread over five heads to cover 80% of it —
 exactly the distributed copy the per-head screen cannot see. The group ablation
-of the candidate group costs 0.0 (the candidates are not the carriers), so the
-classification is "undetermined": the behaviour is content-based, but neither
-the per-head detector nor the current candidate rule identifies *which* heads
-carry it. That is precisely why the mechanism report is **secondary** and why
-the run can end in PARTIAL or "NEGATIVE (unexplained)" even though the model
-copies by content. The thresholds are not changed.
+of the candidate group costs 0.0 because **the candidate group was empty**:
+`n_candidate_heads` is 0, so the ablation was a no-op. The sentence
+"the candidates are not the carriers" in earlier drafts of this addendum is
+**retracted** — it mistook an empty group for a measured null. There were no
+candidates to carry anything. The first-order attribution (5.87, favouring
+content) and the DLA positive share confirm the behaviour is content-based;
+the mechanism class is "undetermined — no candidate passed the 3x chance
+screen", not "none". The thresholds are not changed.
 
-*In attesa: i numeri del run a geometria standard (vocab 256, seq_len 64,
-key 36, quattro blocchi di cinque, 600 epoch, `results/induction_content_derisk_standard.json`)
-vengono aggiunti qui appena il run finisce — il server si è riavviato a metà
-dell'esecuzione e va rieseguito — prima che parta il run GPU.*
+**Standard geometry** (vocab 256, seq_len 64, key 36, four blocks of five,
+d_model 64, 2 layers, 4 heads, fresh batches, 600 epochs, one seed,
+`results/induction_content_derisk_standard.json`):
+tracked manifest; numbers quoted here once the run finishes, before the GPU
+session starts. (The prior 600-epoch attempt was killed at epoch 30 by a host
+reboot and is being re-run.)
 
 - *undetermined* — anything else (for instance a group that costs a lot
   **and** a head that costs a lot: a redundant circuit).
@@ -373,6 +379,60 @@ publish in that case is the one the decision rule already allows —
 "NEGATIVE (unexplained): the model solves the task by a mechanism the
 detector does not identify" — with the report attached as the description
 of that mechanism. The word "induction head" is not used.
+
+## Addendum — 2026-10-25: instrument audit before the GPU run
+
+This addendum records corrections to the instrument, decided **before** the
+GPU run, so that nothing here can be read as a post-hoc adjustment. The seven
+frozen criteria and their thresholds are unchanged.
+
+1. **Chance level fixed.** `chance_content_mass` used `1 / (key + 1)` where it
+   should use `1 / (q + 1)`: the uniform mass at query `q` is spread over the
+   `q + 1` positions the causal mask allows, not over `key + 1`. The old
+   formula overstated the bar, so on the quick geometry the candidate screen
+   selected zero heads (`n_candidate_heads = 0`), making the group ablation a
+   no-op. Fixed in `src/experiments/copy_circuit.py`; the old manifest
+   (`results/induction_content_derisk.json`, SHA 1fc85d7) is kept as evidence
+   of the bug, and the corrected run writes
+   `results/induction_content_derisk_fixed.json`.
+
+2. **Attribution shares normalized by absolute total.** `dla_positive_share`
+   and `dla_top_head_share` divided by the signed total, so they could exceed
+   1 (observed 1.0698 on the de-risk manifest). They now divide by
+   `sum(|v|)` and stay in `[0, 1]`; the sign remains in `dla_total`.
+
+3. **Empty candidate group is not "no circuit."** `classify_mechanism` now
+   returns `undetermined — no candidate passed the 3x chance screen` when
+   `n_candidate_heads == 0`, instead of falling through to "none" or letting
+   a vacuous 0.0 group ablation speak. The sentence "the candidates are not
+   the carriers" from the 2026-10-22 addendum is retracted: there were no
+   candidates.
+
+4. **Exploratory mass-covering group.** `mass_covering_heads` measures the
+   smallest set of heads covering 80% of the content mass. It is explicitly
+   exploratory, not used for the verdict, and reported alongside the
+   pre-registered candidate group in `exp1_induction_heads.py` as
+   `exploratory_group_size` / `exploratory_group_ablation_drop`.
+
+5. **No fabricated zeros for unmeasured path patching.** `exp4_circuit_patching`
+   omits `mean_path_patch_effect` (and `mean_ablation_effect`,
+   `group_path_patch_effect`) when no head was confirmed, and adds
+   `path_patch_measured` / `group_path_patch_measured` flags. The verdict
+   reports `NOT MEASURED`, never a measured 0.0.
+
+6. **Redundant emergence run removed.** The emergence run's only unique
+   output was `confirmed_epoch`, which the full run already records. The GPU
+   protocol is now one session, 3 seeds, full-budget run only; see
+   `docs/agents/gpu-runs.md`. This is a budget amendment, not a threshold
+   change.
+
+7. **Verdict wording follows the decision table.** `content_verdict.py`
+   prints "NEGATIVE (unexplained): the model solves the task by a mechanism
+   the detector does not identify" for the high-copy / low-content-mass case,
+   and the mechanism report prints the aggregate numbers next to the verdict.
+
+The standard-geometry CPU de-risk (`results/induction_content_derisk_standard.json`)
+must be tracked and its numbers added here before the GPU session starts.
 
 ### 5. The counterfactual of the causal cascade: the minimal pair
 

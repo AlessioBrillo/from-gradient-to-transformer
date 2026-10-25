@@ -9,6 +9,8 @@
 	reproduce-retune reproduce-retune-control reproduce-retune-offset reproduce-retune-reweight \
 	remote-dry-grokking remote-run-grokking remote-run-induction remote-run-capstone remote-run-sweep remote-pin \
 	docs-audit reproduce-induction-content reproduce-induction-content-quick \
+	reproduce-induction-content-derisk reproduce-induction-content-derisk-fixed \
+	reproduce-induction-content-derisk-standard content-verdict \
 	remote-dry-induction-content remote-run-induction-content
 
 # --- Shell ---
@@ -233,8 +235,17 @@ reproduce-induction-content-quick:
 	uv run python -m src.experiments.exp1_induction_heads --task variable --vocab-size 256 --seq-len 24 --d-model 64 --n-layers 2 --n-heads 4 --epochs 600 --lr 0.001 --weight-decay 0.1 --batch-size 64 --num-train 1024 --batches fresh --seeds 0 --detect-every 100 --save-manifest --manifest-path results/probe_induction_content_quick.json
 
 reproduce-induction-content-derisk:
-	@echo "=== Rung 1 (content task): the pre-registration's CPU gate, with a tracked manifest ==="
-	uv run python -m src.experiments.exp1_induction_heads --task variable --vocab-size 256 --seq-len 24 --d-model 64 --n-layers 2 --n-heads 4 --epochs 1500 --lr 0.001 --weight-decay 0.1 --batch-size 64 --num-train 1024 --batches fresh --seeds 0 --detect-every 250 --save-manifest --manifest-path results/induction_content_derisk.json
+	@echo "=== Rung 1 (content task): CPU gate, fixed instrument, tracked manifest ==="
+	uv run python -m src.experiments.exp1_induction_heads --task variable --vocab-size 256 --seq-len 24 --d-model 64 --n-layers 2 --n-heads 4 --epochs 1500 --lr 0.001 --weight-decay 0.1 --batch-size 64 --num-train 1024 --batches fresh --seeds 0 --detect-every 250 --save-manifest --manifest-path results/induction_content_derisk_fixed.json
+
+# The standard-geometry CPU de-risk: the exact command of the run that was
+# killed at epoch 30 (see derisk_standard_manifest.log). Same geometry as
+# the GPU run (vocab 256, seq 64, d_model 64, 2L/4H, key 36, four blocks of
+# five), 600 epochs, num_train 2048 to keep it feasible on CPU. Run this
+# with the machine awake; ~45-90 min.
+reproduce-induction-content-derisk-standard:
+	@echo "=== Rung 1 (content task): standard-geometry CPU de-risk (600 epochs) ==="
+	uv run python -m src.experiments.exp1_induction_heads --task variable --vocab-size 256 --seq-len 64 --d-model 64 --n-layers 2 --n-heads 4 --epochs 600 --lr 0.001 --weight-decay 0.1 --batch-size 64 --num-train 2048 --batches fresh --seeds 0 --detect-every 100 --save-manifest --manifest-path results/induction_content_derisk_standard.json
 
 reproduce-induction-content:
 	@echo "=== Rung 1 (content task): the pre-registered run (GPU, 3 seeds x 3000 epochs) ==="

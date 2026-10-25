@@ -1087,9 +1087,15 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         else 0.0
     )
 
+    # Path patching and ablation only make sense when there is at least one
+    # confirmed head to patch. Writing 0.0 for "not measured" would look like
+    # a causal measurement and could flip criterion 7 by fabrication.
+    path_patch_measured = bool(induction_heads)
+    group_path_patch_measured = bool(candidate_group)
+
     mean_ablation_effect = 0.0
     mean_path_patch_effect = 0.0
-    if induction_heads:
+    if path_patch_measured:
         ablation_results = run_head_ablation(
             model=model,
             inputs=val_batch,
@@ -1120,7 +1126,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
     # runs even when no head passed the per-head screen — that is exactly
     # the case it exists for.
     group_path_patch_effect = 0.0
-    if candidate_group:
+    if group_path_patch_measured:
         group_result = run_group_path_patching_to_logits(
             model=model,
             clean_inputs=val_batch,
@@ -1132,14 +1138,13 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         )
         group_path_patch_effect = float(group_result["effect"])
 
-    return {
+    result = {
         "final_val_acc": float(history["val_acc"][-1]),
         "total_induction_heads": float(len(induction_heads)),
         "n_candidate_heads": float(len(candidate_group)),
         "mean_activation_recovery": mean_activation_recovery,
-        "mean_ablation_effect": mean_ablation_effect,
-        "mean_path_patch_effect": mean_path_patch_effect,
-        "group_path_patch_effect": group_path_patch_effect,
+        "path_patch_measured": float(path_patch_measured),
+        "group_path_patch_measured": float(group_path_patch_measured),
         "counterfactual_minimal_pair": float(
             counterfactual_mode == COUNTERFACTUAL_MINIMAL_PAIR
         ),
@@ -1148,6 +1153,12 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         "probe_content_wins": float(bool(probe["content_wins"])),
         "checkpoint_epoch": float(checkpoint["epoch"]) if checkpoint else -1.0,
     }
+    if path_patch_measured:
+        result["mean_ablation_effect"] = mean_ablation_effect
+        result["mean_path_patch_effect"] = mean_path_patch_effect
+    if group_path_patch_measured:
+        result["group_path_patch_effect"] = group_path_patch_effect
+    return result
 
 
 def apply_config_presets(args: argparse.Namespace) -> None:

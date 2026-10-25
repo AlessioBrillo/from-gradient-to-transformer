@@ -370,6 +370,33 @@ def format_report(
         code, label = mechanism_report(row)
         if code:
             lines.append(f"    mechanism    {label} (code {code})")
+        # Aggregate mechanism numbers — printed next to the verdict so the
+        # report is self-contained and no one has to open the manifest.
+        mech_keys = [
+            "content_mass_total",
+            "content_chance_mass",
+            "content_mass_excess",
+            "content_mass_ratio",
+            "content_mass_top_share",
+            "content_mass_heads_for_80pct",
+            "n_candidate_heads",
+            "exploratory_group_size",
+            "group_ablation_drop",
+            "max_single_ablation_drop",
+            "exploratory_group_ablation_drop",
+            "dla_content_minus_offset",
+            "dla_top_head_share",
+            "dla_positive_share",
+        ]
+        mech_lines = []
+        for key in mech_keys:
+            if key in row:
+                try:
+                    mech_lines.append(f"    mechanism {key} = {float(row[key]):.4f}")
+                except (TypeError, ValueError):
+                    pass
+        if mech_lines:
+            lines.extend(mech_lines)
     lines.append("")
     if not result.complete:
         missing = sorted({name for s in result.seeds for name in s.missing})
@@ -382,8 +409,9 @@ def format_report(
     lines.append(f"RUN VERDICT: {result.verdict}")
     if result.verdict == VERDICT_POSITIVE:
         lines.append(
-            "A content-based induction head forms and the causal interventions "
-            "land. The word 'induction head' is earned on this task."
+            "A content-based induction head forms on a variable-distance task, "
+            "and the causal interventions land. The word 'induction head' is "
+            "earned on this task."
         )
     elif result.verdict == VERDICT_PARTIAL:
         failed = sorted({name for s in result.seeds for name in s.failed})
@@ -393,10 +421,29 @@ def format_report(
             "Report the missing criterion, do not re-run."
         )
     else:
-        lines.append(
-            "No content-based induction head at this budget. Report it as a "
-            "negative. The budget is not extended after the fact."
+        rows = exp1_rows
+        no_head = all(
+            int(float(r.get("total_induction_heads", 0.0))) == 0
+            for r in rows.values()
         )
+        high_copy = all(
+            float(r.get("copy_accuracy", 0.0)) >= 0.60 for r in rows.values()
+        )
+        low_content = all(
+            float(r.get("peak_content_mass", 0.0)) < 0.30 for r in rows.values()
+        )
+        if no_head and high_copy and low_content:
+            lines.append(
+                "NEGATIVE (unexplained): the model solves the task by a "
+                "mechanism the detector does not identify. Copy accuracy is "
+                "high but no head passes the content-mass screen. Report it "
+                "as a negative; the budget is not extended after the fact."
+            )
+        else:
+            lines.append(
+                "No content-based induction head at this budget. Report it as "
+                "a negative. The budget is not extended after the fact."
+            )
     return "\n".join(lines)
 
 

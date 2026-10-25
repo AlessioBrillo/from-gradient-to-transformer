@@ -121,6 +121,21 @@ class TestTheSeedVerdict:
         )
         assert verdict.verdict == VERDICT_NEGATIVE
 
+    def test_no_head_with_high_copy_and_low_content_is_negative_unexplained(self) -> None:
+        # copy accuracy is high (0.72 >= 0.60) but content mass is low
+        # (0.15 < 0.30), no head confirmed: the detector cannot explain the
+        # copy — "NEGATIVE (unexplained)".
+        verdict = evaluate_seed(
+            0,
+            _exp1_metrics(
+                total_induction_heads=0.0,
+                peak_content_mass=0.15,
+                peak_offset_mass=0.33,
+            ),
+            None,
+        )
+        assert verdict.verdict == VERDICT_NEGATIVE
+
     def test_the_path_patching_criterion_comes_from_the_exp4_manifest(self) -> None:
         """The bug, frozen as a test.
 
