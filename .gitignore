@@ -38,6 +38,7 @@ checkpoints/
 # Obsidian (local cache, do not share)
 .obsidian/workspace*
 .obsidian/cache
+.claude/
 
 # Temporary alignment papers (do not version)
 from-gradient-to-transformer-PhD.md
