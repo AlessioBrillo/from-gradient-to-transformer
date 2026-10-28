@@ -362,7 +362,7 @@ one seed, `results/induction_content_derisk_fixed.json`):
 | Exploratory group size (top 80% mass) | 5 | not used for the verdict |
 | Exploratory group ablation drop | 0.9966 | not used for the verdict |
 | First-order attribution to content minus position | 5.8723 | sign favours content |
-| DLA positive share (normalized by Σ|v|) | 0.9388 | now in [0, 1] |
+| DLA positive share (normalized by sum(abs(v))) | 0.9388 | now in [0, 1] |
 | Confirmed heads | 0 / 8 | |
 | Mechanism kind | undetermined (code 3) | empty candidate group |
 
@@ -400,7 +400,7 @@ one seed, `results/induction_content_derisk_standard.json`, 0.706 h on CPU):
 | Exploratory group size (top 80% mass) | 3 | not used for the verdict |
 | Exploratory group ablation drop | 0.9956 | same group as the candidates |
 | First-order attribution to content minus position | 9.0855 | sign favours content |
-| DLA positive share (normalized by Σ|v|) | 1.0000 | all heads favour content |
+| DLA positive share (normalized by sum(abs(v))) | 1.0000 | all heads favour content |
 | Confirmed heads | 0 / 8 | K-composition 0.0918 < 0.40 |
 | Mechanism kind | distributed (code 2) | group ≥ 0.20, max single ≤ 0.10 |
 
