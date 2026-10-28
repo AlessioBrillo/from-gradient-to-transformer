@@ -172,6 +172,9 @@ ablation 0.9956, largest single-head drop 0.0986, DLA positive share 1.0. The
 seven criteria and their thresholds are untouched, and the mechanism report
 remains **secondary**.
 
+<!-- manifest: results/induction_content_derisk_fixed.json -->
+<!-- manifest: results/induction_content_derisk_standard.json -->
+
 **What it does not change.** The seven criteria, their thresholds and the
 decision rule are untouched. No number is re-tuned after seeing the de-risk
 data.
@@ -633,6 +636,9 @@ its GPU run. The short version:
 | **The budget** | 3 seeds × 3000 epochs = 384k optimizer steps per seed, GPU. A negative at that budget is a negative: the budget is not extended after the fact, and no seed is dropped. |
 | **The amendments (2026-10-22 and 2026-10-25, before the run)** | Vocabulary 2048 → **256** (`--content-standard`): the periodic task's 2048 answered a constraint this task lacks, and the standard-geometry CPU probe was still uniform after 400 epochs at 2048. The cascade's counterfactual is a **minimal pair** — one token changed, in the same sequence — instead of a different sequence. The 2026-10-25 audit fixed the chance level (`mean(1/(q+1))`), normalized the attribution shares by `sum(abs(v))`, made an empty candidate group *undetermined*, added the exploratory top-80% mass group, and removed the fabricated zeros for unmeasured ablation/path patching. The separate emergence run was removed: the full run records `confirmed_epoch`, so it added no measurement and would have doubled the budget. The standard-geometry de-risk finds a distributed circuit (3 candidates, group drop 0.9956, max single-head drop 0.0986). The seven criteria are untouched. |
 | **Where it is** | [ADR-0033](../docs/adr/0033-content-based-induction-task.md), the [pre-registration](../07_capstone/notes/variable-distance-induction-preregistration.md) (with its two addenda), the notebook `notebooks/kaggle_induction_content.ipynb` (`make remote-run-induction-content`). |
+
+<!-- manifest: results/induction_content_derisk_fixed.json -->
+<!-- manifest: results/induction_content_derisk_standard.json -->
 
 **Status: [ ] not run.** No number is reported here, because there is none
 yet. The experiment exists, its rules are frozen, the instrument is tested (the
