@@ -1364,8 +1364,6 @@ def _headline_metrics(
         ),
         "k_composition_score": float(diagnosis["step2_k_composition"]),
         "l0_duplicate_head_mass": float(max(diagnosis["step1_l0_duplicate_mass"] or [0.0])),
-        "mean_ablation_drop": 0.0,
-        "mean_copy_ablation_drop": 0.0,
         "confirmed_epoch": float(history.get("confirmed_epoch", -1.0)),
         "epochs_run": epochs_run,
         "steps_run": epochs_run * steps_per_epoch,
@@ -1542,10 +1540,12 @@ def _seed_metrics(
             )
             copy_drop_sum += copy_stats["copy_accuracy"] - copy_ablated
             n_drops += 1
-    metrics["mean_ablation_drop"] = float(drop_sum / n_drops) if n_drops else 0.0
-    metrics["mean_copy_ablation_drop"] = (
-        float(copy_drop_sum / n_drops) if n_drops else 0.0
-    )
+    # With no confirmed head there is nothing to ablate: the mean is undefined,
+    # not zero. Writing 0.0 would look like a causal measurement and would fail
+    # criterion 6 by fabrication — the same bug fixed in exp4 for path patching.
+    if n_drops:
+        metrics["mean_ablation_drop"] = float(drop_sum / n_drops)
+        metrics["mean_copy_ablation_drop"] = float(copy_drop_sum / n_drops)
     metrics.update(
         _circuit_report(model, val_loader, report, tokens, task, copy_stats)
     )

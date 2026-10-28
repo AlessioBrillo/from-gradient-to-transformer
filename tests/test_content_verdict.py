@@ -121,6 +121,31 @@ class TestTheSeedVerdict:
         )
         assert verdict.verdict == VERDICT_NEGATIVE
 
+    def test_no_confirmed_head_makes_the_ablation_criterion_not_measured(self) -> None:
+        metrics = _exp1_metrics(total_induction_heads=0.0)
+        del metrics["mean_copy_ablation_drop"]
+        verdict = evaluate_seed(0, metrics, {"mean_path_patch_effect": 0.5})
+        check = next(c for c in verdict.checks if c.criterion.name == "ablation drop")
+        assert check.status == CHECK_NOT_MEASURED
+        assert verdict.complete
+        assert verdict.verdict == VERDICT_NEGATIVE
+
+    def test_an_old_placeholder_zero_is_not_a_measurement(self) -> None:
+        # Manifests written before the fix carry 0.0 for the empty set.
+        metrics = _exp1_metrics(
+            total_induction_heads=0.0, mean_copy_ablation_drop=0.0
+        )
+        verdict = evaluate_seed(0, metrics, {"mean_path_patch_effect": 0.5})
+        check = next(c for c in verdict.checks if c.criterion.name == "ablation drop")
+        assert check.status == CHECK_NOT_MEASURED
+
+    def test_a_confirmed_head_without_the_ablation_metric_is_incomplete(self) -> None:
+        metrics = _exp1_metrics(total_induction_heads=1.0)
+        del metrics["mean_copy_ablation_drop"]
+        verdict = evaluate_seed(0, metrics, {"mean_path_patch_effect": 0.5})
+        assert not verdict.complete
+        assert "ablation drop" in verdict.missing
+
     def test_no_head_with_high_copy_and_low_content_is_negative_unexplained(self) -> None:
         # copy accuracy is high (0.72 >= 0.60) but content mass is low
         # (0.15 < 0.30), no head confirmed: the detector cannot explain the

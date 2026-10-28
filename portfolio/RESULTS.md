@@ -97,9 +97,10 @@ addendum — *before* the run, with the seven criteria untouched:
 - The cascade's counterfactual is a **minimal pair** (one token changed, in the
   same sequence) instead of a different sequence, and the cascade now runs when
   the *behaviour* is content-based — not only when a per-head detector fires.
-- The emergence run stops on `--stop-rule any`, and the content task's
-  standard config is a pinned preset (`--content-standard`) with the vocabulary
-  amended to 256.
+- The content task's standard config is a pinned preset (`--content-standard`)
+  with the vocabulary amended to 256. The 2026-10-25 addendum removed the
+  separate emergence run: the full run records `confirmed_epoch`, so the
+  early-stopped run added no measurement the verdict uses.
 - The notebook's artifacts are zipped **before** the verdict, and the verdict
   cell is the last one: a verdict that crashes must not cost the session.
 
@@ -142,21 +143,34 @@ report on the very case it exists to measure — a distributed copy.
    now returns `undetermined — no candidate passed the 3x chance screen`
    when `n_candidate_heads == 0`, instead of falling through to "none".
 
-5. **Fabricated zeros for unmeasured path patching.** `exp4_circuit_patching`
+5. **Fabricated zeros for unmeasured causal effects.** `exp4_circuit_patching`
    wrote `0.0` for `mean_path_patch_effect` when no head was confirmed — a
-   causal measurement that was never taken. The keys are now omitted and the
+   causal measurement that was never taken. `exp1_induction_heads` did the
+   same for `mean_copy_ablation_drop` when the confirmed set was empty, which
+   made criterion 6 fail by fabrication. Both keys are now omitted and the
    verdict reports `NOT MEASURED`.
 
 6. **The standard-geometry CPU de-risk was missing.** `results/induction_content_derisk_standard.json`
    did not exist; the prior 600-epoch attempt was killed at epoch 30. The run
-   is re-added as `make reproduce-induction-content-derisk-standard`.
+   was re-added as `make reproduce-induction-content-derisk-standard` and has
+   now completed (0.706 h, clean tree): the corrected screen selects **3
+   candidate heads**, the group ablation removes **0.9956** of the copy
+   accuracy, the largest single-head drop is **0.0986** (distributed), the
+   dissociation probe says content (0.9129 vs 0.1793), and the DLA positive
+   share is 1.0. The per-head *confirmed* count is 0 because K-composition is
+   0.0918, below 0.40 — the model's circuit is distributed, not the single-head
+   K-composition pattern the per-head rule looks for. That is recorded before
+   the GPU run, not after it.
 
 **What it changes, measured before the GPU run.** The instrument now has a
 correct chance level, valid shares, an explicit empty-group semantics, an
 exploratory mass-covering group (top 80% of content mass), and no fabricated
 zeros. The pre-registration's addendum (c), dated 2026-10-25, records all of
-this with both new manifests. The seven criteria and their thresholds are
-untouched, and the mechanism report remains **secondary**.
+this with both new manifests. At the GPU geometry the corrected instrument
+finds the distributed circuit it was built for: three candidate heads, group
+ablation 0.9956, largest single-head drop 0.0986, DLA positive share 1.0. The
+seven criteria and their thresholds are untouched, and the mechanism report
+remains **secondary**.
 
 **What it does not change.** The seven criteria, their thresholds and the
 decision rule are untouched. No number is re-tuned after seeing the de-risk
@@ -617,7 +631,7 @@ its GPU run. The short version:
 | **The verdict** | Seven pre-registered criteria (content mass ≥ 0.30, content mass above the best fixed offset by ≥ 0.10, copy accuracy ≥ 0.60, non-modal-distance accuracy ≥ 0.50, copy accuracy above the fixed-offset baseline by ≥ 0.20, ablation drop ≥ 0.10, path-patching effect ≥ 0.20), computed **by code** — `src/experiments/content_verdict.py`, which joins the exp1 and exp4 manifests per seed (`make content-verdict`). The criteria and their thresholds are frozen; a criterion whose measurement is missing is reported missing, and a run whose manifest does not carry it gets the status `INCOMPLETE` and **no verdict**. |
 | **The mechanism report** | A *secondary* report, always produced, that describes the circuit rather than deciding the verdict: the aggregate content mass and its concentration, the **group ablation** (the drop in copy accuracy when the whole candidate group is removed) next to the single-head ablations, and the first-order **logit attribution** of every head to the content-vs-position contrast. The candidate group is fixed by a rule that reads the data and the attention masses and never the outcome. |
 | **The budget** | 3 seeds × 3000 epochs = 384k optimizer steps per seed, GPU. A negative at that budget is a negative: the budget is not extended after the fact, and no seed is dropped. |
-| **The amendments (2026-10-22, before the run)** | The vocabulary drops from 2048 to **256** (`--content-standard`): the periodic task's 2048 answered a constraint this task does not have, and the standard-geometry CPU probe was still at the uniform prediction after 400 epochs at 2048. The emergence run stops on `--stop-rule any` (the two-step rule waits for a head above layer 0, and the periodic circuit was entirely in layer 0, so it would never have fired). The cascade's counterfactual is a **minimal pair** — one token changed, in the same sequence — instead of a different sequence. The seven criteria are untouched. |
+| **The amendments (2026-10-22 and 2026-10-25, before the run)** | The vocabulary drops from 2048 to **256** (`--content-standard`): the periodic task's 2048 answered a constraint this task does not have, and the standard-geometry CPU probe was still at the uniform prediction after 400 epochs at 2048. The cascade's counterfactual is a **minimal pair** — one token changed, in the same sequence — instead of a different sequence. The 2026-10-25 audit fixed the chance level (`mean(1/(q+1))`), normalized the attribution shares by `sum(|v|)`, made an empty candidate group *undetermined*, added the exploratory top-80% mass group, and removed the fabricated zeros for unmeasured ablation/path patching. The separate emergence run was removed: the full-budget run records `confirmed_epoch`, so it added no measurement and would have doubled the GPU budget. The standard-geometry CPU de-risk is tracked and finds a distributed circuit (3 candidate heads, group drop 0.9956, largest single-head drop 0.0986). The seven criteria are untouched. |
 | **Where it is** | [ADR-0033](../docs/adr/0033-content-based-induction-task.md), the [pre-registration](../07_capstone/notes/variable-distance-induction-preregistration.md) (with its two addenda), the notebook `notebooks/kaggle_induction_content.ipynb` (`make remote-run-induction-content`). |
 
 **Status: [ ] not run.** No number is reported here, because there is none

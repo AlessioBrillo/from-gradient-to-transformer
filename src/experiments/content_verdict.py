@@ -243,6 +243,13 @@ def evaluate_seed(
     is then *not measured* (and fails, with the reason), which is different
     from a manifest that simply does not carry the metric.
     """
+    confirmed = 0
+    raw = exp1_metrics.get("total_induction_heads")
+    if raw is not None:
+        try:
+            confirmed = int(float(raw))
+        except (TypeError, ValueError):  # pragma: no cover - manifests are numeric
+            confirmed = 0
     checks: list[Check] = []
     for criterion in criteria:
         if criterion.source == SOURCE_EXP4:
@@ -257,14 +264,13 @@ def evaluate_seed(
                 continue
             checks.append(check_criterion(criterion, exp4_metrics))
             continue
+        # Criterion 6 ablates a *confirmed* head. With none confirmed there is
+        # nothing to remove, so the mean is undefined — not a measured zero.
+        # This is the same distinction exp4 draws for path patching.
+        if criterion.metric == "mean_copy_ablation_drop" and confirmed == 0:
+            checks.append(Check(criterion, None, CHECK_NOT_MEASURED))
+            continue
         checks.append(check_criterion(criterion, exp1_metrics))
-    confirmed = 0
-    raw = exp1_metrics.get("total_induction_heads")
-    if raw is not None:
-        try:
-            confirmed = int(float(raw))
-        except (TypeError, ValueError):  # pragma: no cover - manifests are numeric
-            confirmed = 0
     return SeedVerdict(seed=seed, checks=tuple(checks), confirmed_heads=confirmed)
 
 
