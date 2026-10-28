@@ -333,7 +333,7 @@ Three manifests are tracked:
 
 Both corrected manifests were written on a clean tree (`git_dirty = false`).
 They were produced at commit `1bf347f`, before the last reporting-only fix
-(2026-10-25, item 8 of the addendum: no placeholder zero for an empty
+(2026-10-25, item 5 of the addendum: no placeholder zero for an empty
 confirmed set). That fix changes no measured number; it only removes
 `mean_ablation_drop` / `mean_copy_ablation_drop` when there is no confirmed
 head to ablate. Both manifests have `total_induction_heads = 0`, so the stored
@@ -495,8 +495,8 @@ frozen criteria and their thresholds are unchanged.
    literal per-head verdict plus a distributed-circuit finding, not a failure
    of the model to copy.
 
-The two corrected manifests were produced at commit `1bf347f`, before item 8's
-reporting-only fix (no placeholder zero for an empty confirmed set). That fix
+The two corrected manifests were produced at commit `1bf347f`, before the
+reporting-only fix in item 5 (no placeholder zero for an empty confirmed set). That fix
 changes no measured number; both manifests have `total_induction_heads = 0`,
 so their stored `0.0` is the placeholder and the verdict reads criterion 6 as
 `NOT MEASURED`. The standard-geometry numbers are in "The CPU gate's numbers,
