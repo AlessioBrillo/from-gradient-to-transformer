@@ -29,7 +29,9 @@ from src.experiments.content_verdict import (
     VERDICT_PARTIAL,
     VERDICT_POSITIVE,
     evaluate_seed,
+    format_report,
     main,
+    per_seed_metrics,
     run_verdict,
 )
 
@@ -146,6 +148,36 @@ class TestTheSeedVerdict:
         assert not verdict.complete
         assert "ablation drop" in verdict.missing
 
+    def test_exp4_flag_says_path_patching_was_not_measured(self) -> None:
+        # The de-risked expected outcome: 0 confirmed heads, 3 candidates.
+        # exp4 omits the metric and writes path_patch_measured = 0; that is
+        # NOT MEASURED, not a missing measurement and not a failed 0.0.
+        verdict = evaluate_seed(
+            0,
+            _exp1_metrics(total_induction_heads=0.0),
+            {
+                "total_induction_heads": 0.0,
+                "n_candidate_heads": 3.0,
+                "path_patch_measured": 0.0,
+            },
+        )
+        check = next(c for c in verdict.checks if c.criterion.name == "path patching")
+        assert check.status == CHECK_NOT_MEASURED
+        assert verdict.complete
+        assert verdict.verdict == VERDICT_NEGATIVE
+
+    def test_an_old_exp4_placeholder_zero_is_not_a_measurement(self) -> None:
+        # Manifests written before the fix carry 0.0 and no flag. With no
+        # confirmed head there was nothing to patch, so the 0.0 is a
+        # placeholder, not a measured failure.
+        verdict = evaluate_seed(
+            0,
+            _exp1_metrics(total_induction_heads=0.0),
+            {"total_induction_heads": 0.0, "mean_path_patch_effect": 0.0},
+        )
+        check = next(c for c in verdict.checks if c.criterion.name == "path patching")
+        assert check.status == CHECK_NOT_MEASURED
+
     def test_no_head_with_high_copy_and_low_content_is_negative_unexplained(self) -> None:
         # copy accuracy is high (0.72 >= 0.60) but content mass is low
         # (0.15 < 0.30), no head confirmed: the detector cannot explain the
@@ -169,8 +201,11 @@ class TestTheSeedVerdict:
         there, which is how the verdict of issue #200 died with a
         ``KeyError`` after the GPU session was spent.
         """
-        exp1 = _manifest([0], [_exp1_metrics()])
-        exp4 = {"seeds": [0], "per_seed_metrics": [{"mean_path_patch_effect": 0.55}]}
+        exp1 = _manifest([0, 1, 2], [_exp1_metrics()] * 3)
+        exp4 = {
+            "seeds": [0, 1, 2],
+            "per_seed_metrics": [{"mean_path_patch_effect": 0.55}] * 3,
+        }
         assert "mean_path_patch_effect" not in exp1["per_seed_metrics"][0]
         result = run_verdict(exp1, exp4)
         assert result.status == STATUS_COMPLETE
@@ -236,10 +271,49 @@ class TestTheRunVerdict:
         assert result.verdict != VERDICT_POSITIVE
 
     def test_an_incomplete_seed_stops_the_run_verdict(self) -> None:
-        exp1 = _manifest([0], [{"total_induction_heads": 1.0}])
+        exp1 = _manifest(
+            [0, 1, 2],
+            [_exp1_metrics(), _exp1_metrics(), {"total_induction_heads": 1.0}],
+        )
         result = run_verdict(exp1, None)
         assert result.status == STATUS_INCOMPLETE
         assert result.verdict == ""
+
+    def test_an_empty_manifest_is_incomplete_not_a_negative(self) -> None:
+        result = run_verdict({"seeds": [], "per_seed_metrics": []}, None)
+        assert result.status == STATUS_INCOMPLETE
+        assert result.verdict == ""
+        report = format_report(result, {})
+        assert "NEGATIVE (unexplained)" not in report
+        assert "no seeds" in report
+
+    def test_partial_with_only_a_not_measured_criterion_says_so(self) -> None:
+        exp1 = _manifest([0, 1, 2], [_exp1_metrics()] * 3)
+        result = run_verdict(exp1, None)
+        report = format_report(result, per_seed_metrics(exp1))
+        assert "Not measured: path patching." in report
+        assert "Failing criteria: ." not in report
+
+    def test_a_truncated_exp4_manifest_is_incomplete(self) -> None:
+        exp1 = _manifest([0, 1, 2], [_exp1_metrics()] * 3)
+        exp4 = {
+            "seeds": [0, 1],
+            "per_seed_metrics": [{"mean_path_patch_effect": 0.55}] * 2,
+        }
+        result = run_verdict(exp1, exp4)
+        assert result.status == STATUS_INCOMPLETE
+        assert "missing seed(s)" in result.note
+
+    def test_a_single_seed_is_a_pilot_not_a_positive_run(self) -> None:
+        exp1 = _manifest([0], [_exp1_metrics()])
+        exp4 = {
+            "seeds": [0],
+            "per_seed_metrics": [{"mean_path_patch_effect": 0.55}],
+        }
+        result = run_verdict(exp1, exp4)
+        assert result.status == STATUS_INCOMPLETE
+        assert result.verdict == ""
+        assert "1 of 3" in result.note
 
 
 class TestTheCommandLine:
@@ -249,11 +323,16 @@ class TestTheCommandLine:
         return str(path)
 
     def test_it_prints_the_verdict_and_exits_zero(self, tmp_path, capsys) -> None:
-        exp1 = self._write(tmp_path, "exp1.json", _manifest([0], [_exp1_metrics()]))
+        exp1 = self._write(
+            tmp_path, "exp1.json", _manifest([0, 1, 2], [_exp1_metrics()] * 3)
+        )
         exp4 = self._write(
             tmp_path,
             "exp4.json",
-            {"seeds": [0], "per_seed_metrics": [{"mean_path_patch_effect": 0.55}]},
+            {
+                "seeds": [0, 1, 2],
+                "per_seed_metrics": [{"mean_path_patch_effect": 0.55}] * 3,
+            },
         )
         code = main(["--exp1", exp1, "--exp4", exp4])
         out = capsys.readouterr().out
@@ -264,13 +343,32 @@ class TestTheCommandLine:
 
     def test_it_refuses_to_verdict_an_incomplete_manifest(self, tmp_path, capsys) -> None:
         exp1 = self._write(
-            tmp_path, "exp1.json", _manifest([0], [{"total_induction_heads": 1.0}])
+            tmp_path,
+            "exp1.json",
+            _manifest(
+                [0, 1, 2],
+                [_exp1_metrics(), _exp1_metrics(), {"total_induction_heads": 1.0}],
+            ),
         )
         code = main(["--exp1", exp1])
         out = capsys.readouterr().out
         assert code == 1
         assert STATUS_INCOMPLETE in out
         assert "No verdict is computed" in out
+
+    def test_a_missing_exp4_manifest_is_a_warning_not_a_crash(
+        self, tmp_path, capsys
+    ) -> None:
+        exp1 = self._write(
+            tmp_path, "exp1.json", _manifest([0, 1, 2], [_exp1_metrics()] * 3)
+        )
+        code = main(
+            ["--exp1", exp1, "--exp4", str(tmp_path / "does-not-exist.json")]
+        )
+        captured = capsys.readouterr()
+        assert code == 0
+        assert "does not exist" in captured.err
+        assert "NOT MEASURED" in captured.out
 
     def test_it_warns_when_the_manifest_is_not_the_content_task(self, tmp_path, capsys) -> None:
         exp1 = self._write(
@@ -283,11 +381,16 @@ class TestTheCommandLine:
         assert "WARNING" in out
 
     def test_the_json_report_carries_every_check(self, tmp_path, capsys) -> None:
-        exp1 = self._write(tmp_path, "exp1.json", _manifest([0], [_exp1_metrics()]))
+        exp1 = self._write(
+            tmp_path, "exp1.json", _manifest([0, 1, 2], [_exp1_metrics()] * 3)
+        )
         exp4 = self._write(
             tmp_path,
             "exp4.json",
-            {"seeds": [0], "per_seed_metrics": [{"mean_path_patch_effect": 0.05}]},
+            {
+                "seeds": [0, 1, 2],
+                "per_seed_metrics": [{"mean_path_patch_effect": 0.05}] * 3,
+            },
         )
         main(["--exp1", exp1, "--exp4", exp4, "--json"])
         payload = json.loads(capsys.readouterr().out)

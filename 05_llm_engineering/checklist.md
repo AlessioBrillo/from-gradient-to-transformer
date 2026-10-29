@@ -11,7 +11,7 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
 ## Phase gate
 - [x] **Proof passed** → I can move to the next phase. Hook-based instrumentation
   (ex-01), deterministic inference (ex-02), activation harvesting (ex-02 proof),
-  gradient flow inspection (ex-03) all have linked proofs in this phase.
+  synthetic circuit dataset construction (ex-03) all have linked proofs in this phase.
 
 ## Core MI Engineering
 - [x] **TransformerLens hooks deep-dive:** pre/post hooks on any layer, module, attention head

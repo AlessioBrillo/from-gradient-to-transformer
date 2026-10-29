@@ -34,8 +34,10 @@ seed and then for the run:
 
 The seed verdict is ``POSITIVE`` when all seven are met, ``PARTIAL`` when a
 head is confirmed but the criteria are not all met, and ``NEGATIVE``
-otherwise. The run verdict is ``POSITIVE`` when a majority of the seeds are
-positive, ``PARTIAL`` when any seed is partial, and ``NEGATIVE`` otherwise.
+otherwise. The run verdict requires the pre-registered three seeds:
+``POSITIVE`` when a majority of them are positive, ``PARTIAL`` when any seed
+is partial, and ``NEGATIVE`` otherwise. Fewer seeds are a pilot, not the
+run, and report ``INCOMPLETE``.
 
 What the module refuses to do
 -----------------------------
@@ -187,6 +189,7 @@ class RunVerdict:
     seeds: tuple[SeedVerdict, ...]
     status: str
     verdict: str
+    note: str = ""
 
     @property
     def complete(self) -> bool:
@@ -231,6 +234,25 @@ def check_criterion(
     return Check(criterion, value, status)
 
 
+def _exp4_criterion_not_measured(
+    criterion: Criterion, metrics: Mapping[str, Any]
+) -> bool:
+    """True when exp4 recorded that this criterion was not measured.
+
+    Path patching needs a confirmed head to patch. The new manifests write
+    ``path_patch_measured = 0`` and omit ``mean_path_patch_effect``; older
+    manifests carry a placeholder ``0.0`` and no flag, so a manifest with
+    ``total_induction_heads == 0`` is read the same way. A 0.0 in either form
+    is not a causal measurement.
+    """
+    if criterion.metric != "mean_path_patch_effect":
+        return False
+    measured = _read_metric(metrics, "path_patch_measured")
+    if measured is not None:
+        return measured == 0.0
+    return _read_metric(metrics, "total_induction_heads") == 0.0
+
+
 def evaluate_seed(
     seed: int,
     exp1_metrics: Mapping[str, Any],
@@ -253,7 +275,9 @@ def evaluate_seed(
     checks: list[Check] = []
     for criterion in criteria:
         if criterion.source == SOURCE_EXP4:
-            if exp4_metrics is None:
+            if exp4_metrics is None or _exp4_criterion_not_measured(
+                criterion, exp4_metrics
+            ):
                 checks.append(
                     Check(
                         criterion,
@@ -297,8 +321,15 @@ def run_verdict(
     exp1: Mapping[str, Any],
     exp4: Optional[Mapping[str, Any]] = None,
     criteria: Sequence[Criterion] = CRITERIA,
+    min_seeds: int = 3,
 ) -> RunVerdict:
-    """The verdict of a run, from the exp1 manifest and (optionally) exp4's."""
+    """The verdict of a run, from the exp1 manifest and (optionally) exp4's.
+
+    The pre-registration fixes **three seeds**. A manifest with fewer is a
+    pilot, not the run: it gets ``INCOMPLETE`` and no verdict, so a single
+    lucky seed can never be reported as a POSITIVE run. An empty manifest is
+    likewise ``INCOMPLETE`` rather than a vacuous negative.
+    """
     exp1_rows = per_seed_metrics(exp1)
     exp4_rows = per_seed_metrics(exp4) if exp4 is not None else {}
     seeds: list[SeedVerdict] = []
@@ -306,6 +337,38 @@ def run_verdict(
         seeds.append(
             evaluate_seed(seed, exp1_rows[seed], exp4_rows.get(seed), criteria)
         )
+    if not seeds:
+        return RunVerdict(
+            label="run",
+            seeds=(),
+            status=STATUS_INCOMPLETE,
+            verdict="",
+            note="the exp1 manifest carries no seeds",
+        )
+    if len(seeds) < min_seeds:
+        return RunVerdict(
+            label="run",
+            seeds=tuple(seeds),
+            status=STATUS_INCOMPLETE,
+            verdict="",
+            note=(
+                f"only {len(seeds)} of {min_seeds} pre-registered seeds are present"
+            ),
+        )
+    if exp4 is not None:
+        missing_exp4 = sorted(set(exp1_rows) - set(exp4_rows))
+        if missing_exp4:
+            return RunVerdict(
+                label="run",
+                seeds=tuple(seeds),
+                status=STATUS_INCOMPLETE,
+                verdict="",
+                note=(
+                    "the exp4 manifest is missing seed(s) "
+                    f"{missing_exp4}; a cascade that did not analyse a seed "
+                    "did not measure it"
+                ),
+            )
     incomplete = [s for s in seeds if not s.complete]
     if incomplete:
         return RunVerdict(
@@ -405,6 +468,13 @@ def format_report(
             lines.extend(mech_lines)
     lines.append("")
     if not result.complete:
+        if result.note:
+            lines.append(
+                f"RUN STATUS: {STATUS_INCOMPLETE} — {result.note}. "
+                "No verdict is computed: a pilot or a missing measurement is "
+                "not a negative."
+            )
+            return "\n".join(lines)
         missing = sorted({name for s in result.seeds for name in s.missing})
         lines.append(
             f"RUN STATUS: {STATUS_INCOMPLETE} — the manifest does not carry "
@@ -421,21 +491,29 @@ def format_report(
         )
     elif result.verdict == VERDICT_PARTIAL:
         failed = sorted({name for s in result.seeds for name in s.failed})
+        not_measured = sorted(
+            {name for s in result.seeds for name in s.not_measured}
+        )
+        detail = (
+            f"Failing criteria: {', '.join(failed)}."
+            if failed
+            else f"Not measured: {', '.join(not_measured)}."
+        )
         lines.append(
             "A copy head forms, but the causal evidence does not support the "
-            f"induction claim. Failing criteria: {', '.join(failed)}. "
+            f"induction claim. {detail} "
             "Report the missing criterion, do not re-run."
         )
     else:
         rows = exp1_rows
-        no_head = all(
+        no_head = bool(rows) and all(
             int(float(r.get("total_induction_heads", 0.0))) == 0
             for r in rows.values()
         )
-        high_copy = all(
+        high_copy = bool(rows) and all(
             float(r.get("copy_accuracy", 0.0)) >= 0.60 for r in rows.values()
         )
-        low_content = all(
+        low_content = bool(rows) and all(
             float(r.get("peak_content_mass", 0.0)) < 0.30 for r in rows.values()
         )
         if no_head and high_copy and low_content:
@@ -476,7 +554,16 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     exp1 = load_manifest(args.exp1)
     task = exp1.get("args", {}).get("task")
-    exp4 = load_manifest(args.exp4) if args.exp4 else None
+    exp4 = None
+    if args.exp4:
+        if Path(args.exp4).exists():
+            exp4 = load_manifest(args.exp4)
+        else:
+            print(
+                f"WARNING: exp4 manifest {args.exp4!r} does not exist — "
+                "criterion 7 is NOT MEASURED, not a failed path patch.",
+                file=sys.stderr,
+            )
 
     result = run_verdict(exp1, exp4)
     exp1_rows = per_seed_metrics(exp1)

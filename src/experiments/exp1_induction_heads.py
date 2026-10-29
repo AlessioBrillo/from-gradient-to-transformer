@@ -2124,7 +2124,11 @@ def main() -> None:
             f"MULTI-SEED MODE: {len(seeds)} seeds {seeds} "
             f"(fresh_batches={args.fresh_batches}, skipping plots/model-save)"
         )
-        result = run_seeds(lambda s: run_single_seed(s, args), seeds)
+        result = run_seeds(
+            lambda s: run_single_seed(s, args),
+            seeds,
+            optional_keys={"mean_ablation_drop", "mean_copy_ablation_drop"},
+        )
         probe_model = AttentionOnlyTransformer(
             vocab_size=args.vocab_size,
             d_model=args.d_model,

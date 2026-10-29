@@ -231,6 +231,14 @@ class TestMassSummary:
         assert summary["content_mass_excess"] == pytest.approx(0.5 - 2.0 / 6.0)
         assert summary["content_mass_ratio"] == pytest.approx(0.5 / (2.0 / 6.0))
 
+    def test_all_zero_mass_covers_no_heads(self) -> None:
+        # With no content mass there is no head to name: the width is 0, not
+        # the vacuous 1 the loop used to report.
+        report = DetectionReport(masses={"content": [np.array([0.0, 0.0])]})
+        triples = np.array([[0, 5, 3]], dtype=np.int64)
+        summary = mass_summary(report, triples)
+        assert summary["content_mass_heads_for_80pct"] == 0.0
+
 
 class TestMassCoveringHeads:
     def _report(self, content: list[list[float]]) -> DetectionReport:

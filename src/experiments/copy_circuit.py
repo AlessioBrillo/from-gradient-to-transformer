@@ -158,13 +158,14 @@ def mass_summary(report: DetectionReport, triples: np.ndarray) -> dict[str, floa
     if per_head:
         ordered = sorted((v for _, _, v in per_head), reverse=True)
         top_share = float(ordered[0] / total) if total > 0 else 0.0
-        running = 0.0
-        target = 0.8 * total
-        for value in ordered:
-            running += value
-            heads_for_80 += 1
-            if running >= target:
-                break
+        if total > 0:
+            running = 0.0
+            target = 0.8 * total
+            for value in ordered:
+                running += value
+                heads_for_80 += 1
+                if running >= target:
+                    break
 
     offset_total, offset_best = _best_offset_total(report)
     chance = chance_content_mass(triples)

@@ -14,13 +14,15 @@ smoke tests (`make reproduce-quick`) and a full-scale mode (`make reproduce`).
 ## Honesty Ledger
 
 Nine audits have now caught real problems in this repository's causal claims and
-evidence base. Seven found claims that were wrong or unbacked; the eighth found a
-claim that was **right and had been called wrong by its own metric**; the ninth
-found that the experiment which was supposed to close the last open question
-**could not have produced a verdict at all** — and fixed the instrument before
-the run. All entries stay here — the point of this section is to make it easy to
-see the trend (are correctness problems getting caught faster, or accumulating?),
-not to keep only the latest one.
+evidence base. They include claims that were wrong or unbacked, a claim that was
+**right and had been called wrong by its own metric** (2026-10-14), and two
+content-task audits (2026-10-22 and 2026-10-25) that found the experiment
+supposed to close the last open question **could not have produced a verdict at
+all** — first because its verdict code would crash, then because its instrument
+measured the wrong position — and fixed it before the run. All entries stay
+here — the point of this section is to make it easy to see the trend (are
+correctness problems getting caught faster, or accumulating?), not to keep only
+the latest one.
 
 ### 2026-10-22 — The content-task run could not have produced a verdict: a `KeyError`, a gate with no manifest, and a probe that contradicted the addendum
 
@@ -635,7 +637,7 @@ its GPU run. The short version:
 | **The mechanism report** | A *secondary* report, always produced, that describes the circuit rather than deciding the verdict: the aggregate content mass and its concentration, the **group ablation** (the drop in copy accuracy when the whole candidate group is removed) next to the single-head ablations, and the first-order **logit attribution** of every head to the content-vs-position contrast. The candidate group is fixed by a rule that reads the data and the attention masses and never the outcome. |
 | **The budget** | 3 seeds × 3000 epochs = 384k optimizer steps per seed, GPU. A negative at that budget is a negative: the budget is not extended after the fact, and no seed is dropped. |
 | **The amendments (2026-10-22 and 2026-10-25, before the run)** | Vocabulary 2048 → **256** (`--content-standard`): the periodic task's 2048 answered a constraint this task lacks, and the standard-geometry CPU probe was still uniform after 400 epochs at 2048. The cascade's counterfactual is a **minimal pair** — one token changed, in the same sequence — instead of a different sequence. The 2026-10-25 audit fixed the chance level (`mean(1/(q+1))`), normalized the attribution shares by `sum(abs(v))`, made an empty candidate group *undetermined*, added the exploratory top-80% mass group, and removed the fabricated zeros for unmeasured ablation/path patching. The separate emergence run was removed: the full run records `confirmed_epoch`, so it added no measurement and would have doubled the budget. The standard-geometry de-risk finds a distributed circuit (3 candidates, group drop 0.9956, max single-head drop 0.0986). The seven criteria are untouched. |
-| **Where it is** | [ADR-0033](../docs/adr/0033-content-based-induction-task.md), the [pre-registration](../07_capstone/notes/variable-distance-induction-preregistration.md) (with its two addenda), the notebook `notebooks/kaggle_induction_content.ipynb` (`make remote-run-induction-content`). |
+| **Where it is** | [ADR-0033](../docs/adr/0033-content-based-induction-task.md), the [pre-registration](../07_capstone/notes/variable-distance-induction-preregistration.md) (with its three addenda), the notebook `notebooks/kaggle_induction_content.ipynb` (`make remote-run-induction-content`). |
 
 <!-- manifest: results/induction_content_derisk_fixed.json -->
 <!-- manifest: results/induction_content_derisk_standard.json -->

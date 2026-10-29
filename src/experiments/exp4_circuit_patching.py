@@ -1435,7 +1435,15 @@ def main() -> None:
         logger.info(
             f"MULTI-SEED MODE: {len(seeds)} seeds {seeds} (skipping plots)"
         )
-        result = run_seeds(lambda s: run_single_seed(s, args), seeds)
+        result = run_seeds(
+            lambda s: run_single_seed(s, args),
+            seeds,
+            optional_keys={
+                "mean_ablation_effect",
+                "mean_path_patch_effect",
+                "group_path_patch_effect",
+            },
+        )
         # The parameter count must describe the model that was actually
         # analysed (an attention-only model when --from-checkpoint points at
         # Rung 1's checkpoint), not a throwaway probe of another family.

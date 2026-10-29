@@ -9,10 +9,7 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
 **Reframing:** The infrastructure serves the research goal — making every result auditable, extendable, and trustworthy. "Production AI" here means production-quality *research*, not product deployment.
 
 ## Phase gate
-- [x] **Proof passed** → I can move to the capstone. Reproducibility harness
-  (multi-seed runner + provenance manifests + `make verify-claims`), experiment
-  tracking (manifests on disk), `make reproduce` for every experiment, CI for
-  research, and figure generation scripts all have linked notes and manifests.
+- [ ] **Proof passed** → I can move to the capstone.
 
 ## Research Infrastructure
 - [~] **Reproducibility harness:** global seed control, deterministic flags, pinned env
@@ -32,9 +29,9 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
   `portfolio/figures/` established as the committed curated set (12 figures tracked since
   Micro-Phase 13, PR #38), enforced mechanically by `make verify-claims` (existence +
   git-tracking check added 2026-08-07, Micro-Phase 12 Step 1). All sections carry their
-  manifest tags: Rung 2 (`results/exp2_grokking.json`), Rung 5
+  manifest tags: Rung 2 (`results/grokking_nanda_p113.json`), Rung 5
   (`results/exp5_real_activations.json`), Rung 1 content
-  (`results/induction_content_derisk_fixed.json`, gate manifest).
+  (`results/induction_content_derisk_standard.json`, gate manifest).
 - [x] **Feature dashboard deployment:** (descoped 2026-10-11: no confirmed head) Hugging Face Spaces for SAE feature browser
 - [x] **Mini-paper workflow:** LaTeX template, `make paper` (added 2026-08-08), citation
   management — `portfolio/paper/main.tex` + `references.bib` scaffold added 2026-08-02;

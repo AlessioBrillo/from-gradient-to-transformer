@@ -107,6 +107,14 @@ class TestTheRun:
         assert "induction_content_emergence" not in text
         assert "--stop-on-confirmed" not in text
 
+    def test_the_seeds_variable_is_defined_before_the_first_run(self) -> None:
+        """Deleting the emergence cell also deleted the only `SEEDS`
+        definition, and every command below uses `$SEEDS`: the first run
+        would have failed before training."""
+        text = _all_text(json.loads(NOTEBOOK.read_text(encoding="utf-8")))
+        assert 'os.environ["SEEDS"] = "0,1,2"' in text
+        assert text.index('os.environ["SEEDS"]') < text.index("--seeds $SEEDS")
+
     def test_the_exp4_printer_tolerates_unmeasured_metrics(self) -> None:
         """No fabricated 0.0: absent path-patch metrics print 'not measured'."""
         text = _all_text(json.loads(NOTEBOOK.read_text(encoding="utf-8")))

@@ -105,6 +105,9 @@ on all of them.
 - Two runs: an **emergence** run with `--stop-on-confirmed --stop-rule
   mechanism` (when does the circuit appear?) and a **full-budget** run
   without the early stop (the headline; the model Rungs 4 and 5 analyse).
+  *(Superseded by the 2026-10-25 addendum: the emergence run was removed, so
+  the protocol is one full-budget run. The full run records
+  `confirmed_epoch`, which answers the same question.)*
 - The budget is the same as the periodic run's, so the two are comparable.
   A negative at this budget is a negative *at this budget*, and it is
   reported as such — the budget is not extended after the fact.
@@ -216,10 +219,10 @@ make the early phase much slower to leave. What this does *not* change is
 the protocol: the GPU run is the pre-registered one, at its budget, with the
 criteria above, and a negative there is a negative at that budget.
 
-## Addendum — 2026-10-22 (b): four corrections, decided before the GPU run
+## Addendum — 2026-10-22 (b): five corrections, decided before the GPU run
 
 This addendum is written **before** the GPU run and after the audit of the
-2026-10-22 de-risk itself. It changes the *protocol* in four ways, and it
+2026-10-22 de-risk itself. It changes the *protocol* in five ways, and it
 does not change a single one of the seven criteria.
 
 ### 1. The record above was wrong twice, and here is the correction
@@ -428,6 +431,25 @@ publish in that case is the one the decision rule already allows —
 detector does not identify" — with the report attached as the description
 of that mechanism. The word "induction head" is not used.
 
+### 5. The counterfactual of the causal cascade: the minimal pair
+
+The 2026-10-20 cascade built the corrupted half of the intervention from a
+*different* sequence, so the contrast it measured was "the answer of this
+sequence against the answer of another sequence" — which every mechanism
+has to lose. That is why its activation-patching recovery is 0.0834, a
+number that is hard to read as "this circuit carries the answer".
+
+The content run uses a **minimal pair**: the same sequence with exactly one
+token changed — the token at the source of the copy (`prev(q) + 1`). The
+replacement token is drawn from the ids that do **not** occur in the
+sequence, so the corrupted sequence keeps every token unique and the read
+position stays a copy query: only the answer changes. The intervention is
+then "the head's direct contribution carries the *content* of the source",
+which is the claim the criterion is about.
+
+The criterion (7) is unchanged. The design is expected to make the effect
+**larger**, so the criterion is at least as strict as it was.
+
 ## Addendum — 2026-10-25: instrument audit before the GPU run
 
 This addendum records corrections to the instrument, decided **before** the
@@ -463,12 +485,18 @@ frozen criteria and their thresholds are unchanged.
    `exploratory_group_size` / `exploratory_group_ablation_drop`.
 
 5. **No fabricated zeros for unmeasured causal effects.** `exp4_circuit_patching`
-   omits `mean_path_patch_effect` (and `mean_ablation_effect`,
-   `group_path_patch_effect`) when no head was confirmed, and adds
-   `path_patch_measured` / `group_path_patch_measured` flags. The same rule
-   now applies to exp1: `mean_ablation_drop` / `mean_copy_ablation_drop` are
-   absent when no head is confirmed, and `content_verdict` reports criterion 6
-   as `NOT MEASURED` — never a measured 0.0.
+   omits `mean_path_patch_effect` / `mean_ablation_effect` when no head was
+   confirmed, and `group_path_patch_effect` when the candidate group is
+   empty, and records `path_patch_measured` / `group_path_patch_measured`.
+   The same rule applies to exp1: `mean_ablation_drop` /
+   `mean_copy_ablation_drop` are absent when no head is confirmed. The
+   multi-seed runner treats these as optional keys, so a mixed run (some
+   seeds confirmed a head, some did not) aggregates without crashing and
+   without inventing a mean for a metric that was not measured. `content_verdict`
+   reads the exp4 flag — and, for older manifests without it,
+   `total_induction_heads == 0` — and reports criterion 7 as `NOT MEASURED`;
+   criterion 6 is `NOT MEASURED` when `total_induction_heads == 0`. Never a
+   measured 0.0.
 
 6. **Redundant emergence run removed.** The emergence run's only unique
    output was `confirmed_epoch`, which the full run already records. The GPU
@@ -496,30 +524,11 @@ frozen criteria and their thresholds are unchanged.
    of the model to copy.
 
 The two corrected manifests were produced at commit `1bf347f`, before the
-reporting-only fix in item 5 (no placeholder zero for an empty confirmed set). That fix
-changes no measured number; both manifests have `total_induction_heads = 0`,
+no-fabricated-zero fix in item 5 of this addendum. That fix changes no measured number; both
+manifests have `total_induction_heads = 0`,
 so their stored `0.0` is the placeholder and the verdict reads criterion 6 as
 `NOT MEASURED`. The standard-geometry numbers are in "The CPU gate's numbers,
 traced to a manifest" above.
-
-### 5. The counterfactual of the causal cascade: the minimal pair
-
-The 2026-10-20 cascade built the corrupted half of the intervention from a
-*different* sequence, so the contrast it measured was "the answer of this
-sequence against the answer of another sequence" — which every mechanism
-has to lose. That is why its activation-patching recovery is 0.0834, a
-number that is hard to read as "this circuit carries the answer".
-
-The content run uses a **minimal pair**: the same sequence with exactly one
-token changed — the token at the source of the copy (`prev(q) + 1`). The
-replacement token is drawn from the ids that do **not** occur in the
-sequence, so the corrupted sequence keeps every token unique and the read
-position stays a copy query: only the answer changes. The intervention is
-then "the head's direct contribution carries the *content* of the source",
-which is the claim the criterion is about.
-
-The criterion (7) is unchanged. The design is expected to make the effect
-**larger**, so the criterion is at least as strict as it was.
 
 ## Links
 
