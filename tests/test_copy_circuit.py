@@ -39,6 +39,7 @@ from src.experiments.copy_circuit import (
     MECHANISM_NONE,
     MECHANISM_SINGLE,
     MECHANISM_UNDETERMINED,
+    attribution_shares,
     candidate_heads,
     chance_content_mass,
     classify_mechanism,
@@ -284,6 +285,22 @@ class TestAttribution:
         report = content_vs_position_attribution(model, tokens, triples, best_offset=3)
         assert report["dla_total"] < 0.0
         assert report["dla_observed_logit_diff"] < 0.0
+
+    def test_the_shares_divide_by_absolute_attribution(self) -> None:
+        # One head votes for the content answer, one against it. The signed
+        # total is 0.5, so the old denominator would report a positive share
+        # of 2.0; the absolute one reports 2/3, a share that is a share.
+        shares = attribution_shares({"L0H0": 1.0, "L0H1": -0.5})
+        assert shares["dla_positive_share"] == pytest.approx(2.0 / 3.0)
+        assert shares["dla_top_head"] == "L0H0"
+        assert shares["dla_top_head_share"] == pytest.approx(2.0 / 3.0)
+        assert 0.0 <= shares["dla_positive_share"] <= 1.0
+        assert 0.0 <= shares["dla_top_head_share"] <= 1.0
+
+    def test_all_zero_attribution_has_zero_shares(self) -> None:
+        shares = attribution_shares({"L0H0": 0.0})
+        assert shares["dla_positive_share"] == 0.0
+        assert shares["dla_top_head_share"] == 0.0
 
     def test_the_planted_head_carries_the_attribution(self) -> None:
         tokens = _tokens()

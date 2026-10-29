@@ -46,6 +46,7 @@ from __future__ import annotations
 
 import inspect
 import logging
+from collections.abc import Mapping
 from typing import Any, Optional, cast
 
 import numpy as np
@@ -318,6 +319,31 @@ def _attention_only_weights(
     return list(blocks), cast(torch.Tensor, unembed.weight)
 
 
+def attribution_shares(per_head: Mapping[str, float]) -> dict[str, Any]:
+    """The top-head and positive shares of a signed per-head attribution.
+
+    Both divide by ``sum(abs(v))``. The signed total can be near zero or
+    negative, and dividing by it once produced ``dla_positive_share = 1.0698``
+    — a share that is not a share. A head that votes *against* the content
+    answer now lowers the positive share instead of inflating it, and both
+    shares stay in ``[0, 1]``.
+    """
+    total_abs = float(sum(abs(v) for v in per_head.values()))
+    top_head = ""
+    top_share = 0.0
+    if per_head:
+        top_head = max(per_head, key=lambda k: abs(per_head[k]))
+        if total_abs > 0:
+            top_share = abs(per_head[top_head]) / total_abs
+    positive = float(sum(v for v in per_head.values() if v > 0))
+    positive_share = positive / total_abs if total_abs > 0 else 0.0
+    return {
+        "dla_top_head": top_head,
+        "dla_top_head_share": top_share,
+        "dla_positive_share": positive_share,
+    }
+
+
 def content_vs_position_attribution(
     model: nn.Module,
     input_tokens: torch.Tensor,
@@ -413,21 +439,11 @@ def content_vs_position_attribution(
         ).mean().item()
 
     total = float(sum(per_head.values()))
-    total_abs = float(sum(abs(v) for v in per_head.values()))
-    top_head = ""
-    top_share = 0.0
-    if per_head:
-        top_head = max(per_head, key=lambda k: abs(per_head[k]))
-        top_share = float(abs(per_head[top_head]) / total_abs) if total_abs > 0 else 0.0
-    positive = float(sum(v for v in per_head.values() if v > 0))
-    positive_share = float(positive / total_abs) if total_abs > 0 else 0.0
 
     return {
         "dla_total": total,
         "dla_by_head": per_head,
-        "dla_top_head": top_head,
-        "dla_top_head_share": top_share,
-        "dla_positive_share": positive_share,
+        **attribution_shares(per_head),
         "dla_observed_logit_diff": float(observed),
         "dla_n_queries": int(b_idx.size),
     }
