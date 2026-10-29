@@ -313,7 +313,41 @@ class TestTheRunVerdict:
         result = run_verdict(exp1, exp4)
         assert result.status == STATUS_INCOMPLETE
         assert result.verdict == ""
-        assert "1 of 3" in result.note
+        assert "pre-registered seeds" in result.note
+        assert "missing [1, 2]" in result.note
+
+    def test_four_seeds_are_not_the_pre_registered_run(self) -> None:
+        exp1 = _manifest([0, 1, 2, 3], [_exp1_metrics()] * 4)
+        exp4 = {
+            "seeds": [0, 1, 2, 3],
+            "per_seed_metrics": [{"mean_path_patch_effect": 0.55}] * 4,
+        }
+        result = run_verdict(exp1, exp4)
+        assert result.status == STATUS_INCOMPLETE
+        assert result.verdict == ""
+        assert "unexpected [3]" in result.note
+
+    def test_unexpected_seed_ids_are_not_the_pre_registered_run(self) -> None:
+        exp1 = _manifest([5, 6, 7], [_exp1_metrics()] * 3)
+        result = run_verdict(exp1, None)
+        assert result.status == STATUS_INCOMPLETE
+        assert result.verdict == ""
+        assert "missing [0, 1, 2]" in result.note
+
+    def test_a_manifest_without_the_head_count_is_incomplete(self) -> None:
+        # The head count decides whether criterion 6 is measurable. Absent,
+        # it must not be read as "0 confirmed" and turned into a negative.
+        rows = [_exp1_metrics() for _ in range(3)]
+        for row in rows:
+            del row["total_induction_heads"]
+        exp1 = _manifest([0, 1, 2], rows)
+        result = run_verdict(exp1, None)
+        assert result.status == STATUS_INCOMPLETE
+        assert result.verdict == ""
+        assert "total_induction_heads" in result.note
+        report = format_report(result, per_seed_metrics(exp1))
+        assert "heads=?" in report
+        assert "RUN VERDICT" not in report
 
 
 class TestTheCommandLine:

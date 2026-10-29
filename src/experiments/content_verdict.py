@@ -141,7 +141,8 @@ class SeedVerdict:
 
     seed: int
     checks: tuple[Check, ...]
-    confirmed_heads: int
+    confirmed_heads: Optional[int]
+    note: str = ""
 
     @property
     def missing(self) -> tuple[str, ...]:
@@ -165,9 +166,11 @@ class SeedVerdict:
         legitimate absence — the pre-registered rule then fails that
         criterion. A criterion whose metric is *missing from the manifest*
         means the manifest never carried that measurement, and then no
-        verdict can be computed at all.
+        verdict can be computed at all. ``note`` carries the same refusal
+        for a missing input that is not itself a criterion (the head count
+        that decides whether criterion 6 is measurable).
         """
-        return not self.missing
+        return not self.missing and not self.note
 
     @property
     def verdict(self) -> str:
@@ -176,7 +179,7 @@ class SeedVerdict:
             return ""
         if all(c.met for c in self.checks):
             return VERDICT_POSITIVE
-        if self.confirmed_heads > 0:
+        if (self.confirmed_heads or 0) > 0:
             return VERDICT_PARTIAL
         return VERDICT_NEGATIVE
 
@@ -265,13 +268,20 @@ def evaluate_seed(
     is then *not measured* (and fails, with the reason), which is different
     from a manifest that simply does not carry the metric.
     """
-    confirmed = 0
+    confirmed: Optional[int] = None
     raw = exp1_metrics.get("total_induction_heads")
     if raw is not None:
         try:
             confirmed = int(float(raw))
-        except (TypeError, ValueError):  # pragma: no cover - manifests are numeric
-            confirmed = 0
+        except (TypeError, ValueError):
+            confirmed = None
+    # The head count is the input that decides whether criterion 6 is
+    # measurable at all. Without it, a fabricated 0.0 would read as "no head
+    # confirmed" and the run would be reported as a negative it never
+    # measured; the seed is incomplete instead.
+    note = ""
+    if confirmed is None:
+        note = "the exp1 manifest does not carry a usable total_induction_heads"
     checks: list[Check] = []
     for criterion in criteria:
         if criterion.source == SOURCE_EXP4:
@@ -291,11 +301,13 @@ def evaluate_seed(
         # Criterion 6 ablates a *confirmed* head. With none confirmed there is
         # nothing to remove, so the mean is undefined — not a measured zero.
         # This is the same distinction exp4 draws for path patching.
-        if criterion.metric == "mean_copy_ablation_drop" and confirmed == 0:
+        if criterion.metric == "mean_copy_ablation_drop" and confirmed in (None, 0):
             checks.append(Check(criterion, None, CHECK_NOT_MEASURED))
             continue
         checks.append(check_criterion(criterion, exp1_metrics))
-    return SeedVerdict(seed=seed, checks=tuple(checks), confirmed_heads=confirmed)
+    return SeedVerdict(
+        seed=seed, checks=tuple(checks), confirmed_heads=confirmed, note=note
+    )
 
 
 def load_manifest(path: str | Path) -> dict[str, Any]:
@@ -321,14 +333,15 @@ def run_verdict(
     exp1: Mapping[str, Any],
     exp4: Optional[Mapping[str, Any]] = None,
     criteria: Sequence[Criterion] = CRITERIA,
-    min_seeds: int = 3,
+    expected_seeds: Sequence[int] = (0, 1, 2),
 ) -> RunVerdict:
     """The verdict of a run, from the exp1 manifest and (optionally) exp4's.
 
-    The pre-registration fixes **three seeds**. A manifest with fewer is a
-    pilot, not the run: it gets ``INCOMPLETE`` and no verdict, so a single
-    lucky seed can never be reported as a POSITIVE run. An empty manifest is
-    likewise ``INCOMPLETE`` rather than a vacuous negative.
+    The pre-registration fixes **three seeds, 0, 1 and 2**. A manifest that
+    carries a different set is not the run: it gets ``INCOMPLETE`` and no
+    verdict, so neither a one-seed pilot nor an extra seed can be reported
+    as the pre-registered POSITIVE. An empty manifest is likewise
+    ``INCOMPLETE`` rather than a vacuous negative.
     """
     exp1_rows = per_seed_metrics(exp1)
     exp4_rows = per_seed_metrics(exp4) if exp4 is not None else {}
@@ -345,14 +358,23 @@ def run_verdict(
             verdict="",
             note="the exp1 manifest carries no seeds",
         )
-    if len(seeds) < min_seeds:
+    expected = set(expected_seeds)
+    if set(exp1_rows) != expected:
+        missing = sorted(expected - set(exp1_rows))
+        extra = sorted(set(exp1_rows) - expected)
+        parts = []
+        if missing:
+            parts.append(f"missing {missing}")
+        if extra:
+            parts.append(f"unexpected {extra}")
         return RunVerdict(
             label="run",
             seeds=tuple(seeds),
             status=STATUS_INCOMPLETE,
             verdict="",
             note=(
-                f"only {len(seeds)} of {min_seeds} pre-registered seeds are present"
+                "the exp1 manifest does not carry the pre-registered seeds "
+                f"{sorted(expected)} ({'; '.join(parts)})"
             ),
         )
     if exp4 is not None:
@@ -371,11 +393,23 @@ def run_verdict(
             )
     incomplete = [s for s in seeds if not s.complete]
     if incomplete:
+        missing_measurements = sorted(
+            {name for s in incomplete for name in s.missing}
+        )
+        notes = sorted({s.note for s in incomplete if s.note})
+        parts = []
+        if missing_measurements:
+            parts.append(
+                f"missing measurements: {', '.join(missing_measurements)}"
+            )
+        if notes:
+            parts.append("; ".join(notes))
         return RunVerdict(
             label="run",
             seeds=tuple(seeds),
             status=STATUS_INCOMPLETE,
             verdict="",
+            note="; ".join(parts),
         )
     verdicts = [s.verdict for s in seeds]
     n_positive = verdicts.count(VERDICT_POSITIVE)
@@ -411,9 +445,10 @@ def mechanism_report(metrics: Mapping[str, Any]) -> tuple[str, str]:
 # ---------------------------------------------------------------------------
 def format_seed(seed: SeedVerdict) -> str:
     """The one-line summary of a seed."""
+    heads = "?" if seed.confirmed_heads is None else seed.confirmed_heads
     parts = [
         f"seed {seed.seed}: {seed.verdict or 'NO VERDICT'}",
-        f"| heads={seed.confirmed_heads}",
+        f"| heads={heads}",
     ]
     for check in seed.checks:
         if check.value is None:
@@ -572,12 +607,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         payload = {
             "status": result.status,
             "verdict": result.verdict,
+            "note": result.note,
             "task": task,
             "seeds": [
                 {
                     "seed": s.seed,
                     "verdict": s.verdict,
                     "confirmed_heads": s.confirmed_heads,
+                    "note": s.note,
                     "missing": list(s.missing),
                     "not_measured": list(s.not_measured),
                     "failed": list(s.failed),
