@@ -329,6 +329,34 @@ def per_seed_metrics(manifest: Mapping[str, Any]) -> dict[int, Mapping[str, Any]
     return out
 
 
+def _manifest_seed_problem(manifest: Mapping[str, Any], label: str) -> str:
+    """Why the manifest's declared seeds cannot be trusted, or ``""``.
+
+    ``per_seed_metrics`` zips the two lists, so a truncated, overlong or
+    duplicated seed list would silently drop or collapse rows before any
+    verdict is computed. Validate the raw lists first: the verdict must be
+    about the manifest that exists, not the prefix ``zip`` kept.
+    """
+    seeds = manifest.get("seeds", [])
+    rows = manifest.get("per_seed_metrics", [])
+    if not isinstance(seeds, list) or not isinstance(rows, list):
+        return f"{label} does not carry seed and metric lists"
+    if len(seeds) != len(rows):
+        return (
+            f"{label} declares {len(seeds)} seed(s) but carries "
+            f"{len(rows)} metric row(s)"
+        )
+    ids: list[int] = []
+    for seed in seeds:
+        try:
+            ids.append(int(seed))
+        except (TypeError, ValueError):
+            return f"{label} carries a non-integer seed"
+    if len(set(ids)) != len(ids):
+        return f"{label} carries duplicate seed(s)"
+    return ""
+
+
 def run_verdict(
     exp1: Mapping[str, Any],
     exp4: Optional[Mapping[str, Any]] = None,
@@ -343,14 +371,55 @@ def run_verdict(
     as the pre-registered POSITIVE. An empty manifest is likewise
     ``INCOMPLETE`` rather than a vacuous negative.
     """
+    exp1_problem = _manifest_seed_problem(exp1, "the exp1 manifest")
+    if exp1_problem:
+        return RunVerdict(
+            label="run",
+            seeds=(),
+            status=STATUS_INCOMPLETE,
+            verdict="",
+            note=exp1_problem,
+        )
     exp1_rows = per_seed_metrics(exp1)
-    exp4_rows = per_seed_metrics(exp4) if exp4 is not None else {}
+    exp1_seeds = [int(s) for s in exp1.get("seeds", [])]
+    exp4_rows: dict[int, Mapping[str, Any]] = {}
+    if exp4 is not None:
+        exp4_problem = _manifest_seed_problem(exp4, "the exp4 manifest")
+        if exp4_problem:
+            return RunVerdict(
+                label="run",
+                seeds=(),
+                status=STATUS_INCOMPLETE,
+                verdict="",
+                note=exp4_problem,
+            )
+        exp4_seeds = [int(s) for s in exp4.get("seeds", [])]
+        missing_exp4 = sorted(set(exp1_seeds) - set(exp4_seeds))
+        extra_exp4 = sorted(set(exp4_seeds) - set(exp1_seeds))
+        if missing_exp4 or extra_exp4:
+            parts = []
+            if missing_exp4:
+                parts.append(f"missing {missing_exp4}")
+            if extra_exp4:
+                parts.append(f"unexpected {extra_exp4}")
+            return RunVerdict(
+                label="run",
+                seeds=(),
+                status=STATUS_INCOMPLETE,
+                verdict="",
+                note=(
+                    "the exp4 manifest does not carry the exp1 seeds "
+                    f"({'; '.join(parts)}); a cascade that did not analyse "
+                    "a seed did not measure it"
+                ),
+            )
+        exp4_rows = per_seed_metrics(exp4)
     seeds: list[SeedVerdict] = []
     for seed in sorted(exp1_rows):
         seeds.append(
             evaluate_seed(seed, exp1_rows[seed], exp4_rows.get(seed), criteria)
         )
-    if not seeds:
+    if not exp1_seeds:
         return RunVerdict(
             label="run",
             seeds=(),
@@ -359,9 +428,9 @@ def run_verdict(
             note="the exp1 manifest carries no seeds",
         )
     expected = set(expected_seeds)
-    if set(exp1_rows) != expected:
-        missing = sorted(expected - set(exp1_rows))
-        extra = sorted(set(exp1_rows) - expected)
+    if set(exp1_seeds) != expected:
+        missing = sorted(expected - set(exp1_seeds))
+        extra = sorted(set(exp1_seeds) - expected)
         parts = []
         if missing:
             parts.append(f"missing {missing}")
@@ -377,20 +446,6 @@ def run_verdict(
                 f"{sorted(expected)} ({'; '.join(parts)})"
             ),
         )
-    if exp4 is not None:
-        missing_exp4 = sorted(set(exp1_rows) - set(exp4_rows))
-        if missing_exp4:
-            return RunVerdict(
-                label="run",
-                seeds=tuple(seeds),
-                status=STATUS_INCOMPLETE,
-                verdict="",
-                note=(
-                    "the exp4 manifest is missing seed(s) "
-                    f"{missing_exp4}; a cascade that did not analyse a seed "
-                    "did not measure it"
-                ),
-            )
     incomplete = [s for s in seeds if not s.complete]
     if incomplete:
         missing_measurements = sorted(

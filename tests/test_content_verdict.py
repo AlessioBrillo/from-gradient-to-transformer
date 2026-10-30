@@ -302,7 +302,7 @@ class TestTheRunVerdict:
         }
         result = run_verdict(exp1, exp4)
         assert result.status == STATUS_INCOMPLETE
-        assert "missing seed(s)" in result.note
+        assert "missing [2]" in result.note
 
     def test_a_single_seed_is_a_pilot_not_a_positive_run(self) -> None:
         exp1 = _manifest([0], [_exp1_metrics()])
@@ -333,6 +333,45 @@ class TestTheRunVerdict:
         assert result.status == STATUS_INCOMPLETE
         assert result.verdict == ""
         assert "missing [0, 1, 2]" in result.note
+
+    def test_more_declared_seeds_than_rows_is_incomplete(self) -> None:
+        # `per_seed_metrics` zips the lists, so a declared fourth seed with
+        # only three rows used to be truncated away before the set check.
+        exp1 = {
+            "seeds": [0, 1, 2, 3],
+            "per_seed_metrics": [_exp1_metrics()] * 3,
+        }
+        result = run_verdict(exp1, None)
+        assert result.status == STATUS_INCOMPLETE
+        assert "declares 4 seed(s) but carries 3 metric row(s)" in result.note
+
+    def test_more_rows_than_declared_seeds_is_incomplete(self) -> None:
+        exp1 = {
+            "seeds": [0, 1, 2],
+            "per_seed_metrics": [_exp1_metrics()] * 4,
+        }
+        result = run_verdict(exp1, None)
+        assert result.status == STATUS_INCOMPLETE
+        assert "declares 3 seed(s) but carries 4 metric row(s)" in result.note
+
+    def test_duplicate_seed_ids_are_incomplete(self) -> None:
+        exp1 = {
+            "seeds": [0, 1, 2, 2],
+            "per_seed_metrics": [_exp1_metrics()] * 4,
+        }
+        result = run_verdict(exp1, None)
+        assert result.status == STATUS_INCOMPLETE
+        assert "duplicate seed(s)" in result.note
+
+    def test_exp4_with_an_extra_seed_is_incomplete(self) -> None:
+        exp1 = _manifest([0, 1, 2], [_exp1_metrics()] * 3)
+        exp4 = {
+            "seeds": [0, 1, 2, 3],
+            "per_seed_metrics": [{"mean_path_patch_effect": 0.55}] * 4,
+        }
+        result = run_verdict(exp1, exp4)
+        assert result.status == STATUS_INCOMPLETE
+        assert "unexpected [3]" in result.note
 
     def test_a_manifest_without_the_head_count_is_incomplete(self) -> None:
         # The head count decides whether criterion 6 is measurable. Absent,
