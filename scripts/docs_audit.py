@@ -103,8 +103,9 @@ STALE_CLAIMS: list[tuple[str, str, str, str]] = [
     (
         "07_capstone/writeup.md",
         "Six audits have caught real bugs",
-        "seven audits have caught real bugs (the seventh reversed a negative "
-        "verdict its own metric had manufactured)",
+        "nine audits have caught real bugs (they include a negative verdict "
+        "its own metric had manufactured, and the content-task experiment "
+        "that could not produce a verdict until its instrument was fixed)",
         "2026-10-20",
     ),
     (

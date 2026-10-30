@@ -7,13 +7,15 @@ metric only the **exp4** manifest carries, so the cell raised ``KeyError``
 on the first seed — after the GPU session had been spent, and before the
 manifests were zipped.
 
-These tests pin the three properties that make the next session safe:
+These tests pin the properties that make the next session safe:
 
 * the verdict comes from the tested module, not from a cell;
 * the artifacts are zipped *before* the verdict, so a verdict that fails
   cannot cost the session;
 * the cascade runs when the behaviour is content-based, not only when a
-  per-head detector fires.
+  per-head detector fires;
+* the redundant emergence run is gone (2026-10-25 addendum), and the exp4
+  printer tolerates the metrics that are deliberately not measured.
 """
 
 from __future__ import annotations
@@ -97,13 +99,27 @@ class TestTheRun:
         assert "BEHAVIOUR_IS_CONTENT" in text
         assert "if BEHAVIOUR_IS_CONTENT or FOUND_HEAD:" in text
 
-    def test_the_emergence_run_stops_on_any_confirmation(self) -> None:
-        """The `mechanism` rule waits for a head above layer 0 — and the
-        periodic circuit was entirely in layer 0, so the rule would never
-        fire and the emergence run would cost the whole budget."""
+    def test_the_emergence_run_is_not_in_the_protocol(self) -> None:
+        """The 2026-10-25 addendum removed it: `confirmed_epoch` is recorded
+        by the full-budget run, and a second early-stopped run only doubled
+        the GPU budget."""
         text = _all_text(json.loads(NOTEBOOK.read_text(encoding="utf-8")))
-        assert "--stop-rule any" in text
-        assert "--stop-rule mechanism" not in text
+        assert "induction_content_emergence" not in text
+        assert "--stop-on-confirmed" not in text
+
+    def test_the_seeds_variable_is_defined_before_the_first_run(self) -> None:
+        """Deleting the emergence cell also deleted the only `SEEDS`
+        definition, and every command below uses `$SEEDS`: the first run
+        would have failed before training."""
+        text = _all_text(json.loads(NOTEBOOK.read_text(encoding="utf-8")))
+        assert 'os.environ["SEEDS"] = "0,1,2"' in text
+        assert text.index('os.environ["SEEDS"]') < text.index("--seeds $SEEDS")
+
+    def test_the_exp4_printer_tolerates_unmeasured_metrics(self) -> None:
+        """No fabricated 0.0: absent path-patch metrics print 'not measured'."""
+        text = _all_text(json.loads(NOTEBOOK.read_text(encoding="utf-8")))
+        assert "_fmt(metrics, 'mean_path_patch_effect')" in text
+        assert "not measured" in text
 
     def test_the_config_is_the_content_standard(self) -> None:
         text = _all_text(json.loads(NOTEBOOK.read_text(encoding="utf-8")))

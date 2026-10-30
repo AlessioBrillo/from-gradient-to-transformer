@@ -105,6 +105,9 @@ on all of them.
 - Two runs: an **emergence** run with `--stop-on-confirmed --stop-rule
   mechanism` (when does the circuit appear?) and a **full-budget** run
   without the early stop (the headline; the model Rungs 4 and 5 analyse).
+  *(Superseded by the 2026-10-25 addendum: the emergence run was removed, so
+  the protocol is one full-budget run. The full run records
+  `confirmed_epoch`, which answers the same question.)*
 - The budget is the same as the periodic run's, so the two are comparable.
   A negative at this budget is a negative *at this budget*, and it is
   reported as such — the budget is not extended after the fact.
@@ -216,10 +219,10 @@ make the early phase much slower to leave. What this does *not* change is
 the protocol: the GPU run is the pre-registered one, at its budget, with the
 criteria above, and a negative there is a negative at that budget.
 
-## Addendum — 2026-10-22 (b): four corrections, decided before the GPU run
+## Addendum — 2026-10-22 (b): five corrections, decided before the GPU run
 
 This addendum is written **before** the GPU run and after the audit of the
-2026-10-22 de-risk itself. It changes the *protocol* in four ways, and it
+2026-10-22 de-risk itself. It changes the *protocol* in five ways, and it
 does not change a single one of the seven criteria.
 
 ### 1. The record above was wrong twice, and here is the correction
@@ -316,54 +319,108 @@ positions, not from the model).
 - *single head* — one head alone costs ≥ 0.20;
 - *none* — the group costs ≤ 0.05 and the attribution does not favour the
   content;
+- *undetermined* — anything else (for instance a group that costs a lot
+  **and** a head that costs a lot: a redundant circuit).
+
 ### The CPU gate's numbers, traced to a manifest
 
-The gate was re-run with `--save-manifest`, and both manifests are tracked:
-`results/induction_content_derisk.json` (quick geometry) and
-`results/induction_content_derisk_standard.json` (standard geometry, once the
-second run finishes). Every number below is quoted from the quick-run manifest;
-the standard-geometry numbers will be added here when its run finishes —
-before the GPU session starts.
+Three manifests are tracked:
 
-**Quick geometry** (vocab 256, seq_len 24, key 15, two blocks of three,
-d_model 64, 2 layers, 4 heads, fresh batches, 1500 epochs, one seed,
-`results/induction_content_derisk.json`):
+- `results/induction_content_derisk.json` — the **pre-fix** quick run, kept as
+  evidence of the chance-level bug. Its numbers are quoted in the 2026-10-25
+  addendum and are not the gate.
+- `results/induction_content_derisk_fixed.json` — the quick geometry with the
+  corrected instrument.
+- `results/induction_content_derisk_standard.json` — the standard geometry
+  with the corrected instrument. **This is the gate the GPU run needs.**
+
+Both corrected manifests were written on a clean tree (`git_dirty = false`).
+They were produced at commit `1bf347f`, before the last reporting-only fix
+(2026-10-25, item 5 of the addendum: no placeholder zero for an empty
+confirmed set). That fix changes no measured number; it only removes
+`mean_ablation_drop` / `mean_copy_ablation_drop` when there is no confirmed
+head to ablate. Both manifests have `total_induction_heads = 0`, so the stored
+`0.0` is the placeholder, and `content_verdict` now reports criterion 6 as
+**NOT MEASURED** for them.
+
+**Quick geometry, corrected instrument** (vocab 256, seq_len 24, key 15, two
+blocks of three, d_model 64, 2 layers, 4 heads, fresh batches, 1500 epochs,
+one seed, `results/induction_content_derisk_fixed.json`):
 
 | Measurement | Value | Chance / baseline |
 |---|---|---|
-| Copy accuracy (copy queries) | 0.9988 | 0.193 (best fixed offset) |
+| Copy accuracy (copy queries) | 0.9988 | 0.1934 (best fixed offset) |
 | Copy accuracy, non-modal distance group | 0.9988 | ~0 for a fixed-offset head |
-| Content mass (per head, best) | 0.154 | screen 0.30 |
-| Offset mass (best fixed offset, per head, best) | 0.330 | |
-| Content mass, total over heads | 0.695 | |
-| Top head's share of the content mass | 0.221 | 1.0 = one head does all of it |
+| Chance content mass (uniform head at query q) | 0.0519 | `mean(1/(q+1))` |
+| Content mass (per head, best) | 0.1539 | screen 0.30; candidate bar 3×0.0519 = 0.1557 |
+| Offset mass (best fixed offset, per head, best) | 0.3299 | |
+| Content mass, total over heads | 0.6949 | chance total 8×0.0519 = 0.4149 |
+| Content mass excess over chance | 0.2800 | |
+| Content mass ratio to chance | 1.6748 | 1.0 = exactly chance |
+| Top head's share of the content mass | 0.2214 | 1.0 = one head does all of it |
 | Heads covering 80% of the content mass | 5 | 1 = a single-head circuit |
-| First-order attribution to content minus position | 5.87 | sign favours content |
-| Group ablation drop (candidate group) | 0.0 | ≥ 0.20 = the group carries the copy |
-| Max single-head ablation drop | 0.0 | ≥ 0.20 = one head carries the copy |
+| Candidate heads (3× chance) | 0 | the bar is 0.1557; the best head is 0.1539 |
+| Group ablation drop (candidate group) | 0.0 | **no-op: the group is empty** |
+| Max single-head ablation drop | 0.0 | no candidate to ablate |
+| Exploratory group size (top 80% mass) | 5 | not used for the verdict |
+| Exploratory group ablation drop | 0.9966 | not used for the verdict |
+| First-order attribution to content minus position | 5.8723 | sign favours content |
+| DLA positive share (normalized by sum(abs(v))) | 0.9388 | now in [0, 1] |
 | Confirmed heads | 0 / 8 | |
-| Mechanism kind | undetermined (code 3) | — |
+| Mechanism kind | undetermined (code 3) | empty candidate group |
 
-**What it says.** The task is learnable — 0.999 copy accuracy on the copy
-queries against a 0.19 fixed-offset ceiling — and the behaviour is clearly
-content-based. But the detector does not fire: the best head's content mass is
-0.154, below the 0.30 screen, and no head is confirmed. The aggregate content
-mass over all heads is 0.695, spread over five heads to cover 80% of it —
-exactly the distributed copy the per-head screen cannot see. The group ablation
-of the candidate group costs 0.0 (the candidates are not the carriers), so the
-classification is "undetermined": the behaviour is content-based, but neither
-the per-head detector nor the current candidate rule identifies *which* heads
-carry it. That is precisely why the mechanism report is **secondary** and why
-the run can end in PARTIAL or "NEGATIVE (unexplained)" even though the model
-copies by content. The thresholds are not changed.
+**What it says.** The task is learnable — 0.9988 copy accuracy against a
+0.1934 fixed-offset ceiling — and the behaviour is content-based. The corrected
+chance level is 0.0519, so the candidate bar is 0.1557; the best head holds
+0.1539, just under it, and the pre-registered candidate group is empty. The
+group ablation is therefore a no-op, and the mechanism class is
+**undetermined — no candidate passed the 3× chance screen**, not "none". The
+exploratory top-80% group (five heads) removes 0.9966 of the copy accuracy:
+the copy is carried by a group, but the pre-registered rule selects none of
+them at this geometry. The first-order attribution (5.8723) and the DLA
+positive share (0.9388) agree that the behaviour is content-based. The
+thresholds are unchanged; the exploratory group is not part of the verdict.
 
-*In attesa: i numeri del run a geometria standard (vocab 256, seq_len 64,
-key 36, quattro blocchi di cinque, 600 epoch, `results/induction_content_derisk_standard.json`)
-vengono aggiunti qui appena il run finisce — il server si è riavviato a metà
-dell'esecuzione e va rieseguito — prima che parta il run GPU.*
+**Standard geometry, corrected instrument** (vocab 256, seq_len 64, key 36,
+four blocks of five, d_model 64, 2 layers, 4 heads, fresh batches, 600 epochs,
+one seed, `results/induction_content_derisk_standard.json`, 0.706 h on CPU):
 
-- *undetermined* — anything else (for instance a group that costs a lot
-  **and** a head that costs a lot: a redundant circuit).
+| Measurement | Value | Chance / baseline |
+|---|---|---|
+| Copy accuracy (copy queries) | 0.9993 | 0.1646 (best fixed offset) |
+| Copy accuracy, non-modal distance group | 0.9991 | ~0 for a fixed-offset head |
+| Chance content mass (uniform head at query q) | 0.0205 | `mean(1/(q+1))` |
+| Content mass (per head, best) | 0.9116 | screen 0.30; candidate bar 3×0.0205 = 0.0614 |
+| Offset mass (best fixed offset, per head, best) | 0.1585 | |
+| Content mass, total over heads | 2.7470 | chance total 8×0.0205 = 0.1638 |
+| Content mass excess over chance | 2.5832 | |
+| Content mass ratio to chance | 16.7736 | 1.0 = exactly chance |
+| Top head's share of the content mass | 0.3319 | 1.0 = one head does all of it |
+| Heads covering 80% of the content mass | 3 | 1 = a single-head circuit |
+| Candidate heads (3× chance) | 3 | all three are in the top-80% group |
+| Group ablation drop (candidate group) | 0.9956 | ≥ 0.20 = the group carries the copy |
+| Max single-head ablation drop | 0.0986 | ≤ 0.10 = no single head carries it |
+| Exploratory group size (top 80% mass) | 3 | not used for the verdict |
+| Exploratory group ablation drop | 0.9956 | same group as the candidates |
+| First-order attribution to content minus position | 9.0855 | sign favours content |
+| DLA positive share (normalized by sum(abs(v))) | 1.0000 | all heads favour content |
+| Confirmed heads | 0 / 8 | K-composition 0.0918 < 0.40 |
+| Mechanism kind | distributed (code 2) | group ≥ 0.20, max single ≤ 0.10 |
+
+**What it says.** At the geometry of the GPU run the corrected instrument
+works, and it works on the case it was built for: the candidate screen selects
+three heads, ablating them as a group removes 0.9956 of the copy accuracy,
+and no single head removes more than 0.0986 — a **distributed** circuit by the
+pre-registered thresholds. The dissociation probe says content (0.9129 vs
+0.1793), the DLA is 9.0855 with every head positive, and copy accuracy is
+0.9993. The per-head *confirmed* count is still 0 because the K-composition
+diagnostic (0.0918) does not identify an L0 duplicate head: the model's copy
+is distributed, and the per-head composition rule is not the mechanism it uses.
+That is exactly why the mechanism report is secondary, and why criterion 6 is
+**NOT MEASURED** when no head is confirmed instead of a fabricated `0.0`. The
+seven criteria and their thresholds are unchanged. The GPU run is the one that
+decides; this gate only says the instrument can see the circuit it will be
+asked about.
 
 **What the report may say.** It may say that the copy is content-based and
 carried by a group of heads rather than by one. It may not change the
@@ -392,6 +449,86 @@ which is the claim the criterion is about.
 
 The criterion (7) is unchanged. The design is expected to make the effect
 **larger**, so the criterion is at least as strict as it was.
+
+## Addendum — 2026-10-25: instrument audit before the GPU run
+
+This addendum records corrections to the instrument, decided **before** the
+GPU run, so that nothing here can be read as a post-hoc adjustment. The seven
+frozen criteria and their thresholds are unchanged.
+
+1. **Chance level fixed.** `chance_content_mass` used `1 / (key + 1)` where it
+   should use `1 / (q + 1)`: the uniform mass at query `q` is spread over the
+   `q + 1` positions the causal mask allows, not over `key + 1`. The old
+   formula overstated the bar, so on the quick geometry the candidate screen
+   selected zero heads (`n_candidate_heads = 0`), making the group ablation a
+   no-op. Fixed in `src/experiments/copy_circuit.py`; the old manifest
+   (`results/induction_content_derisk.json`, SHA 1fc85d7) is kept as evidence
+   of the bug, and the corrected run writes
+   `results/induction_content_derisk_fixed.json`.
+
+2. **Attribution shares normalized by absolute total.** `dla_positive_share`
+   and `dla_top_head_share` divided by the signed total, so they could exceed
+   1 (observed 1.0698 on the de-risk manifest). They now divide by
+   `sum(|v|)` and stay in `[0, 1]`; the sign remains in `dla_total`.
+
+3. **Empty candidate group is not "no circuit."** `classify_mechanism` now
+   returns `undetermined — no candidate passed the 3x chance screen` when
+   `n_candidate_heads == 0`, instead of falling through to "none" or letting
+   a vacuous 0.0 group ablation speak. The sentence "the candidates are not
+   the carriers" from the 2026-10-22 addendum is retracted: there were no
+   candidates.
+
+4. **Exploratory mass-covering group.** `mass_covering_heads` measures the
+   smallest set of heads covering 80% of the content mass. It is explicitly
+   exploratory, not used for the verdict, and reported alongside the
+   pre-registered candidate group in `exp1_induction_heads.py` as
+   `exploratory_group_size` / `exploratory_group_ablation_drop`.
+
+5. **No fabricated zeros for unmeasured causal effects.** `exp4_circuit_patching`
+   omits `mean_path_patch_effect` / `mean_ablation_effect` when no head was
+   confirmed, and `group_path_patch_effect` when the candidate group is
+   empty, and records `path_patch_measured` / `group_path_patch_measured`.
+   The same rule applies to exp1: `mean_ablation_drop` /
+   `mean_copy_ablation_drop` are absent when no head is confirmed. The
+   multi-seed runner treats these as optional keys, so a mixed run (some
+   seeds confirmed a head, some did not) aggregates without crashing and
+   without inventing a mean for a metric that was not measured. `content_verdict`
+   reads the exp4 flag — and, for older manifests without it,
+   `total_induction_heads == 0` — and reports criterion 7 as `NOT MEASURED`;
+   criterion 6 is `NOT MEASURED` when `total_induction_heads == 0`. Never a
+   measured 0.0.
+
+6. **Redundant emergence run removed.** The emergence run's only unique
+   output was `confirmed_epoch`, which the full run already records. The GPU
+   protocol is now one session, 3 seeds, full-budget run only; see
+   `docs/agents/gpu-runs.md`. This is a budget amendment, not a threshold
+   change.
+
+7. **Verdict wording follows the decision table.** `content_verdict.py`
+   prints "NEGATIVE (unexplained): the model solves the task by a mechanism
+   the detector does not identify" for the high-copy / low-content-mass case,
+   and the mechanism report prints the aggregate numbers next to the verdict.
+
+8. **Standard-geometry de-risk completed.** `results/induction_content_derisk_standard.json`
+   is tracked (0.706 h on CPU, `git_dirty = false`). At the GPU geometry the
+   corrected screen selects **3 candidate heads**, the group ablation removes
+   **0.9956** of the copy accuracy and the largest single-head drop is
+   **0.0986** — a **distributed** circuit by the frozen thresholds. The
+   dissociation probe says content (0.9129 vs 0.1793) and the DLA positive
+   share is 1.0. The per-head *confirmed* count is **0** because the
+   K-composition diagnostic is 0.0918, below the 0.40 threshold: the model
+   copies by a distributed circuit, not by the single-head K-composition
+   pattern the per-head rule looks for. This is recorded **before** the GPU
+   run: a GPU verdict of NEGATIVE/PARTIAL with this mechanism report is the
+   literal per-head verdict plus a distributed-circuit finding, not a failure
+   of the model to copy.
+
+The two corrected manifests were produced at commit `1bf347f`, before the
+no-fabricated-zero fix in item 5 of this addendum. That fix changes no measured number; both
+manifests have `total_induction_heads = 0`,
+so their stored `0.0` is the placeholder and the verdict reads criterion 6 as
+`NOT MEASURED`. The standard-geometry numbers are in "The CPU gate's numbers,
+traced to a manifest" above.
 
 ## Links
 

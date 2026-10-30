@@ -25,14 +25,13 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
   pre-existing; 2026-08-02 fixed a `python-version` mismatch (3.11 pinned vs. 3.12
   resolved) and split the mypy step so a genuine crash (exit 2) fails the build instead of
   being swallowed by `|| true` alongside ordinary reported errors (exit 1).
-- [~] **Figure generation scripts:** every figure has a deterministic generating script;
+- [x] **Figure generation scripts:** every figure has a deterministic generating script;
   `portfolio/figures/` established as the committed curated set (12 figures tracked since
   Micro-Phase 13, PR #38), enforced mechanically by `make verify-claims` (existence +
-  git-tracking check added 2026-08-07, Micro-Phase 12 Step 1, falsified against the real
-  pre-fix state — see [[06_production_ai/notes/figure-provenance-and-evidence-gates]],
-  [[06_production_ai/exercises/ex-05-falsify-the-figure-gate]]). Not flipped to `[x]` yet:
-  two sections (Rung 2 grokking, Rung 5 SAE) have no manifest to tag at all — a real gap,
-  not a bug in the check (the gate keeps flagging them until those runs land).
+  git-tracking check added 2026-08-07, Micro-Phase 12 Step 1). All sections carry their
+  manifest tags: Rung 2 (`results/grokking_nanda_p113.json`), Rung 5
+  (`results/exp5_real_activations.json`), Rung 1 content
+  (`results/induction_content_derisk_standard.json`, gate manifest).
 - [x] **Feature dashboard deployment:** (descoped 2026-10-11: no confirmed head) Hugging Face Spaces for SAE feature browser
 - [x] **Mini-paper workflow:** LaTeX template, `make paper` (added 2026-08-08), citation
   management — `portfolio/paper/main.tex` + `references.bib` scaffold added 2026-08-02;

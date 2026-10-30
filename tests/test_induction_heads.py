@@ -841,12 +841,38 @@ class TestTheCircuitReport:
             "n_candidate_heads",
             "group_ablation_drop",
             "max_single_ablation_drop",
+            "exploratory_group_size",
+            "exploratory_group_ablation_drop",
+            "content_mass_excess",
+            "content_mass_ratio",
             "dla_content_minus_offset",
             "dla_observed_logit_diff",
             "mechanism_kind",
         ):
             assert key in metrics, f"{key} missing from the circuit report"
             assert isinstance(metrics[key], float)
+
+    def test_no_confirmed_head_does_not_fabricate_an_ablation_zero(self) -> None:
+        """An empty confirmed set has no mean ablation drop: absent, not 0.0."""
+        from src.experiments.exp1_induction_heads import _seed_metrics
+
+        model, loader, report, tokens = self._setup()
+        history = {"val_acc": [0.5], "confirmed_epoch": -1.0}
+        diagnosis = {"step1_l0_duplicate_mass": [0.1], "step2_k_composition": 0.2}
+        metrics = _seed_metrics(
+            model,
+            loader,
+            history,
+            [[], []],
+            diagnosis,
+            report,
+            None,
+            {"copy_accuracy": 0.1},
+            tokens,
+            "variable",
+        )
+        assert "mean_ablation_drop" not in metrics
+        assert "mean_copy_ablation_drop" not in metrics
 
     def test_the_group_ablation_restores_the_heads(self) -> None:
         """A leaked mask would ablate those heads for the rest of the run."""

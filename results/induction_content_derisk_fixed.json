@@ -1,0 +1,445 @@
+{
+  "experiment": "exp1_induction_heads",
+  "seeds": [
+    0
+  ],
+  "args": {
+    "seed": 42,
+    "vocab_size": 256,
+    "seq_len": 24,
+    "content_standard": false,
+    "task": "variable",
+    "key_len": null,
+    "copy_blocks": null,
+    "copy_block_len": null,
+    "d_model": 64,
+    "n_layers": 2,
+    "n_heads": 4,
+    "epochs": 1500,
+    "lr": 0.001,
+    "weight_decay": 0.1,
+    "batch_size": 64,
+    "num_train": 1024,
+    "no_train": false,
+    "quick": false,
+    "standard": false,
+    "wandb": false,
+    "scale": null,
+    "save_model": false,
+    "fresh_batches": true,
+    "checkpoint_dir": "checkpoints",
+    "checkpoint_every": 0,
+    "resume": false,
+    "resume_from": null,
+    "detect_every": 250,
+    "stop_on_confirmed": false,
+    "stop_rule": "mechanism",
+    "detect_patience": 2,
+    "probe_dissociation": true,
+    "save_manifest": true,
+    "manifest_path": "results/induction_content_derisk_fixed.json",
+    "batches": null,
+    "batch_mode": "fresh"
+  },
+  "per_seed_metrics": [
+    {
+      "final_val_acc": 0.19136379076086957,
+      "total_induction_heads": 0.0,
+      "total_mass_heads": 0.0,
+      "confirmed_heads_first_layer": 0.0,
+      "confirmed_heads_later_layers": 0.0,
+      "mechanism_confirmed": 0.0,
+      "peak_induction_mass": 0.192312553524971,
+      "peak_prev_token_mass": 0.44077402353286743,
+      "peak_content_mass": 0.1538815051317215,
+      "peak_offset_mass": 0.32992076873779297,
+      "k_composition_score": 0.09624377638101578,
+      "l0_duplicate_head_mass": 0.10312356054782867,
+      "mean_ablation_drop": 0.0,
+      "mean_copy_ablation_drop": 0.0,
+      "confirmed_epoch": -1.0,
+      "epochs_run": 1500.0,
+      "steps_run": 24000.0,
+      "probe_content_mass": 0.16036690771579742,
+      "probe_period_mass": 0.0,
+      "probe_offset_mass": 0.3312217891216278,
+      "probe_content_wins": 0.0,
+      "copy_accuracy": 0.998779296875,
+      "copy_accuracy_nonmodal": 0.9987893462469734,
+      "fixed_offset_baseline": 0.193359375,
+      "copy_gap": 0.805419921875,
+      "n_copy_queries": 4096.0,
+      "n_copy_distances": 11.0,
+      "content_mass_total": 0.6948901522555389,
+      "content_mass_top_share": 0.22144723828973348,
+      "content_mass_heads_for_80pct": 5.0,
+      "offset_mass_total": 1.079277249344159,
+      "offset_best_offset": 7.0,
+      "content_chance_mass": 0.051863169510228346,
+      "content_mass_excess": 0.2799847961737121,
+      "content_mass_ratio": 1.6748160564080403,
+      "n_candidate_heads": 0.0,
+      "exploratory_group_size": 5.0,
+      "group_ablation_drop": 0.0,
+      "max_single_ablation_drop": 0.0,
+      "mean_single_ablation_drop": 0.0,
+      "exploratory_group_ablation_drop": 0.99658203125,
+      "dla_content_minus_offset": 5.872312117367983,
+      "dla_top_head_share": 0.3757361999616086,
+      "dla_positive_share": 0.9387543780356691,
+      "dla_observed_logit_diff": 9.706672668457031,
+      "dla_n_queries": 1024.0,
+      "mechanism_kind": 3.0,
+      "batch_mode": 1.0
+    }
+  ],
+  "aggregate": {
+    "copy_accuracy": {
+      "mean": 0.998779296875,
+      "std": 0.0,
+      "min": 0.998779296875,
+      "max": 0.998779296875,
+      "n": 1.0
+    },
+    "fixed_offset_baseline": {
+      "mean": 0.193359375,
+      "std": 0.0,
+      "min": 0.193359375,
+      "max": 0.193359375,
+      "n": 1.0
+    },
+    "max_single_ablation_drop": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 1.0
+    },
+    "exploratory_group_size": {
+      "mean": 5.0,
+      "std": 0.0,
+      "min": 5.0,
+      "max": 5.0,
+      "n": 1.0
+    },
+    "dla_positive_share": {
+      "mean": 0.9387543780356691,
+      "std": 0.0,
+      "min": 0.9387543780356691,
+      "max": 0.9387543780356691,
+      "n": 1.0
+    },
+    "total_induction_heads": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 1.0
+    },
+    "probe_period_mass": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 1.0
+    },
+    "n_candidate_heads": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 1.0
+    },
+    "peak_prev_token_mass": {
+      "mean": 0.44077402353286743,
+      "std": 0.0,
+      "min": 0.44077402353286743,
+      "max": 0.44077402353286743,
+      "n": 1.0
+    },
+    "confirmed_epoch": {
+      "mean": -1.0,
+      "std": 0.0,
+      "min": -1.0,
+      "max": -1.0,
+      "n": 1.0
+    },
+    "mean_single_ablation_drop": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 1.0
+    },
+    "k_composition_score": {
+      "mean": 0.09624377638101578,
+      "std": 0.0,
+      "min": 0.09624377638101578,
+      "max": 0.09624377638101578,
+      "n": 1.0
+    },
+    "mechanism_confirmed": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 1.0
+    },
+    "l0_duplicate_head_mass": {
+      "mean": 0.10312356054782867,
+      "std": 0.0,
+      "min": 0.10312356054782867,
+      "max": 0.10312356054782867,
+      "n": 1.0
+    },
+    "confirmed_heads_first_layer": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 1.0
+    },
+    "n_copy_distances": {
+      "mean": 11.0,
+      "std": 0.0,
+      "min": 11.0,
+      "max": 11.0,
+      "n": 1.0
+    },
+    "dla_observed_logit_diff": {
+      "mean": 9.706672668457031,
+      "std": 0.0,
+      "min": 9.706672668457031,
+      "max": 9.706672668457031,
+      "n": 1.0
+    },
+    "mechanism_kind": {
+      "mean": 3.0,
+      "std": 0.0,
+      "min": 3.0,
+      "max": 3.0,
+      "n": 1.0
+    },
+    "probe_content_wins": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 1.0
+    },
+    "content_mass_ratio": {
+      "mean": 1.6748160564080403,
+      "std": 0.0,
+      "min": 1.6748160564080403,
+      "max": 1.6748160564080403,
+      "n": 1.0
+    },
+    "content_mass_excess": {
+      "mean": 0.2799847961737121,
+      "std": 0.0,
+      "min": 0.2799847961737121,
+      "max": 0.2799847961737121,
+      "n": 1.0
+    },
+    "total_mass_heads": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 1.0
+    },
+    "copy_accuracy_nonmodal": {
+      "mean": 0.9987893462469734,
+      "std": 0.0,
+      "min": 0.9987893462469734,
+      "max": 0.9987893462469734,
+      "n": 1.0
+    },
+    "peak_content_mass": {
+      "mean": 0.1538815051317215,
+      "std": 0.0,
+      "min": 0.1538815051317215,
+      "max": 0.1538815051317215,
+      "n": 1.0
+    },
+    "final_val_acc": {
+      "mean": 0.19136379076086957,
+      "std": 0.0,
+      "min": 0.19136379076086957,
+      "max": 0.19136379076086957,
+      "n": 1.0
+    },
+    "mean_copy_ablation_drop": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 1.0
+    },
+    "epochs_run": {
+      "mean": 1500.0,
+      "std": 0.0,
+      "min": 1500.0,
+      "max": 1500.0,
+      "n": 1.0
+    },
+    "mean_ablation_drop": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 1.0
+    },
+    "peak_offset_mass": {
+      "mean": 0.32992076873779297,
+      "std": 0.0,
+      "min": 0.32992076873779297,
+      "max": 0.32992076873779297,
+      "n": 1.0
+    },
+    "exploratory_group_ablation_drop": {
+      "mean": 0.99658203125,
+      "std": 0.0,
+      "min": 0.99658203125,
+      "max": 0.99658203125,
+      "n": 1.0
+    },
+    "copy_gap": {
+      "mean": 0.805419921875,
+      "std": 0.0,
+      "min": 0.805419921875,
+      "max": 0.805419921875,
+      "n": 1.0
+    },
+    "probe_offset_mass": {
+      "mean": 0.3312217891216278,
+      "std": 0.0,
+      "min": 0.3312217891216278,
+      "max": 0.3312217891216278,
+      "n": 1.0
+    },
+    "content_chance_mass": {
+      "mean": 0.051863169510228346,
+      "std": 0.0,
+      "min": 0.051863169510228346,
+      "max": 0.051863169510228346,
+      "n": 1.0
+    },
+    "batch_mode": {
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0,
+      "n": 1.0
+    },
+    "n_copy_queries": {
+      "mean": 4096.0,
+      "std": 0.0,
+      "min": 4096.0,
+      "max": 4096.0,
+      "n": 1.0
+    },
+    "content_mass_total": {
+      "mean": 0.6948901522555389,
+      "std": 0.0,
+      "min": 0.6948901522555389,
+      "max": 0.6948901522555389,
+      "n": 1.0
+    },
+    "dla_top_head_share": {
+      "mean": 0.3757361999616086,
+      "std": 0.0,
+      "min": 0.3757361999616086,
+      "max": 0.3757361999616086,
+      "n": 1.0
+    },
+    "confirmed_heads_later_layers": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 1.0
+    },
+    "probe_content_mass": {
+      "mean": 0.16036690771579742,
+      "std": 0.0,
+      "min": 0.16036690771579742,
+      "max": 0.16036690771579742,
+      "n": 1.0
+    },
+    "offset_best_offset": {
+      "mean": 7.0,
+      "std": 0.0,
+      "min": 7.0,
+      "max": 7.0,
+      "n": 1.0
+    },
+    "content_mass_heads_for_80pct": {
+      "mean": 5.0,
+      "std": 0.0,
+      "min": 5.0,
+      "max": 5.0,
+      "n": 1.0
+    },
+    "dla_content_minus_offset": {
+      "mean": 5.872312117367983,
+      "std": 0.0,
+      "min": 5.872312117367983,
+      "max": 5.872312117367983,
+      "n": 1.0
+    },
+    "offset_mass_total": {
+      "mean": 1.079277249344159,
+      "std": 0.0,
+      "min": 1.079277249344159,
+      "max": 1.079277249344159,
+      "n": 1.0
+    },
+    "dla_n_queries": {
+      "mean": 1024.0,
+      "std": 0.0,
+      "min": 1024.0,
+      "max": 1024.0,
+      "n": 1.0
+    },
+    "group_ablation_drop": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 1.0
+    },
+    "steps_run": {
+      "mean": 24000.0,
+      "std": 0.0,
+      "min": 24000.0,
+      "max": 24000.0,
+      "n": 1.0
+    },
+    "content_mass_top_share": {
+      "mean": 0.22144723828973348,
+      "std": 0.0,
+      "min": 0.22144723828973348,
+      "max": 0.22144723828973348,
+      "n": 1.0
+    },
+    "peak_induction_mass": {
+      "mean": 0.192312553524971,
+      "std": 0.0,
+      "min": 0.192312553524971,
+      "max": 0.192312553524971,
+      "n": 1.0
+    }
+  },
+  "wall_clock_seconds": 1158.9035519000608,
+  "git_sha": "1bf347f",
+  "git_dirty": false,
+  "device": "cpu",
+  "torch_version": "2.12.1+cpu",
+  "numpy_version": "2.5.0",
+  "python_version": "3.14.7",
+  "n_parameters": 67456,
+  "created_at": "2026-10-26T21:11:56+00:00",
+  "notes": null,
+  "neuron_ablation": null
+}

@@ -13,13 +13,85 @@ smoke tests (`make reproduce-quick`) and a full-scale mode (`make reproduce`).
 
 ## Honesty Ledger
 
-Eight audits have now caught real problems in this repository's causal claims and
-evidence base. Six found claims that were wrong or unbacked; the seventh found a
-claim that was **right and had been called wrong by its own metric**; the eighth
-found that the experiment which was supposed to close the last open question
-**could not have produced an answer at all**. All entries stay here — the point of
-this section is to make it easy to see the trend (are correctness problems getting
-caught faster, or accumulating?), not to keep only the latest one.
+Nine audits have now caught real problems in this repository's causal claims and
+evidence base. They include claims that were wrong or unbacked, a claim that was
+**right and had been called wrong by its own metric** (2026-10-14), and two
+content-task audits (2026-10-22 and 2026-10-25) that found the experiment
+supposed to close the last open question **could not have produced a verdict at
+all** — first because its verdict code would crash, then because its instrument
+measured the wrong position — and fixed it before the run. All entries stay
+here — the point of this section is to make it easy to see the trend (are
+correctness problems getting caught faster, or accumulating?), not to keep only
+the latest one.
+
+### 2026-10-25 — The content-task instrument cannot measure its own question: wrong chance level, invalid shares, an empty candidate group, and a missing standard-geometry de-risk
+
+The ninth audit, and the one that reaches furthest forward again: it is about
+the experiment that is supposed to **close** Rung 1's open question, and it
+found that the instrument as shipped would have produced a vacuous mechanism
+report on the very case it exists to measure — a distributed copy.
+
+**What was broken.** Six things, each independent of the others:
+
+1. **The chance level used the wrong position.** `chance_content_mass`
+   divided by `key + 1` instead of `q + 1`: the uniform mass at query `q` is
+   spread over the `q + 1` positions the causal mask allows, not over
+   `key + 1`. The old formula overstated the bar, so on the quick geometry
+   the candidate screen selected zero heads (`n_candidate_heads = 0`), and
+   the group ablation was a no-op. The addendum's reading
+   "the candidates are not the carriers" is retracted — there were no
+   candidates. Fixed in `src/experiments/copy_circuit.py`; the old manifest
+   (`results/induction_content_derisk.json`) is kept as evidence of the bug.
+
+2. **Attribution shares could exceed 1.** `dla_positive_share` and
+   `dla_top_head_share` divided by the signed total, so they could exceed
+   1 (observed 1.0698 on the de-risk manifest). They now divide by
+   `sum(|v|)` and stay in `[0, 1]`.
+
+3. **No aggregate measurement before the fix.** The de-risk had no
+   `content_mass_excess`, `content_mass_ratio`, or group-concentration
+   numbers — the sum over heads (0.695) looked meaningless without a chance
+   baseline. Added to `mass_summary`.
+
+4. **An empty candidate group is not "no circuit."** `classify_mechanism`
+   now returns `undetermined — no candidate passed the 3x chance screen`
+   when `n_candidate_heads == 0`, instead of falling through to "none".
+
+5. **Fabricated zeros for unmeasured causal effects.** `exp4_circuit_patching`
+   wrote `0.0` for `mean_path_patch_effect` when no head was confirmed — a
+   causal measurement that was never taken. `exp1_induction_heads` did the
+   same for `mean_copy_ablation_drop` when the confirmed set was empty, which
+   made criterion 6 fail by fabrication. Both keys are now omitted and the
+   verdict reports `NOT MEASURED`.
+
+6. **The standard-geometry CPU de-risk was missing.** `results/induction_content_derisk_standard.json`
+   did not exist; the prior 600-epoch attempt was killed at epoch 30. The run
+   was re-added as `make reproduce-induction-content-derisk-standard` and has
+   now completed (0.706 h, clean tree): the corrected screen selects **3
+   candidate heads**, the group ablation removes **0.9956** of the copy
+   accuracy, the largest single-head drop is **0.0986** (distributed), the
+   dissociation probe says content (0.9129 vs 0.1793), and the DLA positive
+   share is 1.0. The per-head *confirmed* count is 0 because K-composition is
+   0.0918, below 0.40 — the model's circuit is distributed, not the single-head
+   K-composition pattern the per-head rule looks for. That is recorded before
+   the GPU run, not after it.
+
+**What it changes, measured before the GPU run.** The instrument now has a
+correct chance level, valid shares, an explicit empty-group semantics, an
+exploratory mass-covering group (top 80% of content mass), and no fabricated
+zeros. The pre-registration's addendum (c), dated 2026-10-25, records all of
+this with both new manifests. At the GPU geometry the corrected instrument
+finds the distributed circuit it was built for: three candidate heads, group
+ablation 0.9956, largest single-head drop 0.0986, DLA positive share 1.0. The
+seven criteria and their thresholds are untouched, and the mechanism report
+remains **secondary**.
+
+<!-- manifest: results/induction_content_derisk_fixed.json -->
+<!-- manifest: results/induction_content_derisk_standard.json -->
+
+**What it does not change.** The seven criteria, their thresholds and the
+decision rule are untouched. No number is re-tuned after seeing the de-risk
+data.
 
 ### 2026-10-22 — The content-task run could not have produced a verdict: a `KeyError`, a gate with no manifest, and a probe that contradicted the addendum
 
@@ -96,9 +168,10 @@ addendum — *before* the run, with the seven criteria untouched:
 - The cascade's counterfactual is a **minimal pair** (one token changed, in the
   same sequence) instead of a different sequence, and the cascade now runs when
   the *behaviour* is content-based — not only when a per-head detector fires.
-- The emergence run stops on `--stop-rule any`, and the content task's
-  standard config is a pinned preset (`--content-standard`) with the vocabulary
-  amended to 256.
+- The content task's standard config is a pinned preset (`--content-standard`)
+  with the vocabulary amended to 256. The 2026-10-25 addendum removed the
+  separate emergence run: the full run records `confirmed_epoch`, so the
+  early-stopped run added no measurement the verdict uses.
 - The notebook's artifacts are zipped **before** the verdict, and the verdict
   cell is the last one: a verdict that crashes must not cost the session.
 
@@ -563,8 +636,11 @@ its GPU run. The short version:
 | **The verdict** | Seven pre-registered criteria (content mass ≥ 0.30, content mass above the best fixed offset by ≥ 0.10, copy accuracy ≥ 0.60, non-modal-distance accuracy ≥ 0.50, copy accuracy above the fixed-offset baseline by ≥ 0.20, ablation drop ≥ 0.10, path-patching effect ≥ 0.20), computed **by code** — `src/experiments/content_verdict.py`, which joins the exp1 and exp4 manifests per seed (`make content-verdict`). The criteria and their thresholds are frozen; a criterion whose measurement is missing is reported missing, and a run whose manifest does not carry it gets the status `INCOMPLETE` and **no verdict**. |
 | **The mechanism report** | A *secondary* report, always produced, that describes the circuit rather than deciding the verdict: the aggregate content mass and its concentration, the **group ablation** (the drop in copy accuracy when the whole candidate group is removed) next to the single-head ablations, and the first-order **logit attribution** of every head to the content-vs-position contrast. The candidate group is fixed by a rule that reads the data and the attention masses and never the outcome. |
 | **The budget** | 3 seeds × 3000 epochs = 384k optimizer steps per seed, GPU. A negative at that budget is a negative: the budget is not extended after the fact, and no seed is dropped. |
-| **The amendments (2026-10-22, before the run)** | The vocabulary drops from 2048 to **256** (`--content-standard`): the periodic task's 2048 answered a constraint this task does not have, and the standard-geometry CPU probe was still at the uniform prediction after 400 epochs at 2048. The emergence run stops on `--stop-rule any` (the two-step rule waits for a head above layer 0, and the periodic circuit was entirely in layer 0, so it would never have fired). The cascade's counterfactual is a **minimal pair** — one token changed, in the same sequence — instead of a different sequence. The seven criteria are untouched. |
-| **Where it is** | [ADR-0033](../docs/adr/0033-content-based-induction-task.md), the [pre-registration](../07_capstone/notes/variable-distance-induction-preregistration.md) (with its two addenda), the notebook `notebooks/kaggle_induction_content.ipynb` (`make remote-run-induction-content`). |
+| **The amendments (2026-10-22 and 2026-10-25, before the run)** | Vocabulary 2048 → **256** (`--content-standard`): the periodic task's 2048 answered a constraint this task lacks, and the standard-geometry CPU probe was still uniform after 400 epochs at 2048. The cascade's counterfactual is a **minimal pair** — one token changed, in the same sequence — instead of a different sequence. The 2026-10-25 audit fixed the chance level (`mean(1/(q+1))`), normalized the attribution shares by `sum(abs(v))`, made an empty candidate group *undetermined*, added the exploratory top-80% mass group, and removed the fabricated zeros for unmeasured ablation/path patching. The separate emergence run was removed: the full run records `confirmed_epoch`, so it added no measurement and would have doubled the budget. The standard-geometry de-risk finds a distributed circuit (3 candidates, group drop 0.9956, max single-head drop 0.0986). The seven criteria are untouched. |
+| **Where it is** | [ADR-0033](../docs/adr/0033-content-based-induction-task.md), the [pre-registration](../07_capstone/notes/variable-distance-induction-preregistration.md) (with its three addenda), the notebook `notebooks/kaggle_induction_content.ipynb` (`make remote-run-induction-content`). |
+
+<!-- manifest: results/induction_content_derisk_fixed.json -->
+<!-- manifest: results/induction_content_derisk_standard.json -->
 
 **Status: [ ] not run.** No number is reported here, because there is none
 yet. The experiment exists, its rules are frozen, the instrument is tested (the

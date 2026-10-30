@@ -57,7 +57,7 @@ model classes; `exp6` (capstone) uses the shared one.
 
 ```
 CONTEXT.md            ← this file
-docs/adr/             ← dated architecture/research decisions (0001–0031)
+docs/adr/             ← dated architecture/research decisions (0001–0033)
 portfolio/RESULTS.md  ← Honesty Ledger: the authority on what is true
 src/results.py        ← manifests + verify-claims
 src/experiments/      ← one module per rung

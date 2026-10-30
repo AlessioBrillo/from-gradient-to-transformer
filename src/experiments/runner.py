@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import logging
 import time
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Collection, Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -136,19 +136,28 @@ class SeedAggregate:
 def run_seeds(
     fn: Callable[[int], dict[str, float]],
     seeds: Sequence[int],
+    *,
+    optional_keys: Collection[str] = (),
 ) -> SeedAggregate:
     """Run `fn(seed)` once per seed and aggregate the returned metric dicts.
 
     `fn` is responsible for calling `src.reproducibility.set_seed(seed)`
     itself — exactly what every experiment's training routine already does
     for a single seed — and must return a flat `dict[str, float]` of scalar
-    metrics. Every seed must report the same metric keys; a seed run that
-    silently drops a metric produces a silently smaller aggregate, which is
-    worse than a loud failure.
+    metrics. Every seed must report the same *required* metric keys; a seed
+    run that silently drops one produces a silently smaller aggregate, which
+    is worse than a loud failure.
+
+    ``optional_keys`` names the metrics whose measurement can be undefined
+    for a seed (for instance an ablation drop when no head was confirmed).
+    Those keys may be absent from individual seeds; they enter the aggregate
+    only when every seed carries them, and the per-seed values remain the
+    source of truth. A key outside ``optional_keys`` that a seed drops is
+    still an error.
 
     Raises:
         ValueError: if `seeds` is empty, or if seeds disagree on which
-            metric keys they report.
+            required metric keys they report.
     """
     if not seeds:
         raise ValueError("run_seeds requires at least one seed")
@@ -161,13 +170,19 @@ def run_seeds(
         per_seed.append(metrics)
     wall_clock = time.monotonic() - start
 
-    keys = set(per_seed[0].keys())
+    optional = set(optional_keys)
+    first_keys = set(per_seed[0])
+    required = first_keys - optional
     for i, m in enumerate(per_seed[1:], start=1):
-        if set(m.keys()) != keys:
+        current = set(m)
+        missing = required - current
+        unexpected = (current - optional) - first_keys
+        if missing or unexpected:
             raise ValueError(
                 f"Seed {seeds[i]} reported different metric keys "
-                f"({set(m.keys())}) than seed {seeds[0]} ({keys}) — every "
-                "seed must report the same metrics for a valid aggregate."
+                f"({current}) than seed {seeds[0]} ({first_keys}) — every "
+                "seed must report the same required metrics for a valid "
+                "aggregate."
             )
 
     aggregate = aggregate_metrics(per_seed)
@@ -180,9 +195,15 @@ def aggregate_metrics(per_seed: list[dict[str, float]]) -> dict[str, dict[str, f
 
     The single aggregation used by the live runner and by the manifest
     producers that rebuild manifests from disk checkpoints, so a pinned
-    manifest is indistinguishable from a locally-run one. Requires every
-    seed to report the same metric keys."""
-    keys = set(per_seed[0].keys())
+    manifest is indistinguishable from a locally-run one. Only metrics
+    present in *every* seed are aggregated: an optional measurement that one
+    seed did not take has no run-level mean, and inventing one would be the
+    fabrication this module exists to prevent."""
+    if not per_seed:
+        raise ValueError("aggregate_metrics requires at least one seed")
+    keys = set(per_seed[0])
+    for m in per_seed[1:]:
+        keys &= set(m)
     aggregate: dict[str, dict[str, float]] = {}
     for key in keys:
         values = np.array([m[key] for m in per_seed], dtype=float)

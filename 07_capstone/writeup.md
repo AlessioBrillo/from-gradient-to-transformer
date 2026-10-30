@@ -265,7 +265,7 @@ See [[07_capstone/notes/mp-89-retune-verdict]].
 - The hardest part of MI is not running experiments — it is forming precise,
   falsifiable hypotheses. The tools are easier than the thinking.
 - **A negative result honestly reported is more valuable than a positive result
-  overclaimed.** Seven audits have caught real bugs in this repo's own claims, and
+  overclaimed.** Nine audits have caught real bugs in this repo's own claims, and
   they are all still visible in [[portfolio/RESULTS]].
 
 ## Links

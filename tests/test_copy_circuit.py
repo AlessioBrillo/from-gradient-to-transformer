@@ -39,11 +39,13 @@ from src.experiments.copy_circuit import (
     MECHANISM_NONE,
     MECHANISM_SINGLE,
     MECHANISM_UNDETERMINED,
+    attribution_shares,
     candidate_heads,
     chance_content_mass,
     classify_mechanism,
     content_triples,
     content_vs_position_attribution,
+    mass_covering_heads,
     mass_summary,
 )
 from src.experiments.induction_detection import DetectionReport
@@ -141,14 +143,15 @@ class _PlantedCopyModel(nn.Module):
 # ---------------------------------------------------------------------------
 class TestChanceLevel:
     def test_the_chance_level_is_the_uniform_mass(self) -> None:
-        # a query whose content key sits at position 0 can only be attended
-        # to with probability 1 (it is the only allowed key)
+        # at query q a uniform head puts 1/(q+1) on any one allowed key
         triples = np.array([[0, 5, 0], [1, 9, 0]], dtype=np.int64)
-        assert chance_content_mass(triples) == pytest.approx(1.0)
+        assert chance_content_mass(triples) == pytest.approx(
+            (1.0 / 6.0 + 1.0 / 10.0) / 2.0
+        )
 
-    def test_the_chance_level_falls_with_the_key_position(self) -> None:
+    def test_the_chance_level_falls_with_the_query_position(self) -> None:
         triples = np.array([[0, 5, 3]], dtype=np.int64)
-        assert chance_content_mass(triples) == pytest.approx(1.0 / 4.0)
+        assert chance_content_mass(triples) == pytest.approx(1.0 / 6.0)
 
     def test_no_queries_means_no_chance(self) -> None:
         assert chance_content_mass(np.zeros((0, 3), dtype=np.int64)) == 0.0
@@ -165,16 +168,23 @@ class TestCandidateGroup:
         return DetectionReport(masses=masses)
 
     def test_only_the_heads_above_the_bar_are_candidates(self) -> None:
-        # the chance level of this query set is 1/(19+1) = 0.05, so the bar
-        # is 3 * 0.05 = 0.15
+        # chance = 1/(29+1) ≈ 0.0333, bar = 3 * 0.0333 ≈ 0.1
         triples = np.array([[0, 29, 19], [1, 29, 19]], dtype=np.int64)
         report = self._report([[0.5, 0.01, 0.1]])
+        chosen = candidate_heads(report, triples, factor=CHANCE_FACTOR)
+        assert chosen == [(0, 0), (0, 2)]
+
+    def test_a_head_between_old_and_new_bar_is_a_candidate_after_the_fix(self) -> None:
+        # old chance 1/(19+1)=0.05 → bar 0.15 would exclude 0.12;
+        # new chance 1/(29+1)≈0.0333 → bar ≈0.1 includes it.
+        triples = np.array([[0, 29, 19]], dtype=np.int64)
+        report = self._report([[0.12]])
         chosen = candidate_heads(report, triples, factor=CHANCE_FACTOR)
         assert chosen == [(0, 0)]
 
     def test_a_uniform_head_is_not_a_candidate(self) -> None:
         triples = np.array([[0, 9, 3]], dtype=np.int64)
-        report = self._report([[0.2]])  # 0.2 < 3 * 0.25
+        report = self._report([[0.2]])  # 0.2 < 3 * 0.1 = 0.3
         assert candidate_heads(report, triples, factor=CHANCE_FACTOR) == []
 
     def test_no_queries_means_no_candidates(self) -> None:
@@ -211,6 +221,48 @@ class TestMassSummary:
         assert summary["offset_best_offset"] == 1.0
         assert summary["offset_mass_total"] == pytest.approx(0.4)
 
+    def test_content_mass_excess_and_ratio(self) -> None:
+        report = DetectionReport(
+            masses={"content": [np.array([0.4, 0.1])]},
+        )
+        triples = np.array([[0, 5, 3]], dtype=np.int64)
+        summary = mass_summary(report, triples)
+        assert summary["content_mass_total"] == pytest.approx(0.5)
+        assert summary["content_chance_mass"] == pytest.approx(1.0 / 6.0)
+        assert summary["content_mass_excess"] == pytest.approx(0.5 - 2.0 / 6.0)
+        assert summary["content_mass_ratio"] == pytest.approx(0.5 / (2.0 / 6.0))
+
+    def test_all_zero_mass_covers_no_heads(self) -> None:
+        # With no content mass there is no head to name: the width is 0, not
+        # the vacuous 1 the loop used to report.
+        report = DetectionReport(masses={"content": [np.array([0.0, 0.0])]})
+        triples = np.array([[0, 5, 3]], dtype=np.int64)
+        summary = mass_summary(report, triples)
+        assert summary["content_mass_heads_for_80pct"] == 0.0
+
+
+class TestMassCoveringHeads:
+    def _report(self, content: list[list[float]]) -> DetectionReport:
+        masses = {"content": [np.asarray(layer, dtype=float) for layer in content]}
+        return DetectionReport(masses=masses)
+
+    def test_covers_80_percent_of_the_mass(self) -> None:
+        report = self._report([[0.4, 0.1, 0.1, 0.1]])
+        triples = np.array([[0, 5, 3]], dtype=np.int64)
+        chosen = mass_covering_heads(report, triples, coverage=0.8)
+        assert chosen == [(0, 0), (0, 1), (0, 2)]
+
+    def test_one_head_covers_everything(self) -> None:
+        report = self._report([[0.9, 0.05, 0.05]])
+        triples = np.array([[0, 5, 3]], dtype=np.int64)
+        chosen = mass_covering_heads(report, triples, coverage=0.8)
+        assert chosen == [(0, 0)]
+
+    def test_empty_report_returns_empty(self) -> None:
+        report = DetectionReport(masses={"content": [np.array([])]})
+        triples = np.array([[0, 5, 3]], dtype=np.int64)
+        assert mass_covering_heads(report, triples) == []
+
 
 # ---------------------------------------------------------------------------
 # The attribution
@@ -233,6 +285,22 @@ class TestAttribution:
         report = content_vs_position_attribution(model, tokens, triples, best_offset=3)
         assert report["dla_total"] < 0.0
         assert report["dla_observed_logit_diff"] < 0.0
+
+    def test_the_shares_divide_by_absolute_attribution(self) -> None:
+        # One head votes for the content answer, one against it. The signed
+        # total is 0.5, so the old denominator would report a positive share
+        # of 2.0; the absolute one reports 2/3, a share that is a share.
+        shares = attribution_shares({"L0H0": 1.0, "L0H1": -0.5})
+        assert shares["dla_positive_share"] == pytest.approx(2.0 / 3.0)
+        assert shares["dla_top_head"] == "L0H0"
+        assert shares["dla_top_head_share"] == pytest.approx(2.0 / 3.0)
+        assert 0.0 <= shares["dla_positive_share"] <= 1.0
+        assert 0.0 <= shares["dla_top_head_share"] <= 1.0
+
+    def test_all_zero_attribution_has_zero_shares(self) -> None:
+        shares = attribution_shares({"L0H0": 0.0})
+        assert shares["dla_positive_share"] == 0.0
+        assert shares["dla_top_head_share"] == 0.0
 
     def test_the_planted_head_carries_the_attribution(self) -> None:
         tokens = _tokens()
@@ -281,6 +349,30 @@ class TestClassifyMechanism:
 
     def test_a_circuit_that_is_not_there_is_none(self) -> None:
         code, _label = classify_mechanism(
+            {
+                "group_ablation_drop": 0.0,
+                "max_single_ablation_drop": 0.0,
+                "dla_content_minus_offset": -1.0,
+            }
+        )
+        assert code == MECHANISM_NONE
+
+    def test_no_candidate_group_is_undetermined_not_none(self) -> None:
+        # The 3x chance screen selected no head: the group ablation is a
+        # no-op, so 0.0 is not "no circuit" — it is "undetermined".
+        code, label = classify_mechanism(
+            {
+                "group_ablation_drop": 0.0,
+                "max_single_ablation_drop": 0.0,
+                "dla_content_minus_offset": 5.0,
+                "n_candidate_heads": 0.0,
+            }
+        )
+        assert code == MECHANISM_UNDETERMINED
+        assert "no candidate" in label
+
+    def test_without_n_candidates_old_behavior_preserved(self) -> None:
+        code, _ = classify_mechanism(
             {
                 "group_ablation_drop": 0.0,
                 "max_single_ablation_drop": 0.0,

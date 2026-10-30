@@ -39,6 +39,7 @@ from src.experiments.copy_circuit import (
     classify_mechanism,
     content_triples,
     content_vs_position_attribution,
+    mass_covering_heads,
     mass_summary,
 )
 from src.experiments.induction_detection import (
@@ -1363,8 +1364,6 @@ def _headline_metrics(
         ),
         "k_composition_score": float(diagnosis["step2_k_composition"]),
         "l0_duplicate_head_mass": float(max(diagnosis["step1_l0_duplicate_mass"] or [0.0])),
-        "mean_ablation_drop": 0.0,
-        "mean_copy_ablation_drop": 0.0,
         "confirmed_epoch": float(history.get("confirmed_epoch", -1.0)),
         "epochs_run": epochs_run,
         "steps_run": epochs_run * steps_per_epoch,
@@ -1432,6 +1431,13 @@ def _circuit_report(
     candidates = candidate_heads(report, triples)
     metrics["n_candidate_heads"] = float(len(candidates))
 
+    # Exploratory group: the smallest set of heads covering 80% of the
+    # content mass. Not the pre-registered candidate rule, not used for the
+    # verdict — it exists so the mechanism report can describe a distributed
+    # circuit even when the 3x chance screen selects few or no heads.
+    exploratory = mass_covering_heads(report, triples)
+    metrics["exploratory_group_size"] = float(len(exploratory))
+
     base_copy = float(copy_stats.get("copy_accuracy", 0.0))
     single_drops: list[float] = []
     for layer, head in candidates:
@@ -1446,6 +1452,14 @@ def _circuit_report(
     )
     metrics["mean_single_ablation_drop"] = (
         float(sum(single_drops) / len(single_drops)) if single_drops else 0.0
+    )
+
+    # Exploratory group ablation: same intervention, wider group.
+    group_accuracy_exploratory = causal_ablation_group(
+        model, val_loader, exploratory, restrict_to_copy=True
+    )
+    metrics["exploratory_group_ablation_drop"] = float(
+        base_copy - group_accuracy_exploratory
     )
 
     subset = min(int(tokens.shape[0]), ATTRIBUTION_SEQUENCES)
@@ -1465,14 +1479,21 @@ def _circuit_report(
     code, label = classify_mechanism(metrics)
     metrics["mechanism_kind"] = float(code)
     logger.info(
-        "Circuit report - content mass total %.4f (top head %.0f%%, %d heads "
-        "cover 80%%) | group ablation drop %.4f | max single drop %.4f | "
-        "attribution %.4f -> %s",
+        "Circuit report - content mass total %.4f (chance %.4f, excess %.4f, "
+        "ratio %.2f) | top head %.0f%%, %d heads cover 80%% | "
+        "n_candidates=%d | group ablation drop %.4f | max single drop %.4f | "
+        "exploratory group=%d, exploratory drop %.4f | attribution %.4f -> %s",
         metrics["content_mass_total"],
+        metrics["content_chance_mass"],
+        metrics["content_mass_excess"],
+        metrics["content_mass_ratio"],
         100.0 * metrics["content_mass_top_share"],
         int(metrics["content_mass_heads_for_80pct"]),
+        int(metrics["n_candidate_heads"]),
         metrics["group_ablation_drop"],
         metrics["max_single_ablation_drop"],
+        int(metrics["exploratory_group_size"]),
+        metrics["exploratory_group_ablation_drop"],
         metrics["dla_content_minus_offset"],
         label,
     )
@@ -1519,10 +1540,12 @@ def _seed_metrics(
             )
             copy_drop_sum += copy_stats["copy_accuracy"] - copy_ablated
             n_drops += 1
-    metrics["mean_ablation_drop"] = float(drop_sum / n_drops) if n_drops else 0.0
-    metrics["mean_copy_ablation_drop"] = (
-        float(copy_drop_sum / n_drops) if n_drops else 0.0
-    )
+    # With no confirmed head there is nothing to ablate: the mean is undefined,
+    # not zero. Writing 0.0 would look like a causal measurement and would fail
+    # criterion 6 by fabrication — the same bug fixed in exp4 for path patching.
+    if n_drops:
+        metrics["mean_ablation_drop"] = float(drop_sum / n_drops)
+        metrics["mean_copy_ablation_drop"] = float(copy_drop_sum / n_drops)
     metrics.update(
         _circuit_report(model, val_loader, report, tokens, task, copy_stats)
     )
@@ -2101,7 +2124,11 @@ def main() -> None:
             f"MULTI-SEED MODE: {len(seeds)} seeds {seeds} "
             f"(fresh_batches={args.fresh_batches}, skipping plots/model-save)"
         )
-        result = run_seeds(lambda s: run_single_seed(s, args), seeds)
+        result = run_seeds(
+            lambda s: run_single_seed(s, args),
+            seeds,
+            optional_keys={"mean_ablation_drop", "mean_copy_ablation_drop"},
+        )
         probe_model = AttentionOnlyTransformer(
             vocab_size=args.vocab_size,
             d_model=args.d_model,

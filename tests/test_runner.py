@@ -44,6 +44,31 @@ class TestRunSeeds:
         with pytest.raises(ValueError, match="different metric keys"):
             run_seeds(fn, [0, 1])
 
+    def test_optional_keys_may_be_absent_and_are_not_aggregated(self) -> None:
+        # A mixed run (one seed confirmed a head, one did not) must not crash
+        # after training: the optional metric is absent for one seed and has
+        # no run-level mean.
+        def fn(seed: int) -> dict[str, float]:
+            return {"a": 1.0} if seed == 0 else {"a": 1.0, "b": 2.0}
+
+        result = run_seeds(fn, [0, 1], optional_keys={"b"})
+        assert result.per_seed[0] == {"a": 1.0}
+        assert "b" not in result.aggregate
+        assert result.aggregate["a"]["n"] == 2.0
+
+    def test_an_optional_key_present_in_every_seed_is_aggregated(self) -> None:
+        result = run_seeds(
+            lambda _s: {"a": 1.0, "b": 2.0}, [0, 1], optional_keys={"b"}
+        )
+        assert result.aggregate["b"]["mean"] == 2.0
+
+    def test_a_dropped_required_key_still_raises(self) -> None:
+        def fn(seed: int) -> dict[str, float]:
+            return {"a": 1.0, "b": 2.0} if seed == 0 else {"b": 2.0}
+
+        with pytest.raises(ValueError, match="different metric keys"):
+            run_seeds(fn, [0, 1], optional_keys={"b"})
+
     def test_fn_receives_the_seed(self) -> None:
         seen = []
 

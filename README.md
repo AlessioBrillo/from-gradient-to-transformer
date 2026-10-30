@@ -39,10 +39,10 @@ The manifests behind that table: Rung 1
 <!-- manifest: results/exp5_real_activations.json -->.
 
 Read the Honesty Ledger in [`portfolio/RESULTS.md`](portfolio/RESULTS.md) before citing any
-number from this repository: seven audits have now examined these claims — six found numbers
-that were wrong or unbacked, the seventh reversed a negative verdict its own metric had
-manufactured, and the latest (2026-10-19) retracted every head count this repository had
-published because the detector behind them measured the wrong attention offset.
+number from this repository: nine audits have now examined these claims — they found numbers
+that were wrong or unbacked, a negative verdict its own metric had manufactured, and a
+content-task experiment that could not have produced a verdict until its instrument was fixed
+before the GPU run.
 `make verify-claims` (run in CI) fails if a public number has no committed
 manifest behind it.
 
