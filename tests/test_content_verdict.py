@@ -373,6 +373,18 @@ class TestTheRunVerdict:
         assert result.status == STATUS_INCOMPLETE
         assert "unexpected [3]" in result.note
 
+    def test_non_integer_seed_ids_are_incomplete(self) -> None:
+        # 1.5, True and "1" all coerce to pre-registered IDs under int();
+        # a manifest must name the seeds as integers.
+        for bad in (1.5, True, "1"):
+            exp1 = {
+                "seeds": [0, bad, 2],
+                "per_seed_metrics": [_exp1_metrics()] * 3,
+            }
+            result = run_verdict(exp1, None)
+            assert result.status == STATUS_INCOMPLETE
+            assert "non-integer seed" in result.note
+
     def test_a_manifest_without_the_head_count_is_incomplete(self) -> None:
         # The head count decides whether criterion 6 is measurable. Absent,
         # it must not be read as "0 confirmed" and turned into a negative.

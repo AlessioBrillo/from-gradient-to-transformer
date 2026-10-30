@@ -348,10 +348,11 @@ def _manifest_seed_problem(manifest: Mapping[str, Any], label: str) -> str:
         )
     ids: list[int] = []
     for seed in seeds:
-        try:
-            ids.append(int(seed))
-        except (TypeError, ValueError):
+        # ``int()`` would coerce 1.5, True and "1" into the pre-registered
+        # IDs; a manifest must name them as integers.
+        if type(seed) is not int:
             return f"{label} carries a non-integer seed"
+        ids.append(seed)
     if len(set(ids)) != len(ids):
         return f"{label} carries duplicate seed(s)"
     return ""
