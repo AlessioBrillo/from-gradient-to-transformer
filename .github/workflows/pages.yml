@@ -77,7 +77,7 @@ jobs:
         # site never shipped the paper at all. paper.yml compiles it as a CI
         # artifact only; the site needs its own build so the PDF always
         # matches the committed .tex source. Two passes for \bibliography.
-        uses: xu-cheng/latex-action@v3
+        uses: xu-cheng/latex-action@v4
         with:
           root_file: main.tex
           working_directory: portfolio/paper
