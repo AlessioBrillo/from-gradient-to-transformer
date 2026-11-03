@@ -26,6 +26,7 @@ produces is the analysis plus the figures above.
 import argparse
 import logging
 from pathlib import Path
+from typing import Any, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -34,9 +35,14 @@ from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
-from src.experiments.runner import parse_seeds, run_seeds
+from src.experiments.runner import aggregate_metrics, parse_seeds, run_seeds
 from src.reproducibility import set_seed
-from src.results import ResultsManifest, count_parameters, resolve_manifest_path
+from src.results import (
+    ResultsManifest,
+    count_parameters,
+    per_seed_manifest_path,
+    resolve_manifest_path,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -147,13 +153,9 @@ class SparseAutoencoder(nn.Module):
     def _normalize_decoder(self) -> None:
         """Normalize decoder weight columns to unit norm."""
         with torch.no_grad():
-            self.decoder.weight.data = nn.functional.normalize(
-                self.decoder.weight.data, dim=0
-            )
+            self.decoder.weight.data = nn.functional.normalize(self.decoder.weight.data, dim=0)
 
-    def forward(
-        self, x: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Forward pass.
 
         Args:
@@ -167,9 +169,7 @@ class SparseAutoencoder(nn.Module):
         return recon, latent
 
     @torch.no_grad()
-    def get_feature_activations(
-        self, x: torch.Tensor
-    ) -> torch.Tensor:
+    def get_feature_activations(self, x: torch.Tensor) -> torch.Tensor:
         """Get sparse feature activations without reconstruction."""
         return torch.relu(self.encoder(x - self.b_dec))
 
@@ -230,7 +230,7 @@ def train_sae(
 
         if (epoch + 1) % 100 == 0:
             logger.info(
-                f"Epoch {epoch+1:4d} | loss: {history['loss'][-1]:.4f} | "
+                f"Epoch {epoch + 1:4d} | loss: {history['loss'][-1]:.4f} | "
                 f"MSE: {history['mse'][-1]:.4f} | L1: {history['l1'][-1]:.4f} | "
                 f"L0: {history['l0'][-1]:.2f}"
             )
@@ -437,6 +437,7 @@ def harvest_activations_from_checkpoint(
     num_samples: int,
     seed: int,
     task: str = "periodic",
+    source_model_seed: Optional[int] = None,
 ) -> torch.Tensor:
     """Harvest real residual-stream activations from a trained
     induction-heads checkpoint (either the `--save-model` plain state_dict or
@@ -450,6 +451,12 @@ def harvest_activations_from_checkpoint(
     `vocab_size`/`seq_len`/`d_model`/`n_layers`/`n_heads` arguments must
     match the architecture the checkpoint was actually trained with; a
     state-dict-only checkpoint carries no architecture metadata of its own.
+
+    ``source_model_seed`` is the seed of the *model* the checkpoint came
+    from. The SAE seed is a different number (it varies the dictionary, not
+    the activations), so a run that points at
+    ``exp1_checkpoint_seed0.pt`` must say ``source_model_seed=0``; a mismatch
+    is refused rather than silently training the SAE on another model.
 
     Returns:
         Tensor of shape (num_samples, d_model) — no ground-truth "true
@@ -470,7 +477,7 @@ def harvest_activations_from_checkpoint(
         n_heads=n_heads,
         max_seq_len=seq_len,
     )
-    state_dict = torch.load(checkpoint_path, map_location=DEVICE)
+    raw = torch.load(checkpoint_path, map_location=DEVICE)
     # Two checkpoint formats reach this function. `--save-model` writes a plain
     # state_dict (figures/exp1_trained_model.pt, single-seed runs only), while
     # the `--seeds` runs leave the *rolling resume* checkpoint at
@@ -479,17 +486,50 @@ def harvest_activations_from_checkpoint(
     # --save-model, so without unwrapping here the Rung 1 -> Rung 5 cascade
     # ("SAE on activations from a confirmed-head checkpoint") could only run
     # on single-seed models. Accept both; the "model" key is the state_dict.
-    if isinstance(state_dict, dict) and "model" in state_dict:
-        state_dict = state_dict["model"]
+    state_dict = raw
+    if isinstance(raw, dict) and "model" in raw:
+        arch = raw.get("arch")
+        if arch:
+            expected = {
+                "vocab_size": vocab_size,
+                "d_model": d_model,
+                "n_layers": n_layers,
+                "n_heads": n_heads,
+                "max_seq_len": seq_len,
+            }
+            mismatched = {k: (arch.get(k), v) for k, v in expected.items() if arch.get(k) != v}
+            if mismatched:
+                raise SystemExit(
+                    f"--activations-from: {checkpoint_path} was trained with "
+                    f"{arch}, but --source-* says {expected}. Fix the source "
+                    "flags."
+                )
+        checkpoint_seed = raw.get("seed")
+        if (
+            source_model_seed is not None
+            and checkpoint_seed is not None
+            and int(checkpoint_seed) != int(source_model_seed)
+        ):
+            raise SystemExit(
+                f"--activations-from: {checkpoint_path} is model seed "
+                f"{checkpoint_seed}, but --source-model-seed is "
+                f"{source_model_seed}. The SAE would be trained on another "
+                "model's activations."
+            )
+        checkpoint_task = raw.get("task")
+        if checkpoint_task is not None and checkpoint_task != task:
+            raise SystemExit(
+                f"--activations-from: {checkpoint_path} was trained on the "
+                f"{checkpoint_task!r} task, but --source-task is {task!r}."
+            )
+        state_dict = raw["model"]
     model.load_state_dict(state_dict)
     model.to(DEVICE)
     model.eval()
 
     captured: list[torch.Tensor] = []
 
-    def _hook(
-        module: nn.Module, inp: tuple, out: torch.Tensor
-    ) -> None:
+    def _hook(module: nn.Module, inp: tuple, out: torch.Tensor) -> None:
         captured.append(inp[0].detach().cpu())
 
     handle = model.ln_final.register_forward_hook(_hook)
@@ -529,6 +569,40 @@ def harvest_activations_from_checkpoint(
     return activations
 
 
+def checkpoint_provenance(checkpoint_path: Path) -> dict[str, Any]:
+    """What the activation source actually is, for the SAE manifest.
+
+    The SAE's own metrics say nothing about the model whose residual stream
+    they describe. This records the checkpoint's format, architecture, seed,
+    epoch and commit, so a Rung 5 number quoted in the writeup can be traced
+    to the Rung 1 model it came from. A rolling checkpoint carries these
+    facts; a plain ``--save-model`` state_dict does not, and the record says
+    ``unknown`` rather than inventing them.
+    """
+    raw = torch.load(checkpoint_path, map_location="cpu")
+    if not isinstance(raw, dict) or "model" not in raw:
+        return {
+            "path": str(checkpoint_path),
+            "format": "state_dict",
+            "seed": None,
+            "epoch": -1,
+            "task": None,
+            "git_sha": "unknown",
+            "git_dirty": True,
+            "arch": {},
+        }
+    return {
+        "path": str(checkpoint_path),
+        "format": "rolling",
+        "seed": raw.get("seed"),
+        "epoch": int(raw.get("epoch", -1)) + 1,
+        "task": raw.get("task"),
+        "git_sha": str(raw.get("git_sha") or "unknown"),
+        "git_dirty": bool(raw.get("git_dirty", False)),
+        "arch": raw.get("arch") or {},
+    }
+
+
 # ---------------------------------------------------------------------------
 # Multi-seed headline run
 # ---------------------------------------------------------------------------
@@ -553,6 +627,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
             num_samples=args.num_samples,
             seed=seed,
             task=getattr(args, "source_task", "periodic"),
+            source_model_seed=getattr(args, "source_model_seed", None),
         )
         d_model = activations.size(1)
         true_features = torch.zeros(activations.size(0), 1)
@@ -599,19 +674,67 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
     }
 
 
+def _manifest_args(args: argparse.Namespace) -> dict:
+    """The recorded config: every flag except the seed *list*."""
+    return {k: v for k, v in vars(args).items() if k != "seeds"}
+
+
+def _resolved_manifest_path(args: argparse.Namespace) -> Path:
+    """Where this run's (multi-seed) manifest goes."""
+    return resolve_manifest_path(
+        "exp5_sae_dashboard",
+        Path("results") / "exp5_sae_dashboard.json",
+        args.manifest_path,
+        args.quick,
+    )
+
+
+def _source_provenance(args: argparse.Namespace) -> dict | None:
+    """The activation checkpoint this run read, when it read one."""
+    if args.activations_from is None:
+        return None
+    return {"checkpoints": [checkpoint_provenance(Path(args.activations_from))]}
+
+
+def _write_seed_manifest(
+    args: argparse.Namespace,
+    seed: int,
+    metrics: dict[str, float],
+    wall_clock_seconds: float,
+) -> Path:
+    """Write the per-seed recovery manifest of a multi-seed run."""
+    manifest_path = per_seed_manifest_path(_resolved_manifest_path(args), seed)
+    manifest = ResultsManifest.from_run(
+        experiment="exp5_sae_dashboard",
+        seeds=[seed],
+        args=_manifest_args(args),
+        per_seed_metrics=[metrics],
+        aggregate=aggregate_metrics([metrics]),
+        wall_clock_seconds=wall_clock_seconds,
+        device=str(DEVICE),
+        n_parameters=int(metrics["n_parameters"]),
+        notes=(
+            "One seed of a multi-seed run, written when the seed finished "
+            "(recovery artifact; the multi-seed manifest is the record)."
+        ),
+    )
+    provenance = _source_provenance(args)
+    if provenance:
+        manifest.source_provenance = provenance
+    manifest.save(manifest_path)
+    logger.info(f"Saved seed {seed} recovery manifest to {manifest_path}")
+    return manifest_path
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 def build_parser() -> argparse.ArgumentParser:
     """exp5's CLI, extracted from main() so tests can pin the flag contract
     (same pattern as exp1/exp2/exp4)."""
-    parser = argparse.ArgumentParser(
-        description="Rung 5: Sparse autoencoder feature dashboard"
-    )
+    parser = argparse.ArgumentParser(description="Rung 5: Sparse autoencoder feature dashboard")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
-    parser.add_argument(
-        "--d-model", type=int, default=64, help="Activation dimension"
-    )
+    parser.add_argument("--d-model", type=int, default=64, help="Activation dimension")
     parser.add_argument(
         "--n-features",
         type=int,
@@ -630,12 +753,8 @@ def build_parser() -> argparse.ArgumentParser:
         default=0.05,
         help="True feature sparsity (lower = sparser)",
     )
-    parser.add_argument(
-        "--epochs", type=int, default=1000, help="SAE training epochs"
-    )
-    parser.add_argument(
-        "--lr", type=float, default=1e-3, help="Learning rate"
-    )
+    parser.add_argument("--epochs", type=int, default=1000, help="SAE training epochs")
+    parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
     parser.add_argument(
         "--l1-coeff",
         type=float,
@@ -648,9 +767,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=50000,
         help="Number of activation samples",
     )
-    parser.add_argument(
-        "--batch-size", type=int, default=256, help="Batch size"
-    )
+    parser.add_argument("--batch-size", type=int, default=256, help="Batch size")
     parser.add_argument(
         "--quick", action="store_true", help="Quick test with fewer samples and epochs"
     )
@@ -689,23 +806,33 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
-        "--source-vocab-size", type=int, default=2048,
+        "--source-vocab-size",
+        type=int,
+        default=2048,
         help="Checkpoint's vocab-size (must match training config)",
     )
     parser.add_argument(
-        "--source-seq-len", type=int, default=24,
+        "--source-seq-len",
+        type=int,
+        default=24,
         help="Checkpoint's seq-len (must match training config)",
     )
     parser.add_argument(
-        "--source-d-model", type=int, default=32,
+        "--source-d-model",
+        type=int,
+        default=32,
         help="Checkpoint's d-model (must match training config)",
     )
     parser.add_argument(
-        "--source-n-layers", type=int, default=2,
+        "--source-n-layers",
+        type=int,
+        default=2,
         help="Checkpoint's n-layers (must match training config)",
     )
     parser.add_argument(
-        "--source-n-heads", type=int, default=4,
+        "--source-n-heads",
+        type=int,
+        default=4,
         help="Checkpoint's n-heads (must match training config)",
     )
     parser.add_argument(
@@ -716,6 +843,16 @@ def build_parser() -> argparse.ArgumentParser:
             "The task the checkpoint was trained on. The harvested "
             "activations must come from that task: a model trained on the "
             "variable-distance task has never seen a periodic sequence."
+        ),
+    )
+    parser.add_argument(
+        "--source-model-seed",
+        type=int,
+        default=None,
+        help=(
+            "The seed of the model the checkpoint came from (the seed in "
+            "its filename), not the SAE seed in --seeds. When set, the "
+            "checkpoint's recorded seed must match."
         ),
     )
     return parser
@@ -747,7 +884,11 @@ def main() -> None:
             f"MULTI-SEED MODE: {len(seeds)} seeds {seeds} "
             f"(activations_from={args.activations_from}, skipping plots)"
         )
-        result = run_seeds(lambda s: run_single_seed(s, args), seeds)
+
+        def _on_seed(seed: int, metrics: dict[str, float], wall_clock_seconds: float) -> None:
+            _write_seed_manifest(args, seed, metrics, wall_clock_seconds)
+
+        result = run_seeds(lambda s: run_single_seed(s, args), seeds, on_seed=_on_seed)
         # Parameter count comes from the seeds themselves (see run_single_seed),
         # not from a throwaway probe: with --activations-from the real d_model is
         # the source checkpoint's, not --d-model.
@@ -757,25 +898,21 @@ def main() -> None:
         # `AttributeError: 'list' object has no attribute 'values'` — after the
         # whole SAE had been trained, which is exactly the path the Rung 5
         # cascade takes (`--activations-from ... --seeds 42`).
-        probe_params = [
-            m["n_parameters"] for m in result.per_seed if "n_parameters" in m
-        ]
+        probe_params = [m["n_parameters"] for m in result.per_seed if "n_parameters" in m]
         manifest = ResultsManifest.from_run(
             experiment="exp5_sae_dashboard",
             seeds=seeds,
-            args={k: v for k, v in vars(args).items() if k != "seeds"},
+            args=_manifest_args(args),
             per_seed_metrics=result.per_seed,
             aggregate=result.aggregate,
             wall_clock_seconds=result.wall_clock_seconds,
             device=str(DEVICE),
             n_parameters=int(probe_params[0]) if probe_params else None,
         )
-        manifest_path = resolve_manifest_path(
-            "exp5_sae_dashboard",
-            Path("results") / "exp5_sae_dashboard.json",
-            args.manifest_path,
-            args.quick,
-        )
+        provenance = _source_provenance(args)
+        if provenance:
+            manifest.source_provenance = provenance
+        manifest_path = _resolved_manifest_path(args)
         manifest.save(manifest_path)
         logger.info(f"Saved multi-seed manifest to {manifest_path}")
         for key in result.aggregate:
@@ -794,6 +931,7 @@ def main() -> None:
             num_samples=args.num_samples,
             seed=args.seed,
             task=getattr(args, "source_task", "periodic"),
+            source_model_seed=getattr(args, "source_model_seed", None),
         )
         args.d_model = activations.size(1)  # match the harvested activations exactly
         true_features = torch.zeros(activations.size(0), 1)  # no ground truth for real data

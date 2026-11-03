@@ -63,10 +63,15 @@ from src.experiments.induction_tasks import (
     copy_query_minimal_pair_batch,
     task_datasets,
 )
-from src.experiments.runner import parse_seeds, run_seeds
+from src.experiments.runner import aggregate_metrics, parse_seeds, run_seeds
 from src.models.decoder_only_transformer import DecoderOnlyTransformer
 from src.reproducibility import set_seed
-from src.results import ResultsManifest, count_parameters, resolve_manifest_path
+from src.results import (
+    ResultsManifest,
+    count_parameters,
+    per_seed_manifest_path,
+    resolve_manifest_path,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -126,9 +131,6 @@ def _run_task_probe(
     return run_dissociation_probe(
         model, vocab_size=vocab_size, seq_len=seq_len, num_samples=32, seed=seed
     )
-
-
-
 
 
 # ---------------------------------------------------------------------------
@@ -248,9 +250,7 @@ def _install_resid_mid_patch(
 
 
 @torch.no_grad()
-def compute_attention_patterns(
-    model: nn.Module, inputs: torch.Tensor
-) -> tuple[dict, dict]:
+def compute_attention_patterns(model: nn.Module, inputs: torch.Tensor) -> tuple[dict, dict]:
     """Per-layer attention probabilities averaged over heads, plus the raw cache.
 
     Returns a tuple `(probs, cache)`, not a bare dict — the annotation used to
@@ -300,11 +300,7 @@ def detect_induction_heads(
         composition_threshold=composition_threshold,
         task=task,
     )
-    return [
-        (layer, head)
-        for layer, heads in enumerate(report.confirmed)
-        for head in heads
-    ]
+    return [(layer, head) for layer, heads in enumerate(report.confirmed) for head in heads]
 
 
 # How many sequences the detection reads. The periodic task's cascade was
@@ -348,11 +344,7 @@ def detect_copy_circuit(
         composition_threshold=composition_threshold,
         task=task,
     )
-    confirmed = [
-        (layer, head)
-        for layer, heads in enumerate(report.confirmed)
-        for head in heads
-    ]
+    confirmed = [(layer, head) for layer, heads in enumerate(report.confirmed) for head in heads]
     triples = content_triples(inputs)
     return {
         "confirmed": confirmed,
@@ -386,9 +378,7 @@ def train_model(
     """
     set_seed(seed)
     model.train()
-    opt = torch.optim.AdamW(
-        model.parameters(), lr=lr, weight_decay=weight_decay
-    )
+    opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
     history = {"train_loss": [], "val_loss": [], "val_acc": []}
 
     for epoch in tqdm(range(epochs), desc="Training"):
@@ -399,9 +389,7 @@ def train_model(
         for x, y in train_loader:
             opt.zero_grad()
             logits, _ = model(x)
-            loss = nn.functional.cross_entropy(
-                logits.view(-1, logits.size(-1)), y.view(-1)
-            )
+            loss = nn.functional.cross_entropy(logits.view(-1, logits.size(-1)), y.view(-1))
             loss.backward()
             # Gradient clipping, now that it is a parameter. exp4 used to
             # train with no clipping at all while exp2 and exp6 both apply
@@ -440,7 +428,7 @@ def train_model(
 
         if (epoch + 1) % 200 == 0:
             logger.info(
-                f"Epoch {epoch+1:4d} | train loss: {history['train_loss'][-1]:.4f} "
+                f"Epoch {epoch + 1:4d} | train loss: {history['train_loss'][-1]:.4f} "
                 f"| val loss: {history['val_loss'][-1]:.4f} "
                 f"| val acc: {history['val_acc'][-1]:.4f}"
             )
@@ -528,12 +516,10 @@ def run_activation_patching(
         corrupted_resid_mid = corrupted_cache[f"blocks.{layer}.resid_mid"].to(DEVICE)
 
         for patch_pos in positions_to_patch:
-            target = corrupted_resid_mid[:, patch_pos:patch_pos + 1, :]
-            pre = resid_pre[:, patch_pos:patch_pos + 1, :]
+            target = corrupted_resid_mid[:, patch_pos : patch_pos + 1, :]
+            pre = resid_pre[:, patch_pos : patch_pos + 1, :]
 
-            hook_handle = _install_resid_mid_patch(
-                model, layer, patch_pos, target, pre
-            )
+            hook_handle = _install_resid_mid_patch(model, layer, patch_pos, target, pre)
 
             with torch.no_grad():
                 patched_logits, _ = _forward_with_cache(model, clean_inputs[:batch_size])
@@ -612,7 +598,9 @@ def run_path_patching_to_logits(
     for layer, head in tqdm(heads, desc="Path patching heads → logits"):
         attn_module = _attn_module(model, layer)
         d_head = attn_module.d_head
-        w_o_head = attn_module.W_O.weight[:, head * d_head:(head + 1) * d_head]  # (d_model, d_head)
+        w_o_head = attn_module.W_O.weight[
+            :, head * d_head : (head + 1) * d_head
+        ]  # (d_model, d_head)
 
         probs_clean = clean_cache[f"blocks.{layer}.attn.attn_probs"].to(DEVICE)
         v_clean = clean_cache[f"blocks.{layer}.attn.V"].to(DEVICE)
@@ -691,7 +679,7 @@ def run_group_path_patching_to_logits(
     for layer, head in heads:
         attn_module = _attn_module(model, layer)
         d_head = attn_module.d_head
-        w_o_head = attn_module.W_O.weight[:, head * d_head:(head + 1) * d_head]
+        w_o_head = attn_module.W_O.weight[:, head * d_head : (head + 1) * d_head]
 
         probs_clean = clean_cache[f"blocks.{layer}.attn.attn_probs"].to(DEVICE)
         v_clean = clean_cache[f"blocks.{layer}.attn.V"].to(DEVICE)
@@ -887,6 +875,19 @@ def _checkpoint_for_seed(args: argparse.Namespace, seed: int) -> Optional[Path]:
     return path
 
 
+def _same_commit(left: str, right: str) -> bool:
+    """True when two git SHAs name the same commit, allowing abbreviations.
+
+    Manifests record ``git rev-parse --short HEAD``; a user may pass the full
+    SHA from ``git rev-parse HEAD``. A prefix of an unambiguous abbreviation
+    still names the same commit, so compare both directions.
+    """
+    left, right = left.strip(), right.strip()
+    return bool(left and right) and (
+        left == right or left.startswith(right) or right.startswith(left)
+    )
+
+
 def _build_model(
     args: argparse.Namespace, seed: int, load_weights: bool = True
 ) -> tuple[nn.Module, Optional[dict]]:
@@ -900,10 +901,10 @@ def _build_model(
     The state-dict load is strict: a mismatched architecture raises rather
     than silently loading a partially-compatible model.
 
-    Returns the model and a small provenance dict (`path`, `epoch`) — the
-    epoch matters because the rolling checkpoint can be up to
-    `--checkpoint-every` epochs behind the run that wrote it, and the
-    manifest has to say which model was actually analysed.
+    Returns the model and a provenance dict (`path`, `epoch`, `seed`,
+    `git_sha`, `git_dirty`) — the epoch matters because the rolling
+    checkpoint can be up to `--checkpoint-every` epochs behind the run that
+    wrote it, and the manifest has to say which model was actually analysed.
     """
     checkpoint = _checkpoint_for_seed(args, seed)
     if checkpoint is None:
@@ -924,7 +925,7 @@ def _build_model(
         max_seq_len=args.source_seq_len,
     )
     if not load_weights:
-        return model, {"path": str(checkpoint), "epoch": -1}
+        return model, {"path": str(checkpoint), "epoch": -1, "seed": seed}
     if not checkpoint.exists():
         raise SystemExit(
             f"--from-checkpoint: {checkpoint} does not exist. The cascade "
@@ -943,22 +944,77 @@ def _build_model(
             "n_heads": args.source_n_heads,
             "max_seq_len": args.source_seq_len,
         }
-        mismatched = {
-            k: (arch.get(k), v) for k, v in expected.items() if arch.get(k) != v
-        }
+        mismatched = {k: (arch.get(k), v) for k, v in expected.items() if arch.get(k) != v}
         if mismatched:
             raise SystemExit(
                 f"--from-checkpoint: {checkpoint} was trained with {arch}, but "
                 f"--source-* says {expected}. Fix the source flags."
             )
+    # A directory of per-seed checkpoints can be pointed at with the wrong
+    # --seeds; the filename is not proof of which model the weights are.
+    state_seed = state.get("seed")
+    if state_seed is not None and int(state_seed) != seed:
+        raise SystemExit(
+            f"--from-checkpoint: {checkpoint} holds model seed {state_seed}, "
+            f"but this seed is {seed}. The cascade would analyse a different "
+            "model."
+        )
+    # The task is not recoverable from the weights. A checkpoint written by
+    # the current instrument records it; an older one does not, and then the
+    # --source-task flag is the only statement about it (the verdict still
+    # cross-checks it against exp1's manifest).
+    state_task = state.get("task")
+    source_task = getattr(args, "source_task", TASK_PERIODIC)
+    if state_task is not None and state_task != source_task:
+        raise SystemExit(
+            f"--from-checkpoint: {checkpoint} was trained on the "
+            f"{state_task!r} task, but --source-task is {source_task!r}."
+        )
+    state_sha = state.get("git_sha")
+    expected_sha = getattr(args, "source_git_sha", None)
+    if expected_sha:
+        if not state_sha or state_sha == "unknown":
+            raise SystemExit(
+                f"--from-checkpoint: {checkpoint} does not record the commit "
+                "that wrote it; --source-git-sha cannot be verified. Re-run "
+                "exp1 with the current checkpoint code."
+            )
+        if not _same_commit(str(state_sha), expected_sha):
+            raise SystemExit(
+                f"--from-checkpoint: {checkpoint} was written at {state_sha}, "
+                f"but --source-git-sha is {expected_sha}. The cascade would "
+                "measure a model trained by a different instrument."
+            )
+    if state.get("git_dirty") is True:
+        logger.warning(
+            f"Checkpoint {checkpoint} was written with a dirty working tree "
+            f"(git_sha {state_sha or 'unknown'}); its weights do not correspond "
+            "to a committed instrument."
+        )
     # Strict load: a checkpoint without metadata still fails loudly (on the
     # shapes) rather than loading a partially-compatible model.
     model.load_state_dict(state["model"])
     epoch = int(state.get("epoch", -1)) + 1
+    expected_epochs = getattr(args, "source_epochs", None)
+    if expected_epochs is not None and epoch != expected_epochs:
+        raise SystemExit(
+            f"--from-checkpoint: {checkpoint} is epoch {epoch}, but "
+            f"--source-epochs is {expected_epochs}. The rolling checkpoint is "
+            "stale: the cascade would analyse a model that is not the final "
+            "one exp1 reported. Re-run exp1 to the end (a checkpoint is saved "
+            "at the final boundary and at an early stop)."
+        )
     logger.info(
-        f"Loaded checkpoint {checkpoint} (epoch {epoch}, no training in this rung)"
+        f"Loaded checkpoint {checkpoint} (epoch {epoch}, seed {seed}, "
+        f"git {state_sha or 'unknown'}, no training in this rung)"
     )
-    return model, {"path": str(checkpoint), "epoch": epoch}
+    return model, {
+        "path": str(checkpoint),
+        "epoch": epoch,
+        "seed": seed,
+        "git_sha": state_sha or "unknown",
+        "git_dirty": bool(state.get("git_dirty", False)),
+    }
 
 
 def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
@@ -1004,9 +1060,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         with torch.no_grad():
             logits, _ = model(val_loader.dataset.tensors[0][:32].to(DEVICE))
             labels = val_loader.dataset.tensors[1][:32].to(DEVICE)
-            history["val_acc"].append(
-                float((logits.argmax(-1) == labels).float().mean().item())
-            )
+            history["val_acc"].append(float((logits.argmax(-1) == labels).float().mean().item()))
             history["val_loss"].append(0.0)
             history["train_loss"].append(0.0)
     else:
@@ -1028,21 +1082,16 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
     # DETECTION_SAMPLES): its copy queries sit at different positions in
     # every sequence, and the candidate group is a distribution over heads.
     detect_inputs = next(iter(val_loader))[0][: DETECTION_SAMPLES.get(task, 8)]
-    circuit = detect_copy_circuit(
-        model, detect_inputs, prefix_len=prefix_len, task=task
-    )
+    circuit = detect_copy_circuit(model, detect_inputs, prefix_len=prefix_len, task=task)
     induction_heads = circuit["confirmed"]
     candidate_group = circuit["candidates"]
 
-    probe = _run_task_probe(
-        model, task, vocab_size, seq_len, seed, tokens=sample_inputs
-    )
+    probe = _run_task_probe(model, task, vocab_size, seq_len, seed, tokens=sample_inputs)
 
     counterfactual_mode = getattr(args, "counterfactual", COUNTERFACTUAL_DISJOINT)
     if counterfactual_mode not in COUNTERFACTUAL_MODES:
         raise SystemExit(
-            f"--counterfactual must be one of {COUNTERFACTUAL_MODES}, "
-            f"got {counterfactual_mode!r}"
+            f"--counterfactual must be one of {COUNTERFACTUAL_MODES}, got {counterfactual_mode!r}"
         )
     val_x, val_y = val_dataset.tensors
     if task == TASK_VARIABLE:
@@ -1050,9 +1099,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
             # The minimal pair: the same sequence with one token changed, so
             # the intervention is not diluted by everything the two sequences
             # differ in.
-            patch = copy_query_minimal_pair_batch(
-                val_x, val_y, vocab_size=vocab_size, seed=seed
-            )
+            patch = copy_query_minimal_pair_batch(val_x, val_y, vocab_size=vocab_size, seed=seed)
         else:
             patch = copy_query_batch(val_x, val_y, vocab_size=vocab_size)
         val_batch = patch["clean_inputs"]
@@ -1063,7 +1110,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
     else:
         n_pair = min(32, val_x.size(0) // 2)
         val_batch, val_batch_answers = val_x[:n_pair], val_y[:n_pair, -1]
-        corrupted, corrupted_answers = val_x[n_pair:2 * n_pair], val_y[n_pair:2 * n_pair, -1]
+        corrupted, corrupted_answers = val_x[n_pair : 2 * n_pair], val_y[n_pair : 2 * n_pair, -1]
         read_pos = -1
 
     layers_to_patch = list(range(len(getattr(model, "blocks", []))))
@@ -1104,9 +1151,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
             induction_heads=induction_heads,
             pos=read_pos,
         )
-        mean_ablation_effect = float(
-            np.mean([v["effect"] for v in ablation_results.values()])
-        )
+        mean_ablation_effect = float(np.mean([v["effect"] for v in ablation_results.values()]))
 
         path_results = run_path_patching_to_logits(
             model=model,
@@ -1117,9 +1162,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
             heads=induction_heads,
             pos=read_pos,
         )
-        mean_path_patch_effect = float(
-            np.mean([v["effect"] for v in path_results.values()])
-        )
+        mean_path_patch_effect = float(np.mean([v["effect"] for v in path_results.values()]))
 
     # The group intervention: the candidate group is patched as a whole, so
     # a copy carried by several heads is not invisible to the cascade. It
@@ -1145,20 +1188,99 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         "mean_activation_recovery": mean_activation_recovery,
         "path_patch_measured": float(path_patch_measured),
         "group_path_patch_measured": float(group_path_patch_measured),
-        "counterfactual_minimal_pair": float(
-            counterfactual_mode == COUNTERFACTUAL_MINIMAL_PAIR
-        ),
+        "counterfactual_minimal_pair": float(counterfactual_mode == COUNTERFACTUAL_MINIMAL_PAIR),
         "probe_content_mass": float(probe["peak_content_mass"]),
         "probe_period_mass": float(probe["peak_period_mass"]),
         "probe_content_wins": float(bool(probe["content_wins"])),
         "checkpoint_epoch": float(checkpoint["epoch"]) if checkpoint else -1.0,
     }
+    # The model seed says which checkpoint this row analysed. It is omitted
+    # when exp4 trained its own model (no cascade): there is no source model
+    # to name, and a value here would let the verdict mistake a second model
+    # for exp1's.
+    if checkpoint is not None:
+        result["source_model_seed"] = float(checkpoint.get("seed", seed))
     if path_patch_measured:
         result["mean_ablation_effect"] = mean_ablation_effect
         result["mean_path_patch_effect"] = mean_path_patch_effect
     if group_path_patch_measured:
         result["group_path_patch_effect"] = group_path_patch_effect
     return result
+
+
+def _manifest_args(args: argparse.Namespace) -> dict:
+    """The recorded config: every flag except the seed *list*."""
+    return {k: v for k, v in vars(args).items() if k != "seeds"}
+
+
+def _resolved_manifest_path(args: argparse.Namespace) -> Path:
+    """Where this run's (multi-seed) manifest goes."""
+    return resolve_manifest_path(
+        "exp4_circuit_patching",
+        Path("results") / "exp4_circuit_patching.json",
+        args.manifest_path,
+        args.quick,
+    )
+
+
+def _checkpoint_provenance(args: argparse.Namespace, seed: int) -> dict:
+    """What model seed ``seed`` actually analysed, read back from disk.
+
+    The manifest's own ``git_sha`` says which commit *ran the analysis*; this
+    says which commit *trained the weights*. They are the same in a
+    single-session cascade and can differ in a later re-analysis, which is
+    exactly the drift the content verdict refuses.
+    """
+    checkpoint = _checkpoint_for_seed(args, seed)
+    if checkpoint is None:
+        return {}
+    state = load_training_checkpoint(checkpoint, map_location="cpu")
+    if state is None:
+        return {
+            "path": str(checkpoint),
+            "seed": seed,
+            "epoch": -1,
+            "git_sha": "unknown",
+            "git_dirty": True,
+        }
+    return {
+        "path": str(checkpoint),
+        "seed": seed,
+        "epoch": int(state.get("epoch", -1)) + 1,
+        "git_sha": str(state.get("git_sha") or "unknown"),
+        "git_dirty": bool(state.get("git_dirty", False)),
+    }
+
+
+def _write_seed_manifest(
+    args: argparse.Namespace,
+    seed: int,
+    metrics: dict[str, float],
+    wall_clock_seconds: float,
+    n_parameters: int,
+) -> Path:
+    """Write the per-seed recovery manifest of a multi-seed run."""
+    manifest_path = per_seed_manifest_path(_resolved_manifest_path(args), seed)
+    manifest = ResultsManifest.from_run(
+        experiment="exp4_circuit_patching",
+        seeds=[seed],
+        args=_manifest_args(args),
+        per_seed_metrics=[metrics],
+        aggregate=aggregate_metrics([metrics]),
+        wall_clock_seconds=wall_clock_seconds,
+        device=str(DEVICE),
+        n_parameters=n_parameters,
+        notes=(
+            "One seed of a multi-seed run, written when the seed finished "
+            "(recovery artifact; the multi-seed manifest is the record)."
+        ),
+    )
+    provenance = _checkpoint_provenance(args, seed)
+    if provenance:
+        manifest.source_provenance = {"checkpoints": [provenance]}
+    manifest.save(manifest_path)
+    logger.info(f"Saved seed {seed} recovery manifest to {manifest_path}")
+    return manifest_path
 
 
 def apply_config_presets(args: argparse.Namespace) -> None:
@@ -1313,9 +1435,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--fresh-batches (same convention as exp1)."
         ),
     )
-    parser.add_argument(
-        "--no-train", action="store_true", help="Skip training (untrained model)"
-    )
+    parser.add_argument("--no-train", action="store_true", help="Skip training (untrained model)")
     parser.add_argument(
         "--seeds",
         type=str,
@@ -1352,23 +1472,33 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
-        "--source-vocab-size", type=int, default=2048,
+        "--source-vocab-size",
+        type=int,
+        default=2048,
         help="The checkpoint's vocab size (must match how it was trained)",
     )
     parser.add_argument(
-        "--source-seq-len", type=int, default=64,
+        "--source-seq-len",
+        type=int,
+        default=64,
         help="The checkpoint's sequence length (must match how it was trained)",
     )
     parser.add_argument(
-        "--source-d-model", type=int, default=64,
+        "--source-d-model",
+        type=int,
+        default=64,
         help="The checkpoint's d_model (must match how it was trained)",
     )
     parser.add_argument(
-        "--source-n-layers", type=int, default=2,
+        "--source-n-layers",
+        type=int,
+        default=2,
         help="The checkpoint's layer count (must match how it was trained)",
     )
     parser.add_argument(
-        "--source-n-heads", type=int, default=4,
+        "--source-n-heads",
+        type=int,
+        default=4,
         help="The checkpoint's head count (must match how it was trained)",
     )
     parser.add_argument(
@@ -1384,15 +1514,44 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
-        "--source-key-len", type=int, default=None,
+        "--source-epochs",
+        type=int,
+        default=None,
+        help=(
+            "The epoch count exp1's manifest reports (epochs_run). When set, "
+            "the loaded checkpoint must be from exactly that epoch: a rolling "
+            "checkpoint can be up to --checkpoint-every epochs stale, and a "
+            "cascade about a stale model is not the cascade the verdict "
+            "describes."
+        ),
+    )
+    parser.add_argument(
+        "--source-git-sha",
+        type=str,
+        default=None,
+        help=(
+            "The commit that wrote the checkpoint (short or full SHA). When "
+            "set, the checkpoint's recorded git_sha must name the same commit "
+            "— weights trained by a different instrument cannot answer this "
+            "task's causal question."
+        ),
+    )
+    parser.add_argument(
+        "--source-key-len",
+        type=int,
+        default=None,
         help="Variable task only: the checkpoint's key length.",
     )
     parser.add_argument(
-        "--source-copy-blocks", type=int, default=None,
+        "--source-copy-blocks",
+        type=int,
+        default=None,
         help="Variable task only: the checkpoint's number of copy blocks.",
     )
     parser.add_argument(
-        "--source-copy-block-len", type=int, default=None,
+        "--source-copy-block-len",
+        type=int,
+        default=None,
         help="Variable task only: the checkpoint's copy block length.",
     )
     parser.add_argument(
@@ -1432,9 +1591,16 @@ def main() -> None:
 
     if args.seeds:
         seeds = parse_seeds(args.seeds)
-        logger.info(
-            f"MULTI-SEED MODE: {len(seeds)} seeds {seeds} (skipping plots)"
-        )
+        logger.info(f"MULTI-SEED MODE: {len(seeds)} seeds {seeds} (skipping plots)")
+        # The parameter count must describe the model that was actually
+        # analysed (an attention-only model when --from-checkpoint points at
+        # Rung 1's checkpoint), not a throwaway probe of another family.
+        probe_model, _ = _build_model(args, seeds[0], load_weights=False)
+        n_parameters = count_parameters(probe_model)
+
+        def _on_seed(seed: int, metrics: dict[str, float], wall_clock_seconds: float) -> None:
+            _write_seed_manifest(args, seed, metrics, wall_clock_seconds, n_parameters)
+
         result = run_seeds(
             lambda s: run_single_seed(s, args),
             seeds,
@@ -1442,28 +1608,26 @@ def main() -> None:
                 "mean_ablation_effect",
                 "mean_path_patch_effect",
                 "group_path_patch_effect",
+                "source_model_seed",
             },
+            on_seed=_on_seed,
         )
-        # The parameter count must describe the model that was actually
-        # analysed (an attention-only model when --from-checkpoint points at
-        # Rung 1's checkpoint), not a throwaway probe of another family.
-        probe_model, _ = _build_model(args, seeds[0], load_weights=False)
         manifest = ResultsManifest.from_run(
             experiment="exp4_circuit_patching",
             seeds=seeds,
-            args={k: v for k, v in vars(args).items() if k != "seeds"},
+            args=_manifest_args(args),
             per_seed_metrics=result.per_seed,
             aggregate=result.aggregate,
             wall_clock_seconds=result.wall_clock_seconds,
             device=str(DEVICE),
-            n_parameters=count_parameters(probe_model),
+            n_parameters=n_parameters,
         )
-        manifest_path = resolve_manifest_path(
-            "exp4_circuit_patching",
-            Path("results") / "exp4_circuit_patching.json",
-            args.manifest_path,
-            args.quick,
-        )
+        checkpoints = [
+            provenance for seed in seeds if (provenance := _checkpoint_provenance(args, seed))
+        ]
+        if checkpoints:
+            manifest.source_provenance = {"checkpoints": checkpoints}
+        manifest_path = _resolved_manifest_path(args)
         manifest.save(manifest_path)
         logger.info(f"Saved multi-seed manifest to {manifest_path}")
         for key in result.aggregate:
@@ -1492,9 +1656,7 @@ def main() -> None:
     train_dataset, val_dataset = task_datasets(spec, args.num_train, 1024, args.seed)
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=256, shuffle=False)
-    logger.info(
-        f"Data: train={args.num_train} sequences, seq_len={seq_len} | task={task}"
-    )
+    logger.info(f"Data: train={args.num_train} sequences, seq_len={seq_len} | task={task}")
 
     n_params = sum(p.numel() for p in model.parameters())
     logger.info(f"Model parameters: {n_params:,}")
@@ -1514,9 +1676,7 @@ def main() -> None:
             gradient_clip=args.gradient_clip,
             fresh_batches_fn=fresh_batches_fn,
         )
-        logger.info(
-            f"Training done | final val acc: {history['val_acc'][-1]:.4f}"
-        )
+        logger.info(f"Training done | final val acc: {history['val_acc'][-1]:.4f}")
 
     # Induction head detection
     sample_inputs = next(iter(val_loader))[0][:8]
@@ -1543,9 +1703,7 @@ def main() -> None:
     if not induction_heads:
         logger.warning("No induction heads detected.")
 
-    probe = _run_task_probe(
-        model, task, vocab_size, seq_len, args.seed, tokens=sample_inputs
-    )
+    probe = _run_task_probe(model, task, vocab_size, seq_len, args.seed, tokens=sample_inputs)
     logger.info(
         "Dissociation probe — content mass "
         f"{probe['peak_content_mass']:.3f} vs positional mass "
@@ -1575,7 +1733,7 @@ def main() -> None:
     else:
         n_pair = min(32, val_x.size(0) // 2)
         val_batch, val_batch_answers = val_x[:n_pair], val_y[:n_pair, -1]
-        corrupted, corrupted_answers = val_x[n_pair:2 * n_pair], val_y[n_pair:2 * n_pair, -1]
+        corrupted, corrupted_answers = val_x[n_pair : 2 * n_pair], val_y[n_pair : 2 * n_pair, -1]
         read_pos = -1
 
     layers_to_patch = list(range(len(getattr(model, "blocks", []))))
@@ -1666,7 +1824,7 @@ def main() -> None:
     logger.info("Circuit Summary")
     logger.info("=" * 60)
     if induction_heads:
-        for (layer, head) in induction_heads:
+        for layer, head in induction_heads:
             logger.info(f"  Induction head: L{layer}H{head}")
     logger.info(f"  Total heads patched: {len(patching_results)}")
     if induction_heads:

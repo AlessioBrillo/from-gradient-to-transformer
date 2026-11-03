@@ -59,6 +59,14 @@ results/scratch_*.json
 # Scratch by design — nothing under it is a claim until it is pinned.
 results/remote/
 
+# Per-seed recovery manifests and the content verdict artifact. A long
+# multi-seed run writes one manifest per finished seed so a dead session
+# keeps its work; merge_manifests.py rebuilds the tracked multi-seed record
+# from them. Neither the per-seed files nor the verdict JSON is evidence, and
+# pin_remote_run.py --only names the records that are.
+results/*_seed[0-9]*.json
+results/content_verdict.json
+
 # CI / Coverage
 .coverage
 .coverage.*

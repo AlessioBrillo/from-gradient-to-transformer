@@ -17,10 +17,10 @@ What the module decides
 The **seven frozen criteria**, in the order they were frozen, evaluated per
 seed and then for the run:
 
-1. ``peak_content_mass`` >= 0.30 — some head puts a third of its attention
-   mass on the content key.
-2. ``peak_content_mass - peak_offset_mass`` >= 0.10 — and that mass beats
-   the best fixed offset.
+1. ``confirmed_content_mass`` >= 0.30 — the **confirmed head** puts a third
+   of its attention mass on the content key.
+2. ``confirmed_content_mass - peak_offset_mass`` >= 0.10 — and that mass
+   beats the best fixed offset.
 3. ``copy_accuracy`` >= 0.60 — the model copies on the copy queries.
 4. ``copy_accuracy_nonmodal`` >= 0.50 — and it copies on the queries whose
    distance is *not* the modal one, where a fixed-offset head scores ~0.
@@ -31,6 +31,16 @@ seed and then for the run:
 7. ``mean_path_patch_effect`` >= 0.20 — patching that head's direct
    contribution to the logits moves the answer with it. **This one is
    measured by exp4**, so it is read from the exp4 manifest.
+
+Criteria 1 and 2 read the **confirmed head's** content mass, exactly as the
+pre-registration's table says ("`content_mass` of the confirmed head"). They
+do not read ``peak_content_mass``, which is the strongest head on the screen
+whether or not that head was confirmed: on 2026-10-25 the two were the same
+number only because the strongest head was also the one the rule looked for.
+When no head is confirmed there is no confirmed-head mass to measure, so the
+two criteria are ``NOT MEASURED`` — the same rule criterion 6 already used
+for ablation. A fabricated 0.0 would turn "nothing was confirmed" into a
+failed measurement.
 
 The seed verdict is ``POSITIVE`` when all seven are met, ``PARTIAL`` when a
 head is confirmed but the criteria are not all met, and ``NEGATIVE``
@@ -106,10 +116,17 @@ class Criterion:
         return f"{self.metric} >= {self.threshold}"
 
 
-#: The seven criteria, frozen on 2026-10-20 and unchanged since.
+#: The seven criteria, frozen on 2026-10-20. Thresholds and order unchanged;
+#: criteria 1-2 read the confirmed head's mass (the pre-registration's
+#: wording), not the screen's peak across every head.
 CRITERIA: tuple[Criterion, ...] = (
-    Criterion("content mass", "peak_content_mass", 0.30),
-    Criterion("content beats position", "peak_content_mass", 0.10, other="peak_offset_mass"),
+    Criterion("content mass", "confirmed_content_mass", 0.30),
+    Criterion(
+        "content beats position",
+        "confirmed_content_mass",
+        0.10,
+        other="peak_offset_mass",
+    ),
     Criterion("copy accuracy", "copy_accuracy", 0.60),
     Criterion("non-modal accuracy", "copy_accuracy_nonmodal", 0.50),
     Criterion("beats fixed offset", "copy_accuracy", 0.20, other="fixed_offset_baseline"),
@@ -150,9 +167,7 @@ class SeedVerdict:
 
     @property
     def not_measured(self) -> tuple[str, ...]:
-        return tuple(
-            c.criterion.name for c in self.checks if c.status == CHECK_NOT_MEASURED
-        )
+        return tuple(c.criterion.name for c in self.checks if c.status == CHECK_NOT_MEASURED)
 
     @property
     def failed(self) -> tuple[str, ...]:
@@ -237,9 +252,7 @@ def check_criterion(
     return Check(criterion, value, status)
 
 
-def _exp4_criterion_not_measured(
-    criterion: Criterion, metrics: Mapping[str, Any]
-) -> bool:
+def _exp4_criterion_not_measured(criterion: Criterion, metrics: Mapping[str, Any]) -> bool:
     """True when exp4 recorded that this criterion was not measured.
 
     Path patching needs a confirmed head to patch. The new manifests write
@@ -254,6 +267,13 @@ def _exp4_criterion_not_measured(
     if measured is not None:
         return measured == 0.0
     return _read_metric(metrics, "total_induction_heads") == 0.0
+
+
+#: The exp1 metrics that only exist when a head was confirmed. With no
+#: confirmed head there is nothing to measure, so these are ``NOT MEASURED``
+#: rather than a failed 0.0 — the same rule exp4 already applied to path
+#: patching.
+HEAD_DEPENDENT_METRICS = frozenset({"confirmed_content_mass", "mean_copy_ablation_drop"})
 
 
 def evaluate_seed(
@@ -275,19 +295,17 @@ def evaluate_seed(
             confirmed = int(float(raw))
         except (TypeError, ValueError):
             confirmed = None
-    # The head count is the input that decides whether criterion 6 is
-    # measurable at all. Without it, a fabricated 0.0 would read as "no head
-    # confirmed" and the run would be reported as a negative it never
-    # measured; the seed is incomplete instead.
+    # The head count is the input that decides whether the head-level
+    # criteria are measurable at all. Without it, a fabricated 0.0 would read
+    # as "no head confirmed" and the run would be reported as a negative it
+    # never measured; the seed is incomplete instead.
     note = ""
     if confirmed is None:
         note = "the exp1 manifest does not carry a usable total_induction_heads"
     checks: list[Check] = []
     for criterion in criteria:
         if criterion.source == SOURCE_EXP4:
-            if exp4_metrics is None or _exp4_criterion_not_measured(
-                criterion, exp4_metrics
-            ):
+            if exp4_metrics is None or _exp4_criterion_not_measured(criterion, exp4_metrics):
                 checks.append(
                     Check(
                         criterion,
@@ -298,16 +316,14 @@ def evaluate_seed(
                 continue
             checks.append(check_criterion(criterion, exp4_metrics))
             continue
-        # Criterion 6 ablates a *confirmed* head. With none confirmed there is
-        # nothing to remove, so the mean is undefined — not a measured zero.
-        # This is the same distinction exp4 draws for path patching.
-        if criterion.metric == "mean_copy_ablation_drop" and confirmed in (None, 0):
+        # A head-level criterion needs a confirmed head. With none confirmed
+        # there is nothing to measure — not a measured zero. This is the same
+        # distinction exp4 draws for path patching.
+        if criterion.metric in HEAD_DEPENDENT_METRICS and confirmed == 0:
             checks.append(Check(criterion, None, CHECK_NOT_MEASURED))
             continue
         checks.append(check_criterion(criterion, exp1_metrics))
-    return SeedVerdict(
-        seed=seed, checks=tuple(checks), confirmed_heads=confirmed, note=note
-    )
+    return SeedVerdict(seed=seed, checks=tuple(checks), confirmed_heads=confirmed, note=note)
 
 
 def load_manifest(path: str | Path) -> dict[str, Any]:
@@ -342,10 +358,7 @@ def _manifest_seed_problem(manifest: Mapping[str, Any], label: str) -> str:
     if not isinstance(seeds, list) or not isinstance(rows, list):
         return f"{label} does not carry seed and metric lists"
     if len(seeds) != len(rows):
-        return (
-            f"{label} declares {len(seeds)} seed(s) but carries "
-            f"{len(rows)} metric row(s)"
-        )
+        return f"{label} declares {len(seeds)} seed(s) but carries {len(rows)} metric row(s)"
     ids: list[int] = []
     for seed in seeds:
         # ``int()`` would coerce 1.5, True and "1" into the pre-registered
@@ -355,6 +368,152 @@ def _manifest_seed_problem(manifest: Mapping[str, Any], label: str) -> str:
         ids.append(seed)
     if len(set(ids)) != len(ids):
         return f"{label} carries duplicate seed(s)"
+    return ""
+
+
+def _manifest_arg(manifest: Mapping[str, Any], name: str) -> Any:
+    """One value from a manifest's recorded arguments, or ``None``."""
+    args = manifest.get("args")
+    if not isinstance(args, Mapping):
+        return None
+    return args.get(name)
+
+
+def _same_commit(left: str, right: str) -> bool:
+    """True when two git SHAs name the same commit, allowing abbreviations."""
+    left, right = left.strip(), right.strip()
+    return bool(left and right) and (
+        left == right or left.startswith(right) or right.startswith(left)
+    )
+
+
+def _provenance_problem(exp1: Mapping[str, Any], exp4: Optional[Mapping[str, Any]]) -> str:
+    """Why these manifests are not one pre-registered run, or ``""``.
+
+    The seven criteria answer the content task only. A periodic manifest, a
+    manifest recorded on a dirty tree, or an exp4 cascade run against a
+    different commit did not measure the same thing, and the verdict must
+    refuse rather than attach the word ``NEGATIVE`` to it.
+    """
+    task = _manifest_arg(exp1, "task")
+    if task is None:
+        return (
+            "the exp1 manifest does not declare its task; the seven criteria "
+            "are the variable-distance task's"
+        )
+    if task != "variable":
+        return (
+            f"the exp1 manifest is the {task!r} task, not 'variable' — its "
+            "numbers answer the periodic question"
+        )
+    if exp1.get("git_dirty") is True:
+        return (
+            "the exp1 manifest was recorded with a dirty working tree; its "
+            "numbers do not correspond to a committed instrument"
+        )
+    if exp4 is None:
+        return ""
+    source_task = _manifest_arg(exp4, "source_task")
+    if source_task is not None and source_task != task:
+        return (
+            f"exp4 analysed the {source_task!r} task, not {task!r}; the "
+            "cascade and the run are not the same experiment"
+        )
+    if exp4.get("git_dirty") is True:
+        return (
+            "the exp4 manifest was recorded with a dirty working tree; its "
+            "causal measurement does not correspond to a committed instrument"
+        )
+    exp1_sha = exp1.get("git_sha")
+    exp4_sha = exp4.get("git_sha")
+    if (
+        exp1_sha
+        and exp4_sha
+        and exp1_sha != "unknown"
+        and exp4_sha != "unknown"
+        and not _same_commit(str(exp1_sha), str(exp4_sha))
+    ):
+        return (
+            f"exp1 was run at {exp1_sha} and exp4 at {exp4_sha}; a cascade "
+            "from a different commit is not the pre-registered instrument"
+        )
+    return ""
+
+
+def _cascade_problem(
+    seed: int,
+    exp1_row: Mapping[str, Any],
+    exp4_row: Optional[Mapping[str, Any]],
+    exp1: Optional[Mapping[str, Any]] = None,
+    exp4: Optional[Mapping[str, Any]] = None,
+) -> str:
+    """Why exp4 did not analyse the model this exp1 seed trained, or ``""``.
+
+    Four independent facts have to line up: the checkpoint must come from
+    the same model seed, it must be the model's final epoch (a rolling
+    checkpoint can be up to ``--checkpoint-every`` epochs stale), the
+    checkpoint must have been written by the same commit exp1 ran, and the
+    counterfactual must be the pre-registered minimal pair. A mismatch is a
+    cascade about a different model or a different intervention.
+    """
+    if exp4_row is None:
+        return ""
+    source_seed = _read_metric(exp4_row, "source_model_seed")
+    if source_seed is not None and int(source_seed) >= 0 and int(source_seed) != seed:
+        return f"seed {seed}: exp4 analysed model seed {int(source_seed)}, not {seed}"
+    minimal_pair = _read_metric(exp4_row, "counterfactual_minimal_pair")
+    if minimal_pair is not None and minimal_pair != 1.0:
+        return (
+            f"seed {seed}: exp4 used a disjoint counterfactual, not the pre-registered minimal pair"
+        )
+    exp4_epoch = _read_metric(exp4_row, "checkpoint_epoch")
+    if exp4_epoch is not None and exp4_epoch < 0:
+        return (
+            f"seed {seed}: exp4 did not analyse a checkpoint "
+            "(checkpoint_epoch = -1) — it trained its own model, so this is "
+            "not the cascade"
+        )
+    exp1_epochs = _read_metric(exp1_row, "epochs_run")
+    if exp1_epochs is not None and exp4_epoch is not None and exp4_epoch >= 0:
+        if int(exp1_epochs) != int(exp4_epoch):
+            return (
+                f"seed {seed}: exp4 analysed checkpoint epoch "
+                f"{int(exp4_epoch)} but exp1 ran {int(exp1_epochs)} epochs; "
+                "the cascade is not about the final model"
+            )
+    provenance = (exp4 or {}).get("source_provenance")
+    if isinstance(provenance, Mapping):
+        exp1_sha = (exp1 or {}).get("git_sha")
+        checkpoints = provenance.get("checkpoints", [])
+        if isinstance(checkpoints, list):
+            for checkpoint in checkpoints:
+                if not isinstance(checkpoint, Mapping):
+                    continue
+                try:
+                    checkpoint_seed = int(checkpoint.get("seed", -1))
+                except (TypeError, ValueError):
+                    continue
+                if checkpoint_seed != seed:
+                    continue
+                if checkpoint.get("git_dirty") is True:
+                    return (
+                        f"seed {seed}: the checkpoint was trained with a dirty "
+                        "working tree — its weights do not correspond to a "
+                        "committed instrument"
+                    )
+                checkpoint_sha = checkpoint.get("git_sha")
+                if (
+                    checkpoint_sha
+                    and checkpoint_sha != "unknown"
+                    and exp1_sha
+                    and exp1_sha != "unknown"
+                    and not _same_commit(str(checkpoint_sha), str(exp1_sha))
+                ):
+                    return (
+                        f"seed {seed}: the checkpoint was trained at "
+                        f"{checkpoint_sha} but exp1 ran at {exp1_sha}; the "
+                        "cascade measured weights from a different instrument"
+                    )
     return ""
 
 
@@ -417,9 +576,7 @@ def run_verdict(
         exp4_rows = per_seed_metrics(exp4)
     seeds: list[SeedVerdict] = []
     for seed in sorted(exp1_rows):
-        seeds.append(
-            evaluate_seed(seed, exp1_rows[seed], exp4_rows.get(seed), criteria)
-        )
+        seeds.append(evaluate_seed(seed, exp1_rows[seed], exp4_rows.get(seed), criteria))
     if not exp1_seeds:
         return RunVerdict(
             label="run",
@@ -427,6 +584,36 @@ def run_verdict(
             status=STATUS_INCOMPLETE,
             verdict="",
             note="the exp1 manifest carries no seeds",
+        )
+    provenance = _provenance_problem(exp1, exp4)
+    if provenance:
+        return RunVerdict(
+            label="run",
+            seeds=tuple(seeds),
+            status=STATUS_INCOMPLETE,
+            verdict="",
+            note=provenance,
+        )
+    cascade_problems = [
+        problem
+        for seed in seeds
+        if (
+            problem := _cascade_problem(
+                seed.seed,
+                exp1_rows[seed.seed],
+                exp4_rows.get(seed.seed),
+                exp1,
+                exp4,
+            )
+        )
+    ]
+    if cascade_problems:
+        return RunVerdict(
+            label="run",
+            seeds=tuple(seeds),
+            status=STATUS_INCOMPLETE,
+            verdict="",
+            note="; ".join(cascade_problems),
         )
     expected = set(expected_seeds)
     if set(exp1_seeds) != expected:
@@ -449,15 +636,11 @@ def run_verdict(
         )
     incomplete = [s for s in seeds if not s.complete]
     if incomplete:
-        missing_measurements = sorted(
-            {name for s in incomplete for name in s.missing}
-        )
+        missing_measurements = sorted({name for s in incomplete for name in s.missing})
         notes = sorted({s.note for s in incomplete if s.note})
         parts = []
         if missing_measurements:
-            parts.append(
-                f"missing measurements: {', '.join(missing_measurements)}"
-            )
+            parts.append(f"missing measurements: {', '.join(missing_measurements)}")
         if notes:
             parts.append("; ".join(notes))
         return RunVerdict(
@@ -513,11 +696,171 @@ def format_seed(seed: SeedVerdict) -> str:
     return " ".join(parts)
 
 
+def _row_metric(row: Mapping[str, Any], key: str) -> Optional[float]:
+    """One numeric metric from a per-seed manifest row, or ``None``."""
+    return _read_metric(row, key)
+
+
+def _numeric_fields(row: Mapping[str, Any], keys: Sequence[str]) -> dict[str, float]:
+    """The subset of ``keys`` the row carries as numbers, in order."""
+    fields: dict[str, float] = {}
+    for key in keys:
+        value = _row_metric(row, key)
+        if value is not None:
+            fields[key] = value
+    return fields
+
+
+#: The exp1 mechanism numbers printed next to the verdict. They are the
+#: secondary circuit report, not the seven criteria.
+MECHANISM_KEYS = (
+    "peak_content_mass",
+    "peak_offset_mass",
+    "k_composition_score",
+    "content_mass_total",
+    "content_chance_mass",
+    "content_mass_excess",
+    "content_mass_ratio",
+    "content_mass_top_share",
+    "content_mass_heads_for_80pct",
+    "n_candidate_heads",
+    "exploratory_group_size",
+    "group_ablation_drop",
+    "max_single_ablation_drop",
+    "exploratory_group_ablation_drop",
+    "dla_content_minus_offset",
+    "dla_top_head_share",
+    "dla_positive_share",
+)
+
+#: The exp4 cascade numbers printed next to the verdict.
+CASCADE_KEYS = (
+    "mean_path_patch_effect",
+    "group_path_patch_effect",
+    "mean_ablation_effect",
+    "mean_activation_recovery",
+    "checkpoint_epoch",
+    "source_model_seed",
+)
+
+
+def _is_distributed(row: Mapping[str, Any]) -> bool:
+    """The pre-registered ``distributed`` classification, read from the row.
+
+    The same two conditions ``copy_circuit.classify_mechanism`` uses: the
+    candidate group carries the copy (>= 0.20) and no single member does
+    (<= 0.10). Requiring the single-head number to be present keeps an old
+    manifest with no measured drop from being read as a zero.
+    """
+    candidates = _row_metric(row, "n_candidate_heads")
+    group = _row_metric(row, "group_ablation_drop")
+    single = _row_metric(row, "max_single_ablation_drop")
+    return (
+        candidates is not None
+        and candidates > 0
+        and group is not None
+        and group >= 0.20
+        and single is not None
+        and single <= 0.10
+    )
+
+
+def _negative_lines(
+    result: RunVerdict,
+    exp1_rows: Mapping[int, Mapping[str, Any]],
+    exp4_rows: Mapping[int, Mapping[str, Any]],
+) -> list[str]:
+    """The decision table's NEGATIVE sentences, with the secondary report.
+
+    The frozen rule has two negatives: "no head is confirmed" and "the copy
+    is high but the content mass is low" (the detector's blind spot). The
+    2026-10-25 addendum added a third measured case that is still the second
+    negative: the per-head screen can pass and the K-composition confirmation
+    can still fail on a distributed circuit. The report names which one
+    happened; it does not change the label.
+    """
+    confirmed_zero = {s.seed for s in result.seeds if (s.confirmed_heads or 0) == 0}
+    high_copy = {
+        seed
+        for seed in confirmed_zero
+        if (_row_metric(exp1_rows.get(seed, {}), "copy_accuracy") or 0.0) >= 0.60
+    }
+    if not high_copy:
+        return [
+            "No content-based induction head at this budget. Report it as a "
+            "negative. The budget is not extended after the fact."
+        ]
+
+    seeds = ", ".join(str(s) for s in sorted(high_copy))
+    lines = [
+        "NEGATIVE (unexplained): the model solves the task by a mechanism the "
+        f"detector does not identify (seed(s) {seeds}). Copy accuracy is high "
+        "but no head is confirmed. Report it as a negative; the budget is not "
+        "extended after the fact."
+    ]
+    distributed = sorted(seed for seed in high_copy if _is_distributed(exp1_rows.get(seed, {})))
+    if distributed:
+        group_drops = [_row_metric(exp1_rows[seed], "group_ablation_drop") for seed in distributed]
+        single_drops = [
+            _row_metric(exp1_rows[seed], "max_single_ablation_drop") for seed in distributed
+        ]
+        group_values = [v for v in group_drops if v is not None]
+        single_values = [v for v in single_drops if v is not None]
+        lines.append(
+            "The mechanism report classifies the copy as distributed: the "
+            "candidate group's ablation removes "
+            f"{min(group_values):.4f}–{max(group_values):.4f} of the copy "
+            "accuracy, while no single head removes more than "
+            f"{max(single_values):.4f}. The per-head rule confirms no head "
+            "because the K-composition confirmation does not fire; that is "
+            "the detector's granularity, not the absence of a copy circuit."
+        )
+        group_patch = [
+            _row_metric(exp4_rows.get(seed, {}), "group_path_patch_effect") for seed in distributed
+        ]
+        patch_values = [v for v in group_patch if v is not None]
+        if patch_values:
+            lines.append(
+                "The cascade's group path-patch effect is "
+                f"{min(patch_values):.4f}–{max(patch_values):.4f}."
+            )
+        lines.append(
+            "This is a pre-specified secondary finding, not a change to the "
+            "verdict: the seven criteria still decide, and the word "
+            "'induction head' is not used."
+        )
+    else:
+        low_content = all(
+            (_row_metric(exp1_rows.get(seed, {}), "peak_content_mass") or 0.0) < 0.30
+            for seed in high_copy
+        )
+        if low_content:
+            lines.append(
+                "Copy accuracy is high but no head passes the content-mass "
+                "screen. The mechanism report says which heads carry the copy."
+            )
+        else:
+            lines.append(
+                "A per-head candidate passes the content screen but the "
+                "K-composition rule confirms no head. The mechanism report "
+                "says whether the copy is distributed or undetermined."
+            )
+    return lines
+
+
 def format_report(
     result: RunVerdict,
     exp1_rows: Mapping[int, Mapping[str, Any]],
+    exp4_rows: Optional[Mapping[int, Mapping[str, Any]]] = None,
 ) -> str:
-    """The full, printable report of a run."""
+    """The full, printable report of a run.
+
+    ``exp4_rows`` is optional so a caller with only the exp1 manifest still
+    gets a report; when present, the cascade's group path-patch effect and
+    checkpoint provenance are printed next to the verdict (they are the
+    causal half of the secondary mechanism report).
+    """
+    exp4_rows = exp4_rows or {}
     lines: list[str] = []
     for seed in result.seeds:
         lines.append(format_seed(seed))
@@ -532,24 +875,8 @@ def format_report(
             lines.append(f"    mechanism    {label} (code {code})")
         # Aggregate mechanism numbers — printed next to the verdict so the
         # report is self-contained and no one has to open the manifest.
-        mech_keys = [
-            "content_mass_total",
-            "content_chance_mass",
-            "content_mass_excess",
-            "content_mass_ratio",
-            "content_mass_top_share",
-            "content_mass_heads_for_80pct",
-            "n_candidate_heads",
-            "exploratory_group_size",
-            "group_ablation_drop",
-            "max_single_ablation_drop",
-            "exploratory_group_ablation_drop",
-            "dla_content_minus_offset",
-            "dla_top_head_share",
-            "dla_positive_share",
-        ]
         mech_lines = []
-        for key in mech_keys:
+        for key in MECHANISM_KEYS:
             if key in row:
                 try:
                     mech_lines.append(f"    mechanism {key} = {float(row[key]):.4f}")
@@ -557,6 +884,14 @@ def format_report(
                     pass
         if mech_lines:
             lines.extend(mech_lines)
+        cascade_row = exp4_rows.get(seed.seed, {})
+        cascade_lines = []
+        for key in CASCADE_KEYS:
+            value = _row_metric(cascade_row, key)
+            if value is not None:
+                cascade_lines.append(f"    cascade      {key} = {value:.4f}")
+        if cascade_lines:
+            lines.extend(cascade_lines)
     lines.append("")
     if not result.complete:
         if result.note:
@@ -582,9 +917,7 @@ def format_report(
         )
     elif result.verdict == VERDICT_PARTIAL:
         failed = sorted({name for s in result.seeds for name in s.failed})
-        not_measured = sorted(
-            {name for s in result.seeds for name in s.not_measured}
-        )
+        not_measured = sorted({name for s in result.seeds for name in s.not_measured})
         detail = (
             f"Failing criteria: {', '.join(failed)}."
             if failed
@@ -596,40 +929,84 @@ def format_report(
             "Report the missing criterion, do not re-run."
         )
     else:
-        rows = exp1_rows
-        no_head = bool(rows) and all(
-            int(float(r.get("total_induction_heads", 0.0))) == 0
-            for r in rows.values()
-        )
-        high_copy = bool(rows) and all(
-            float(r.get("copy_accuracy", 0.0)) >= 0.60 for r in rows.values()
-        )
-        low_content = bool(rows) and all(
-            float(r.get("peak_content_mass", 0.0)) < 0.30 for r in rows.values()
-        )
-        if no_head and high_copy and low_content:
-            lines.append(
-                "NEGATIVE (unexplained): the model solves the task by a "
-                "mechanism the detector does not identify. Copy accuracy is "
-                "high but no head passes the content-mass screen. Report it "
-                "as a negative; the budget is not extended after the fact."
-            )
-        else:
-            lines.append(
-                "No content-based induction head at this budget. Report it as "
-                "a negative. The budget is not extended after the fact."
-            )
+        lines.extend(_negative_lines(result, exp1_rows, exp4_rows))
     return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# The saved artifact
+# ---------------------------------------------------------------------------
+VERDICT_SCHEMA = "content-verdict/1"
+
+
+def verdict_payload(
+    result: RunVerdict,
+    exp1_rows: Optional[Mapping[int, Mapping[str, Any]]] = None,
+    exp4_rows: Optional[Mapping[int, Mapping[str, Any]]] = None,
+    task: Optional[str] = None,
+    sources: Optional[Mapping[str, Optional[str]]] = None,
+) -> dict[str, Any]:
+    """The verdict as a JSON-serialisable record.
+
+    This is the artifact the GPU session saves next to the manifests. It is
+    *not* a ``ResultsManifest`` and must not be pinned as one: it records the
+    decision, the per-seed checks and the secondary mechanism numbers, all of
+    which are re-derivable from the manifests named in ``sources``.
+    """
+    exp1_rows = exp1_rows or {}
+    exp4_rows = exp4_rows or {}
+    return {
+        "schema": VERDICT_SCHEMA,
+        "task": task,
+        "status": result.status,
+        "verdict": result.verdict,
+        "note": result.note,
+        "sources": dict(sources or {}),
+        "seeds": [
+            {
+                "seed": seed.seed,
+                "verdict": seed.verdict,
+                "confirmed_heads": seed.confirmed_heads,
+                "note": seed.note,
+                "missing": list(seed.missing),
+                "not_measured": list(seed.not_measured),
+                "failed": list(seed.failed),
+                "checks": [
+                    {
+                        "name": check.criterion.name,
+                        "metric": check.criterion.metric,
+                        "expression": check.criterion.expression,
+                        "value": check.value,
+                        "status": check.status,
+                    }
+                    for check in seed.checks
+                ],
+                "mechanism": _numeric_fields(exp1_rows.get(seed.seed, {}), MECHANISM_KEYS),
+                "cascade": _numeric_fields(exp4_rows.get(seed.seed, {}), CASCADE_KEYS),
+            }
+            for seed in result.seeds
+        ],
+    }
+
+
+def write_verdict_json(payload: Mapping[str, Any], path: str | Path) -> Path:
+    """Write the verdict payload to ``path``, creating its directory."""
+    out = Path(path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with open(out, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2)
+        handle.write("\n")
+    return out
 
 
 # ---------------------------------------------------------------------------
 # The CLI
 # ---------------------------------------------------------------------------
 def main(argv: Optional[Sequence[str]] = None) -> int:
-    """Print the verdict of a run.
+    """Print (and optionally save) the verdict of a run.
 
     ``python -m src.experiments.content_verdict --exp1 results/induction_content.json
-    --exp4 results/exp4_content.json``
+    --exp4 results/exp4_content.json --output results/content_verdict.json``
     """
     parser = argparse.ArgumentParser(
         description="The pre-registered verdict of the content-based induction task."
@@ -641,10 +1018,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         help="the exp4 manifest of the cascade (criterion 7 lives there)",
     )
     parser.add_argument("--json", action="store_true", help="print the report as JSON")
+    parser.add_argument(
+        "--output",
+        default=None,
+        help="also write the JSON payload here (e.g. results/content_verdict.json)",
+    )
     args = parser.parse_args(argv)
 
     exp1 = load_manifest(args.exp1)
-    task = exp1.get("args", {}).get("task")
+    task = _manifest_arg(exp1, "task")
     exp4 = None
     if args.exp4:
         if Path(args.exp4).exists():
@@ -658,36 +1040,19 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     result = run_verdict(exp1, exp4)
     exp1_rows = per_seed_metrics(exp1)
+    exp4_rows = per_seed_metrics(exp4) if exp4 is not None else {}
+    payload = verdict_payload(
+        result,
+        exp1_rows,
+        exp4_rows,
+        task,
+        {"exp1": args.exp1, "exp4": args.exp4},
+    )
+    if args.output:
+        written = write_verdict_json(payload, args.output)
+        print(f"verdict written to {written}", file=sys.stderr)
 
     if args.json:
-        payload = {
-            "status": result.status,
-            "verdict": result.verdict,
-            "note": result.note,
-            "task": task,
-            "seeds": [
-                {
-                    "seed": s.seed,
-                    "verdict": s.verdict,
-                    "confirmed_heads": s.confirmed_heads,
-                    "note": s.note,
-                    "missing": list(s.missing),
-                    "not_measured": list(s.not_measured),
-                    "failed": list(s.failed),
-                    "checks": [
-                        {
-                            "name": c.criterion.name,
-                            "metric": c.criterion.metric,
-                            "expression": c.criterion.expression,
-                            "value": c.value,
-                            "status": c.status,
-                        }
-                        for c in s.checks
-                    ],
-                }
-                for s in result.seeds
-            ],
-        }
         print(json.dumps(payload, indent=2))
         return 0 if result.complete else 1
 
@@ -698,7 +1063,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             "not the content-based run, and its numbers answer a different "
             "question."
         )
-    print(format_report(result, exp1_rows))
+    print(format_report(result, exp1_rows, exp4_rows))
     return 0 if result.complete else 1
 
 

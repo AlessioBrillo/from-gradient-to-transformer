@@ -8,6 +8,12 @@ continuity point a seamless resume needs: a resumed run draws the same batches
 it would have drawn had it never stopped. Falsified per-experiment by the
 checkpoint-resume tests (resume must reproduce an uninterrupted run
 bit-for-bit).
+
+Each checkpoint also records the commit that wrote it. The content-task
+cascade loads exp1's checkpoint in exp4, potentially in a later session on a
+different commit; without this field the cascade can only check the epoch and
+the architecture, not that the weights came from the pre-registered
+instrument.
 """
 
 from __future__ import annotations
@@ -16,6 +22,8 @@ from pathlib import Path
 from typing import Any, Optional
 
 import torch
+
+from src.results import git_provenance
 
 
 def checkpoint_path_for_seed(checkpoint_dir: str, prefix: str, seed: int) -> Path:
@@ -65,11 +73,21 @@ def save_training_checkpoint(
     history: dict[str, Any],
     rng_state: Any,
     arch: Optional[dict[str, Any]] = None,
+    seed: Optional[int] = None,
+    task: Optional[str] = None,
 ) -> None:
     """Atomically write a resume checkpoint: a kill mid-save leaves the *old*
-    valid checkpoint, not a truncated one."""
+    valid checkpoint, not a truncated one.
+
+    ``seed`` and ``task`` are the facts about *what* was trained that the
+    weights alone cannot say. The content-task cascade (exp4) checks them: a
+    directory of per-seed checkpoints can be pointed at with the wrong
+    ``--seeds``, and a checkpoint of the periodic task has the same shapes as
+    one of the variable task.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
+    git_sha, git_dirty = git_provenance()
     payload: dict[str, Any] = {
         "epoch": epoch,
         "model": model.state_dict(),
@@ -77,7 +95,13 @@ def save_training_checkpoint(
         "scheduler": scheduler.state_dict(),
         "rng_state": rng_state,
         "history": history,
+        "git_sha": git_sha,
+        "git_dirty": git_dirty,
     }
+    if seed is not None:
+        payload["seed"] = int(seed)
+    if task is not None:
+        payload["task"] = task
     if arch is not None:
         payload["arch"] = arch
     torch.save(payload, tmp)

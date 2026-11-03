@@ -73,9 +73,7 @@ def init_wandb(
         return None
 
 
-def log_wandb_metrics(
-    run: Any, metrics: dict[str, float], step: int | None = None
-) -> None:
+def log_wandb_metrics(run: Any, metrics: dict[str, float], step: int | None = None) -> None:
     """Log metrics to W&B run if available."""
     wandb = _get_wandb()
     if not wandb or run is None:
@@ -87,9 +85,7 @@ def log_wandb_metrics(
         logger.warning(f"Failed to log metrics to W&B: {e}")
 
 
-def log_wandb_artifact(
-    run: Any, filepath: str, name: str, type_: str = "model"
-) -> None:
+def log_wandb_artifact(run: Any, filepath: str, name: str, type_: str = "model") -> None:
     """Log file as W&B artifact if available."""
     wandb = _get_wandb()
     if not wandb or run is None:
@@ -138,6 +134,7 @@ def run_seeds(
     seeds: Sequence[int],
     *,
     optional_keys: Collection[str] = (),
+    on_seed: Callable[[int, dict[str, float], float], None] | None = None,
 ) -> SeedAggregate:
     """Run `fn(seed)` once per seed and aggregate the returned metric dicts.
 
@@ -155,6 +152,13 @@ def run_seeds(
     source of truth. A key outside ``optional_keys`` that a seed drops is
     still an error.
 
+    ``on_seed`` is called with ``(seed, metrics, wall_clock_seconds)`` as
+    soon as that seed finishes, *before* the next one starts. A long run uses
+    it to write a per-seed manifest, so a session that dies before the last
+    seed still leaves the completed seeds recoverable. An exception from
+    ``on_seed`` propagates: a broken recovery artifact is a bug, not a
+    logging inconvenience.
+
     Raises:
         ValueError: if `seeds` is empty, or if seeds disagree on which
             required metric keys they report.
@@ -166,8 +170,11 @@ def run_seeds(
     start = time.monotonic()
     for seed in seeds:
         logger.info(f"=== seed {seed} ===")
+        seed_start = time.monotonic()
         metrics = fn(seed)
         per_seed.append(metrics)
+        if on_seed is not None:
+            on_seed(seed, metrics, time.monotonic() - seed_start)
     wall_clock = time.monotonic() - start
 
     optional = set(optional_keys)

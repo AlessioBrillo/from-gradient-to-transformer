@@ -254,10 +254,12 @@ reproduce-induction-content:
 # The verdict of issue #200, computed by the tested module (not by a
 # notebook cell): the seven frozen criteria, joined across the exp1 and
 # exp4 manifests. The exp4 manifest is optional — without it the causal
-# criterion is *not measured* and the run says so.
+# criterion is *not measured* and the run says so. The JSON artifact is
+# saved next to the manifests; it is not a ResultsManifest and is therefore
+# never pinned as one.
 content-verdict:
 	@echo "=== The content task's verdict (the seven pre-registered criteria) ==="
-	uv run python -m src.experiments.content_verdict --exp1 results/induction_content.json --exp4 results/exp4_content.json
+	uv run python -m src.experiments.content_verdict --exp1 results/induction_content.json --exp4 results/exp4_content.json --output results/content_verdict.json
 
 # --- Retune A/B (Micro-Phase 89, Row 2) ---
 # Frozen 500-step arms, seed 0, warmup 100, probe manifests only.
