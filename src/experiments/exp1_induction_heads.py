@@ -68,9 +68,14 @@ from src.experiments.induction_tasks import (
     fixed_offset_baseline,
     task_datasets,
 )
-from src.experiments.runner import parse_seeds, run_seeds
+from src.experiments.runner import aggregate_metrics, parse_seeds, run_seeds
 from src.reproducibility import set_seed
-from src.results import ResultsManifest, count_parameters, resolve_manifest_path
+from src.results import (
+    ResultsManifest,
+    count_parameters,
+    per_seed_manifest_path,
+    resolve_manifest_path,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -169,9 +174,7 @@ def make_repeated_token_data(
     # periodic task and the variable-distance task are produced by the same
     # code path and the periodic data stays bit-for-bit what every manifest
     # in this repository was written against.
-    spec = TaskSpec.periodic(
-        vocab_size=vocab_size, seq_len=seq_len, prefix_ratio=prefix_ratio
-    )
+    spec = TaskSpec.periodic(vocab_size=vocab_size, seq_len=seq_len, prefix_ratio=prefix_ratio)
     return task_datasets(spec, num_train, num_val, seed)
 
 
@@ -417,18 +420,14 @@ def analyze_copy_metrics(
                 sel = mask & (dist == d)
                 key = int(d)
                 per_distance_total[key] = per_distance_total.get(key, 0) + int(sel.sum())
-                per_distance_correct[key] = per_distance_correct.get(key, 0) + int(
-                    ok[sel].sum()
-                )
+                per_distance_correct[key] = per_distance_correct.get(key, 0) + int(ok[sel].sum())
             token_chunks.append(full.numpy())
             mask_chunks.append(geom["mask"])
 
     total = sum(per_distance_total.values())
     correct = sum(per_distance_correct.values())
     modal = (
-        max(per_distance_total, key=lambda k: per_distance_total[k])
-        if per_distance_total
-        else -1
+        max(per_distance_total, key=lambda k: per_distance_total[k]) if per_distance_total else -1
     )
     modal_total = per_distance_total.get(modal, 0)
     modal_correct = per_distance_correct.get(modal, 0)
@@ -437,9 +436,7 @@ def analyze_copy_metrics(
 
     baseline = {"best_offset": -1, "best_accuracy": 0.0}
     if token_chunks:
-        baseline = fixed_offset_baseline(
-            np.concatenate(token_chunks), np.concatenate(mask_chunks)
-        )
+        baseline = fixed_offset_baseline(np.concatenate(token_chunks), np.concatenate(mask_chunks))
 
     return {
         "copy_accuracy": float(correct / total) if total else 0.0,
@@ -451,9 +448,7 @@ def analyze_copy_metrics(
         "n_copy_queries": float(total),
         "n_distances": float(len(per_distance_total)),
         "modal_distance": float(modal),
-        "overall_accuracy": (
-            float(overall_correct / overall_total) if overall_total else 0.0
-        ),
+        "overall_accuracy": (float(overall_correct / overall_total) if overall_total else 0.0),
     }
 
 
@@ -529,9 +524,7 @@ def compute_attention_entropy(
     masses = head_masses(patterns, tokens, prefix_len, task=task)
     out = {"entropy": entropy}
     for name in ("induction", "duplicate", "content", "prev_token"):
-        out[f"{name}_mass"] = [
-            float(layer.max()) if len(layer) else 0.0 for layer in masses[name]
-        ]
+        out[f"{name}_mass"] = [float(layer.max()) if len(layer) else 0.0 for layer in masses[name]]
     return out
 
 
@@ -791,6 +784,8 @@ def train_model(
                 history,
                 torch.random.get_rng_state(),
                 arch=architecture_metadata(model),
+                seed=seed,
+                task=task,
             )
             logger.info(f"Checkpoint saved: {ckpt_path} (epoch {epoch + 1})")
 
@@ -815,6 +810,8 @@ def train_model(
                         history,
                         torch.random.get_rng_state(),
                         arch=architecture_metadata(model),
+                        seed=seed,
+                        task=task,
                     )
                     logger.info(f"Checkpoint saved at the confirmation point: {ckpt_path}")
                 logger.info(
@@ -1304,6 +1301,31 @@ def _run_task_probe(
     )
 
 
+def _confirmed_content_mass(report, induction_heads: list) -> Optional[float]:
+    """The strongest **confirmed** head's mass on the content key.
+
+    Criterion 1 is existential — "some head puts a third of its attention
+    mass on the content key" — so when more than one head is confirmed the
+    claim is carried by the strongest of them. ``peak_content_mass`` is not
+    this number: it is the best head on the *screen*, confirmed or not. With
+    no confirmed head there is nothing to measure, and the metric is omitted
+    rather than written as a fabricated 0.0 (the verdict then reports the
+    criterion as NOT MEASURED).
+    """
+    if report is None or not induction_heads:
+        return None
+    masses = report.masses.get("content", [])
+    values: list[float] = []
+    for layer_idx, heads in enumerate(induction_heads):
+        if layer_idx >= len(masses):
+            continue
+        layer = masses[layer_idx]
+        for head_idx in heads:
+            if head_idx < len(layer):
+                values.append(float(layer[head_idx].max()))
+    return max(values) if values else None
+
+
 def _headline_metrics(
     history: dict,
     induction_heads: list,
@@ -1359,9 +1381,7 @@ def _headline_metrics(
         "peak_induction_mass": peak_induction,
         "peak_prev_token_mass": peak_prev_token,
         "peak_content_mass": float(report.peak("content") if report is not None else 0.0),
-        "peak_offset_mass": float(
-            report.peak_offset_mass if report is not None else 0.0
-        ),
+        "peak_offset_mass": float(report.peak_offset_mass if report is not None else 0.0),
         "k_composition_score": float(diagnosis["step2_k_composition"]),
         "l0_duplicate_head_mass": float(max(diagnosis["step1_l0_duplicate_mass"] or [0.0])),
         "confirmed_epoch": float(history.get("confirmed_epoch", -1.0)),
@@ -1382,6 +1402,12 @@ def _headline_metrics(
         "n_copy_queries": float(stats.get("n_copy_queries", 0.0)),
         "n_copy_distances": float(stats.get("n_distances", 0.0)),
     }
+    # Only a confirmed head has a confirmed-head mass. The key is omitted
+    # (not zero) when none is confirmed, so the verdict can tell "nothing was
+    # confirmed" from "the measurement was zero".
+    confirmed_content = _confirmed_content_mass(report, induction_heads)
+    if confirmed_content is not None:
+        metrics["confirmed_content_mass"] = confirmed_content
     return metrics
 
 
@@ -1443,13 +1469,9 @@ def _circuit_report(
     for layer, head in candidates:
         ablated = causal_ablation(model, val_loader, layer, head, restrict_to_copy=True)
         single_drops.append(base_copy - ablated)
-    group_accuracy = causal_ablation_group(
-        model, val_loader, candidates, restrict_to_copy=True
-    )
+    group_accuracy = causal_ablation_group(model, val_loader, candidates, restrict_to_copy=True)
     metrics["group_ablation_drop"] = float(base_copy - group_accuracy)
-    metrics["max_single_ablation_drop"] = (
-        float(max(single_drops)) if single_drops else 0.0
-    )
+    metrics["max_single_ablation_drop"] = float(max(single_drops)) if single_drops else 0.0
     metrics["mean_single_ablation_drop"] = (
         float(sum(single_drops) / len(single_drops)) if single_drops else 0.0
     )
@@ -1458,9 +1480,7 @@ def _circuit_report(
     group_accuracy_exploratory = causal_ablation_group(
         model, val_loader, exploratory, restrict_to_copy=True
     )
-    metrics["exploratory_group_ablation_drop"] = float(
-        base_copy - group_accuracy_exploratory
-    )
+    metrics["exploratory_group_ablation_drop"] = float(base_copy - group_accuracy_exploratory)
 
     subset = min(int(tokens.shape[0]), ATTRIBUTION_SEQUENCES)
     triples_subset = triples[triples[:, 0] < subset]
@@ -1546,10 +1566,77 @@ def _seed_metrics(
     if n_drops:
         metrics["mean_ablation_drop"] = float(drop_sum / n_drops)
         metrics["mean_copy_ablation_drop"] = float(copy_drop_sum / n_drops)
-    metrics.update(
-        _circuit_report(model, val_loader, report, tokens, task, copy_stats)
-    )
+    metrics.update(_circuit_report(model, val_loader, report, tokens, task, copy_stats))
     return metrics
+
+
+def _manifest_args(args: argparse.Namespace) -> dict:
+    """The recorded config: every flag except the seed *list*.
+
+    ``--seeds`` is the loop control, not part of the run's configuration;
+    the per-seed IDs are the manifest's ``seeds`` field.
+    """
+    return {k: v for k, v in vars(args).items() if k != "seeds"}
+
+
+def _probe_parameter_count(args: argparse.Namespace) -> int:
+    """The parameter count of the architecture this run used."""
+    return count_parameters(
+        AttentionOnlyTransformer(
+            vocab_size=args.vocab_size,
+            d_model=args.d_model,
+            n_layers=args.n_layers,
+            n_heads=args.n_heads,
+            max_seq_len=args.seq_len,
+        )
+    )
+
+
+def _resolved_manifest_path(args: argparse.Namespace) -> Path:
+    """Where this run's (multi-seed) manifest goes.
+
+    `--quick` is a smoke config and must not overwrite the flagship record;
+    an explicit --manifest-path always wins.
+    """
+    return resolve_manifest_path(
+        "exp1_induction_heads",
+        Path("results") / "exp1_induction_heads.json",
+        getattr(args, "manifest_path", None),
+        getattr(args, "quick", False),
+    )
+
+
+def _write_seed_manifest(
+    args: argparse.Namespace,
+    seed: int,
+    metrics: dict[str, float],
+    wall_clock_seconds: float,
+) -> Path:
+    """Write the per-seed recovery manifest of a multi-seed run.
+
+    The final multi-seed manifest is the record; this file is written as
+    soon as one seed finishes so a session that dies at seed 2 still leaves
+    seeds 0 and 1 recoverable. It is a complete ``ResultsManifest`` for one
+    seed, so ``scripts/merge_manifests.py`` can rebuild the aggregate.
+    """
+    manifest_path = per_seed_manifest_path(_resolved_manifest_path(args), seed)
+    manifest = ResultsManifest.from_run(
+        experiment="exp1_induction_heads",
+        seeds=[seed],
+        args=_manifest_args(args),
+        per_seed_metrics=[metrics],
+        aggregate=aggregate_metrics([metrics]),
+        wall_clock_seconds=wall_clock_seconds,
+        device=str(DEVICE),
+        n_parameters=_probe_parameter_count(args),
+        notes=(
+            "One seed of a multi-seed run, written when the seed finished "
+            "(recovery artifact; the multi-seed manifest is the record)."
+        ),
+    )
+    manifest.save(manifest_path)
+    logger.info(f"Saved seed {seed} recovery manifest to {manifest_path}")
+    return manifest_path
 
 
 def _write_single_manifest(
@@ -1564,32 +1651,15 @@ def _write_single_manifest(
     manifest = ResultsManifest.from_run(
         experiment="exp1_induction_heads",
         seeds=[args.seed],
-        args={k: v for k, v in vars(args).items() if k != "seeds"},
+        args=_manifest_args(args),
         per_seed_metrics=[metrics],
-        aggregate={
-            k: {"mean": v, "std": 0.0, "min": v, "max": v, "n": 1.0} for k, v in metrics.items()
-        },
+        aggregate=aggregate_metrics([metrics]),
         wall_clock_seconds=wall_clock_seconds,
         device=str(DEVICE),
-        n_parameters=count_parameters(
-            AttentionOnlyTransformer(
-                vocab_size=args.vocab_size,
-                d_model=args.d_model,
-                n_layers=args.n_layers,
-                n_heads=args.n_heads,
-                max_seq_len=args.seq_len,
-            )
-        ),
+        n_parameters=_probe_parameter_count(args),
         notes="Single-seed standard-scale run (Micro-Phase 12 'landed domino').",
     )
-    # `--quick` is a smoke config and must not overwrite the flagship record;
-    # an explicit --manifest-path always wins.
-    manifest_path = resolve_manifest_path(
-        "exp1_induction_heads",
-        Path("results") / "exp1_induction_heads.json",
-        getattr(args, "manifest_path", None),
-        getattr(args, "quick", False),
-    )
+    manifest_path = _resolved_manifest_path(args)
     manifest.save(manifest_path)
     logger.info(f"Saved single-seed manifest to {manifest_path}")
 
@@ -2124,34 +2194,31 @@ def main() -> None:
             f"MULTI-SEED MODE: {len(seeds)} seeds {seeds} "
             f"(fresh_batches={args.fresh_batches}, skipping plots/model-save)"
         )
+
+        def _on_seed(seed: int, metrics: dict[str, float], wall_clock_seconds: float) -> None:
+            _write_seed_manifest(args, seed, metrics, wall_clock_seconds)
+
         result = run_seeds(
             lambda s: run_single_seed(s, args),
             seeds,
-            optional_keys={"mean_ablation_drop", "mean_copy_ablation_drop"},
-        )
-        probe_model = AttentionOnlyTransformer(
-            vocab_size=args.vocab_size,
-            d_model=args.d_model,
-            n_layers=args.n_layers,
-            n_heads=args.n_heads,
-            max_seq_len=args.seq_len,
+            optional_keys={
+                "mean_ablation_drop",
+                "mean_copy_ablation_drop",
+                "confirmed_content_mass",
+            },
+            on_seed=_on_seed,
         )
         manifest = ResultsManifest.from_run(
             experiment="exp1_induction_heads",
             seeds=seeds,
-            args={k: v for k, v in vars(args).items() if k != "seeds"},
+            args=_manifest_args(args),
             per_seed_metrics=result.per_seed,
             aggregate=result.aggregate,
             wall_clock_seconds=result.wall_clock_seconds,
             device=str(DEVICE),
-            n_parameters=count_parameters(probe_model),
+            n_parameters=_probe_parameter_count(args),
         )
-        manifest_path = resolve_manifest_path(
-            "exp1_induction_heads",
-            Path("results") / "exp1_induction_heads.json",
-            args.manifest_path,
-            args.quick,
-        )
+        manifest_path = _resolved_manifest_path(args)
         manifest.save(manifest_path)
         logger.info(f"Saved multi-seed manifest to {manifest_path}")
         for key in result.aggregate:

@@ -146,8 +146,8 @@ class TestActivationPatching:
         counterfactual = _sample_batch(n=16, seed=2)[1][:, -1]
         idx = torch.arange(clean.size(0))
         expected = (
-            logits[:, -1, :][idx, answer] - logits[:, -1, :][idx, counterfactual]
-        ).mean().item()
+            (logits[:, -1, :][idx, answer] - logits[:, -1, :][idx, counterfactual]).mean().item()
+        )
         results = run_activation_patching(
             model=model,
             clean_inputs=clean,
@@ -159,8 +159,7 @@ class TestActivationPatching:
         )
         for (layer, _pos), vals in results.items():
             assert abs(vals["clean_diff"] - expected) < 1e-4, (
-                "the metric must be read at the answer's position, not at the "
-                "last patched one"
+                "the metric must be read at the answer's position, not at the last patched one"
             )
 
     def test_an_explicit_read_position_is_honoured(self) -> None:
@@ -173,9 +172,10 @@ class TestActivationPatching:
         counterfactual = _sample_batch(n=16, seed=2)[1][:, -1]
         idx = torch.arange(clean.size(0))
         expected = (
-            logits[:, read_pos, :][idx, answer]
-            - logits[:, read_pos, :][idx, counterfactual]
-        ).mean().item()
+            (logits[:, read_pos, :][idx, answer] - logits[:, read_pos, :][idx, counterfactual])
+            .mean()
+            .item()
+        )
         results = run_activation_patching(
             model=model,
             clean_inputs=clean,
@@ -267,8 +267,14 @@ class TestBatchRegimeAndPresets:
         apply_config_presets(mine)
         exp1_presets(theirs)
         for key in (
-            "vocab_size", "seq_len", "d_model", "n_layers", "n_heads",
-            "epochs", "num_train", "fresh_batches",
+            "vocab_size",
+            "seq_len",
+            "d_model",
+            "n_layers",
+            "n_heads",
+            "epochs",
+            "num_train",
+            "fresh_batches",
         ):
             assert getattr(mine, key) == getattr(theirs, key), (
                 f"exp4 --standard disagrees with exp1 --standard on {key}"
@@ -308,8 +314,14 @@ class TestBatchRegimeAndPresets:
         apply_config_presets(mine)
         exp1_presets(theirs)
         for key in (
-            "vocab_size", "seq_len", "d_model", "n_layers", "n_heads",
-            "epochs", "num_train", "fresh_batches",
+            "vocab_size",
+            "seq_len",
+            "d_model",
+            "n_layers",
+            "n_heads",
+            "epochs",
+            "num_train",
+            "fresh_batches",
         ):
             assert getattr(mine, key) == getattr(theirs, key), (
                 f"exp4 --scale large disagrees with exp1 --scale large on {key}"
@@ -493,14 +505,22 @@ class TestFromCheckpoint:
     def _args(self, tmp_path):
         return build_parser().parse_args(
             [
-                "--from-checkpoint", str(tmp_path),
-                "--source-vocab-size", "32",
-                "--source-seq-len", "16",
-                "--source-d-model", "16",
-                "--source-n-layers", "2",
-                "--source-n-heads", "2",
-                "--num-train", "32",
-                "--batch-size", "8",
+                "--from-checkpoint",
+                str(tmp_path),
+                "--source-vocab-size",
+                "32",
+                "--source-seq-len",
+                "16",
+                "--source-d-model",
+                "16",
+                "--source-n-layers",
+                "2",
+                "--source-n-heads",
+                "2",
+                "--num-train",
+                "32",
+                "--batch-size",
+                "8",
             ]
         )
 
@@ -553,3 +573,115 @@ class TestFromCheckpoint:
             "probe_content_mass",
         }
         assert metrics["final_val_acc"] >= 0.0
+
+    def _rewrite_checkpoint(self, tmp_path, seed: int = 0, **fields) -> None:
+        """Modify the checkpoint metadata in place (the tests' fault injection)."""
+        import torch
+
+        path = tmp_path / f"exp1_checkpoint_seed{seed}.pt"
+        state = torch.load(path, map_location="cpu")
+        state.update(fields)
+        torch.save(state, path)
+
+    def test_a_checkpoint_of_another_model_seed_is_refused(self, tmp_path) -> None:
+        """The filename is not proof: a copied checkpoint must be refused."""
+        import shutil
+
+        import pytest
+
+        from src.experiments.exp4_circuit_patching import _build_model
+
+        self._train_exp1_checkpoint(tmp_path, seed=0)
+        shutil.copy(
+            tmp_path / "exp1_checkpoint_seed0.pt",
+            tmp_path / "exp1_checkpoint_seed1.pt",
+        )
+        args = self._args(tmp_path)
+        with pytest.raises(SystemExit, match="holds model seed 0"):
+            _build_model(args, 1)
+
+    def test_a_checkpoint_of_another_task_is_refused(self, tmp_path) -> None:
+        import pytest
+
+        from src.experiments.exp4_circuit_patching import _build_model
+
+        self._train_exp1_checkpoint(tmp_path)
+        args = self._args(tmp_path)
+        args.source_task = "variable"
+        with pytest.raises(SystemExit, match="trained on the 'periodic' task"):
+            _build_model(args, 0)
+
+    def test_a_stale_checkpoint_is_refused(self, tmp_path) -> None:
+        """The rolling checkpoint can lag the run; a cascade about it is not
+        the cascade the verdict describes."""
+        import pytest
+
+        from src.experiments.exp4_circuit_patching import _build_model
+
+        self._train_exp1_checkpoint(tmp_path)
+        args = self._args(tmp_path)
+        args.source_epochs = 99
+        with pytest.raises(SystemExit, match="is epoch 2, but --source-epochs"):
+            _build_model(args, 0)
+
+    def test_the_matching_epoch_is_accepted(self, tmp_path) -> None:
+        from src.experiments.exp4_circuit_patching import _build_model
+
+        self._train_exp1_checkpoint(tmp_path)
+        args = self._args(tmp_path)
+        args.source_epochs = 2
+        _model, checkpoint = _build_model(args, 0)
+        assert checkpoint is not None and checkpoint["epoch"] == 2
+
+    def test_a_checkpoint_from_another_commit_is_refused(self, tmp_path) -> None:
+        import pytest
+
+        from src.experiments.exp4_circuit_patching import _build_model
+
+        self._train_exp1_checkpoint(tmp_path)
+        self._rewrite_checkpoint(tmp_path, git_sha="deadbee")
+        args = self._args(tmp_path)
+        args.source_git_sha = "cafebab"
+        with pytest.raises(SystemExit, match="written at deadbee"):
+            _build_model(args, 0)
+
+    def test_the_matching_commit_is_accepted(self, tmp_path) -> None:
+        from src.experiments.exp4_circuit_patching import _build_model
+
+        self._train_exp1_checkpoint(tmp_path)
+        self._rewrite_checkpoint(tmp_path, git_sha="abc1234")
+        args = self._args(tmp_path)
+        args.source_git_sha = "abc1234"
+        _model, checkpoint = _build_model(args, 0)
+        assert checkpoint is not None and checkpoint["git_sha"] == "abc1234"
+
+    def test_a_checkpoint_without_a_commit_cannot_be_verified(self, tmp_path) -> None:
+        import pytest
+
+        from src.experiments.exp4_circuit_patching import _build_model
+
+        self._train_exp1_checkpoint(tmp_path)
+        self._rewrite_checkpoint(tmp_path, git_sha="unknown")
+        args = self._args(tmp_path)
+        args.source_git_sha = "abc1234"
+        with pytest.raises(SystemExit, match="does not record the commit"):
+            _build_model(args, 0)
+
+    def test_the_provenance_names_the_seed_and_commit(self, tmp_path) -> None:
+        from src.experiments.exp4_circuit_patching import _checkpoint_provenance
+
+        self._train_exp1_checkpoint(tmp_path)
+        self._rewrite_checkpoint(tmp_path, git_sha="abc1234", git_dirty=False)
+        provenance = _checkpoint_provenance(self._args(tmp_path), 0)
+        assert provenance["seed"] == 0
+        assert provenance["epoch"] == 2
+        assert provenance["git_sha"] == "abc1234"
+        assert provenance["git_dirty"] is False
+
+    def test_the_seed_row_records_which_model_it_analysed(self, tmp_path) -> None:
+        from src.experiments.exp4_circuit_patching import run_single_seed
+
+        self._train_exp1_checkpoint(tmp_path)
+        metrics = run_single_seed(0, self._args(tmp_path))
+        assert metrics["source_model_seed"] == 0.0
+        assert metrics["checkpoint_epoch"] == 2.0

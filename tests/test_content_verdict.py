@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 
 from src.experiments.content_verdict import (
+    CHECK_FAIL,
     CHECK_MISSING,
     CHECK_NOT_MEASURED,
     CHECK_PASS,
@@ -33,12 +34,15 @@ from src.experiments.content_verdict import (
     main,
     per_seed_metrics,
     run_verdict,
+    verdict_payload,
+    write_verdict_json,
 )
 
 
 def _exp1_metrics(**overrides: float) -> dict[str, float]:
     """A seed that meets every criterion but the causal one."""
     base = {
+        "confirmed_content_mass": 0.45,
         "peak_content_mass": 0.45,
         "peak_offset_mass": 0.20,
         "copy_accuracy": 0.72,
@@ -55,12 +59,14 @@ def _manifest(
     seeds: list[int],
     rows: list[dict[str, float]],
     task: str = "variable",
+    **extra: object,
 ) -> dict:
     return {
         "experiment": "exp1_induction_heads",
         "seeds": seeds,
         "per_seed_metrics": rows,
         "args": {"task": task},
+        **extra,
     }
 
 
@@ -78,40 +84,31 @@ class TestTheFrozenCriteria:
 
     def test_the_thresholds_are_the_frozen_ones(self) -> None:
         expressions = {c.name: c.expression for c in CRITERIA}
-        assert expressions["content mass"] == "peak_content_mass >= 0.3"
+        assert expressions["content mass"] == "confirmed_content_mass >= 0.3"
         assert (
             expressions["content beats position"]
-            == "peak_content_mass - peak_offset_mass >= 0.1"
+            == "confirmed_content_mass - peak_offset_mass >= 0.1"
         )
         assert expressions["copy accuracy"] == "copy_accuracy >= 0.6"
         assert expressions["non-modal accuracy"] == "copy_accuracy_nonmodal >= 0.5"
-        assert (
-            expressions["beats fixed offset"]
-            == "copy_accuracy - fixed_offset_baseline >= 0.2"
-        )
+        assert expressions["beats fixed offset"] == "copy_accuracy - fixed_offset_baseline >= 0.2"
         assert expressions["ablation drop"] == "mean_copy_ablation_drop >= 0.1"
         assert expressions["path patching"] == "mean_path_patch_effect >= 0.2"
 
     def test_only_the_causal_criterion_comes_from_exp4(self) -> None:
         sources = {c.name: c.source for c in CRITERIA}
         assert sources["path patching"] == "exp4"
-        assert all(
-            source == "exp1" for name, source in sources.items() if name != "path patching"
-        )
+        assert all(source == "exp1" for name, source in sources.items() if name != "path patching")
 
 
 class TestTheSeedVerdict:
     def test_a_seed_that_meets_every_criterion_is_positive(self) -> None:
-        verdict = evaluate_seed(
-            0, _exp1_metrics(), {"mean_path_patch_effect": 0.55}
-        )
+        verdict = evaluate_seed(0, _exp1_metrics(), {"mean_path_patch_effect": 0.55})
         assert verdict.verdict == VERDICT_POSITIVE
         assert all(check.met for check in verdict.checks)
 
     def test_a_confirmed_head_with_a_failing_criterion_is_partial(self) -> None:
-        verdict = evaluate_seed(
-            0, _exp1_metrics(), {"mean_path_patch_effect": 0.05}
-        )
+        verdict = evaluate_seed(0, _exp1_metrics(), {"mean_path_patch_effect": 0.05})
         assert verdict.verdict == VERDICT_PARTIAL
         assert "path patching" in verdict.failed
 
@@ -134,9 +131,7 @@ class TestTheSeedVerdict:
 
     def test_an_old_placeholder_zero_is_not_a_measurement(self) -> None:
         # Manifests written before the fix carry 0.0 for the empty set.
-        metrics = _exp1_metrics(
-            total_induction_heads=0.0, mean_copy_ablation_drop=0.0
-        )
+        metrics = _exp1_metrics(total_induction_heads=0.0, mean_copy_ablation_drop=0.0)
         verdict = evaluate_seed(0, metrics, {"mean_path_patch_effect": 0.5})
         check = next(c for c in verdict.checks if c.criterion.name == "ablation drop")
         assert check.status == CHECK_NOT_MEASURED
@@ -235,6 +230,284 @@ class TestTheSeedVerdict:
             {"mean_path_patch_effect": 0.55},
         )
         assert without.verdict == with_report.verdict == VERDICT_POSITIVE
+
+    def test_criteria_1_and_2_read_the_confirmed_heads_mass(self) -> None:
+        """The screen's peak is not the confirmed head's mass.
+
+        A strong unconfirmed head must not carry criteria 1-2 for a weak
+        confirmed one: the pre-registration says "content_mass of the
+        confirmed head", and the screen's peak is a different number.
+        """
+        metrics = _exp1_metrics(
+            confirmed_content_mass=0.20,
+            peak_content_mass=0.95,
+        )
+        verdict = evaluate_seed(0, metrics, {"mean_path_patch_effect": 0.55})
+        mass = next(c for c in verdict.checks if c.criterion.name == "content mass")
+        beats = next(c for c in verdict.checks if c.criterion.name == "content beats position")
+        assert mass.status == CHECK_FAIL
+        assert beats.status == CHECK_FAIL
+        assert verdict.verdict == VERDICT_PARTIAL
+
+    def test_no_confirmed_head_leaves_the_content_criteria_not_measured(self) -> None:
+        """Nothing confirmed means no confirmed-head mass — not a zero."""
+        metrics = _exp1_metrics(total_induction_heads=0.0)
+        del metrics["confirmed_content_mass"]
+        verdict = evaluate_seed(0, metrics, None)
+        statuses = {c.criterion.name: c.status for c in verdict.checks}
+        assert statuses["content mass"] == CHECK_NOT_MEASURED
+        assert statuses["content beats position"] == CHECK_NOT_MEASURED
+        assert verdict.complete
+        assert verdict.verdict == VERDICT_NEGATIVE
+
+
+class TestTheDistributedNegative:
+    """The 2026-10-25 de-risk shape: behavior solved, no head confirmed.
+
+    The content verdict must describe the distributed circuit as a
+    pre-specified secondary finding without changing the frozen NEGATIVE.
+    """
+
+    def _exp1_row(self, seed: int, **overrides: float) -> dict[str, float]:
+        row = {
+            "total_induction_heads": 0.0,
+            "peak_content_mass": 0.9116,
+            "peak_offset_mass": 0.1585,
+            "copy_accuracy": 0.9993,
+            "copy_accuracy_nonmodal": 0.9991,
+            "fixed_offset_baseline": 0.1646,
+            "n_candidate_heads": 3.0,
+            "group_ablation_drop": 0.9956,
+            "max_single_ablation_drop": 0.0986,
+            "k_composition_score": 0.0918,
+            "epochs_run": 3000.0,
+        }
+        row.update(overrides)
+        return row
+
+    def _exp4_row(self, seed: int, **overrides: float) -> dict[str, float]:
+        row = {
+            "total_induction_heads": 0.0,
+            "path_patch_measured": 0.0,
+            "checkpoint_epoch": 3000.0,
+            "source_model_seed": float(seed),
+            "counterfactual_minimal_pair": 1.0,
+            "group_path_patch_effect": 0.87,
+        }
+        row.update(overrides)
+        return row
+
+    def _run(self, **exp1_overrides: float):
+        seeds = [0, 1, 2]
+        exp1 = _manifest(seeds, [self._exp1_row(seed, **exp1_overrides) for seed in seeds])
+        exp4 = {
+            "seeds": seeds,
+            "per_seed_metrics": [self._exp4_row(seed) for seed in seeds],
+        }
+        return exp1, exp4, run_verdict(exp1, exp4)
+
+    def test_the_frozen_verdict_is_negative(self) -> None:
+        _exp1, _exp4, result = self._run()
+        assert result.status == STATUS_COMPLETE
+        assert result.verdict == VERDICT_NEGATIVE
+
+    def test_the_report_names_the_distributed_circuit(self) -> None:
+        exp1, exp4, result = self._run()
+        report = format_report(result, per_seed_metrics(exp1), per_seed_metrics(exp4))
+        assert "NEGATIVE (unexplained)" in report
+        assert "distributed" in report
+        assert "0.9956" in report
+        assert "0.0986" in report
+        assert "group path-patch effect" in report
+        assert "0.8700" in report
+        assert "secondary finding" in report
+
+    def test_the_secondary_finding_does_not_change_the_label(self) -> None:
+        _exp1, _exp4, result = self._run()
+        assert result.verdict == VERDICT_NEGATIVE
+        assert all(seed.verdict == VERDICT_NEGATIVE for seed in result.seeds)
+
+    def test_a_low_content_mass_still_gets_the_detector_blind_spot_sentence(
+        self,
+    ) -> None:
+        exp1, exp4, result = self._run(
+            peak_content_mass=0.15,
+            n_candidate_heads=0.0,
+            group_ablation_drop=0.0,
+            max_single_ablation_drop=0.0,
+        )
+        report = format_report(result, per_seed_metrics(exp1), per_seed_metrics(exp4))
+        assert "NEGATIVE (unexplained)" in report
+        assert "no head passes the content-mass screen" in report
+        assert "distributed" not in report
+
+
+class TestTheProvenanceRefusals:
+    """A NEGATIVE is only about the pre-registered run.
+
+    The same seven criteria applied to a periodic task, a dirty tree, or a
+    cascade from another commit would attach the word NEGATIVE to a
+    measurement that never answered the content question.
+    """
+
+    def test_a_periodic_manifest_gets_no_verdict(self) -> None:
+        exp1 = _manifest([0, 1, 2], [_exp1_metrics()] * 3, task="periodic")
+        result = run_verdict(exp1, None)
+        assert result.status == STATUS_INCOMPLETE
+        assert result.verdict == ""
+        assert "periodic" in result.note
+
+    def test_a_manifest_without_a_declared_task_gets_no_verdict(self) -> None:
+        exp1 = _manifest([0, 1, 2], [_exp1_metrics()] * 3)
+        del exp1["args"]["task"]
+        result = run_verdict(exp1, None)
+        assert result.status == STATUS_INCOMPLETE
+        assert "does not declare its task" in result.note
+
+    def test_a_dirty_exp1_manifest_gets_no_verdict(self) -> None:
+        exp1 = _manifest([0, 1, 2], [_exp1_metrics()] * 3, git_dirty=True)
+        result = run_verdict(exp1, None)
+        assert result.status == STATUS_INCOMPLETE
+        assert "dirty working tree" in result.note
+
+    def test_a_dirty_exp4_manifest_gets_no_verdict(self) -> None:
+        exp1 = _manifest([0, 1, 2], [_exp1_metrics()] * 3)
+        exp4 = {
+            "seeds": [0, 1, 2],
+            "per_seed_metrics": [{"mean_path_patch_effect": 0.55}] * 3,
+            "git_dirty": True,
+        }
+        result = run_verdict(exp1, exp4)
+        assert result.status == STATUS_INCOMPLETE
+        assert result.verdict == ""
+        assert "dirty working tree" in result.note
+
+    def test_a_cascade_from_another_commit_gets_no_verdict(self) -> None:
+        exp1 = _manifest([0, 1, 2], [_exp1_metrics()] * 3, git_sha="aaaaaaa")
+        exp4 = {
+            "seeds": [0, 1, 2],
+            "per_seed_metrics": [{"mean_path_patch_effect": 0.55}] * 3,
+            "git_sha": "bbbbbbb",
+        }
+        result = run_verdict(exp1, exp4)
+        assert result.status == STATUS_INCOMPLETE
+        assert "different commit" in result.note
+
+    def test_exp4_can_name_an_abbreviated_source_commit(self) -> None:
+        exp1 = _manifest([0, 1, 2], [_exp1_metrics()] * 3, git_sha="aaaaaaa")
+        exp4 = {
+            "seeds": [0, 1, 2],
+            "per_seed_metrics": [{"mean_path_patch_effect": 0.55}] * 3,
+            "git_sha": "aaaaaaabbbb",
+        }
+        result = run_verdict(exp1, exp4)
+        assert result.status == STATUS_COMPLETE
+
+    def test_exp4_without_a_checkpoint_gets_no_verdict(self) -> None:
+        exp1 = _manifest([0, 1, 2], [_exp1_metrics()] * 3)
+        exp4 = {
+            "seeds": [0, 1, 2],
+            "per_seed_metrics": [{"mean_path_patch_effect": 0.55, "checkpoint_epoch": -1.0}] * 3,
+        }
+        result = run_verdict(exp1, exp4)
+        assert result.status == STATUS_INCOMPLETE
+        assert "did not analyse a checkpoint" in result.note
+
+    def test_a_stale_checkpoint_is_not_the_final_model(self) -> None:
+        rows = [_exp1_metrics(epochs_run=3000.0) for _ in range(3)]
+        exp1 = _manifest([0, 1, 2], rows)
+        exp4 = {
+            "seeds": [0, 1, 2],
+            "per_seed_metrics": [{"mean_path_patch_effect": 0.55, "checkpoint_epoch": 2750.0}] * 3,
+        }
+        result = run_verdict(exp1, exp4)
+        assert result.status == STATUS_INCOMPLETE
+        assert "checkpoint epoch 2750" in result.note
+        assert "exp1 ran 3000 epochs" in result.note
+
+    def test_a_cascade_on_another_model_seed_gets_no_verdict(self) -> None:
+        rows = [_exp1_metrics(epochs_run=3000.0) for _ in range(3)]
+        exp1 = _manifest([0, 1, 2], rows)
+        exp4 = {
+            "seeds": [0, 1, 2],
+            "per_seed_metrics": [
+                {
+                    "mean_path_patch_effect": 0.55,
+                    "checkpoint_epoch": 3000.0,
+                    "source_model_seed": 1.0,
+                }
+            ]
+            * 3,
+        }
+        result = run_verdict(exp1, exp4)
+        assert result.status == STATUS_INCOMPLETE
+        assert "analysed model seed 1, not 0" in result.note
+
+    def test_a_disjoint_counterfactual_gets_no_verdict(self) -> None:
+        rows = [_exp1_metrics(epochs_run=3000.0) for _ in range(3)]
+        exp1 = _manifest([0, 1, 2], rows)
+        exp4 = {
+            "seeds": [0, 1, 2],
+            "per_seed_metrics": [
+                {
+                    "mean_path_patch_effect": 0.55,
+                    "checkpoint_epoch": 3000.0,
+                    "counterfactual_minimal_pair": 0.0,
+                }
+            ]
+            * 3,
+        }
+        result = run_verdict(exp1, exp4)
+        assert result.status == STATUS_INCOMPLETE
+        assert "disjoint counterfactual" in result.note
+
+    def test_a_checkpoint_from_another_commit_gets_no_verdict(self) -> None:
+        rows = [_exp1_metrics(epochs_run=3000.0) for _ in range(3)]
+        exp1 = _manifest([0, 1, 2], rows, git_sha="aaaaaaa")
+        exp4 = {
+            "seeds": [0, 1, 2],
+            "per_seed_metrics": [
+                {
+                    "mean_path_patch_effect": 0.55,
+                    "checkpoint_epoch": 3000.0,
+                    "source_model_seed": float(seed),
+                }
+                for seed in range(3)
+            ],
+            "git_sha": "aaaaaaa",
+            "source_provenance": {
+                "checkpoints": [
+                    {"seed": seed, "git_sha": "bbbbbbb", "git_dirty": False} for seed in range(3)
+                ]
+            },
+        }
+        result = run_verdict(exp1, exp4)
+        assert result.status == STATUS_INCOMPLETE
+        assert "trained at bbbbbbb" in result.note
+
+    def test_a_dirty_checkpoint_gets_no_verdict(self) -> None:
+        rows = [_exp1_metrics(epochs_run=3000.0) for _ in range(3)]
+        exp1 = _manifest([0, 1, 2], rows, git_sha="aaaaaaa")
+        exp4 = {
+            "seeds": [0, 1, 2],
+            "per_seed_metrics": [
+                {
+                    "mean_path_patch_effect": 0.55,
+                    "checkpoint_epoch": 3000.0,
+                    "source_model_seed": float(seed),
+                }
+                for seed in range(3)
+            ],
+            "git_sha": "aaaaaaa",
+            "source_provenance": {
+                "checkpoints": [
+                    {"seed": seed, "git_sha": "aaaaaaa", "git_dirty": True} for seed in range(3)
+                ]
+            },
+        }
+        result = run_verdict(exp1, exp4)
+        assert result.status == STATUS_INCOMPLETE
+        assert "dirty working tree" in result.note
 
 
 class TestTheRunVerdict:
@@ -408,9 +681,7 @@ class TestTheCommandLine:
         return str(path)
 
     def test_it_prints_the_verdict_and_exits_zero(self, tmp_path, capsys) -> None:
-        exp1 = self._write(
-            tmp_path, "exp1.json", _manifest([0, 1, 2], [_exp1_metrics()] * 3)
-        )
+        exp1 = self._write(tmp_path, "exp1.json", _manifest([0, 1, 2], [_exp1_metrics()] * 3))
         exp4 = self._write(
             tmp_path,
             "exp4.json",
@@ -441,15 +712,9 @@ class TestTheCommandLine:
         assert STATUS_INCOMPLETE in out
         assert "No verdict is computed" in out
 
-    def test_a_missing_exp4_manifest_is_a_warning_not_a_crash(
-        self, tmp_path, capsys
-    ) -> None:
-        exp1 = self._write(
-            tmp_path, "exp1.json", _manifest([0, 1, 2], [_exp1_metrics()] * 3)
-        )
-        code = main(
-            ["--exp1", exp1, "--exp4", str(tmp_path / "does-not-exist.json")]
-        )
+    def test_a_missing_exp4_manifest_is_a_warning_not_a_crash(self, tmp_path, capsys) -> None:
+        exp1 = self._write(tmp_path, "exp1.json", _manifest([0, 1, 2], [_exp1_metrics()] * 3))
+        code = main(["--exp1", exp1, "--exp4", str(tmp_path / "does-not-exist.json")])
         captured = capsys.readouterr()
         assert code == 0
         assert "does not exist" in captured.err
@@ -466,9 +731,7 @@ class TestTheCommandLine:
         assert "WARNING" in out
 
     def test_the_json_report_carries_every_check(self, tmp_path, capsys) -> None:
-        exp1 = self._write(
-            tmp_path, "exp1.json", _manifest([0, 1, 2], [_exp1_metrics()] * 3)
-        )
+        exp1 = self._write(tmp_path, "exp1.json", _manifest([0, 1, 2], [_exp1_metrics()] * 3))
         exp4 = self._write(
             tmp_path,
             "exp4.json",
@@ -483,6 +746,44 @@ class TestTheCommandLine:
         checks = payload["seeds"][0]["checks"]
         assert len(checks) == len(CRITERIA)
         assert {c["name"] for c in checks} == {c.name for c in CRITERIA}
+
+    def test_it_writes_the_verdict_artifact(self, tmp_path) -> None:
+        """The GPU session must save the verdict, not only print it."""
+        exp1 = self._write(tmp_path, "exp1.json", _manifest([0, 1, 2], [_exp1_metrics()] * 3))
+        exp4 = self._write(
+            tmp_path,
+            "exp4.json",
+            {
+                "seeds": [0, 1, 2],
+                "per_seed_metrics": [{"mean_path_patch_effect": 0.55}] * 3,
+            },
+        )
+        output = tmp_path / "content_verdict.json"
+        code = main(["--exp1", exp1, "--exp4", exp4, "--output", str(output)])
+        assert code == 0
+        payload = json.loads(output.read_text(encoding="utf-8"))
+        assert payload["schema"] == "content-verdict/1"
+        assert payload["verdict"] == VERDICT_POSITIVE
+        assert payload["sources"]["exp1"] == exp1
+        assert payload["seeds"][0]["mechanism"]["peak_content_mass"] == 0.45
+        assert payload["seeds"][0]["cascade"]["mean_path_patch_effect"] == 0.55
+
+    def test_the_payload_helper_and_the_cli_agree(self, tmp_path) -> None:
+        exp1_payload = _manifest([0, 1, 2], [_exp1_metrics()] * 3)
+        exp4_payload = {
+            "seeds": [0, 1, 2],
+            "per_seed_metrics": [{"mean_path_patch_effect": 0.55}] * 3,
+        }
+        result = run_verdict(exp1_payload, exp4_payload)
+        payload = verdict_payload(
+            result,
+            per_seed_metrics(exp1_payload),
+            per_seed_metrics(exp4_payload),
+            "variable",
+            {"exp1": "exp1.json", "exp4": "exp4.json"},
+        )
+        path = write_verdict_json(payload, tmp_path / "verdict.json")
+        assert json.loads(path.read_text(encoding="utf-8")) == payload
 
 
 class TestTheCheckStatuses:

@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+from pathlib import Path
 
 import pytest
 import torch
@@ -121,7 +122,7 @@ class TestCausalAblation:
                 Q = block.W_Q(h).view(B, S, block.n_heads, block.d_head).transpose(1, 2)
                 K = block.W_K(h).view(B, S, block.n_heads, block.d_head).transpose(1, 2)
                 V = block.W_V(h).view(B, S, block.n_heads, block.d_head).transpose(1, 2)
-                scores = Q @ K.transpose(-2, -1) / (block.d_head ** 0.5)
+                scores = Q @ K.transpose(-2, -1) / (block.d_head**0.5)
                 causal = torch.triu(torch.full((S, S), float("-inf")), diagonal=1)
                 probs = (scores + causal).softmax(dim=-1)
                 out = probs @ V
@@ -216,18 +217,12 @@ class TestPrefixAmbiguityWarning:
         self, caplog: "logging.LogCaptureFixture"
     ) -> None:
         with caplog.at_level(logging.WARNING):
-            make_repeated_token_data(
-                vocab_size=8, seq_len=16, num_train=4, num_val=2, seed=0
-            )
+            make_repeated_token_data(vocab_size=8, seq_len=16, num_train=4, num_val=2, seed=0)
         assert any("Prefix ambiguity" in r.message for r in caplog.records)
 
-    def test_no_warning_when_well_posed(
-        self, caplog: "logging.LogCaptureFixture"
-    ) -> None:
+    def test_no_warning_when_well_posed(self, caplog: "logging.LogCaptureFixture") -> None:
         with caplog.at_level(logging.WARNING):
-            make_repeated_token_data(
-                vocab_size=4096, seq_len=16, num_train=4, num_val=2, seed=0
-            )
+            make_repeated_token_data(vocab_size=4096, seq_len=16, num_train=4, num_val=2, seed=0)
         assert not any("Prefix ambiguity" in r.message for r in caplog.records)
 
 
@@ -331,8 +326,13 @@ class TestKComposition:
         train_loader = DataLoader(train, batch_size=8)
         val_loader = DataLoader(val, batch_size=8)
         train_model(
-            model=model, train_loader=train_loader, val_loader=val_loader,
-            epochs=2, lr=1e-3, weight_decay=0.0, seed=0,
+            model=model,
+            train_loader=train_loader,
+            val_loader=val_loader,
+            epochs=2,
+            lr=1e-3,
+            weight_decay=0.0,
+            seed=0,
         )
         model.eval()
         collected: list[list] = [[], []]
@@ -345,8 +345,11 @@ class TestKComposition:
         all_patterns = [torch.cat(c, dim=0) for c in collected]
         diag = diagnose_induction_formation(all_patterns)
         assert set(diag) >= {
-            "step1_l0_duplicate_mass", "l0_peakedness",
-            "step2_k_composition", "best_l0_head", "best_l1_head",
+            "step1_l0_duplicate_mass",
+            "l0_peakedness",
+            "step2_k_composition",
+            "best_l0_head",
+            "best_l1_head",
         }
         assert len(diag["step1_l0_duplicate_mass"]) == 2
 
@@ -438,6 +441,7 @@ class TestCheckpointResume:
     @staticmethod
     def _fresh_batches(args, seed=0):
         from src.experiments.exp1_induction_heads import _make_fresh_batches_fn
+
         return _make_fresh_batches_fn(args, seed)
 
     @staticmethod
@@ -492,22 +496,38 @@ class TestCheckpointResume:
         state = self._initial_state(args)
 
         full_hist = train_model(
-            self._model_from(state), tl, vl, epochs=8,
-            lr=1e-3, weight_decay=0.1, seed=0,
+            self._model_from(state),
+            tl,
+            vl,
+            epochs=8,
+            lr=1e-3,
+            weight_decay=0.1,
+            seed=0,
             fresh_batches_fn=self._fresh_batches(args),
         )
 
         broken_model = self._model_from(state)
         train_model(
-            broken_model, tl, vl, epochs=3,
-            lr=1e-3, weight_decay=0.1, seed=0,
+            broken_model,
+            tl,
+            vl,
+            epochs=3,
+            lr=1e-3,
+            weight_decay=0.1,
+            seed=0,
             fresh_batches_fn=self._fresh_batches(args),
-            checkpoint_dir=str(tmp_path), checkpoint_every=1,
+            checkpoint_dir=str(tmp_path),
+            checkpoint_every=1,
             schedule_epochs=8,  # partial run: anneal LR over the full 8-epoch horizon
         )
         resumed_hist = train_model(
-            broken_model, tl, vl, epochs=8,
-            lr=1e-3, weight_decay=0.1, seed=0,
+            broken_model,
+            tl,
+            vl,
+            epochs=8,
+            lr=1e-3,
+            weight_decay=0.1,
+            seed=0,
             fresh_batches_fn=self._fresh_batches(args),
             resume_from=str(checkpoint_path_for_seed(str(tmp_path), "exp1", 0)),
         )
@@ -528,22 +548,38 @@ class TestCheckpointResume:
         state = self._initial_state(args)
 
         full_hist = train_model(
-            self._model_from(state), tl, vl, epochs=8,
-            lr=1e-3, weight_decay=0.1, seed=0,
+            self._model_from(state),
+            tl,
+            vl,
+            epochs=8,
+            lr=1e-3,
+            weight_decay=0.1,
+            seed=0,
             fresh_batches_fn=self._fresh_batches(args),
         )
 
         broken = self._model_from(state)
         train_model(
-            broken, tl, vl, epochs=4,
-            lr=1e-3, weight_decay=0.1, seed=0,
+            broken,
+            tl,
+            vl,
+            epochs=4,
+            lr=1e-3,
+            weight_decay=0.1,
+            seed=0,
             fresh_batches_fn=self._fresh_batches(args),
-            checkpoint_dir=str(tmp_path), checkpoint_every=2,
+            checkpoint_dir=str(tmp_path),
+            checkpoint_every=2,
             schedule_epochs=8,
         )
         resumed_hist = train_model(
-            broken, tl, vl, epochs=8,
-            lr=1e-3, weight_decay=0.1, seed=0,
+            broken,
+            tl,
+            vl,
+            epochs=8,
+            lr=1e-3,
+            weight_decay=0.1,
+            seed=0,
             fresh_batches_fn=self._fresh_batches(args),
             resume_from=str(checkpoint_path_for_seed(str(tmp_path), "exp1", 0)),
         )
@@ -558,8 +594,13 @@ class TestCheckpointResume:
         args = self._args()
         tl, vl = self._loaders(args)
         hist = train_model(
-            self._model_from(self._initial_state(args)), tl, vl, epochs=2,
-            lr=1e-3, weight_decay=0.1, seed=0,
+            self._model_from(self._initial_state(args)),
+            tl,
+            vl,
+            epochs=2,
+            lr=1e-3,
+            weight_decay=0.1,
+            seed=0,
             fresh_batches_fn=self._fresh_batches(args),
             resume_from=str(tmp_path / "does_not_exist.pt"),
         )
@@ -596,9 +637,7 @@ class TestEarlyStopAndCheckpoint:
         )
         with torch.no_grad():
             model.embed.weight.zero_()
-            model.pos_embed.weight.copy_(
-                torch.eye(model.pos_embed.num_embeddings, d_model)
-            )
+            model.pos_embed.weight.copy_(torch.eye(model.pos_embed.num_embeddings, d_model))
             block = model.blocks[0]
             w_q = torch.zeros(d_model, d_model)
             for i in range(prefix_len - 1, model.pos_embed.num_embeddings):
@@ -708,9 +747,18 @@ class TestConfigPresets:
         apply_config_presets(via_flag)
         apply_config_presets(via_scale)
         for key in (
-            "vocab_size", "seq_len", "d_model", "n_layers", "n_heads",
-            "epochs", "num_train", "batch_size", "fresh_batches",
-            "checkpoint_every", "save_model", "save_manifest",
+            "vocab_size",
+            "seq_len",
+            "d_model",
+            "n_layers",
+            "n_heads",
+            "epochs",
+            "num_train",
+            "batch_size",
+            "fresh_batches",
+            "checkpoint_every",
+            "save_model",
+            "save_manifest",
         ):
             assert getattr(via_scale, key) == getattr(via_flag, key), (
                 f"--scale standard disagrees with --standard on {key}"
@@ -781,8 +829,13 @@ class TestConfigPresets:
         apply_config_presets(content)
         assert content.vocab_size != standard.vocab_size
         for key in (
-            "seq_len", "d_model", "n_layers", "n_heads", "epochs",
-            "num_train", "batch_size",
+            "seq_len",
+            "d_model",
+            "n_layers",
+            "n_heads",
+            "epochs",
+            "num_train",
+            "batch_size",
         ):
             assert getattr(content, key) == getattr(standard, key)
 
@@ -808,9 +861,7 @@ class TestTheCircuitReport:
         model = AttentionOnlyTransformer(
             vocab_size=32, d_model=16, n_layers=2, n_heads=2, max_seq_len=24
         )
-        report, _patterns, tokens = detect_from_loader(
-            model, loader, task="variable"
-        )
+        report, _patterns, tokens = detect_from_loader(model, loader, task="variable")
         return model, loader, report, tokens
 
     def test_the_report_is_empty_on_the_periodic_task(self) -> None:
@@ -820,19 +871,14 @@ class TestTheCircuitReport:
 
         model, loader, report, tokens = self._setup()
         assert (
-            _circuit_report(
-                model, loader, report, tokens, "periodic", {"copy_accuracy": 0.1}
-            )
-            == {}
+            _circuit_report(model, loader, report, tokens, "periodic", {"copy_accuracy": 0.1}) == {}
         )
 
     def test_the_report_carries_the_mechanism_fields(self) -> None:
         from src.experiments.exp1_induction_heads import _circuit_report
 
         model, loader, report, tokens = self._setup()
-        metrics = _circuit_report(
-            model, loader, report, tokens, "variable", {"copy_accuracy": 0.1}
-        )
+        metrics = _circuit_report(model, loader, report, tokens, "variable", {"copy_accuracy": 0.1})
         for key in (
             "content_mass_total",
             "content_mass_top_share",
@@ -890,3 +936,171 @@ class TestTheCircuitReport:
         causal_ablation(model, loader, 0, 1, restrict_to_copy=True)
         for block in model.blocks:
             assert block.head_mask is None
+
+
+class TestTheConfirmedContentMass:
+    """Criterion 1-2 read the pre-registration's number, not the screen's peak.
+
+    The pre-registration says "content_mass of the confirmed head". The
+    screen's ``peak_content_mass`` is the best head *on the screen*, which
+    can be an unconfirmed one: using it would let a head the detector
+    rejected carry the verdict. ``_confirmed_content_mass`` is the number
+    the criteria read, and it is absent - not 0.0 - when nothing is
+    confirmed.
+    """
+
+    class _Report:
+        def __init__(self, masses):
+            self.masses = masses
+            self.screen_count = 2
+            self.peak_offset_mass = 0.15
+            self.confirmed = [[], []]
+
+        def peak(self, name: str) -> float:
+            masses = self.masses.get(name, [])
+            return max(
+                (float(layer.max()) for layer in masses if layer.numel()),
+                default=0.0,
+            )
+
+    def _report(self):
+        # 2 layers, 2 heads; each layer is (n_heads, queries, keys).
+        # Layer 0 head 0 is the weak confirmed head, layer 0 head 1 is a
+        # strong unconfirmed one.
+        return self._Report(
+            {
+                "content": [
+                    torch.tensor(
+                        [
+                            [[0.20, 0.0], [0.0, 0.0]],
+                            [[0.95, 0.0], [0.0, 0.0]],
+                        ]
+                    ),
+                    torch.zeros(2, 2, 2),
+                ]
+            }
+        )
+
+    def test_it_reads_the_confirmed_head_not_the_screen_peak(self) -> None:
+        from src.experiments.exp1_induction_heads import _confirmed_content_mass
+
+        report = self._report()
+        assert _confirmed_content_mass(report, [[0], []]) == pytest.approx(0.20)
+
+    def test_it_takes_the_strongest_confirmed_head(self) -> None:
+        from src.experiments.exp1_induction_heads import _confirmed_content_mass
+
+        report = self._report()
+        assert _confirmed_content_mass(report, [[0, 1], []]) == pytest.approx(0.95)
+
+    def test_no_confirmed_head_is_none_not_zero(self) -> None:
+        from src.experiments.exp1_induction_heads import _confirmed_content_mass
+
+        assert _confirmed_content_mass(self._report(), [[], []]) is None
+
+    def test_no_report_is_none(self) -> None:
+        from src.experiments.exp1_induction_heads import _confirmed_content_mass
+
+        assert _confirmed_content_mass(None, [[0], []]) is None
+
+    def test_it_is_omitted_from_the_seed_metrics_when_unconfirmed(self) -> None:
+        from src.experiments.exp1_induction_heads import _seed_metrics
+
+        report = self._report()
+        metrics = _seed_metrics(
+            model=None,
+            val_loader=None,
+            history={"val_acc": [0.5], "confirmed_epoch": -1.0},
+            induction_heads=[[], []],
+            diagnosis={"step1_l0_duplicate_mass": [0.1], "step2_k_composition": 0.2},
+            report=report,
+            probe=None,
+            copy_stats={"copy_accuracy": 0.1},
+            tokens=None,
+            task="periodic",
+        )
+        assert "confirmed_content_mass" not in metrics
+
+    def test_it_is_recorded_when_a_head_is_confirmed(self) -> None:
+        from src.experiments.exp1_induction_heads import _headline_metrics
+
+        report = self._report()
+        metrics = _headline_metrics(
+            {"val_acc": [0.5], "confirmed_epoch": 3.0},
+            [[0], []],
+            {"step1_l0_duplicate_mass": [0.1], "step2_k_composition": 0.2},
+            report=report,
+            copy_stats={"copy_accuracy": 0.1},
+        )
+        assert metrics["confirmed_content_mass"] == pytest.approx(0.20)
+        assert metrics["peak_content_mass"] == pytest.approx(0.95)
+
+
+class TestThePerSeedRecoveryManifest:
+    """A dead GPU session must keep the seeds it already finished."""
+
+    def _args(self, tmp_path, **overrides):
+        args = build_parser().parse_args(
+            [
+                "--seeds",
+                "0,1,2",
+                "--manifest-path",
+                str(tmp_path / "run.json"),
+            ]
+        )
+        for key, value in overrides.items():
+            setattr(args, key, value)
+        return args
+
+    def test_it_writes_one_complete_manifest_per_seed(self, tmp_path) -> None:
+        from src.experiments.exp1_induction_heads import _write_seed_manifest
+        from src.results import ResultsManifest, per_seed_manifest_path
+
+        args = self._args(tmp_path)
+        metrics = {"copy_accuracy": 0.5, "confirmed_content_mass": 0.4}
+        path = _write_seed_manifest(args, 1, metrics, 12.5)
+        assert path == per_seed_manifest_path(tmp_path / "run.json", 1)
+        manifest = ResultsManifest.load(path)
+        assert manifest.seeds == [1]
+        assert manifest.per_seed_metrics == [metrics]
+        assert manifest.aggregate["copy_accuracy"]["mean"] == 0.5
+        assert "recovery artifact" in (manifest.notes or "")
+
+    def test_the_manifest_args_exclude_the_seed_list(self) -> None:
+        from src.experiments.exp1_induction_heads import _manifest_args
+
+        args = self._args(Path("results"))
+        recorded = _manifest_args(args)
+        assert "seeds" not in recorded
+        assert recorded["manifest_path"].endswith("run.json")
+
+
+class TestTheSeedMetricsCheckpointMetadata:
+    def test_train_model_writes_seed_and_task_into_the_checkpoint(self, tmp_path) -> None:
+        """exp4 refuses a checkpoint whose seed or task it cannot verify."""
+        from src.experiments.checkpointing import load_training_checkpoint
+
+        model = AttentionOnlyTransformer(
+            vocab_size=8, d_model=8, n_layers=1, n_heads=2, max_seq_len=8
+        )
+        x = torch.randint(0, 8, (16, 8))
+        y = torch.randint(0, 8, (16, 8))
+        loader = DataLoader(list(zip(x, y)), batch_size=8)
+        history = train_model(
+            model=model,
+            train_loader=loader,
+            val_loader=loader,
+            epochs=2,
+            lr=0.0,
+            weight_decay=0.0,
+            seed=5,
+            checkpoint_dir=str(tmp_path),
+            checkpoint_every=1,
+            task="variable",
+        )
+        assert history is not None
+        state = load_training_checkpoint(tmp_path / "exp1_checkpoint_seed5.pt")
+        assert state is not None
+        assert state["seed"] == 5
+        assert state["task"] == "variable"
+        assert state["arch"]["n_heads"] == 2

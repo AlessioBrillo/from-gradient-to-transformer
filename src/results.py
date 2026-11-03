@@ -128,6 +128,11 @@ class ResultsManifest:
     )
     notes: str | None = None
     neuron_ablation: dict[str, Any] | None = None
+    #: Which model(s) the run actually analysed, when it did not train them
+    #: itself. The content-task cascade (exp4, exp5) uses this to record the
+    #: checkpoint path, epoch, seed and commit it loaded — facts about the
+    #: *source* model that the run's own git_sha cannot attest.
+    source_provenance: dict[str, Any] | None = None
 
     @classmethod
     def from_run(
@@ -202,6 +207,19 @@ def resolve_manifest_path(
     return default
 
 
+def per_seed_manifest_path(base_path: str | Path, seed: int) -> Path:
+    """The recovery manifest for one seed of a multi-seed run.
+
+    ``results/induction_content.json`` becomes
+    ``results/induction_content_seed0.json``. The multi-seed manifest stays
+    the record; the per-seed files exist so a session that dies before the
+    last seed does not lose the seeds it already finished (and so
+    ``scripts/merge_manifests.py`` can rebuild the aggregate).
+    """
+    path = Path(base_path)
+    return path.with_name(f"{path.stem}_seed{seed}{path.suffix}")
+
+
 def _is_json_safe(value: Any) -> bool:
     return isinstance(value, (str, int, float, bool, type(None), list, dict))
 
@@ -256,11 +274,7 @@ def verify_claims(
     """
     problems: list[str] = []
 
-    manifest_files = (
-        sorted(results_dir.glob("*.json"))
-        if results_dir.exists()
-        else []
-    )
+    manifest_files = sorted(results_dir.glob("*.json")) if results_dir.exists() else []
     # Drop untracked scratch before checking anything: `--quick` writes
     # results/probe_<experiment>_quick.json with a necessarily dirty tree (it
     # runs while the code is being edited), which used to fail this whole
@@ -427,9 +441,7 @@ def _main() -> None:
         "verify", help="Verify results/*.json manifests and RESULTS.md's manifest tags"
     )
     verify_p.add_argument("--results-dir", type=Path, default=Path("results"))
-    verify_p.add_argument(
-        "--claims-file", type=Path, default=Path("portfolio/RESULTS.md")
-    )
+    verify_p.add_argument("--claims-file", type=Path, default=Path("portfolio/RESULTS.md"))
 
     verify_p.add_argument("--paper-dir", type=Path, default=Path("portfolio/paper"))
 

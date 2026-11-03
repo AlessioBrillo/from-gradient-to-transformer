@@ -530,6 +530,89 @@ so their stored `0.0` is the placeholder and the verdict reads criterion 6 as
 `NOT MEASURED`. The standard-geometry numbers are in "The CPU gate's numbers,
 traced to a manifest" above.
 
+## Addendum — 2026-11-01: the verdict, the cascade's provenance, and the distributed circuit
+
+This addendum was written after the 2026-10-25 CPU de-risk and **before**
+the GPU run. It changes no threshold and no criterion: the seven frozen
+criteria and their values are exactly the 2026-10-19 ones. It fixes the
+instrument that evaluates them, hardens the cascade's provenance, and
+states in advance how a distributed circuit is reported.
+
+1. **Criteria 1–2 read the confirmed head's mass.** The pre-registration
+   says "`content_mass` of the **confirmed** head", and the code was reading
+   `peak_content_mass` — the best head *on the screen*, which can be a head
+   the detector did not confirm. exp1 now records
+   `confirmed_content_mass`, the strongest confirmed head's content mass,
+   and criteria 1 and 2 read it. `peak_content_mass` stays in the manifest
+   as the screen's number, not as the criterion's.
+
+2. **A missing head is NOT MEASURED, not a fabricated 0.0.** When no head
+   is confirmed, criteria 1–2 (the confirmed head's mass and its margin over
+   the fixed offset), criterion 6 (the copy ablation drop) and criterion 7
+   (the exp4 path patch) have no measurement. `content_verdict` reports
+   them as `NOT MEASURED`; exp1 omits `confirmed_content_mass`,
+   `mean_ablation_drop` and `mean_copy_ablation_drop`, and exp4 omits the
+   path-patch metrics. A run with no confirmed head can still fail a
+   behavioural criterion (3–5) — it cannot fail a causal one it never
+   measured.
+
+3. **The cascade is pinned to exp1's model.** exp1's rolling checkpoint now
+   records `git_sha`, `git_dirty`, `seed` and `task`; exp4 must load the
+   final epoch exp1 reported (`--source-epochs`), the commit that wrote the
+   checkpoint (`--source-git-sha`), the matching model seed and the declared
+   task, and it refuses a checkpoint that fails any check. exp5 takes
+   `--source-model-seed` separately from the SAE seed (which varies the
+   dictionary, not the weights). Both manifests record the loaded
+   checkpoint in `source_provenance`, and the verdict refuses a cascade
+   whose checkpoint came from another seed, another commit, a dirty tree,
+   or an epoch before the end of exp1's run. The cascade is one model only
+   if these facts line up.
+
+4. **The distributed circuit is a secondary finding.** The 2026-10-25
+   standard-geometry de-risk (vocab 256, seq 64, d_model 64, 2 layers,
+   4 heads, seed 0) copies at 0.9993 overall and 0.9991 on non-modal
+   queries, 0.8347 above the fixed-offset baseline, while
+   `total_induction_heads = 0` because the K-composition score is 0.0918,
+   below the 0.40 confirmation threshold. The circuit report measures what
+   the per-head screen cannot: 3 candidate heads, a group ablation drop of
+   0.9956 against a largest single-head drop of 0.0986, peak content mass
+   0.9116, and an attribution margin of 9.0855. That is a **distributed
+   content circuit**, and it was already visible before the GPU run.
+
+   The seven criteria remain the primary verdict. If the full run reproduces
+   this shape, the verdict is the literal per-head verdict (NEGATIVE) and
+   the report describes the distributed circuit as the **secondary
+   finding**, with the group ablation, the content mass and the exp4 group
+   path-patch effect. The headline is not changed from "a head" to "a
+   circuit": the repository reports that no single head passed the frozen
+   per-head criteria, and that the behaviour was carried by a group. The
+   word "induction head" is still not used for a head the detector did not
+   confirm.
+
+5. **Recovery, not repetition.** A multi-seed run writes one complete
+   `ResultsManifest` per finished seed (`results/<experiment>_seed<N>.json`)
+   as soon as that seed finishes. If the session dies, `merge_manifests.py`
+   rebuilds the multi-seed record from those files; it refuses files from
+   different configs, commits, environments or seed sets, and it refuses a
+   dirty tree. A seed is never re-run "to get a better label": a recovered
+   record is evidence only if it passes the same checks as one written in a
+   single session.
+
+6. **The verdict artifact is saved, and is not evidence.** The GPU session
+   writes `results/content_verdict.json` next to the manifests. It records
+   the decision, the per-seed checks and the secondary mechanism numbers,
+   and it is re-derivable from the manifests named in its `sources` field.
+   It is not a `ResultsManifest` and is never pinned as one; neither are the
+   per-seed recovery manifests. `pin_remote_run.py --only` names the records
+   that are.
+
+The standard-geometry de-risk manifest predates items 1 and 2 (commit
+`1bf347f`), so it carries the old placeholder zeros and no
+`confirmed_content_mass`; the current module reads its head-dependent
+criteria as `NOT MEASURED`, which is why the pilot report does not claim a
+causal verdict. The de-risk is a one-seed pilot and its run status is
+`INCOMPLETE` for that reason, not a NEGATIVE.
+
 ## Links
 
 - [[portfolio/RESULTS]] — the authority on what is true; the Rung 1 section

@@ -57,9 +57,7 @@ class TestRunSeeds:
         assert result.aggregate["a"]["n"] == 2.0
 
     def test_an_optional_key_present_in_every_seed_is_aggregated(self) -> None:
-        result = run_seeds(
-            lambda _s: {"a": 1.0, "b": 2.0}, [0, 1], optional_keys={"b"}
-        )
+        result = run_seeds(lambda _s: {"a": 1.0, "b": 2.0}, [0, 1], optional_keys={"b"})
         assert result.aggregate["b"]["mean"] == 2.0
 
     def test_a_dropped_required_key_still_raises(self) -> None:
@@ -78,3 +76,45 @@ class TestRunSeeds:
 
         run_seeds(fn, [3, 1, 4])
         assert seen == [3, 1, 4]
+
+    def test_on_seed_is_called_after_each_seed_not_at_the_end(self) -> None:
+        """A dead session must keep the seeds it already finished.
+
+        The callback is the recovery hook the long GPU runs use to write a
+        per-seed manifest. It has to fire between seeds; collecting the
+        calls and replaying them at the end would lose exactly the work the
+        hook exists to save.
+        """
+        order: list[tuple[str, int]] = []
+
+        def fn(seed: int) -> dict[str, float]:
+            order.append(("run", seed))
+            return {"metric": float(seed)}
+
+        def on_seed(seed: int, metrics: dict[str, float], seconds: float) -> None:
+            assert metrics == {"metric": float(seed)}
+            assert seconds >= 0.0
+            order.append(("callback", seed))
+
+        run_seeds(fn, [0, 1, 2], on_seed=on_seed)
+        assert order == [
+            ("run", 0),
+            ("callback", 0),
+            ("run", 1),
+            ("callback", 1),
+            ("run", 2),
+            ("callback", 2),
+        ]
+
+    def test_a_callback_exception_propagates(self) -> None:
+        """A broken recovery artifact is a bug, not a logging inconvenience."""
+
+        def on_seed(seed: int, metrics: dict[str, float], seconds: float) -> None:
+            raise RuntimeError("disk full")
+
+        with pytest.raises(RuntimeError, match="disk full"):
+            run_seeds(lambda s: {"metric": 1.0}, [0], on_seed=on_seed)
+
+    def test_on_seed_is_optional(self) -> None:
+        result = run_seeds(lambda s: {"metric": 1.0}, [0, 1])
+        assert result.aggregate["metric"]["n"] == 2.0

@@ -43,9 +43,18 @@ Ordered cheapest/highest-signal → more ambitious. Each is a defensible standal
   windows and the block positions resampled per sequence, so the best single
   fixed offset explains 17.6% of the copy queries while a content-matching head
   can reach 100%. Seven criteria, three seeds, the same budget as the periodic
-  run, and a verdict computed from the manifest rather than by hand. The GPU
-  run is the one open item that can still change a headline claim in this
-  repository.
+  run, and a verdict computed from the manifest rather than by hand. The
+  instrument was audited before the run (2026-11-01): the criteria read the
+  **confirmed** head's mass, a head-dependent criterion with no confirmed head
+  is `NOT MEASURED` rather than `0.0`, and the exp4/exp5 cascade is pinned to
+  exp1's final epoch, commit, seed and task. The standard-geometry CPU de-risk
+  already shows the shape the full run may reproduce: content-based copying
+  with a **distributed** circuit (3 candidates, group ablation 0.9956, largest
+  single-head drop 0.0986) and no confirmed head. If the GPU run reproduces it,
+  the seven frozen criteria still decide (NEGATIVE) and the distributed circuit
+  is the pre-specified **secondary finding** — the headline is not rewritten
+  from "a head" to "a circuit". The GPU run is the one open item that can still
+  change a headline claim in this repository.
 
 ### Rung 2 — Grokking on Modular Addition (PRIMARY FLAGSHIP ★)
 

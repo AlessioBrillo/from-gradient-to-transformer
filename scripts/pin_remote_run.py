@@ -68,14 +68,12 @@ def validate_manifest(path: Path) -> list[str]:
         problems.append(f"{path.name}: empty aggregate — nothing was measured")
     if len(m.seeds) != len(m.per_seed_metrics):
         problems.append(
-            f"{path.name}: {len(m.seeds)} seeds but "
-            f"{len(m.per_seed_metrics)} per-seed records"
+            f"{path.name}: {len(m.seeds)} seeds but {len(m.per_seed_metrics)} per-seed records"
         )
     for key, stats in m.aggregate.items():
         if int(stats.get("n", -1)) != len(m.seeds):
             problems.append(
-                f"{path.name}: aggregate['{key}']['n']={stats.get('n')} != "
-                f"{len(m.seeds)} seeds"
+                f"{path.name}: aggregate['{key}']['n']={stats.get('n')} != {len(m.seeds)} seeds"
             )
     if m.git_dirty:
         problems.append(
@@ -116,12 +114,30 @@ def _expand_zips(source: Path) -> list[Path]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--from", dest="source", type=str, required=True,
-                        help="Directory of downloaded manifests (or a single .json)")
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Validate and report, install nothing")
-    parser.add_argument("--force", action="store_true",
-                        help="Overwrite an existing file in results/")
+    parser.add_argument(
+        "--from",
+        dest="source",
+        type=str,
+        required=True,
+        help="Directory of downloaded manifests (or a single .json)",
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Validate and report, install nothing"
+    )
+    parser.add_argument(
+        "--force", action="store_true", help="Overwrite an existing file in results/"
+    )
+    parser.add_argument(
+        "--only",
+        default=None,
+        help=(
+            "Comma-separated file names to pin from the download directory "
+            "(e.g. induction_content.json,exp4_content.json). Per-seed "
+            "recovery manifests and the verdict JSON are valid JSON but are "
+            "not the record; selecting the record explicitly is what keeps "
+            "them out of results/."
+        ),
+    )
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
@@ -140,6 +156,18 @@ def main() -> None:
     if not candidates:
         print(f"no .json manifests found under {source}", file=sys.stderr)
         raise SystemExit(1)
+
+    if args.only:
+        wanted = {name.strip() for name in args.only.split(",") if name.strip()}
+        present = {c.name for c in candidates}
+        missing = sorted(wanted - present)
+        if missing:
+            print(
+                f"--only: {', '.join(missing)} not found under {source}",
+                file=sys.stderr,
+            )
+            raise SystemExit(1)
+        candidates = [c for c in candidates if c.name in wanted]
 
     all_problems: list[str] = []
     for path in candidates:

@@ -139,9 +139,7 @@ class TestEvaluateReconstruction:
             return self.mean.expand_as(x), x
 
     def test_perfect_reconstruction_gives_fve_one_mse_zero(self) -> None:
-        loader = DataLoader(
-            TensorDataset(torch.randn(32, 4), torch.zeros(32, 4)), batch_size=8
-        )
+        loader = DataLoader(TensorDataset(torch.randn(32, 4), torch.zeros(32, 4)), batch_size=8)
         result = evaluate_reconstruction(self._IdentityModel(), loader)
         assert abs(result["mse"]) < 1e-10
         assert abs(result["fve"] - 1.0) < 1e-6
@@ -232,7 +230,7 @@ class TestHarvestActivationsFromCheckpoint:
 
     def test_wrong_architecture_raises(self, tmp_path: Path) -> None:
         model = AttentionOnlyTransformer(
-            vocab_size=8, d_model=8, n_layers=1, n_heads=2, max_seq_len=8
+            vocab_size=16, d_model=8, n_layers=1, n_heads=2, max_seq_len=16
         )
         checkpoint_path = tmp_path / "tiny_checkpoint.pt"
         torch.save(model.state_dict(), checkpoint_path)
@@ -263,3 +261,123 @@ def test_manifest_path_flag_exists() -> None:
     )
     assert args.manifest_path == "results/probe_exp5.json"
     assert build_parser().parse_args(["--seeds", "42"]).manifest_path is None
+
+
+class TestTheSAEProvenance:
+    """The SAE number must be traceable to the model whose stream it read.
+
+    Rung 5's FVE is a claim about *a model*: a manifest that does not name
+    the checkpoint, its seed, epoch and commit cannot support it.
+    """
+
+    def _rolling(self, tmp_path, **fields):
+        model = AttentionOnlyTransformer(
+            vocab_size=16, d_model=8, n_layers=1, n_heads=2, max_seq_len=16
+        )
+        state = {
+            "epoch": 41,
+            "model": model.state_dict(),
+            "optimizer": {},
+            "scheduler": {},
+            "rng_state": None,
+            "history": {},
+            "seed": 0,
+            "task": "variable",
+            "git_sha": "abc1234",
+            "git_dirty": False,
+            "arch": {
+                "vocab_size": 16,
+                "d_model": 8,
+                "n_layers": 1,
+                "n_heads": 2,
+                "max_seq_len": 16,
+            },
+        }
+        state.update(fields)
+        path = tmp_path / "exp1_checkpoint_seed0.pt"
+        torch.save(state, path)
+        return path
+
+    def test_the_parser_has_a_source_model_seed_flag(self) -> None:
+        args = build_parser().parse_args(
+            ["--activations-from", "ckpt.pt", "--source-model-seed", "2"]
+        )
+        assert args.source_model_seed == 2
+
+    def test_provenance_records_the_rolling_checkpoint(self, tmp_path) -> None:
+        from src.experiments.exp5_sae_dashboard import checkpoint_provenance
+
+        provenance = checkpoint_provenance(self._rolling(tmp_path))
+        assert provenance["format"] == "rolling"
+        assert provenance["seed"] == 0
+        assert provenance["epoch"] == 42
+        assert provenance["task"] == "variable"
+        assert provenance["git_sha"] == "abc1234"
+        assert provenance["git_dirty"] is False
+        assert provenance["arch"]["d_model"] == 8
+
+    def test_provenance_does_not_invent_facts_for_a_state_dict(self, tmp_path) -> None:
+        from src.experiments.exp5_sae_dashboard import checkpoint_provenance
+
+        model = AttentionOnlyTransformer(
+            vocab_size=16, d_model=8, n_layers=1, n_heads=2, max_seq_len=16
+        )
+        path = tmp_path / "plain.pt"
+        torch.save(model.state_dict(), path)
+        provenance = checkpoint_provenance(path)
+        assert provenance["format"] == "state_dict"
+        assert provenance["seed"] is None
+        assert provenance["git_sha"] == "unknown"
+        assert provenance["git_dirty"] is True
+
+    def test_a_checkpoint_from_another_model_seed_is_refused(self, tmp_path) -> None:
+        import pytest
+
+        path = self._rolling(tmp_path, seed=1)
+        with pytest.raises(SystemExit, match="is model seed 1"):
+            harvest_activations_from_checkpoint(
+                checkpoint_path=path,
+                vocab_size=16,
+                seq_len=16,
+                d_model=8,
+                n_layers=1,
+                n_heads=2,
+                num_samples=10,
+                seed=0,
+                task="variable",
+                source_model_seed=0,
+            )
+
+    def test_a_checkpoint_of_another_task_is_refused(self, tmp_path) -> None:
+        import pytest
+
+        path = self._rolling(tmp_path, task="periodic")
+        with pytest.raises(SystemExit, match="trained on the 'periodic' task"):
+            harvest_activations_from_checkpoint(
+                checkpoint_path=path,
+                vocab_size=16,
+                seq_len=16,
+                d_model=8,
+                n_layers=1,
+                n_heads=2,
+                num_samples=10,
+                seed=0,
+                task="variable",
+                source_model_seed=0,
+            )
+
+    def test_the_matching_seed_and_task_are_accepted(self, tmp_path) -> None:
+        path = self._rolling(tmp_path)
+        activations = harvest_activations_from_checkpoint(
+            checkpoint_path=path,
+            vocab_size=16,
+            seq_len=16,
+            d_model=8,
+            n_layers=1,
+            n_heads=2,
+            num_samples=10,
+            seed=0,
+            task="variable",
+            source_model_seed=0,
+        )
+        assert activations.shape == (10, 8)

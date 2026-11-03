@@ -13,16 +13,85 @@ smoke tests (`make reproduce-quick`) and a full-scale mode (`make reproduce`).
 
 ## Honesty Ledger
 
-Nine audits have now caught real problems in this repository's causal claims and
+Ten audits have now caught real problems in this repository's causal claims and
 evidence base. They include claims that were wrong or unbacked, a claim that was
-**right and had been called wrong by its own metric** (2026-10-14), and two
-content-task audits (2026-10-22 and 2026-10-25) that found the experiment
-supposed to close the last open question **could not have produced a verdict at
-all** — first because its verdict code would crash, then because its instrument
-measured the wrong position — and fixed it before the run. All entries stay
-here — the point of this section is to make it easy to see the trend (are
-correctness problems getting caught faster, or accumulating?), not to keep only
-the latest one.
+**right and had been called wrong by its own metric** (2026-10-14), and three
+content-task audits (2026-10-22, 2026-10-25 and 2026-11-01) that found the
+experiment supposed to close the last open question **could not have produced a
+verdict at all** — first because its verdict code would crash, then because its
+instrument measured the wrong position, then because the verdict read the wrong
+head and the cascade could silently analyse another model — and fixed it before
+the run. All entries stay here — the point of this section is to make it easy to
+see the trend (are correctness problems getting caught faster, or accumulating?),
+not to keep only the latest one.
+
+### 2026-11-01 — The content-task verdict read the wrong head, the cascade could analyse the wrong model, and the distributed circuit had no voice
+
+The tenth audit, again before the GPU run. The 2026-10-25 de-risk made the
+central shape visible: the model copies by **content** (0.9993 overall,
+0.9991 on non-modal queries, 0.8347 above the fixed-offset baseline) while
+`total_induction_heads = 0`, because K-composition is 0.0918. Three
+candidate heads carry the copy jointly: group ablation 0.9956 against a
+largest single-head drop of 0.0986. The instrument as shipped would have
+described that model as "NEGATIVE (unexplained)" without naming the circuit
+it had measured, and could have computed its causal criteria from a model
+it never trained.
+
+**What was broken.** Four things, each independent of the others:
+
+1. **Criteria 1–2 read the screen's peak, not the confirmed head's mass.**
+   The pre-registration says "`content_mass` of the **confirmed** head";
+   the code read `peak_content_mass`, the best head on the screen,
+   confirmed or not. A strong head the detector rejected could carry both
+   criteria for a weak confirmed one. `exp1` now records
+   `confirmed_content_mass` (the strongest confirmed head; the key is
+   omitted when none is confirmed) and the criteria read it. No threshold
+   moved.
+
+2. **A missing head was a verdict, not a missing measurement.** Criteria
+   1–2 are head-dependent, so with no confirmed head there is nothing to
+   measure. They are now `NOT MEASURED`, like criteria 6–7; the run can
+   still fail the behavioural criteria 3–5, but it cannot fail a causal
+   criterion it never measured. `exp1` no longer writes a fabricated
+   `confirmed_content_mass`.
+
+3. **The cascade could analyse a different model.** exp1's rolling
+   checkpoint carried only weights, optimizer state and epoch: not the
+   model seed, not the task, not the commit. exp4 could load
+   `checkpoint_seed1.pt` for seed 0, a stale epoch, or weights trained by
+   another commit, and exp5 could train its SAE on a different model's
+   activations. Checkpoints now record `git_sha`, `git_dirty`, `seed` and
+   `task`; exp4 checks the architecture, seed, task, final epoch and
+   commit (`--source-epochs`, `--source-git-sha`) and exp5 takes
+   `--source-model-seed`; both manifests record the loaded checkpoint in
+   `source_provenance`, and the verdict refuses a cascade that fails any
+   check.
+
+4. **A dead session lost the seeds it had finished, and the verdict was
+   never saved.** The multi-seed manifest was written only after the last
+   seed; a disconnect at seed 2 discarded seeds 0 and 1. Each seed now
+   writes a complete per-seed recovery manifest, `merge_manifests.py`
+   rebuilds the aggregate (refusing mixed configs, commits, environments
+   or seed sets), the GPU session saves `results/content_verdict.json`
+   next to the manifests, and `pin_remote_run.py --only` names the records
+   so the recovery files and the verdict are not installed as evidence.
+
+**What it changes, measured before the GPU run.** The seven criteria and
+their thresholds are untouched. The mechanism report now names a
+distributed content circuit when it measured one — group ablation, content
+mass, single-head drop, and exp4's group path-patch effect — and labels it
+a **secondary finding**. A NEGATIVE stays NEGATIVE; the report explains
+the mechanism the per-head rule did not confirm. The pre-registration's
+2026-11-01 addendum records all of this, and the standard-geometry
+de-risk's shape is written there **before** the GPU run.
+
+<!-- manifest: results/induction_content_derisk_standard.json -->
+
+**What it does not change.** No criterion, threshold or decision rule. No
+number is re-tuned after seeing the de-risk data, and the headline is not
+rewritten from "a head" to "a circuit": the repository reports that no
+single head passed the frozen per-head criteria and that the behaviour was
+carried by a group.
 
 ### 2026-10-25 — The content-task instrument cannot measure its own question: wrong chance level, invalid shares, an empty candidate group, and a missing standard-geometry de-risk
 
@@ -633,20 +702,27 @@ its GPU run. The short version:
 |---|---|
 | **The task** | A key of 36 distinct tokens; four verbatim copy blocks of five, with the source windows **and** the block positions resampled per sequence, so the distance between a token and its previous occurrence changes from block to block. Every token appears at most twice (the task is well posed), the filler is distinct and unpredictable, and the copy queries are derived **from the tokens alone** — the detector never has to trust the generator. |
 | **Why it separates the mechanisms** | The best *single fixed offset* explains **17.6%** of the copy queries (measured on the data before the run). A content-matching head can reach 100%. That gap is the claim, and it is a property of the data, not an assumption. |
-| **The verdict** | Seven pre-registered criteria (content mass ≥ 0.30, content mass above the best fixed offset by ≥ 0.10, copy accuracy ≥ 0.60, non-modal-distance accuracy ≥ 0.50, copy accuracy above the fixed-offset baseline by ≥ 0.20, ablation drop ≥ 0.10, path-patching effect ≥ 0.20), computed **by code** — `src/experiments/content_verdict.py`, which joins the exp1 and exp4 manifests per seed (`make content-verdict`). The criteria and their thresholds are frozen; a criterion whose measurement is missing is reported missing, and a run whose manifest does not carry it gets the status `INCOMPLETE` and **no verdict**. |
-| **The mechanism report** | A *secondary* report, always produced, that describes the circuit rather than deciding the verdict: the aggregate content mass and its concentration, the **group ablation** (the drop in copy accuracy when the whole candidate group is removed) next to the single-head ablations, and the first-order **logit attribution** of every head to the content-vs-position contrast. The candidate group is fixed by a rule that reads the data and the attention masses and never the outcome. |
+| **The verdict** | Seven pre-registered criteria (the **confirmed head's** content mass ≥ 0.30, that mass above the best fixed offset by ≥ 0.10, copy accuracy ≥ 0.60, non-modal-distance accuracy ≥ 0.50, copy accuracy above the fixed-offset baseline by ≥ 0.20, ablation drop ≥ 0.10, path-patching effect ≥ 0.20), computed **by code** — `src/experiments/content_verdict.py`, which joins the exp1 and exp4 manifests per seed (`make content-verdict`). The criteria and their thresholds are frozen; a criterion whose measurement is missing is reported `NOT MEASURED` — never a fabricated zero — and a run whose manifest does not carry it gets the status `INCOMPLETE` and **no verdict**. |
+| **The mechanism report** | A *secondary* report, always produced, that describes the circuit rather than deciding the verdict: the aggregate content mass and its concentration, the **group ablation** (the drop in copy accuracy when the whole candidate group is removed) next to the single-head ablations, and the first-order **logit attribution** of every head to the content-vs-position contrast. The candidate group is fixed by a rule that reads the data and the attention masses and never the outcome. When it finds a distributed circuit it says so, with the exp4 group path-patch effect, and labels the finding **secondary**. |
 | **The budget** | 3 seeds × 3000 epochs = 384k optimizer steps per seed, GPU. A negative at that budget is a negative: the budget is not extended after the fact, and no seed is dropped. |
-| **The amendments (2026-10-22 and 2026-10-25, before the run)** | Vocabulary 2048 → **256** (`--content-standard`): the periodic task's 2048 answered a constraint this task lacks, and the standard-geometry CPU probe was still uniform after 400 epochs at 2048. The cascade's counterfactual is a **minimal pair** — one token changed, in the same sequence — instead of a different sequence. The 2026-10-25 audit fixed the chance level (`mean(1/(q+1))`), normalized the attribution shares by `sum(abs(v))`, made an empty candidate group *undetermined*, added the exploratory top-80% mass group, and removed the fabricated zeros for unmeasured ablation/path patching. The separate emergence run was removed: the full run records `confirmed_epoch`, so it added no measurement and would have doubled the budget. The standard-geometry de-risk finds a distributed circuit (3 candidates, group drop 0.9956, max single-head drop 0.0986). The seven criteria are untouched. |
-| **Where it is** | [ADR-0033](../docs/adr/0033-content-based-induction-task.md), the [pre-registration](../07_capstone/notes/variable-distance-induction-preregistration.md) (with its three addenda), the notebook `notebooks/kaggle_induction_content.ipynb` (`make remote-run-induction-content`). |
+| **The amendments (2026-10-22, 2026-10-25 and 2026-11-01, before the run)** | Vocabulary 2048 → **256** (`--content-standard`): the periodic task's 2048 answered a constraint this task lacks, and the standard-geometry CPU probe was still uniform after 400 epochs at 2048. The cascade's counterfactual is a **minimal pair** — one token changed, in the same sequence — instead of a different sequence. The 2026-10-25 audit fixed the chance level (`mean(1/(q+1))`), normalized the attribution shares by `sum(abs(v))`, made an empty candidate group *undetermined*, added the exploratory top-80% mass group, and removed the fabricated zeros for unmeasured ablation/path patching. The separate emergence run was removed: the full run records `confirmed_epoch`, so it added no measurement and would have doubled the budget. The 2026-11-01 audit made criteria 1–2 read the **confirmed** head's mass, made head-dependent criteria `NOT MEASURED` with no confirmed head, pinned the exp4/exp5 cascade to exp1's final epoch, commit, seed and task, added per-seed recovery manifests, and made the distributed circuit an explicit **secondary finding** instead of an unexplained NEGATIVE. The seven criteria and thresholds are untouched. The standard-geometry de-risk finds the distributed circuit in advance (3 candidates, group drop 0.9956, max single-head drop 0.0986). |
+| **Where it is** | [ADR-0033](../docs/adr/0033-content-based-induction-task.md), the [pre-registration](../07_capstone/notes/variable-distance-induction-preregistration.md) (with its four addenda), the notebook `notebooks/kaggle_induction_content.ipynb` (`make remote-run-induction-content`). |
 
 <!-- manifest: results/induction_content_derisk_fixed.json -->
 <!-- manifest: results/induction_content_derisk_standard.json -->
 
-**Status: [ ] not run.** No number is reported here, because there is none
-yet. The experiment exists, its rules are frozen, the instrument is tested (the
-verdict is a module, not a notebook cell — see the Honesty Ledger's 2026-10-22
-entry), and the run is the open item — the one measurement in this repository
-that can still change a headline claim.
+**Status: [ ] not run.** No verdict number is reported here, because there is
+none yet. The experiment exists, its rules are frozen, and the instrument is
+tested: the verdict is a module, not a notebook cell (2026-10-22); it reads
+the confirmed head's mass and reports head-dependent criteria as `NOT
+MEASURED` rather than `0.0` (2026-11-01); the cascade is pinned to exp1's
+final epoch, commit, seed and task; and the standard-geometry de-risk already
+shows the shape the full run may reproduce — content-based copying with a
+**distributed** circuit and no confirmed head. If the GPU run reproduces it,
+the verdict is the literal per-head **NEGATIVE** and the distributed circuit
+is the pre-specified secondary finding, not a rewritten headline. The run is
+the open item — the one measurement in this repository that can still change
+a headline claim.
 
 ### Quick scale (the historical scale, for continuity)
 
@@ -1104,7 +1180,7 @@ every cell, so no reader has to infer them from an aggregate.
 | 4 — Circuit Patching | ✅ **Cascade ran end to end on Rung 1's checkpoint** (2026-10-20) | Head ablation **0.4445 ± 0.0425**, path patching **0.8215 ± 0.1255** — the first end-to-end path-patching result against a real head; activation recovery 0.0834 |
 | 5 — SAE Dashboard | ✅ Synthetic reproduced; ✅ **the real-activation gap closed** (2026-10-20) | On the confirmed-head checkpoint the SAE is now *sparse*: L0 15.1/512 (3.0%), FVE 99.998%, MSE 0.0004 — against 53% L0 for the old undertrained model. What remains is a dictionary 8× too large (78% dead features) |
 | 6 — ACDC | ❌ Deleted | Was fabricated data; removed 2026-08-01 rather than fixed |
-| 1b — Content-based induction (issue #200) | [ ] **Pre-registered, run pending** | The task that removes the positional shortcut (repeats at varying distances; the best fixed offset explains 17.6% of the copy queries), its seven criteria, its budget and its decision rule are frozen in [ADR-0033](../docs/adr/0033-content-based-induction-task.md) and the [pre-registration](../07_capstone/notes/variable-distance-induction-preregistration.md). It is the one measurement in this repository that can still change a headline claim — and it is reported whatever it says |
+| 1b — Content-based induction (issue #200) | [ ] **Pre-registered, run pending** | The task that removes the positional shortcut (repeats at varying distances; the best fixed offset explains 17.6% of the copy queries), its seven criteria, its budget and its decision rule are frozen in [ADR-0033](../docs/adr/0033-content-based-induction-task.md) and the [pre-registration](../07_capstone/notes/variable-distance-induction-preregistration.md). The instrument is audited and tested: criteria 1–2 read the confirmed head's mass, head-dependent criteria are `NOT MEASURED` instead of a fabricated zero, the exp4/exp5 cascade is pinned to exp1's final epoch, commit, seed and task, and the standard-geometry de-risk already shows a distributed content circuit (3 candidates, group drop 0.9956, max single-head 0.0986) with no confirmed head. If the full run reproduces it, the verdict is the literal per-head NEGATIVE and the circuit is the pre-specified secondary finding — the headline is not rewritten. It is reported whatever it says |
 
 **What to trust right now, in order**: (1) Rung 2's sparse-circuit reproduction —
 GPU, 3 seeds, both protocols, post-audit energy metric, manifests pinned with

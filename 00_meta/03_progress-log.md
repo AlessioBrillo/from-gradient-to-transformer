@@ -13,6 +13,57 @@ Dated journal. One line per session: *what* I studied, *what* I built, *what* I 
 - Open question:
 -->
 
+## 2026-11-01 — The content-task verdict, the cascade's provenance, and the distributed circuit
+
+- **Studied**: the 2026-10-25 standard-geometry de-risk as an *instrument*
+  question, not a model question. The de-risk copies by content (0.9993,
+  non-modal 0.9991, 0.8347 above the fixed-offset baseline) while the
+  per-head detector confirms **0** heads (K-composition 0.0918). The
+  screen's peak content mass (0.9116) is not the confirmed head's mass,
+  and the circuit report already measured the group that carries the
+  behaviour: 3 candidates, group ablation 0.9956, largest single-head drop
+  0.0986. The old verdict could only call this "NEGATIVE (unexplained)".
+- **Built / measured**:
+  - **Criteria 1–2 now read the pre-registration's own number.**
+    `exp1_induction_heads` records `confirmed_content_mass` — the strongest
+    **confirmed** head's mass; the key is omitted when none is confirmed.
+    `content_verdict` reads it, and reports criteria 1–2, 6 and 7 as `NOT
+    MEASURED` when there is no confirmed head. No threshold moved.
+  - **The verdict now names a distributed circuit.** `format_report` prints
+    the mechanism and cascade numbers next to the decision, and the
+    negative taxonomy distinguishes a distributed circuit, a low content
+    mass and an unconfirmed candidate. It labels the circuit a **secondary
+    finding**: the seven frozen criteria still decide, and a NEGATIVE stays
+    NEGATIVE.
+  - **The cascade is pinned to exp1's model.** Checkpoints record
+    `git_sha`, `git_dirty`, `seed` and `task`; exp4 checks architecture,
+    seed, task, final epoch (`--source-epochs`) and commit
+    (`--source-git-sha`), exp5 takes `--source-model-seed`, and both
+    manifests record `source_provenance`. The verdict refuses a cascade
+    from another seed, another commit, a dirty tree or a stale epoch.
+  - **A dead session keeps its seeds.** `run_seeds` gained an `on_seed`
+    callback; exp1/exp4/exp5 write one complete recovery manifest per
+    finished seed; `merge_manifests.py` rebuilds the multi-seed record and
+    refuses mixed configs, commits, environments or seed sets. The GPU
+    session also saves `results/content_verdict.json` (not a
+    `ResultsManifest`), and `pin_remote_run.py --only` names the records.
+  - **The Kaggle notebook was updated**: exp4 receives exp1's epoch and
+    commit, exp5 receives the model seed, Step 3 falls back to the best
+    content-based seed when no head is confirmed, the verdict writes its
+    JSON and receives the exp4 rows, the zip includes the per-seed
+    manifests, and the final instructions use `--only` and keep the
+    headline frozen. The notebook contract tests were extended.
+  - **Tests**: `tests/test_content_verdict.py` (58), new
+    `tests/test_merge_manifests.py` (19), new
+    `tests/test_checkpointing.py` (7), plus runner, exp1, exp4 and exp5
+    coverage.
+- **Open question**: the #200 GPU run itself. The standard-geometry
+  de-risk is one seed at the GPU geometry, so the verdict on it is
+  `INCOMPLETE` (a pilot), not a NEGATIVE; the run verdict needs seeds
+  0, 1 and 2. The 2026-11-01 addendum records the distributed-circuit
+  shape **before** that run. #168 remains a separate, unresolved scope
+  decision (protocol ablation vs. deferral to v1.2).
+
 ## 2026-10-22 (b) — The instrument audit: the content run could not have produced a verdict
 
 - **Studied**: the content task's *instrument* rather than its model — the
