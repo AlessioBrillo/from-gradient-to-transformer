@@ -197,6 +197,19 @@ def validate_notebook(nb: dict[str, Any], check_flags: bool = True) -> list[str]
             problems.append("absolute host path in a code cell (runs remotely!)")
             break
 
+    # `!zip ... $manifests` looks right and is not: IPython expands a list to
+    # its repr, so zip receives "['results/a.json', ...]" and writes nothing.
+    # The 2026-11-04 audit found this in three notebooks; a Colab session had
+    # been losing its manifests. Use scripts.zip_manifests instead.
+    unsafe_zip = re.compile(r"!\s*zip\b[^\n]*(?:\$[A-Za-z_]|\{)")
+    for cell in cells:
+        if unsafe_zip.search(cell):
+            problems.append(
+                "shell `!zip` expands a Python value into an invalid argument; "
+                "use scripts.zip_manifests.write_manifest_zip"
+            )
+            break
+
     if "cuda.is_available" not in text:
         problems.append("no GPU assertion — a CPU run wastes the session")
 

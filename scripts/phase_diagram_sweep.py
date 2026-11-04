@@ -613,6 +613,31 @@ def generate_sweep_grid(config: dict) -> list[SweepCell]:
     return cells
 
 
+def select_cells(cells: list[SweepCell], spec: Optional[str]) -> list[SweepCell]:
+    """Keep only the named ``cell_id``s, in the config's pre-registered order.
+
+    ``--max-cells`` can only take a prefix, which is awkward when a 10-cell
+    sweep has to be split across two GPU sessions and the slow cells are not
+    the first ones. Naming cells explicitly also makes a resumed session's
+    scope auditable: the working manifest records the cells it ran, and this
+    filter cannot silently add one.
+    """
+    if not spec:
+        return list(cells)
+    wanted = [part.strip() for part in spec.split(",") if part.strip()]
+    if not wanted:
+        raise SystemExit("--cells was given but named no cell")
+    known = {cell.cell_id for cell in cells}
+    unknown = sorted(set(wanted) - known)
+    if unknown:
+        raise SystemExit(
+            f"unknown cell id(s): {', '.join(unknown)}; "
+            f"known: {', '.join(sorted(known))}"
+        )
+    selected = set(wanted)
+    return [cell for cell in cells if cell.cell_id in selected]
+
+
 def emit_cell_manifest(cell: SweepCell, result: CellResult, out_dir: Path) -> Path:
     """Write one cell as a standard ResultsManifest JSON in `out_dir`.
 
@@ -700,6 +725,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--max-cells", type=int, default=None, help="Limit number of cells (for testing)"
     )
+    parser.add_argument(
+        "--cells",
+        type=str,
+        default=None,
+        help=(
+            "Comma-separated cell_ids to run (default: every cell in the "
+            "config). Lets a long sweep be split across GPU sessions without "
+            "re-ordering the pre-registered grid."
+        ),
+    )
     parser.add_argument("--dry-run", action="store_true", help="Print cells without running")
     parser.add_argument("--resume", action="store_true", help="Resume from existing manifest")
     parser.add_argument(
@@ -725,6 +760,7 @@ def main():
 
     # Generate grid
     cells = generate_sweep_grid(config)
+    cells = select_cells(cells, args.cells)
 
     if args.max_cells:
         cells = cells[: args.max_cells]
