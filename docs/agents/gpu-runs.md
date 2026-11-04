@@ -24,6 +24,43 @@ session died before the last seed, rebuild the multi-seed record first with
 `python -m src.experiments.merge_manifests --inputs <dir> --output
 results/<experiment>.json --expected-seeds 0,1,2 --allow-optional`.
 
+## Zip the manifests without shell expansion
+
+Never use `!zip -j ... $manifests` in a notebook cell: IPython expands a
+Python list to its repr, so `zip` receives a single token like
+`['results/a.json', 'results/b.json']`, finds no such file, and writes an
+empty archive - the session's manifests are then lost on Colab. Use the
+tested helper instead (the notebooks already do):
+
+```python
+from scripts.zip_manifests import write_manifest_zip
+import glob
+
+manifests = sorted(glob.glob("results/induction_content*.json"))
+archive = write_manifest_zip(manifests, "induction_content_results.zip")
+```
+
+`write_manifest_zip` refuses an empty file list, a missing file, and two
+files with the same basename, so a partial or silently-overwritten archive
+is impossible. The content notebook appends `results/content_verdict.json`
+to the same archive with `append_to_zip`, which refuses a name already
+present. See `tests/test_zip_manifests.py`.
+
+## Split a long sweep across sessions with `--cells`
+
+The phase diagram sweep names every cell in its config, in pre-registered
+order, so a long sweep can be split across GPU sessions without re-ordering
+the grid. Name the cells explicitly rather than taking a prefix:
+
+```bash
+python scripts/phase_diagram_sweep.py --cells p113_wd1,p29_wd1 \
+  --manifest-path results/phase_diagram.json
+```
+
+`--cells` refuses unknown ids and keeps the config's order; `--max-cells`
+still takes a prefix for quick tests. A resumed session re-reads its
+manifest and skips completed cells.
+
 ## One-time host setup
 
 - `python -m pip install kaggle` into the project venv (the driver invokes it

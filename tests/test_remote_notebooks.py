@@ -109,3 +109,25 @@ class TestValidateNotebook:
         )
         problems = validate_notebook(nb, check_flags=False)
         assert any("absolute host path" in p for p in problems)
+
+    def test_shell_zip_variable_expansion_is_caught(self) -> None:
+        """`!zip ... $manifests` passes a list repr, not a file list."""
+        nb = self._nb(
+            'BRANCH = "main"',
+            "manifests = ['results/a.json', 'results/b.json']",
+            "!zip -j out.zip $manifests",
+            "from google.colab import files",
+            "import torch; torch.cuda.is_available()",
+        )
+        problems = validate_notebook(nb, check_flags=False)
+        assert any("write_manifest_zip" in p for p in problems), problems
+
+    def test_shell_zip_with_literal_files_is_allowed(self) -> None:
+        nb = self._nb(
+            'BRANCH = "main"',
+            "!zip -j out.zip results/a.json results/b.json",
+            "from google.colab import files",
+            "import torch; torch.cuda.is_available()",
+        )
+        problems = validate_notebook(nb, check_flags=False)
+        assert not any("write_manifest_zip" in p for p in problems), problems

@@ -291,8 +291,8 @@ copy queries on that data, while a content-matching head can reach $100\%$
 The verdict is pre-registered as seven criteria (content mass, content mass
 above the best fixed offset, copy accuracy, accuracy on the
 non-modal-distance group, the margin over the fixed-offset baseline, the
-ablation drop and the path-patching effect), computed from the manifest by
-the notebook rather than written by hand, on three seeds at the same budget
+ablation drop and the path-patching effect), computed from the manifests by
+a tested module rather than written by hand, on three seeds at the same budget
 as the periodic run, with a negative reported as a negative. The run is not
 in this version, and this paper therefore does not claim an induction head:
 it claims a prefix-copying head, and it says why the difference is
@@ -310,9 +310,9 @@ measurement gets the status \emph{incomplete} and no verdict at all, because
 measured one'' are different claims. The same audit amended the protocol
 before the run --- the vocabulary drops from $2048$ to $256$ (the periodic
 task's vocabulary answered a collision constraint that this task does not
-have, since its key is sampled without replacement), the emergence run stops
-on the first confirmed head rather than on a two-step circuit that this
-architecture may never produce, and the causal intervention now uses a
+have, since its key is sampled without replacement), the separate emergence
+run is removed because its only unique output, the confirmation epoch, is
+already recorded by the full-budget run, and the causal intervention now uses a
 \emph{minimal pair} --- the same sequence with the source token changed ---
 rather than a second, unrelated sequence. A \emph{secondary} mechanism report
 accompanies the verdict and never replaces it: it measures the copy at the
@@ -322,6 +322,23 @@ the first-order logit attribution of every head to the content-versus-position
 contrast), because a copy distributed over several heads falls below the
 per-head screen in each of them. If the seven criteria are not met, this
 paper will not claim an induction head, whatever that report says.
+
+% manifest: results/induction_content_derisk_standard.json
+The standard-geometry CPU de-risk of 2026-10-25 was run at pilot geometry -
+600 epochs on 2048 training samples, against the pre-registered full run's
+3000 epochs on 8192 samples - so its numbers are a shape-check, not the
+verdict. It already shows the shape the GPU run may reproduce. At the run's
+geometry (vocabulary $256$,
+$\text{seq\_len}=64$, a key of $36$ distinct tokens, four verbatim copy
+blocks of five, $d_\text{model}=64$, two layers, four heads, fresh batches),
+seed 0 copies at $0.9993$ against a $0.1646$ fixed-offset baseline, the
+candidate screen selects three heads, ablating the group removes $0.9956$ of
+the copy accuracy, and the largest single-head drop is $0.0986$. The
+per-head rule confirms $0/8$ heads because the K-composition score is
+$0.0918 < 0.40$: the copy is carried by a \emph{distributed} circuit. The
+seven criteria are unchanged. If the full run reproduces this shape, the
+verdict is the literal per-head NEGATIVE and the distributed circuit is the
+pre-specified \emph{secondary} finding, not a rewritten headline.
 
 \subsection{Multi-Seed Quick-Scale Manifest}
 Three seeds at quick scale ($V=256$, $\text{seq\_len}=16$,

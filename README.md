@@ -5,6 +5,8 @@
 <a href="https://github.com/AlessioBrillo/from-gradient-to-transformer/actions/workflows/markdown-lint.yml"><img src="https://github.com/AlessioBrillo/from-gradient-to-transformer/actions/workflows/markdown-lint.yml/badge.svg" alt="Markdown Lint"></a>
 <a href="https://github.com/AlessioBrillo/from-gradient-to-transformer/actions/workflows/python-ci.yml"><img src="https://github.com/AlessioBrillo/from-gradient-to-transformer/actions/workflows/python-ci.yml/badge.svg" alt="Python CI"></a>
 
+> **CI gate**: the repository's gate is the Woodpecker pipeline in `.woodpecker/ci.yml`, run locally with `ci-local`. The GitHub Actions badges above are auxiliary checks, not the merge gate.
+
 > **Thesis**: I build a decoder-only transformer from scratch, then reverse-engineer the algorithms it learns. This repository demonstrates end-to-end research capability in mechanistic interpretability — training small models, forming causal hypotheses about their internals, and testing those hypotheses with activation patching, ablations, and sparse dictionary learning.
 
 ---
@@ -39,12 +41,12 @@ The manifests behind that table: Rung 1
 <!-- manifest: results/exp5_real_activations.json -->.
 
 Read the Honesty Ledger in [`portfolio/RESULTS.md`](portfolio/RESULTS.md) before citing any
-number from this repository: nine audits have now examined these claims — they found numbers
+number from this repository: ten audits have now examined these claims — they found numbers
 that were wrong or unbacked, a negative verdict its own metric had manufactured, and a
 content-task experiment that could not have produced a verdict until its instrument was fixed
 before the GPU run.
-`make verify-claims` (run in CI) fails if a public number has no committed
-manifest behind it.
+`make verify-claims` (run in CI) fails if a claim tag has no committed
+manifest behind it; `make docs-audit` checks the prose around those tags.
 
 **Live site:** <https://alessiobrillo.github.io/from-gradient-to-transformer/>
 
@@ -124,8 +126,8 @@ NN_name/
 - [x] **Phase 2 — Classical ML** (linear/logistic regression, trees/forests, SVM, PCA/k-means, CV/metrics, bias/variance)
 - [x] **Phase 3 — Deep Learning** (micrograd, training dynamics, grokking, RNN/CNN breadth)
 - [x] **Phase 4 — NLP & Transformers** (LOAD-BEARING for MI — QK/OV circuits, induction heads, activation patching, logit lens, TransformerLens)
-- [x] **Phase 5 — LLM Engineering** (model instrumentation: hooks, deterministic inference, activation harvesting, circuit datasets)
-- [x] **Phase 6 — Production AI** (reframed: reproducible research infra — pinned env, manifests, `verify-claims` in CI; W&B closed-with-reason, the compiled paper PDF now ships with the site)
+- [~] **Phase 5 - LLM Engineering** (instrumentation done: hooks, deterministic inference, activation harvesting, circuit datasets; nnsight pending - not installed, and the capture protocol the repo uses does not need it)
+- [~] **Phase 6 - Production AI** (reproducible research infra - pinned env, manifests, `verify-claims` in CI; W&B descoped 2026-09-08, HF Spaces descoped 2026-10-11, the compiled paper PDF ships with the site)
 - [~] **Phase 7 — Capstone: train + reverse-engineer** (model built, rungs 1-5 implemented; Rung 2 reproduced on GPU 2026-10-14; the planned 3×20k joint run executed 2026-10-14 — the modular/induction dissociation persists at full budget; the standard-scale induction run landed 2026-10-20 and found a *prefix-copying* head, so the content-based task of issue #200 is the open measurement)
 
 See [03_progress-log](00_meta/03_progress-log.md) for the dated journal and [02_skill-tree](00_meta/02_skill-tree.md) for the complete skill tree.

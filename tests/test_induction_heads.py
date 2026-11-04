@@ -1066,13 +1066,29 @@ class TestThePerSeedRecoveryManifest:
         assert manifest.aggregate["copy_accuracy"]["mean"] == 0.5
         assert "recovery artifact" in (manifest.notes or "")
 
-    def test_the_manifest_args_exclude_the_seed_list(self) -> None:
+    def test_the_manifest_args_exclude_the_seed_controls(self) -> None:
         from src.experiments.exp1_induction_heads import _manifest_args
 
         args = self._args(Path("results"))
         recorded = _manifest_args(args)
         assert "seeds" not in recorded
+        assert "seed" not in recorded
         assert recorded["manifest_path"].endswith("run.json")
+
+    def test_the_recorded_config_does_not_change_with_the_seed(self) -> None:
+        """A per-seed record must not claim the parser's default seed.
+
+        The old ``args.seed`` (42) sat next to ``seeds: [0, 1, 2]`` and
+        ``merge_manifests`` compared it as if it were config. The seed a seed
+        was actually run under lives in ``seeds``, so two namespaces that
+        differ only in ``seed`` must record the same config.
+        """
+        from src.experiments.exp1_induction_heads import _manifest_args
+
+        first = self._args(Path("results"))
+        second = self._args(Path("results"))
+        second.seed = 7
+        assert _manifest_args(first) == _manifest_args(second)
 
 
 class TestTheSeedMetricsCheckpointMetadata:
