@@ -1571,12 +1571,17 @@ def _seed_metrics(
 
 
 def _manifest_args(args: argparse.Namespace) -> dict:
-    """The recorded config: every flag except the seed *list*.
+    """The recorded config: every flag except the seed controls.
 
-    ``--seeds`` is the loop control, not part of the run's configuration;
-    the per-seed IDs are the manifest's ``seeds`` field.
+    ``--seeds`` is the loop control and ``--seed`` is the single-seed fallback;
+    neither is part of a multi-seed run's configuration. The seed IDs that were
+    actually run live in the manifest's ``seeds`` field and in each per-seed
+    record, so keeping the parser's default ``--seed 42`` next to
+    ``seeds: [0, 1, 2]`` only invited a reader to believe the wrong one. It was
+    also load-bearing for ``merge_manifests``, which compares the full ``args``
+    dict: the old field was identical across seeds by accident, not by design.
     """
-    return {k: v for k, v in vars(args).items() if k != "seeds"}
+    return {k: v for k, v in vars(args).items() if k not in {"seed", "seeds"}}
 
 
 def _probe_parameter_count(args: argparse.Namespace) -> int:

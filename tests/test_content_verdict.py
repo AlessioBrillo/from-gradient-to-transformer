@@ -17,6 +17,9 @@ to be a deliberate one.
 from __future__ import annotations
 
 import json
+from pathlib import Path
+
+import pytest
 
 from src.experiments.content_verdict import (
     CHECK_FAIL,
@@ -37,6 +40,9 @@ from src.experiments.content_verdict import (
     verdict_payload,
     write_verdict_json,
 )
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+DERISK_MANIFEST = REPO_ROOT / "results/induction_content_derisk_standard.json"
 
 
 def _exp1_metrics(**overrides: float) -> dict[str, float]:
@@ -672,6 +678,54 @@ class TestTheRunVerdict:
         report = format_report(result, per_seed_metrics(exp1))
         assert "heads=?" in report
         assert "RUN VERDICT" not in report
+
+
+class TestTheDeRiskManifestReadsNotMeasured:
+    """The tracked CPU de-risk manifest is a seed-0 pilot (600 epochs /
+    2048 samples vs the pre-registered 3000 / 8192) that never ran the
+    exp4 cascade. Its causal criterion must read NOT MEASURED, and the
+    head-level criteria must read NOT MEASURED because no head was
+    confirmed - never a fabricated measured zero.
+
+    The manifest itself is kept with its documented placeholder zeros and
+    is deliberately not regenerated (see the 2026-11-04 hardening note).
+    """
+
+    @pytest.fixture
+    def derisk(self) -> dict:
+        assert DERISK_MANIFEST.is_file(), DERISK_MANIFEST
+        return json.loads(DERISK_MANIFEST.read_text(encoding="utf-8"))
+
+    def test_seed_zero_is_a_pilot_not_the_run(self, derisk: dict) -> None:
+        result = run_verdict(derisk, None)
+        assert result.status == STATUS_INCOMPLETE
+        assert result.verdict == ""
+        assert "missing [1, 2]" in result.note
+
+    def test_no_cascade_means_path_patching_is_not_measured(
+        self, derisk: dict
+    ) -> None:
+        row = per_seed_metrics(derisk)[0]
+        seed = evaluate_seed(0, row, None)
+        path_patch = next(c for c in seed.checks if c.criterion.name == "path patching")
+        assert path_patch.status == CHECK_NOT_MEASURED
+
+    def test_no_confirmed_head_means_head_criteria_are_not_measured(
+        self, derisk: dict
+    ) -> None:
+        row = per_seed_metrics(derisk)[0]
+        seed = evaluate_seed(0, row, None)
+        assert seed.confirmed_heads == 0
+        for name in ("content mass", "content beats position", "ablation drop"):
+            check = next(c for c in seed.checks if c.criterion.name == name)
+            assert check.status == CHECK_NOT_MEASURED, name
+
+    def test_measured_copy_criteria_still_pass(self, derisk: dict) -> None:
+        row = per_seed_metrics(derisk)[0]
+        seed = evaluate_seed(0, row, None)
+        for name in ("copy accuracy", "non-modal accuracy", "beats fixed offset"):
+            check = next(c for c in seed.checks if c.criterion.name == name)
+            assert check.status == CHECK_PASS, name
 
 
 class TestTheCommandLine:

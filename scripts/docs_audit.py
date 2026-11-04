@@ -103,10 +103,11 @@ STALE_CLAIMS: list[tuple[str, str, str, str]] = [
     (
         "07_capstone/writeup.md",
         "Six audits have caught real bugs",
-        "nine audits have caught real bugs (they include a negative verdict "
-        "its own metric had manufactured, and the content-task experiment "
-        "that could not produce a verdict until its instrument was fixed)",
-        "2026-10-20",
+        "ten audits have caught real bugs (they include a negative verdict "
+        "its own metric had manufactured, the content-task experiment that "
+        "could not produce a verdict until its instrument was fixed, and the "
+        "2026-11-04 finalization audit)",
+        "2026-11-04",
     ),
     (
         "CONTEXT.md",
@@ -286,8 +287,79 @@ def check_required_manifests() -> list[str]:
     return problems
 
 
+# The ledger's opening sentence is the count of record. The other
+# current-facing documents must not disagree with it: on 2026-11-04 the
+# ledger said "Ten audits" while README, writeup and checklist still said
+# "nine", and no checker noticed because each number was untagged prose.
+AUDIT_COUNT_DOCS = (
+    "README.md",
+    "07_capstone/writeup.md",
+    "07_capstone/checklist.md",
+)
+AUDIT_HEADER_RE = re.compile(
+    r"\b([A-Za-z]+)\s+audits\s+have\s+now\s+caught\b", re.IGNORECASE
+)
+AUDIT_ANY_RE = re.compile(r"\b([A-Za-z]+)\s+audits\b", re.IGNORECASE)
+NUMBER_WORDS = {
+    "one",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine",
+    "ten",
+    "eleven",
+    "twelve",
+}
+
+
+def check_audit_count() -> list[str]:
+    """The public documents agree on how many audits the ledger records."""
+    problems: list[str] = []
+    ledger = REPO_ROOT / "portfolio/RESULTS.md"
+    if not ledger.exists():
+        return ["portfolio/RESULTS.md: file not found - cannot read the audit count"]
+    text = ledger.read_text(encoding="utf-8")
+    match = AUDIT_HEADER_RE.search(text)
+    if match is None:
+        return [
+            "portfolio/RESULTS.md: no '<N> audits have now caught' header "
+            "- the audit count has no single source of truth"
+        ]
+    expected = match.group(1).lower()
+    if expected not in NUMBER_WORDS:
+        problems.append(
+            f"portfolio/RESULTS.md: '{match.group(1)} audits' is not a number word"
+        )
+    for rel in AUDIT_COUNT_DOCS:
+        path = REPO_ROOT / rel
+        if not path.exists():
+            problems.append(f"{rel}: file not found - the audit count cannot be checked")
+            continue
+        body = path.read_text(encoding="utf-8")
+        found = {m.group(1).lower() for m in AUDIT_ANY_RE.finditer(body)}
+        wrong = sorted(word for word in found if word != expected)
+        if wrong:
+            problems.append(
+                f"{rel}: says '{wrong[0]} audits', but portfolio/RESULTS.md "
+                f"says '{expected} audits'"
+            )
+        elif expected not in found:
+            problems.append(
+                f"{rel}: does not name the audit count ('{expected} audits')"
+            )
+    return problems
+
+
 def main() -> int:
-    problems = check_stale_claims() + check_required_manifests()
+    problems = (
+        check_stale_claims()
+        + check_required_manifests()
+        + check_audit_count()
+    )
     if problems:
         print(f"docs-audit: {len(problems)} problem(s) found:")
         for problem in problems:

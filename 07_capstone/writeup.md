@@ -239,6 +239,19 @@ See [[07_capstone/notes/mp-89-retune-verdict]].
   mechanisms are the same function, and the probe says the copy is the
   positional one. The content-based task that separates them is pre-registered
   (ADR-0033) and its run is the open item of issue #200.
+  The standard-geometry CPU de-risk (2026-10-25,
+  `results/induction_content_derisk_standard.json`) was run at pilot geometry -
+  600 epochs on 2048 training samples, against the pre-registered full run's
+  3000 epochs on 8192 samples - so its numbers are a shape-check, not the
+  verdict. It already shows the shape the full run may reproduce: copy
+  accuracy 0.9993 against a 0.1646 fixed-offset
+  baseline, three candidate heads, a group ablation drop of 0.9956 and a
+  largest single-head drop of 0.0986 - a **distributed** content circuit, with
+  0/8 heads confirmed by the per-head K-composition rule (0.0918 < 0.40). The
+  seven criteria are unchanged: if the full run reproduces this, the verdict is
+  the literal per-head NEGATIVE and the distributed circuit is the
+  pre-specified secondary finding, not a rewritten headline.
+  <!-- manifest: results/induction_content_derisk_standard.json -->
 - The real-activation SAE is sparse (L0 3.0%) but its dictionary is ~8× wider
   than the residual stream and 78% of its features never fire: the sparsity is
   evidence about the over-completeness, not yet about disentanglement.
@@ -265,7 +278,7 @@ See [[07_capstone/notes/mp-89-retune-verdict]].
 - The hardest part of MI is not running experiments — it is forming precise,
   falsifiable hypotheses. The tools are easier than the thinking.
 - **A negative result honestly reported is more valuable than a positive result
-  overclaimed.** Nine audits have caught real bugs in this repo's own claims, and
+  overclaimed.** Ten audits have caught real bugs in this repo's own claims, and
   they are all still visible in [[portfolio/RESULTS]].
 
 ## Links

@@ -64,6 +64,11 @@ results/remote/
 # keeps its work; merge_manifests.py rebuilds the tracked multi-seed record
 # from them. Neither the per-seed files nor the verdict JSON is evidence, and
 # pin_remote_run.py --only names the records that are.
+#
+# The glob is intentionally broad. It also covers probe_*_seed<N>.json: a
+# probe is scratch by convention, so being ignored is the intended state.
+# Do not narrow it to a single experiment - a new experiment's recovery
+# manifests would then be committed by accident.
 results/*_seed[0-9]*.json
 results/content_verdict.json
 
