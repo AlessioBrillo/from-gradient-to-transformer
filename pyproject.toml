@@ -16,6 +16,7 @@ dependencies = [
     # and scripts/phase_diagram_sweep.py import yaml directly. It used to work
     # only because wandb happens to depend on PyYAML.
     "pyyaml>=6.0",
+    "kaggle>=1.6",
 ]
 
 # ---------------------------------------------------------------------------
