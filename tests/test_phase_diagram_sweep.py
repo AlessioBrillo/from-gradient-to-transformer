@@ -16,6 +16,8 @@ were silently undertrained. These tests pin the refactored contract:
 
 from __future__ import annotations
 
+import pytest
+
 from scripts.phase_diagram_sweep import (
     CellResult,
     SweepCell,
@@ -25,6 +27,7 @@ from scripts.phase_diagram_sweep import (
     generate_sweep_grid,
     run_joint_cell,
     run_solo_cell,
+    select_cells,
 )
 
 ZERO_AGG = {"mean": 0.0, "std": 0.0, "min": 0.0, "max": 0.0, "n": 0}
@@ -507,3 +510,28 @@ class TestBatchSizePropagatesToExp2:
         cell = _tiny_solo_cell(batch_size=256)
         args = exp2_args_for_cell(cell)
         assert args.batch_size == 256
+
+
+class TestCellSelection:
+    """A long sweep must be splittable without changing its registry."""
+
+    def test_no_spec_keeps_every_cell_in_order(self) -> None:
+        cells = [
+            _tiny_solo_cell(cell_id="a"),
+            _tiny_solo_cell(cell_id="b"),
+            _tiny_solo_cell(cell_id="c"),
+        ]
+        assert [c.cell_id for c in select_cells(cells, None)] == ["a", "b", "c"]
+
+    def test_named_cells_keep_the_config_order(self) -> None:
+        cells = [
+            _tiny_solo_cell(cell_id="a"),
+            _tiny_solo_cell(cell_id="b"),
+            _tiny_solo_cell(cell_id="c"),
+        ]
+        assert [c.cell_id for c in select_cells(cells, "c,a")] == ["a", "c"]
+
+    def test_unknown_cell_is_refused(self) -> None:
+        cells = [_tiny_solo_cell(cell_id="a")]
+        with pytest.raises(SystemExit, match="unknown cell id"):
+            select_cells(cells, "a,typo")

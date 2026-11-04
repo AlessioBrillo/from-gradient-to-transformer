@@ -8,6 +8,11 @@ updated: 2026-09-27
 
 > **ARCHIVED 2026-10-08** ([ADR-0031](../docs/adr/0031-closure.md)). Kept as history of the MP-30 to MP-36
 > closures. Open work is tracked in GitHub Issues under the `v1.0` milestone.
+>
+> **Nothing in this file is a current claim.** The statuses and sentences below
+> describe the state at the date they were written; several were later reversed
+> (for example, the P=113 NO-GROK verdict was retracted on 2026-10-14). The
+> authority on what is true is [`portfolio/RESULTS.md`](../portfolio/RESULTS.md).
 
 **Protocol**: Re-verify all MP-30–MP-36 row closures with transcripts. Each cell: LAUNCHED-with-transcript or CLOSED-with-one-reason. A claimed closure without its transcript stays open and blocks Session 8. This file's absence, if still absent, recorded with a date.
 

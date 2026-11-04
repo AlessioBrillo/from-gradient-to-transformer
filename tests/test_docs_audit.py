@@ -21,6 +21,7 @@ from pathlib import Path
 from scripts.docs_audit import (
     REQUIRED_MANIFESTS,
     STALE_CLAIMS,
+    check_audit_count,
     check_required_manifests,
     check_stale_claims,
 )
@@ -35,6 +36,10 @@ class TestTheAuditPassesOnTheCurrentTree:
 
     def test_every_current_facing_document_names_its_manifests(self) -> None:
         problems = check_required_manifests()
+        assert problems == [], "\n".join(problems)
+
+    def test_public_documents_agree_on_the_audit_count(self) -> None:
+        problems = check_audit_count()
         assert problems == [], "\n".join(problems)
 
 
@@ -59,6 +64,22 @@ class TestTheAuditFires:
         finally:
             target.write_bytes(original)
         assert check_stale_claims() == []
+
+    def test_a_stale_audit_count_is_caught(self) -> None:
+        """The ledger said ten while README/writeup/checklist said nine."""
+        target = REPO_ROOT / "README.md"
+        original = target.read_bytes()
+        text = original.decode("utf-8")
+        assert "ten audits" in text
+        try:
+            target.write_bytes(
+                text.replace("ten audits", "nine audits", 1).encode("utf-8")
+            )
+            problems = check_audit_count()
+            assert any("README.md" in p and "nine" in p for p in problems), problems
+        finally:
+            target.write_bytes(original)
+        assert check_audit_count() == []
 
     def test_a_document_that_stops_naming_its_manifest_is_caught(
         self, tmp_path: Path
