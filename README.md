@@ -22,7 +22,7 @@ describe, detected by the post-audit energy metric on 3/3 seeds. The repository'
 had falsified: on the *same embeddings* the old reader still says 109–110 of 113
 frequencies. The mechanism was sparse all along; the classifier was wrong.
 
-It is the only rung that is fully reproduced. The others are reported as measured, negatives
+**Rung 2 is fully reproduced (2026-10-14).** The others are reported as measured, negatives
 included:
 
 | Rung | Where it stands |

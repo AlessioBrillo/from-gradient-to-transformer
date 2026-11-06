@@ -205,3 +205,133 @@ class TestDryRunEntryPoint:
         )
         assert proc.returncode != 0
         assert "FAILED validation" in proc.stderr
+
+
+class TestProfile:
+    def _write_manifests(self, tmp_path: Path, names: list[str]) -> Path:
+        src = tmp_path / "src"
+        src.mkdir(parents=True)
+        head = subprocess.run(
+            ["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=REPO_ROOT
+        ).stdout.strip()
+        for name in names:
+            manifest = {
+                "experiment": "induction_content",
+                "seeds": [0, 1, 2],
+                "args": {},
+                "per_seed_metrics": [{"final_val_acc": 0.9}] * 3,
+                "aggregate": {
+                    "final_val_acc": {
+                        "mean": 0.9,
+                        "std": 0.0,
+                        "min": 0.9,
+                        "max": 0.9,
+                        "n": 3,
+                    }
+                },
+                "wall_clock_seconds": 120.0,
+                "git_sha": head,
+                "git_dirty": False,
+                "device": "cuda",
+                "torch_version": "2.x",
+                "numpy_version": "2.x",
+                "python_version": "3.12.x",
+                "n_parameters": 1000,
+                "created_at": "2026-10-13T00:00:00+00:00",
+                "notes": None,
+            }
+            (src / name).write_text(
+                json.dumps(manifest), encoding="utf-8"
+            )
+        return src
+
+    def test_profile_pins_required_and_optional(self, tmp_path: Path) -> None:
+        src = self._write_manifests(
+            tmp_path, ["induction_content.json", "exp4_content.json", "exp5_content.json"]
+        )
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(REPO_ROOT / "scripts" / "pin_remote_run.py"),
+                "--from",
+                str(src),
+                "--profile",
+                "induction-content",
+                "--dry-run",
+            ],
+            capture_output=True,
+            text=True,
+            cwd=REPO_ROOT,
+            timeout=300,
+        )
+        assert proc.returncode == 0, proc.stdout + proc.stderr
+        assert "DRY RUN OK" in proc.stdout
+        # Nothing installed in dry run.
+        assert not (REPO_ROOT / "results" / "induction_content.json").exists()
+
+    def test_profile_refuses_missing_required(self, tmp_path: Path) -> None:
+        src = self._write_manifests(
+            tmp_path, ["induction_content.json"]  # exp4_content.json missing
+        )
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(REPO_ROOT / "scripts" / "pin_remote_run.py"),
+                "--from",
+                str(src),
+                "--profile",
+                "induction-content",
+                "--dry-run",
+            ],
+            capture_output=True,
+            text=True,
+            cwd=REPO_ROOT,
+            timeout=300,
+        )
+        assert proc.returncode != 0
+        assert "required by --profile" in proc.stderr
+
+    def test_profile_skips_missing_optional(self, tmp_path: Path) -> None:
+        src = self._write_manifests(
+            tmp_path, ["induction_content.json", "exp4_content.json"]
+        )  # exp5_content.json missing (optional)
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(REPO_ROOT / "scripts" / "pin_remote_run.py"),
+                "--from",
+                str(src),
+                "--profile",
+                "induction-content",
+                "--dry-run",
+            ],
+            capture_output=True,
+            text=True,
+            cwd=REPO_ROOT,
+            timeout=300,
+        )
+        assert proc.returncode == 0, proc.stdout + proc.stderr
+        assert "optional files not present, skipping" in proc.stderr
+        assert "exp5_content.json" in proc.stderr
+
+    def test_profile_and_only_are_mutually_exclusive(self, tmp_path: Path) -> None:
+        src = self._write_manifests(tmp_path, ["induction_content.json"])
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(REPO_ROOT / "scripts" / "pin_remote_run.py"),
+                "--from",
+                str(src),
+                "--profile",
+                "induction-content",
+                "--only",
+                "induction_content.json",
+                "--dry-run",
+            ],
+            capture_output=True,
+            text=True,
+            cwd=REPO_ROOT,
+            timeout=300,
+        )
+        assert proc.returncode != 0
+        assert "mutually exclusive" in proc.stderr

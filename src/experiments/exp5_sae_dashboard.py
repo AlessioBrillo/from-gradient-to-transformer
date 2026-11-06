@@ -35,6 +35,7 @@ from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
+from src.experiments.checkpointing import validate_checkpoint_provenance
 from src.experiments.runner import aggregate_metrics, parse_seeds, run_seeds
 from src.reproducibility import set_seed
 from src.results import (
@@ -438,6 +439,8 @@ def harvest_activations_from_checkpoint(
     seed: int,
     task: str = "periodic",
     source_model_seed: Optional[int] = None,
+    source_git_sha: Optional[str] = None,
+    source_epochs: Optional[int] = None,
 ) -> torch.Tensor:
     """Harvest real residual-stream activations from a trained
     induction-heads checkpoint (either the `--save-model` plain state_dict or
@@ -457,6 +460,12 @@ def harvest_activations_from_checkpoint(
     the activations), so a run that points at
     ``exp1_checkpoint_seed0.pt`` must say ``source_model_seed=0``; a mismatch
     is refused rather than silently training the SAE on another model.
+
+    ``source_git_sha`` and ``source_epochs`` enforce that the checkpoint is
+    the final model exp1 reported at the pre-registered commit; a checkpoint
+    from another commit, a dirty tree, or a stale epoch is refused. This is
+    the same provenance contract exp4 enforces, so Rungs 4 and 5 always
+    analyse the same instrumented model.
 
     Returns:
         Tensor of shape (num_samples, d_model) — no ground-truth "true
@@ -488,40 +497,22 @@ def harvest_activations_from_checkpoint(
     # on single-seed models. Accept both; the "model" key is the state_dict.
     state_dict = raw
     if isinstance(raw, dict) and "model" in raw:
-        arch = raw.get("arch")
-        if arch:
-            expected = {
+        validate_checkpoint_provenance(
+            raw,
+            checkpoint_path,
+            expected_seed=source_model_seed,
+            expected_task=task,
+            expected_git_sha=source_git_sha,
+            expected_epochs=source_epochs,
+            expected_arch={
                 "vocab_size": vocab_size,
                 "d_model": d_model,
                 "n_layers": n_layers,
                 "n_heads": n_heads,
                 "max_seq_len": seq_len,
-            }
-            mismatched = {k: (arch.get(k), v) for k, v in expected.items() if arch.get(k) != v}
-            if mismatched:
-                raise SystemExit(
-                    f"--activations-from: {checkpoint_path} was trained with "
-                    f"{arch}, but --source-* says {expected}. Fix the source "
-                    "flags."
-                )
-        checkpoint_seed = raw.get("seed")
-        if (
-            source_model_seed is not None
-            and checkpoint_seed is not None
-            and int(checkpoint_seed) != int(source_model_seed)
-        ):
-            raise SystemExit(
-                f"--activations-from: {checkpoint_path} is model seed "
-                f"{checkpoint_seed}, but --source-model-seed is "
-                f"{source_model_seed}. The SAE would be trained on another "
-                "model's activations."
-            )
-        checkpoint_task = raw.get("task")
-        if checkpoint_task is not None and checkpoint_task != task:
-            raise SystemExit(
-                f"--activations-from: {checkpoint_path} was trained on the "
-                f"{checkpoint_task!r} task, but --source-task is {task!r}."
-            )
+            },
+            source_label="--activations-from",
+        )
         state_dict = raw["model"]
     model.load_state_dict(state_dict)
     model.to(DEVICE)
@@ -628,6 +619,8 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
             seed=seed,
             task=getattr(args, "source_task", "periodic"),
             source_model_seed=getattr(args, "source_model_seed", None),
+            source_git_sha=getattr(args, "source_git_sha", None),
+            source_epochs=getattr(args, "source_epochs", None),
         )
         d_model = activations.size(1)
         true_features = torch.zeros(activations.size(0), 1)
@@ -853,6 +846,26 @@ def build_parser() -> argparse.ArgumentParser:
             "The seed of the model the checkpoint came from (the seed in "
             "its filename), not the SAE seed in --seeds. When set, the "
             "checkpoint's recorded seed must match."
+        ),
+    )
+    parser.add_argument(
+        "--source-git-sha",
+        type=str,
+        default=None,
+        help=(
+            "The git commit that trained the checkpoint (from exp1's "
+            "manifest). When set, the checkpoint's recorded git_sha must "
+            "match; a checkpoint from another commit is refused."
+        ),
+    )
+    parser.add_argument(
+        "--source-epochs",
+        type=int,
+        default=None,
+        help=(
+            "The epoch exp1 finished at (from exp1's manifest). When set, "
+            "the checkpoint's recorded epoch must match; a stale rolling "
+            "checkpoint is refused."
         ),
     )
     return parser

@@ -621,7 +621,7 @@ class TestFromCheckpoint:
         self._train_exp1_checkpoint(tmp_path)
         args = self._args(tmp_path)
         args.source_epochs = 99
-        with pytest.raises(SystemExit, match="is epoch 2, but --source-epochs"):
+        with pytest.raises(SystemExit, match="is epoch 2, but expected 99"):
             _build_model(args, 0)
 
     def test_the_matching_epoch_is_accepted(self, tmp_path) -> None:

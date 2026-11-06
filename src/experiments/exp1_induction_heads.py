@@ -33,6 +33,7 @@ from src.experiments.checkpointing import (
     checkpoint_path_for_seed,
     load_training_checkpoint,
     save_training_checkpoint,
+    validate_checkpoint_provenance,
 )
 from src.experiments.copy_circuit import (
     candidate_heads,
@@ -73,6 +74,7 @@ from src.reproducibility import set_seed
 from src.results import (
     ResultsManifest,
     count_parameters,
+    git_provenance,
     per_seed_manifest_path,
     resolve_manifest_path,
 )
@@ -549,6 +551,7 @@ def train_model(
     prefix_len: Optional[int] = None,
     composition_threshold: float = COMPOSITION_THRESHOLD,
     task: str = TASK_PERIODIC,
+    expected_git_sha: Optional[str] = None,
 ) -> dict:
     """Train the model and return training curves.
 
@@ -653,6 +656,14 @@ def train_model(
         load_training_checkpoint(Path(resume_from), map_location=DEVICE) if resume_from else None
     )
     if resume_ckpt is not None:
+        provenance = validate_checkpoint_provenance(
+            resume_ckpt,
+            Path(resume_from),
+            expected_seed=seed,
+            expected_task=task,
+            expected_git_sha=expected_git_sha,
+            source_label="--resume",
+        )
         model.load_state_dict(resume_ckpt["model"])
         optimizer.load_state_dict(resume_ckpt["optimizer"])
         scheduler.load_state_dict(resume_ckpt["scheduler"])
@@ -665,7 +676,9 @@ def train_model(
         start_epoch = resume_ckpt["epoch"] + 1
         logger.info(
             f"RESUME: loaded {resume_from} (saved after epoch "
-            f"{resume_ckpt['epoch']}) — continuing from epoch {start_epoch}"
+            f"{resume_ckpt['epoch']}) — continuing from epoch {start_epoch} "
+            f"(git {provenance['git_sha'] or 'unknown'}, "
+            f"dirty={provenance['git_dirty']})"
         )
     elif resume_from:
         logger.warning(f"RESUME: checkpoint {resume_from} not found — starting fresh")
@@ -1719,6 +1732,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         detect_patience=getattr(args, "detect_patience", 2),
         prefix_len=prefix_length_for(args.seq_len),
         task=getattr(args, "task", TASK_PERIODIC),
+        expected_git_sha=git_provenance()[0] if resume_from else None,
     )
     history["steps_per_epoch"] = float(len(train_loader))
 
