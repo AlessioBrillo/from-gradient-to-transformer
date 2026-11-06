@@ -606,6 +606,88 @@ class TestCheckpointResume:
         )
         assert len(hist["val_acc"]) == 2
 
+    def test_resume_refuses_checkpoint_from_another_commit(self, tmp_path) -> None:
+        """Resuming from a checkpoint written by a different commit must fail
+        rather than attributing the resumed run to the wrong instrument."""
+        import pytest
+
+        args = self._args()
+        tl, vl = self._loaders(args)
+
+        # Train a full checkpoint first (writes git_sha of this commit).
+        train_model(
+            self._model_from(self._initial_state(args)),
+            tl,
+            vl,
+            epochs=2,
+            lr=1e-3,
+            weight_decay=0.1,
+            seed=0,
+            fresh_batches_fn=self._fresh_batches(args),
+            checkpoint_dir=str(tmp_path),
+            checkpoint_every=1,
+        )
+        ckpt = tmp_path / "exp1_checkpoint_seed0.pt"
+
+        # Rewrite the checkpoint's git_sha to simulate a different commit.
+        import shutil
+
+        shutil.copy(ckpt, tmp_path / "foreign_checkpoint.pt")
+        state = torch.load(tmp_path / "foreign_checkpoint.pt")
+        state["git_sha"] = "deadbeef"
+        torch.save(state, tmp_path / "foreign_checkpoint.pt")
+
+        with pytest.raises(SystemExit, match="was written at deadbeef"):
+            train_model(
+                self._model_from(self._initial_state(args)),
+                tl,
+                vl,
+                epochs=4,
+                lr=1e-3,
+                weight_decay=0.1,
+                seed=0,
+                fresh_batches_fn=self._fresh_batches(args),
+                resume_from=str(tmp_path / "foreign_checkpoint.pt"),
+                expected_git_sha="cafebab",
+            )
+
+    def test_resume_refuses_checkpoint_of_another_seed(self, tmp_path) -> None:
+        """Resuming from another seed's checkpoint must fail."""
+        import pytest
+
+        args = self._args()
+        tl, vl = self._loaders(args)
+
+        train_model(
+            self._model_from(self._initial_state(args)),
+            tl,
+            vl,
+            epochs=2,
+            lr=1e-3,
+            weight_decay=0.1,
+            seed=0,
+            fresh_batches_fn=self._fresh_batches(args),
+            checkpoint_dir=str(tmp_path),
+            checkpoint_every=1,
+        )
+        ckpt = tmp_path / "exp1_checkpoint_seed0.pt"
+        state = torch.load(ckpt)
+        state["seed"] = 7
+        torch.save(state, ckpt)
+
+        with pytest.raises(SystemExit, match="holds model seed 7"):
+            train_model(
+                self._model_from(self._initial_state(args)),
+                tl,
+                vl,
+                epochs=4,
+                lr=1e-3,
+                weight_decay=0.1,
+                seed=0,
+                fresh_batches_fn=self._fresh_batches(args),
+                resume_from=str(ckpt),
+            )
+
 
 class TestEarlyStopAndCheckpoint:
     """The early stop, the stop rule, and the checkpoint it must leave behind.

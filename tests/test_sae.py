@@ -334,7 +334,7 @@ class TestTheSAEProvenance:
         import pytest
 
         path = self._rolling(tmp_path, seed=1)
-        with pytest.raises(SystemExit, match="is model seed 1"):
+        with pytest.raises(SystemExit, match="holds model seed 1"):
             harvest_activations_from_checkpoint(
                 checkpoint_path=path,
                 vocab_size=16,
@@ -381,3 +381,74 @@ class TestTheSAEProvenance:
             source_model_seed=0,
         )
         assert activations.shape == (10, 8)
+
+    def test_a_checkpoint_from_another_commit_is_refused(self, tmp_path) -> None:
+        import pytest
+
+        path = self._rolling(tmp_path, git_sha="abc1234")
+        with pytest.raises(SystemExit, match="was written at abc1234"):
+            harvest_activations_from_checkpoint(
+                checkpoint_path=path,
+                vocab_size=16,
+                seq_len=16,
+                d_model=8,
+                n_layers=1,
+                n_heads=2,
+                num_samples=10,
+                seed=0,
+                task="variable",
+                source_model_seed=0,
+                source_git_sha="deadbeef",
+            )
+
+    def test_a_stale_checkpoint_epoch_is_refused(self, tmp_path) -> None:
+        import pytest
+
+        path = self._rolling(tmp_path, epoch=5)  # checkpoint says epoch 6
+        with pytest.raises(SystemExit, match="is epoch 6, but expected 2"):
+            harvest_activations_from_checkpoint(
+                checkpoint_path=path,
+                vocab_size=16,
+                seq_len=16,
+                d_model=8,
+                n_layers=1,
+                n_heads=2,
+                num_samples=10,
+                seed=0,
+                task="variable",
+                source_model_seed=0,
+                source_epochs=2,
+            )
+
+    def test_a_dirty_checkpoint_is_warned_but_not_refused(self, tmp_path) -> None:
+        """exp5 logs a warning on a dirty tree but still trains (the remote
+        pinner is the hard refusal for dirty manifests)."""
+        import logging
+
+        path = self._rolling(tmp_path, git_dirty=True)
+        records: list[str] = []
+
+        class Handler(logging.Handler):
+            def emit(self, record: logging.LogRecord) -> None:
+                records.append(record.getMessage())
+
+        handler = Handler()
+        logger = logging.getLogger("src.experiments.checkpointing")
+        logger.addHandler(handler)
+        try:
+            activations = harvest_activations_from_checkpoint(
+                checkpoint_path=path,
+                vocab_size=16,
+                seq_len=16,
+                d_model=8,
+                n_layers=1,
+                n_heads=2,
+                num_samples=10,
+                seed=0,
+                task="variable",
+                source_model_seed=0,
+            )
+        finally:
+            logger.removeHandler(handler)
+        assert activations.shape == (10, 8)
+        assert any("dirty" in r.lower() for r in records)

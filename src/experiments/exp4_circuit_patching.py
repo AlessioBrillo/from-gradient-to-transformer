@@ -39,7 +39,10 @@ from torch import nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from src.experiments.checkpointing import load_training_checkpoint
+from src.experiments.checkpointing import (
+    load_training_checkpoint,
+    validate_checkpoint_provenance,
+)
 from src.experiments.copy_circuit import candidate_heads, content_triples
 from src.experiments.exp1_induction_heads import (
     AttentionOnlyTransformer,
@@ -933,87 +936,36 @@ def _build_model(
             "--checkpoint-dir/--checkpoint-every first)."
         )
     state = load_training_checkpoint(checkpoint, map_location="cpu")
-    if state is None or "model" not in state:
-        raise SystemExit(f"--from-checkpoint: {checkpoint} is not a training checkpoint")
-    arch = state.get("arch")
-    if arch:
-        expected = {
+    provenance = validate_checkpoint_provenance(
+        state,
+        checkpoint,
+        expected_seed=seed,
+        expected_task=getattr(args, "source_task", TASK_PERIODIC),
+        expected_git_sha=getattr(args, "source_git_sha", None),
+        expected_epochs=getattr(args, "source_epochs", None),
+        expected_arch={
             "vocab_size": args.source_vocab_size,
             "d_model": args.source_d_model,
             "n_layers": args.source_n_layers,
             "n_heads": args.source_n_heads,
             "max_seq_len": args.source_seq_len,
-        }
-        mismatched = {k: (arch.get(k), v) for k, v in expected.items() if arch.get(k) != v}
-        if mismatched:
-            raise SystemExit(
-                f"--from-checkpoint: {checkpoint} was trained with {arch}, but "
-                f"--source-* says {expected}. Fix the source flags."
-            )
-    # A directory of per-seed checkpoints can be pointed at with the wrong
-    # --seeds; the filename is not proof of which model the weights are.
-    state_seed = state.get("seed")
-    if state_seed is not None and int(state_seed) != seed:
-        raise SystemExit(
-            f"--from-checkpoint: {checkpoint} holds model seed {state_seed}, "
-            f"but this seed is {seed}. The cascade would analyse a different "
-            "model."
-        )
-    # The task is not recoverable from the weights. A checkpoint written by
-    # the current instrument records it; an older one does not, and then the
-    # --source-task flag is the only statement about it (the verdict still
-    # cross-checks it against exp1's manifest).
-    state_task = state.get("task")
-    source_task = getattr(args, "source_task", TASK_PERIODIC)
-    if state_task is not None and state_task != source_task:
-        raise SystemExit(
-            f"--from-checkpoint: {checkpoint} was trained on the "
-            f"{state_task!r} task, but --source-task is {source_task!r}."
-        )
-    state_sha = state.get("git_sha")
-    expected_sha = getattr(args, "source_git_sha", None)
-    if expected_sha:
-        if not state_sha or state_sha == "unknown":
-            raise SystemExit(
-                f"--from-checkpoint: {checkpoint} does not record the commit "
-                "that wrote it; --source-git-sha cannot be verified. Re-run "
-                "exp1 with the current checkpoint code."
-            )
-        if not _same_commit(str(state_sha), expected_sha):
-            raise SystemExit(
-                f"--from-checkpoint: {checkpoint} was written at {state_sha}, "
-                f"but --source-git-sha is {expected_sha}. The cascade would "
-                "measure a model trained by a different instrument."
-            )
-    if state.get("git_dirty") is True:
-        logger.warning(
-            f"Checkpoint {checkpoint} was written with a dirty working tree "
-            f"(git_sha {state_sha or 'unknown'}); its weights do not correspond "
-            "to a committed instrument."
-        )
+        },
+        source_label="--from-checkpoint",
+    )
     # Strict load: a checkpoint without metadata still fails loudly (on the
     # shapes) rather than loading a partially-compatible model.
     model.load_state_dict(state["model"])
-    epoch = int(state.get("epoch", -1)) + 1
-    expected_epochs = getattr(args, "source_epochs", None)
-    if expected_epochs is not None and epoch != expected_epochs:
-        raise SystemExit(
-            f"--from-checkpoint: {checkpoint} is epoch {epoch}, but "
-            f"--source-epochs is {expected_epochs}. The rolling checkpoint is "
-            "stale: the cascade would analyse a model that is not the final "
-            "one exp1 reported. Re-run exp1 to the end (a checkpoint is saved "
-            "at the final boundary and at an early stop)."
-        )
     logger.info(
-        f"Loaded checkpoint {checkpoint} (epoch {epoch}, seed {seed}, "
-        f"git {state_sha or 'unknown'}, no training in this rung)"
+        f"Loaded checkpoint {checkpoint} (epoch {provenance['epoch']}, "
+        f"seed {provenance['seed']}, git {provenance['git_sha'] or 'unknown'}, "
+        "no training in this rung)"
     )
     return model, {
         "path": str(checkpoint),
-        "epoch": epoch,
-        "seed": seed,
-        "git_sha": state_sha or "unknown",
-        "git_dirty": bool(state.get("git_dirty", False)),
+        "epoch": provenance["epoch"],
+        "seed": provenance["seed"],
+        "git_sha": provenance["git_sha"],
+        "git_dirty": provenance["git_dirty"],
     }
 
 

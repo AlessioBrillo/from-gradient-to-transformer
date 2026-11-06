@@ -45,6 +45,17 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 RESULTS_DIR = REPO_ROOT / "results"
 CLAIMS_FILE = REPO_ROOT / "portfolio" / "RESULTS.md"
 
+# Declared record profiles per experiment. Naming the record set in one place
+# prevents the silent-missing-file failure mode: a profile's `required` files
+# must all be present, `optional` files are pinned when present, and nothing
+# else is installed.
+PROFILES: dict[str, dict[str, list[str]]] = {
+    "induction-content": {
+        "required": ["induction_content.json", "exp4_content.json"],
+        "optional": ["exp5_content.json"],
+    },
+}
+
 
 def _git_sha_exists(sha: str) -> bool:
     proc = subprocess.run(
@@ -138,7 +149,38 @@ def main() -> None:
             "them out of results/."
         ),
     )
+    parser.add_argument(
+        "--profile",
+        default=None,
+        help=(
+            "Named record set (e.g. induction-content). Implies --only with "
+            "the profile's required + optional files; required files that are "
+            "missing fail the run. Use --profile instead of --only for repeat"
+            "able remote-run pinning."
+        ),
+    )
     args = parser.parse_args()
+
+    # Resolve --profile into --only: required files must exist, optional ones
+    # are pinned when present. --profile and --only are mutually exclusive.
+    if args.profile and args.only:
+        print("--profile and --only are mutually exclusive", file=sys.stderr)
+        raise SystemExit(1)
+    if args.profile:
+        if args.profile not in PROFILES:
+            print(
+                f"--profile: unknown profile {args.profile!r}; "
+                f"known: {', '.join(sorted(PROFILES))}",
+                file=sys.stderr,
+            )
+            raise SystemExit(1)
+        profile = PROFILES[args.profile]
+        wanted = set(profile["required"]) | set(profile["optional"])
+        args.only = ",".join(sorted(wanted))
+        # Remember required set for the missing-file check below.
+        args._profile_required = set(profile["required"])
+    else:
+        args._profile_required = set()
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 
@@ -162,11 +204,26 @@ def main() -> None:
         present = {c.name for c in candidates}
         missing = sorted(wanted - present)
         if missing:
-            print(
-                f"--only: {', '.join(missing)} not found under {source}",
-                file=sys.stderr,
-            )
-            raise SystemExit(1)
+            # With --profile, only required files are enforced; optional ones
+            # that are missing are simply not pinned.
+            required_missing = [
+                m for m in missing if m in args._profile_required
+            ]
+            optional_missing = sorted(set(missing) - set(required_missing))
+            if required_missing:
+                print(
+                    f"--only: {', '.join(required_missing)} not found under {source} "
+                    "(required by --profile)",
+                    file=sys.stderr,
+                )
+                raise SystemExit(1)
+            if optional_missing:
+                print(
+                    f"--profile: optional files not present, skipping: "
+                    f"{', '.join(optional_missing)}",
+                    file=sys.stderr,
+                )
+            wanted = wanted - set(optional_missing)
         candidates = [c for c in candidates if c.name in wanted]
 
     all_problems: list[str] = []
