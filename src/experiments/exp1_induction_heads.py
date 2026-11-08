@@ -1479,21 +1479,22 @@ def _circuit_report(
 
     base_copy = float(copy_stats.get("copy_accuracy", 0.0))
     single_drops: list[float] = []
-    for layer, head in candidates:
-        ablated = causal_ablation(model, val_loader, layer, head, restrict_to_copy=True)
-        single_drops.append(base_copy - ablated)
-    group_accuracy = causal_ablation_group(model, val_loader, candidates, restrict_to_copy=True)
-    metrics["group_ablation_drop"] = float(base_copy - group_accuracy)
-    metrics["max_single_ablation_drop"] = float(max(single_drops)) if single_drops else 0.0
-    metrics["mean_single_ablation_drop"] = (
-        float(sum(single_drops) / len(single_drops)) if single_drops else 0.0
-    )
+    if candidates:
+        for layer, head in candidates:
+            ablated = causal_ablation(model, val_loader, layer, head, restrict_to_copy=True)
+            single_drops.append(base_copy - ablated)
+        group_accuracy = causal_ablation_group(model, val_loader, candidates, restrict_to_copy=True)
+        metrics["group_ablation_drop"] = float(base_copy - group_accuracy)
+        metrics["max_single_ablation_drop"] = float(max(single_drops))
+        metrics["mean_single_ablation_drop"] = float(sum(single_drops) / len(single_drops))
 
-    # Exploratory group ablation: same intervention, wider group.
-    group_accuracy_exploratory = causal_ablation_group(
-        model, val_loader, exploratory, restrict_to_copy=True
-    )
-    metrics["exploratory_group_ablation_drop"] = float(base_copy - group_accuracy_exploratory)
+        # Exploratory group ablation: same intervention, wider group.
+        group_accuracy_exploratory = causal_ablation_group(
+            model, val_loader, exploratory, restrict_to_copy=True
+        )
+        metrics["exploratory_group_ablation_drop"] = float(
+            base_copy - group_accuracy_exploratory
+        )
 
     subset = min(int(tokens.shape[0]), ATTRIBUTION_SEQUENCES)
     triples_subset = triples[triples[:, 0] < subset]
@@ -1523,10 +1524,10 @@ def _circuit_report(
         100.0 * metrics["content_mass_top_share"],
         int(metrics["content_mass_heads_for_80pct"]),
         int(metrics["n_candidate_heads"]),
-        metrics["group_ablation_drop"],
-        metrics["max_single_ablation_drop"],
+        metrics.get("group_ablation_drop", 0.0),
+        metrics.get("max_single_ablation_drop", 0.0),
         int(metrics["exploratory_group_size"]),
-        metrics["exploratory_group_ablation_drop"],
+        metrics.get("exploratory_group_ablation_drop", 0.0),
         metrics["dla_content_minus_offset"],
         label,
     )

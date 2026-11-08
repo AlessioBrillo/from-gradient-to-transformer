@@ -121,6 +121,13 @@ class TestTheRun:
         text = _all_text(json.loads(NOTEBOOK.read_text(encoding="utf-8")))
         assert "--source-model-seed {seed}" in text
 
+    def test_the_sae_pins_exp1_epoch_and_commit(self) -> None:
+        """exp5 deve rifiutare uno checkpoint da un'altra epoca/commit: passa
+        --source-epochs e --source-git-sha presi dal manifesto di exp1."""
+        text = _all_text(json.loads(NOTEBOOK.read_text(encoding="utf-8")))
+        assert "--source-epochs {EXP1_EPOCHS}" in text
+        assert "--source-git-sha {EXP1_SHA}" in text
+
     def test_it_refuses_a_stale_or_dirty_clone(self) -> None:
         text = _all_text(json.loads(NOTEBOOK.read_text(encoding="utf-8")))
         assert "the clone is dirty" in text

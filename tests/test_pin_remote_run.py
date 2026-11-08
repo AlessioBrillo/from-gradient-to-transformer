@@ -269,9 +269,10 @@ class TestProfile:
         # Nothing installed in dry run.
         assert not (REPO_ROOT / "results" / "induction_content.json").exists()
 
-    def test_profile_refuses_missing_required(self, tmp_path: Path) -> None:
+    def test_profile_induction_content_passes_with_exp1_only(self, tmp_path: Path) -> None:
+        """exp4 è opzionale: un run negativo valido che salta exp4 è pinnabile."""
         src = self._write_manifests(
-            tmp_path, ["induction_content.json"]  # exp4_content.json missing
+            tmp_path, ["induction_content.json"]  # exp4_content.json missing — OK
         )
         proc = subprocess.run(
             [
@@ -288,8 +289,11 @@ class TestProfile:
             cwd=REPO_ROOT,
             timeout=300,
         )
-        assert proc.returncode != 0
-        assert "required by --profile" in proc.stderr
+        assert proc.returncode == 0, proc.stdout + proc.stderr
+        assert "DRY RUN OK" in proc.stdout
+        assert "optional files not present, skipping" in proc.stderr
+        assert "exp4_content.json" in proc.stderr
+        assert "exp5_content.json" in proc.stderr
 
     def test_profile_skips_missing_optional(self, tmp_path: Path) -> None:
         src = self._write_manifests(
@@ -313,6 +317,45 @@ class TestProfile:
         assert proc.returncode == 0, proc.stdout + proc.stderr
         assert "optional files not present, skipping" in proc.stderr
         assert "exp5_content.json" in proc.stderr
+
+    def test_profile_phase_diagram_requires_all_ten_cells(self, tmp_path: Path) -> None:
+        """Il profilo phase-diagram richiede tutte e dieci le celle del sweep."""
+        src = self._write_manifests(
+            tmp_path,
+            [
+                "induction_content.json",  # estraneo al profilo: ignorato
+            ]
+            + [f"phase_diagram_{cid}.json" for cid in (
+                "p113_nanda_wd10",
+                "p113_minibatch_wd10",
+                "p113_beta2_0999_wd10",
+                "p113_cosine_wd10",
+                "p113_renorm_wd10",
+                "p113_layernorm_wd10",
+                "p113_gradclip_1_wd10",
+                "p113_nanda_wd01",
+                "p113_nanda_wd05",
+                # p113_nanda_wd20 mancante: deve fallire
+            )],
+        )
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(REPO_ROOT / "scripts" / "pin_remote_run.py"),
+                "--from",
+                str(src),
+                "--profile",
+                "phase-diagram",
+                "--dry-run",
+            ],
+            capture_output=True,
+            text=True,
+            cwd=REPO_ROOT,
+            timeout=300,
+        )
+        assert proc.returncode != 0
+        assert "required by --profile" in proc.stderr
+        assert "phase_diagram_p113_nanda_wd20.json" in proc.stderr
 
     def test_profile_and_only_are_mutually_exclusive(self, tmp_path: Path) -> None:
         src = self._write_manifests(tmp_path, ["induction_content.json"])

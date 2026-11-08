@@ -51,8 +51,23 @@ CLAIMS_FILE = REPO_ROOT / "portfolio" / "RESULTS.md"
 # else is installed.
 PROFILES: dict[str, dict[str, list[str]]] = {
     "induction-content": {
-        "required": ["induction_content.json", "exp4_content.json"],
-        "optional": ["exp5_content.json"],
+        "required": ["induction_content.json"],
+        "optional": ["exp4_content.json", "exp5_content.json"],
+    },
+    "phase-diagram": {
+        "required": [
+            "phase_diagram_p113_nanda_wd10.json",
+            "phase_diagram_p113_minibatch_wd10.json",
+            "phase_diagram_p113_beta2_0999_wd10.json",
+            "phase_diagram_p113_cosine_wd10.json",
+            "phase_diagram_p113_renorm_wd10.json",
+            "phase_diagram_p113_layernorm_wd10.json",
+            "phase_diagram_p113_gradclip_1_wd10.json",
+            "phase_diagram_p113_nanda_wd01.json",
+            "phase_diagram_p113_nanda_wd05.json",
+            "phase_diagram_p113_nanda_wd20.json",
+        ],
+        "optional": [],
     },
 }
 

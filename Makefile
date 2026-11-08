@@ -58,14 +58,14 @@ lint:
 lint-fix:
 	uv run ruff check --fix src/ tests/ scripts/
 
-# Non-blocking: strict mode currently reports 211 errors (2026-10-20 count;
+# Non-blocking: strict mode currently reports 250 errors (2026-11-07 count;
 # the 2026-08-01 baseline was 154, +22 by 2026-08-18, +20 since through new
 # research code — see the progress log's MP-52 entry — not from a tool
 # upgrade: verified identical under mypy 1.20.2, 2.1.0, and 2.3.0. After fixing a
 # python_version mismatch that previously made mypy crash on numpy's stubs
 # before checking a single line of src/ — see pyproject.toml
 # [tool.mypy]). Mostly missing-generic-args pedantry (dict -> dict[str,
-# Any], DataLoader -> DataLoader[Any]), not caught bugs, but 211 is real
+# Any], DataLoader -> DataLoader[Any]), not caught bugs, but 250 is real
 # work, not something to silently claim fixed. Tracked as follow-up. Unlike
 # `|| true`, this still fails on a genuine mypy crash (exit 2) — see
 # .github/workflows/python-ci.yml for why that distinction matters.
@@ -257,9 +257,17 @@ reproduce-induction-content:
 # criterion is *not measured* and the run says so. The JSON artifact is
 # saved next to the manifests; it is not a ResultsManifest and is therefore
 # never pinned as one.
+# Il verdetto è condizionale: exp4 è opzionale (un negativo valido può saltarlo).
+# Se results/exp4_content.json manca, il criterio 7 è NOT MEASURED e il verdetto
+# resta calcolabile. Il file content_verdict.json è un artifact derivato (non un
+# ResultsManifest): va tracciato ma non pinnato come manifest.
 content-verdict:
 	@echo "=== The content task's verdict (the seven pre-registered criteria) ==="
-	uv run python -m src.experiments.content_verdict --exp1 results/induction_content.json --exp4 results/exp4_content.json --output results/content_verdict.json
+	@if [ -f results/exp4_content.json ]; then \
+		uv run python -m src.experiments.content_verdict --exp1 results/induction_content.json --exp4 results/exp4_content.json --output results/content_verdict.json; \
+	else \
+		uv run python -m src.experiments.content_verdict --exp1 results/induction_content.json --output results/content_verdict.json; \
+	fi
 
 # --- Retune A/B (Micro-Phase 89, Row 2) ---
 # Frozen 500-step arms, seed 0, warmup 100, probe manifests only.
@@ -398,9 +406,16 @@ paper:
 # GPU_USER:   your Kaggle username (default: alessiobrillo; override with
 #             GPU_USER=<you> make remote-run-...).
 # PIN_FROM:   directory of downloaded manifests for `make remote-pin`.
-GPU_BRANCH ?= main
+# GPU_BRANCH: il ref spinto su cui il run remoto mette i pin. Mai "main": un albero
+# mobile invalida il resume di exp1 (confronto git_sha vs HEAD) e il _git_sha_exists
+# del pinner. Usa un tag immutabile (es. v1.1.0-rc2).
+GPU_BRANCH ?= v1.1.0-rc2
 GPU_USER ?= alessiobrillo
 PIN_FROM ?= results/remote
+
+ifeq ($(GPU_BRANCH),main)
+$(error GPU_BRANCH non può essere main: pin a un tag immutabile, es. v1.1.0-rc2)
+endif
 
 remote-dry-grokking:
 	@echo "=== Validate the grokking GPU notebook without pushing ==="

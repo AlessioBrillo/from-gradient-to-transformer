@@ -961,24 +961,61 @@ class TestTheCircuitReport:
 
         model, loader, report, tokens = self._setup()
         metrics = _circuit_report(model, loader, report, tokens, "variable", {"copy_accuracy": 0.1})
-        for key in (
+        always_keys = (
             "content_mass_total",
             "content_mass_top_share",
             "content_mass_heads_for_80pct",
             "offset_mass_total",
             "n_candidate_heads",
-            "group_ablation_drop",
-            "max_single_ablation_drop",
             "exploratory_group_size",
-            "exploratory_group_ablation_drop",
             "content_mass_excess",
             "content_mass_ratio",
             "dla_content_minus_offset",
             "dla_observed_logit_diff",
             "mechanism_kind",
-        ):
+        )
+        for key in always_keys:
             assert key in metrics, f"{key} missing from the circuit report"
-            assert isinstance(metrics[key], float)
+            assert isinstance(metrics[key], float), f"{key} non è un float"
+        # Le chiavi di ablazione causale esistono solo quando c'è almeno un
+        # candidato; altrimenti sono assenti (mai 0.0 fabbricato).
+        causal_keys = (
+            "group_ablation_drop",
+            "max_single_ablation_drop",
+            "mean_single_ablation_drop",
+            "exploratory_group_ablation_drop",
+        )
+        n_candidates = int(metrics.get("n_candidate_heads", 0))
+        if n_candidates > 0:
+            for key in causal_keys:
+                assert key in metrics, f"{key} manca pur essendoci candidati"
+                assert isinstance(metrics[key], float)
+        else:
+            for key in causal_keys:
+                assert key not in metrics, f"{key} non deve esserci senza candidati"
+
+    def test_no_candidates_omits_causal_zeros(self) -> None:
+        """Senza candidati, le chiavi di ablazione causale sono assenti: non
+        sono 0.0, che sembrerebbe una misura."""
+        from unittest import mock
+
+        from src.experiments.exp1_induction_heads import _circuit_report
+
+        model, loader, report, tokens = self._setup()
+        with mock.patch(
+            "src.experiments.exp1_induction_heads.candidate_heads", return_value=[]
+        ):
+            metrics = _circuit_report(
+                model, loader, report, tokens, "variable", {"copy_accuracy": 0.1}
+            )
+        assert metrics["n_candidate_heads"] == 0.0
+        for key in (
+            "group_ablation_drop",
+            "max_single_ablation_drop",
+            "mean_single_ablation_drop",
+            "exploratory_group_ablation_drop",
+        ):
+            assert key not in metrics, f"{key} non deve esserci senza candidati"
 
     def test_no_confirmed_head_does_not_fabricate_an_ablation_zero(self) -> None:
         """An empty confirmed set has no mean ablation drop: absent, not 0.0."""

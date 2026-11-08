@@ -141,8 +141,9 @@ git clone https://github.com/AlessioBrillo/from-gradient-to-transformer
 cd from-gradient-to-transformer
 
 # Python environment (recommended: uv, fast and reproducible)
+# Tested on Python 3.12 (CI, mypy, ruff target, uv.lock all resolve to 3.12).
 pip install uv
-uv venv && source .venv/bin/activate
+uv venv --python 3.12 && source .venv/bin/activate
 uv sync
 
 # Open the folder as an Obsidian vault
