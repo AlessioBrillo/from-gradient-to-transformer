@@ -1,6 +1,6 @@
 [project]
 name = "from-gradient-to-transformer"
-version = "1.1.0.dev0"
+version = "1.1.0"
 description = "From gradient descent to mechanistic interpretability: train small transformers and reverse-engineer their internals."
 authors = [{ name = "Alessio Brillo" }]
 license = { text = "MIT" }
