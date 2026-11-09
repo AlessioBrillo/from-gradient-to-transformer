@@ -71,9 +71,11 @@ results/remote/
 # Do not narrow it to a single experiment - a new experiment's recovery
 # manifests would then be committed by accident.
 results/*_seed[0-9]*.json
-# results/content_verdict.json is tracked: the verdict is a derived artifact
-# that must be regenerated with `make content-verdict` whenever the pinned
-# manifests change.
+results/content_verdict.json
+# The content verdict is a derived artifact (regenerated with
+# `make content-verdict` whenever the pinned manifests change). It is
+# deliberately NOT tracked: verify_claims loads every results/*.json as a
+# ResultsManifest, and the verdict JSON is not one.
 
 # CI / Coverage
 .coverage
