@@ -694,7 +694,7 @@ Reading the table:
 induction. It does not, on this task. The content-based claim is not testable
 here — it needs a task with repeats at *varying* distances.
 
-### The content-based task (issue #200) — pre-registered, run pending
+### The content-based task (issue #200) — run complete, verdict PARTIAL
 
 The task that *does* contain the question is specified, frozen and waiting for
 its GPU run. The short version:
@@ -712,18 +712,21 @@ its GPU run. The short version:
 <!-- manifest: results/induction_content_derisk_fixed.json -->
 <!-- manifest: results/induction_content_derisk_standard.json -->
 
-**Status: [ ] not run.** No verdict number is reported here, because there is
-none yet. The experiment exists, its rules are frozen, and the instrument is
-tested: the verdict is a module, not a notebook cell (2026-10-22); it reads
-the confirmed head's mass and reports head-dependent criteria as `NOT
-MEASURED` rather than `0.0` (2026-11-01); the cascade is pinned to exp1's
-final epoch, commit, seed and task; and the standard-geometry de-risk already
-shows the shape the full run may reproduce — content-based copying with a
-**distributed** circuit and no confirmed head. If the GPU run reproduces it,
-the verdict is the literal per-head **NEGATIVE** and the distributed circuit
-is the pre-specified secondary finding, not a rewritten headline. The run is
-the open item — the one measurement in this repository that can still change
-a headline claim.
+**Status: [x] run complete — verdict PARTIAL.** GPU run completed 2026-11-09
+(3 seeds × 3000 epochs, manifest `results/induction_content.json` pinned at
+ref `v1.1.0-rc2`). Per-seed results from `results/content_verdict.json`:
+
+| Seed | Verdict | Heads | Copy acc. | Non-modal acc. | Beats fixed offset | Content mass | Ablation drop | Path patching |
+|------|---------|-------|-----------|----------------|-------------------|--------------|---------------|---------------|
+| 0 | PARTIAL | 2 | 1.0000 | 1.0000 | 0.8354 | 0.7555 (PASS) | 0.1797 (PASS) | NOT MEASURED |
+| 1 | NEGATIVE | 0 | 0.9976 | 0.9972 | 0.8426 | NOT MEASURED | NOT MEASURED | NOT MEASURED |
+| 2 | NEGATIVE | 0 | 0.9988 | 0.9986 | 0.8403 | NOT MEASURED | NOT MEASURED | NOT MEASURED |
+
+**Decision:** per the pre-registration, a PARTIAL verdict is reported as-is.
+No re-run: the missing criteria (content mass on seeds 1-2, path patching on
+all seeds) are reported, not fabricated. exp4 was correctly not required for
+this negative-capable run. The verdict artifact is `results/content_verdict.json`
+(a derived artifact, regenerated with `make content-verdict`).
 
 ### Quick scale (the historical scale, for continuity)
 
