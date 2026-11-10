@@ -1142,7 +1142,9 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         "group_path_patch_measured": float(group_path_patch_measured),
         "counterfactual_minimal_pair": float(counterfactual_mode == COUNTERFACTUAL_MINIMAL_PAIR),
         "probe_content_mass": float(probe["peak_content_mass"]),
-        "probe_period_mass": float(probe["peak_period_mass"]),
+        "probe_period_mass": float(
+            probe.get("peak_period_mass", probe.get("peak_offset_mass", 0.0))
+        ),
         "probe_content_wins": float(bool(probe["content_wins"])),
         "checkpoint_epoch": float(checkpoint["epoch"]) if checkpoint else -1.0,
     }

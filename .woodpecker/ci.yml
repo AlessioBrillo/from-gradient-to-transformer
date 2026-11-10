@@ -20,3 +20,8 @@ steps:
       - uv sync --frozen --all-extras
       - make lint vault-check typecheck-new typecheck test-cov check-refs docs-audit
       - uv run python -m src.results verify
+
+  - name: paper-check
+    image: xu-cheng/latex-action:ubuntu-latest  # LuaLaTeX + latexmk for paper compilation
+    commands:
+      - make paper-check

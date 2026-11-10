@@ -275,7 +275,7 @@ The $0.508$ accuracy plateau is the same one the joint capstone run
 measured ($0.5034$): copying the periodic continuation is exactly right on
 the second half of the sequence and unpredictable on the first.
 
-\subsection{The Task That Can Answer It (Pre-Registered, Not Yet Run)}
+\subsection{The Task That Can Answer It (Pre-Registered, Run 2026-11-09)}
 \label{sec:content-task}
 The result above is a statement about a task that does not contain the
 question. A task that does is specified and frozen before its run: a key of
@@ -293,10 +293,11 @@ above the best fixed offset, copy accuracy, accuracy on the
 non-modal-distance group, the margin over the fixed-offset baseline, the
 ablation drop and the path-patching effect), computed from the manifests by
 a tested module rather than written by hand, on three seeds at the same budget
-as the periodic run, with a negative reported as a negative. The run is not
-in this version, and this paper therefore does not claim an induction head:
-it claims a prefix-copying head, and it says why the difference is
-structural.
+as the periodic run, with a negative reported as a negative. The run
+completed 2026-11-09 with overall verdict PARTIAL (see
+\S\ref{sec:limitations}); this paper therefore does not claim a
+content-based induction head: it claims a prefix-copying head, and it says
+why the difference is structural.
 
 The audit of that instrument, on 2026-10-22, found that the run as written
 could not have produced a verdict: the cell that evaluated the criteria read
@@ -339,6 +340,23 @@ $0.0918 < 0.40$: the copy is carried by a \emph{distributed} circuit. The
 seven criteria are unchanged. If the full run reproduces this shape, the
 verdict is the literal per-head NEGATIVE and the distributed circuit is the
 pre-specified \emph{secondary} finding, not a rewritten headline.
+
+\subsection{Deviations from Pre-Registration}
+The pre-registration (issue \#200, ADR-0033) fixes the seven criteria and
+the 0.99 generalization threshold but does not specify the reduction across
+the three seeds. This paper reports the \emph{cell mean} as the primary
+reading, with every-seed and any-seed as sensitivity readings; all three
+share the invariant that no cell is DENSE. The gate (mean \texttt{val\_acc}
+$\ge$ 0.99) is applied before any sparsity or head-count label, so a cell
+that never generalized receives \emph{NOT\_GROKKED}, not SPARSE / MIXED /
+DENSE. The positive control $P=59$ was re-measured on 2026-10-19 with the
+post-audit energy metric and reads MIXED (2 of 3 seeds sparse). Criterion 7
+(exp4 causal ablation) was added as a post-hoc addendum measured on the
+existing 3000-epoch checkpoints; it was not part of the original GPU run,
+and the verdict remains PARTIAL precisely because that criterion is
+measured after the fact. None of these deviations change a headline claim:
+the paper claims a prefix-copying head and a distributed content circuit,
+and explicitly makes no phase-diagram boundary claim.
 
 \subsection{Multi-Seed Quick-Scale Manifest}
 Three seeds at quick scale ($V=256$, $\text{seq\_len}=16$,

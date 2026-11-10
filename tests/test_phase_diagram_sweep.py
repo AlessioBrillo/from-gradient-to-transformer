@@ -351,7 +351,7 @@ class TestEmitCellManifest:
             cell_id="s", modulus=113, d_model=128, n_layers=1, n_heads=4,
             d_mlp=512, weight_decay=1.0, mode="solo", seeds=[42],
             wall_clock_seconds=1.0,
-            final_val_acc=dict(ZERO_AGG),
+            final_val_acc={"mean": 1.0, "std": 0.0, "min": 1.0, "max": 1.0, "n": 1},
             generalization_epoch=dict(ZERO_AGG),
             final_fourier_sparsity=dict(ZERO_AGG),
             k_90_percent=dict(ZERO_AGG),
@@ -378,25 +378,28 @@ class TestEmitCellManifest:
 
 
 class TestRegimeTaxonomy:
-    """SPARSE / MIXED / DENSE — the pre-registered reading of a cell.
+    """SPARSE / MIXED / DENSE / NOT_GROKKED — the pre-registered reading of a cell.
 
     Clarified on 2026-10-19, before any cell had run: SPARSE means every
     seed sparse (3/3, the bar the P=113 positive control clears), MIXED
     means 1 or 2 of 3 (a boundary cell — the very thing the sweep looks
-    for), DENSE means none.
+    for), DENSE means none. NOT_GROKKED means the cell never generalized
+    (mean val_acc < 0.99), so no sparsity label applies.
     """
 
     @staticmethod
-    def _cell(sparse_seeds: int, n: int = 3):
+    def _cell(sparse_seeds: int, n: int = 3, val_mean: float = 1.0):
         return CellResult(
             cell_id="c", modulus=113, d_model=128, n_layers=1, n_heads=4,
             d_mlp=512, weight_decay=1.0, mode="solo", seeds=list(range(n)),
             wall_clock_seconds=1.0,
-            final_val_acc=dict(ZERO_AGG),
+            final_val_acc={"mean": val_mean, "std": 0.0, "min": val_mean,
+                           "max": val_mean, "n": float(n)},
             generalization_epoch=dict(ZERO_AGG),
             final_fourier_sparsity=dict(ZERO_AGG),
             k_90_percent=dict(ZERO_AGG),
-            k_99_percent={"mean": 110.0, "std": 0.0, "min": 110.0, "max": 110.0, "n": n},
+            k_99_percent={"mean": 110.0, "std": 0.0, "min": 110.0,
+                          "max": 110.0, "n": float(n)},
             total_mass_top_k=dict(ZERO_AGG),
             energy_sparse={
                 "mean": sparse_seeds / n,
@@ -425,6 +428,36 @@ class TestRegimeTaxonomy:
         cell = self._cell(0)
         assert cell.regime() == "DENSE"
         assert cell.is_sparse() is False
+
+    def test_below_gate_is_not_groked_no_sparsity_label(self) -> None:
+        """The gate precedes the sparsity label: under 0.99 mean val_acc
+        the cell is NOT_GROKKED even if all seeds look sparse by energy."""
+        cell = self._cell(3, val_mean=0.97)
+        assert cell.regime() == "NOT_GROKKED"
+        assert cell.is_sparse() is False
+
+    def test_at_gate_is_groked(self) -> None:
+        """Exactly 0.99 clears the gate and receives a sparsity label."""
+        cell = self._cell(0, val_mean=0.99)
+        assert cell.regime() == "DENSE"
+
+    def test_grokked_readings_all_three(self) -> None:
+        """cell_mean=1, every_seed=3/3, any_seed=3/3 for a fully sparse cell."""
+        assert self._cell(3).grokked_readings() == {"cell_mean": 1, "every_seed": 3, "any_seed": 3}
+
+    def test_grokked_readings_mixed(self) -> None:
+        """cell_mean=1 (val>=0.99), every_seed=0 (not all sparse), any_seed=3 (some sparse)."""
+        assert self._cell(2).grokked_readings() == {"cell_mean": 1, "every_seed": 0, "any_seed": 3}
+
+    def test_grokked_readings_not_groked(self) -> None:
+        """Below the gate: no reading counts as grokked."""
+        readings = self._cell(3, val_mean=0.5).grokked_readings()
+        assert readings == {"cell_mean": 0, "every_seed": 0, "any_seed": 0}
+
+    def test_grokked_readings_every_seed_only(self) -> None:
+        """Every-seed reading is strict: 2 of 3 sparse => 0, not 2."""
+        assert self._cell(2).grokked_readings()["every_seed"] == 0
+
 
 
 class TestGridReadsPerCellDeviations:

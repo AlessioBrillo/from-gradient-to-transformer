@@ -274,24 +274,27 @@ def main() -> None:
         print(f"DRY RUN OK: {len(candidates)} manifest(s) valid and ready to pin.")
         return
 
-    # The gate: a new manifest in results/ that nothing cites fails
-    # verify-claims until the author adds the tag — print exactly what to add.
+    # verify_claims checks that every citation in RESULTS.md resolves to an
+    # existing, well-formed manifest. It does NOT check that every installed
+    # manifest is cited — an uncited manifest is not a claim, it is just
+    # data. So an uncited manifest cannot make verify-claims RED; print the
+    # citation snippets as a reminder, not as a gate.
     problems = verify_claims(RESULTS_DIR, CLAIMS_FILE)
     print()
     print("verify-claims after install:", "GREEN" if not problems else "RED")
     for p in problems:
         print(f"  - {p}")
     print()
-    print("cite each manifest next to its headline number in portfolio/RESULTS.md:")
+    print("If any installed manifest backs a headline number in portfolio/RESULTS.md,")
+    print("cite it next to that number with one of:")
     for target in installed:
         print(f"  <!-- manifest: results/{target.name} -->")
+    print()
+    print("verify-claims is GREEN when all cited manifests exist and are valid;")
+    print("uncited manifests are data, not claims, and do not affect the gate.")
     if problems:
-        print(
-            "\nverify-claims is RED because the new manifests are not cited "
-            "yet — add the tags above, then re-run `make verify-claims`."
-        )
         raise SystemExit(1)
-    print("\nall green; commit results/*.json on a branch and open a PR.")
+    print("all green; commit results/*.json on a branch and open a PR.")
 
 
 if __name__ == "__main__":
