@@ -25,6 +25,17 @@
 # positive control clears the SPARSE bar at 3/3, so the bar is the same one
 # the control meets.
 #
+# Reduction decision (added 2026-11-10, after the sweep ran on GPU):
+# the pre-registration fixes the 0.99 threshold but not the reduction
+# across the 3 seeds. The gate (mean final_val_acc >= 0.99) is applied
+# BEFORE the sparsity label: a cell below the gate is NOT_GROKKED and
+# receives no SPARSE / MIXED / DENSE label. The primary reading is the
+# cell mean; every-seed and any-seed are sensitivity readings published
+# alongside it so no reader has to infer the reduction. All three readings
+# share the invariant DENSE = 0; only the SPARSE count moves (4 / 2 / 6).
+# This is a post-hoc deviation from the pre-registration and is declared
+# as such wherever the table is cited.
+#
 # Baseline: Nanda-faithful at P=113, wd=1.0, 20k steps (gen-epoch measured at
 # ~5919±547 on job A, so 20k gives >3x headroom).
 cells:

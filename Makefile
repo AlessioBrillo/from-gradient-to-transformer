@@ -1,7 +1,7 @@
 .PHONY: sync test test-cov lint lint-fix typecheck typecheck-strict typecheck-new \
 	ci-check reproduce reproduce-quick reproduce-grokking reproduce-induction \
 	reproduce-superposition reproduce-patching reproduce-sae \
-	reproduce-multiseed verify-claims clean paper figures \
+	reproduce-multiseed verify-claims clean paper paper-check figures \
 	reproduce-grokking-probe reproduce-induction-standard reproduce-induction-1layer \
 	reproduce-exp3-geometry commitlint-head neuron-ablation \
 	check-links vault-check reproduce-induction-batches reproduce-induction-fixed \
@@ -251,6 +251,23 @@ reproduce-induction-content:
 	@echo "=== Rung 1 (content task): the pre-registered run (GPU, 3 seeds x 3000 epochs) ==="
 	uv run python -m src.experiments.exp1_induction_heads --content-standard --seeds 0,1,2 --checkpoint-dir checkpoints/induction_content --checkpoint-every 250 --resume --detect-every 50 --manifest-path results/induction_content.json
 
+# Rung 4 content addendum (issue #200, criterion 7): causal ablation measured on
+# the existing 3000-epoch checkpoints (seed 0/1/2, git_sha=88147ee, task=variable,
+# arch AttentionOnlyTransformer 2L/64d/4H). This is NOT a re-run of training — the
+# checkpoints already exist; exp4 only loads them and runs activation/path patching.
+# Runs locally on CPU, dated as an addendum. The verdict stays PARTIAL because
+# exp4 was measured after the fact; see portfolio/RESULTS.md.
+reproduce-induction-content-exp4:
+	@echo "=== Rung 4 (content task): exp4 causal ablation on existing checkpoints (addendum, CPU) ==="
+	uv run python -m src.experiments.exp4_circuit_patching \
+		--from-checkpoint results/remote/induction-content/output/repo/checkpoints/induction_content \
+		--seeds 0,1,2 \
+		--source-task variable \
+		--source-vocab-size 256 --source-seq-len 64 --source-d-model 64 --source-n-layers 2 --source-n-heads 4 \
+		--manifest-path results/exp4_content.json \
+		--counterfactual minimal-pair
+	@echo "exp4 addendum manifest written to results/exp4_content.json"
+
 # The verdict of issue #200, computed by the tested module (not by a
 # notebook cell): the seven frozen criteria, joined across the exp1 and
 # exp4 manifests. The exp4 manifest is optional — without it the causal
@@ -259,15 +276,13 @@ reproduce-induction-content:
 # never pinned as one.
 # Il verdetto è condizionale: exp4 è opzionale (un negativo valido può saltarlo).
 # Se results/exp4_content.json manca, il criterio 7 è NOT MEASURED e il verdetto
-# resta calcolabile. Il file content_verdict.json è un artifact derivato (non un
-# ResultsManifest): va tracciato ma non pinnato come manifest.
+# resta calcolabile. content_verdict.json è un artifact DERIVATO (non un
+# ResultsManifest): NON va tracciato (è gitignored), viene rigenerato da
+# `make content-verdict` e va citato in portfolio/RESULTS.md con il tag dei
+# manifest di input (induction_content.json, exp4_content.json quando esiste).
 content-verdict:
 	@echo "=== The content task's verdict (the seven pre-registered criteria) ==="
-	@if [ -f results/exp4_content.json ]; then \
-		uv run python -m src.experiments.content_verdict --exp1 results/induction_content.json --exp4 results/exp4_content.json --output results/content_verdict.json; \
-	else \
-		uv run python -m src.experiments.content_verdict --exp1 results/induction_content.json --output results/content_verdict.json; \
-	fi
+	uv run python -m src.experiments.content_verdict --exp1 results/induction_content.json --exp4 results/exp4_content.json --output results/content_verdict.json
 
 # --- Retune A/B (Micro-Phase 89, Row 2) ---
 # Frozen 500-step arms, seed 0, warmup 100, probe manifests only.
@@ -393,6 +408,22 @@ paper:
 	else \
 		echo "No LaTeX toolchain found (latexmk/pdflatex). The paper source is portfolio/paper/main.tex; install TeX Live/MiKTeX or compile on Overleaf."; \
 	fi
+
+# paper-check is the non-graceful companion of `paper`: it fails when no
+# LaTeX toolchain is available or when the document does not compile.
+# Intended for the Woodpecker gate (Docker image ships LuaLaTeX), not for
+# dev machines without TeX. `make paper` stays graceful.
+paper-check:
+	@echo "=== paper-check: compiling portfolio/paper/main.tex (fails hard) ==="
+	@if command -v latexmk >/dev/null 2>&1; then \
+		cd portfolio/paper && latexmk -pdf -lualatex -interaction=nonstopmode -halt-on-error main.tex; \
+	else \
+		echo "No LaTeX toolchain found — paper-check requires latexmk + LuaLaTeX." >&2; \
+		exit 1; \
+	fi
+	@test -f portfolio/paper/main.pdf || { echo "main.pdf not produced — paper-check failed." >&2; exit 1; }
+	@echo "paper-check: main.pdf compiled."
+
 
 # --- Remote GPU runs (Kaggle/Colab; see docs/agents/gpu-runs.md) ---
 # The GPU work this repo still owes (issue #200: the content-based induction

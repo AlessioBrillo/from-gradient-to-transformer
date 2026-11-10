@@ -1,0 +1,221 @@
+{
+  "experiment": "exp4_circuit_patching",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "args": {
+    "seed": 42,
+    "vocab_size": 256,
+    "seq_len": 24,
+    "d_model": 64,
+    "n_layers": 2,
+    "n_heads": 4,
+    "epochs": 3000,
+    "lr": 0.001,
+    "weight_decay": 0.1,
+    "gradient_clip": 1.0,
+    "num_train": 8192,
+    "batch_size": 64,
+    "quick": false,
+    "standard": false,
+    "scale": null,
+    "fresh_batches": false,
+    "batches": null,
+    "no_train": false,
+    "manifest_path": "results/exp4_content.json",
+    "from_checkpoint": "results/remote/induction-content/output/repo/checkpoints/induction_content",
+    "source_vocab_size": 256,
+    "source_seq_len": 64,
+    "source_d_model": 64,
+    "source_n_layers": 2,
+    "source_n_heads": 4,
+    "source_task": "variable",
+    "source_epochs": null,
+    "source_git_sha": null,
+    "source_key_len": null,
+    "source_copy_blocks": null,
+    "source_copy_block_len": null,
+    "counterfactual": "minimal-pair",
+    "batch_mode": "fixed"
+  },
+  "per_seed_metrics": [
+    {
+      "final_val_acc": 0.2743055522441864,
+      "total_induction_heads": 2.0,
+      "n_candidate_heads": 2.0,
+      "mean_activation_recovery": 1.0070302879855995,
+      "path_patch_measured": 1.0,
+      "group_path_patch_measured": 1.0,
+      "counterfactual_minimal_pair": 1.0,
+      "probe_content_mass": 0.7491848468780518,
+      "probe_period_mass": 0.1460685282945633,
+      "probe_content_wins": 1.0,
+      "checkpoint_epoch": 3000.0,
+      "source_model_seed": 0.0,
+      "mean_ablation_effect": 0.4036992717182702,
+      "mean_path_patch_effect": 1.0770980884784507,
+      "group_path_patch_effect": 2.0983190553564417
+    },
+    {
+      "final_val_acc": 0.2723214328289032,
+      "total_induction_heads": 0.0,
+      "n_candidate_heads": 1.0,
+      "mean_activation_recovery": 1.0095342663313518,
+      "path_patch_measured": 0.0,
+      "group_path_patch_measured": 1.0,
+      "counterfactual_minimal_pair": 1.0,
+      "probe_content_mass": 0.11368905752897263,
+      "probe_period_mass": 0.18400608003139496,
+      "probe_content_wins": 0.0,
+      "checkpoint_epoch": 3000.0,
+      "source_model_seed": 1.0,
+      "group_path_patch_effect": -1.3417377297367108e-05
+    },
+    {
+      "final_val_acc": 0.2762896716594696,
+      "total_induction_heads": 0.0,
+      "n_candidate_heads": 4.0,
+      "mean_activation_recovery": 1.0151742203404723,
+      "path_patch_measured": 0.0,
+      "group_path_patch_measured": 1.0,
+      "counterfactual_minimal_pair": 1.0,
+      "probe_content_mass": 0.12993724644184113,
+      "probe_period_mass": 0.3050207793712616,
+      "probe_content_wins": 0.0,
+      "checkpoint_epoch": 3000.0,
+      "source_model_seed": 2.0,
+      "group_path_patch_effect": -0.0036760850169464416
+    }
+  ],
+  "aggregate": {
+    "group_path_patch_effect": {
+      "mean": 0.6982098509873994,
+      "std": 0.9900278419999928,
+      "min": -0.0036760850169464416,
+      "max": 2.0983190553564417,
+      "n": 3.0
+    },
+    "counterfactual_minimal_pair": {
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0,
+      "n": 3.0
+    },
+    "final_val_acc": {
+      "mean": 0.2743055522441864,
+      "std": 0.0016200267187310544,
+      "min": 0.2723214328289032,
+      "max": 0.2762896716594696,
+      "n": 3.0
+    },
+    "probe_content_mass": {
+      "mean": 0.33093705028295517,
+      "std": 0.2958202330563018,
+      "min": 0.11368905752897263,
+      "max": 0.7491848468780518,
+      "n": 3.0
+    },
+    "probe_period_mass": {
+      "mean": 0.21169846256573996,
+      "std": 0.06778203089516083,
+      "min": 0.1460685282945633,
+      "max": 0.3050207793712616,
+      "n": 3.0
+    },
+    "source_model_seed": {
+      "mean": 1.0,
+      "std": 0.816496580927726,
+      "min": 0.0,
+      "max": 2.0,
+      "n": 3.0
+    },
+    "total_induction_heads": {
+      "mean": 0.6666666666666666,
+      "std": 0.9428090415820634,
+      "min": 0.0,
+      "max": 2.0,
+      "n": 3.0
+    },
+    "n_candidate_heads": {
+      "mean": 2.3333333333333335,
+      "std": 1.247219128924647,
+      "min": 1.0,
+      "max": 4.0,
+      "n": 3.0
+    },
+    "group_path_patch_measured": {
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0,
+      "n": 3.0
+    },
+    "checkpoint_epoch": {
+      "mean": 3000.0,
+      "std": 0.0,
+      "min": 3000.0,
+      "max": 3000.0,
+      "n": 3.0
+    },
+    "probe_content_wins": {
+      "mean": 0.3333333333333333,
+      "std": 0.4714045207910317,
+      "min": 0.0,
+      "max": 1.0,
+      "n": 3.0
+    },
+    "mean_activation_recovery": {
+      "mean": 1.0105795915524745,
+      "std": 0.0034059200581363015,
+      "min": 1.0070302879855995,
+      "max": 1.0151742203404723,
+      "n": 3.0
+    },
+    "path_patch_measured": {
+      "mean": 0.3333333333333333,
+      "std": 0.4714045207910317,
+      "min": 0.0,
+      "max": 1.0,
+      "n": 3.0
+    }
+  },
+  "wall_clock_seconds": 23.203999999910593,
+  "git_sha": "891ef46",
+  "git_dirty": false,
+  "device": "cpu",
+  "torch_version": "2.12.1+cpu",
+  "numpy_version": "2.5.0",
+  "python_version": "3.12.14",
+  "n_parameters": 70016,
+  "created_at": "2026-11-10T20:07:38+00:00",
+  "notes": null,
+  "neuron_ablation": null,
+  "source_provenance": {
+    "checkpoints": [
+      {
+        "path": "results\\remote\\induction-content\\output\\repo\\checkpoints\\induction_content\\exp1_checkpoint_seed0.pt",
+        "seed": 0,
+        "epoch": 3000,
+        "git_sha": "88147ee",
+        "git_dirty": false
+      },
+      {
+        "path": "results\\remote\\induction-content\\output\\repo\\checkpoints\\induction_content\\exp1_checkpoint_seed1.pt",
+        "seed": 1,
+        "epoch": 3000,
+        "git_sha": "88147ee",
+        "git_dirty": false
+      },
+      {
+        "path": "results\\remote\\induction-content\\output\\repo\\checkpoints\\induction_content\\exp1_checkpoint_seed2.pt",
+        "seed": 2,
+        "epoch": 3000,
+        "git_sha": "88147ee",
+        "git_dirty": false
+      }
+    ]
+  }
+}

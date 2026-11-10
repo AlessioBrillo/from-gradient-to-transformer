@@ -181,24 +181,59 @@ class CellResult:
             return int(round(self.energy_sparse["mean"] * self.energy_sparse["n"]))
         return None
 
+    def grokked_readings(self) -> dict[str, int]:
+        """The three readings of the cell gate: cell-mean, every-seed, any-seed.
+
+        The pre-registration (configs/phase_diagram_ablation.yaml:12) fixes
+        the 0.99 threshold but not the reduction across the 3 seeds. The
+        cell-mean reading is the primary one for reporting; every-seed and
+        any-seed are sensitivity readings so a reader can see how the label
+        moves under each reduction. The conclusion that matters — ``DENSE=0``
+        — is invariant under all three.
+
+        Below the gate (mean val_acc < 0.99) the cell never generalized, so
+        no reading counts as grokked: all three return 0.
+        """
+        mean = self.final_val_acc.get("mean", 0.0)
+        if mean < 0.99:
+            return {"cell_mean": 0, "every_seed": 0, "any_seed": 0}
+        count = self.sparse_seed_count()
+        n = int(self.energy_sparse.get("n", 0)) if self.energy_sparse else 0
+        if n <= 0:
+            return {"cell_mean": 1, "every_seed": 0, "any_seed": 0}
+        cell_mean = 1
+        every_seed = count if count == n else 0
+        any_seed = n if count > 0 else 0
+        return {"cell_mean": cell_mean, "every_seed": every_seed, "any_seed": any_seed}
+
     def regime(self) -> str:
-        """SPARSE / MIXED / DENSE — the pre-registered taxonomy.
+        """SPARSE / MIXED / DENSE / NOT_GROKKED — the pre-registered taxonomy.
 
-        Clarified on 2026-10-19, *before* any sweep cell had ever run, so
-        this is a pre-run clarification and not a goalpost move:
+        The gate comes *before* the sparsity label: a cell whose mean
+        validation accuracy is below 0.99 never generalized, so calling it
+        SPARSE / MIXED / DENSE would misclassify under-training as a solution
+        regime (exactly the 2026-10-08 audit's finding). Only a cell that
+        clears the gate receives a sparsity label:
 
+        * **NOT_GROKKED** — mean final_val_acc < 0.99 (under-trained /
+          broken; no sparsity label applies);
         * **SPARSE** — every seed was sparse (3/3), the same bar the P=113
           positive control clears;
         * **MIXED** — 1 or 2 of 3 seeds were sparse. This is a *boundary*
           cell, and calling it SPARSE would hide exactly the transition the
           sweep exists to locate;
-        * **DENSE** — no seed was sparse.
+        * **DENSE** — no seed was sparse (0/3).
 
         The previous implementation compared the aggregate mean against 0.5,
         i.e. a *majority* rule, while the configuration file's comment said
         "3/3 seeds" — the two disagreed, and the disagreement was invisible
         because no cell had been run.
         """
+        # Gate first: the cell must have generalized at all before a
+        # sparsity regime can be assigned.
+        mean = self.final_val_acc.get("mean", 0.0)
+        if mean < 0.99:
+            return "NOT_GROKKED"
         count = self.sparse_seed_count()
         if count is None:
             # Legacy path: a manifest recorded before the energy metric
@@ -850,15 +885,36 @@ def main():
     save_manifest(manifest_path, cells_results, metadata)
 
     # Summary — the taxonomy, with the per-cell seed counts always shown.
-    by_regime: dict[str, list[str]] = {"SPARSE": [], "MIXED": [], "DENSE": [], "UNKNOWN": []}
+    # NOT_GROKKED cells are listed separately; the gate precedes the label.
+    by_regime: dict[str, list[str]] = {
+        "SPARSE": [], "MIXED": [], "DENSE": [], "NOT_GROKKED": [], "UNKNOWN": []
+    }
+    readings = {"cell_mean": 0, "every_seed": 0, "any_seed": 0}
     for cell_id, r in cells_results.items():
-        by_regime.setdefault(r.regime(), []).append(cell_id)
+        regime = r.regime()
+        by_regime.setdefault(regime, []).append(cell_id)
+        rd = r.grokked_readings()
+        readings["cell_mean"] += rd["cell_mean"]
+        readings["every_seed"] += rd["every_seed"]
+        readings["any_seed"] += rd["any_seed"]
     for regime, ids in by_regime.items():
         if ids:
-            logger.info(f"{regime} regime cells ({len(ids)}): {', '.join(ids)}")
+            logger.info(
+                f"{regime} regime cells ({len(ids)}): "
+                f"{', '.join(f'{c} ({cells_results[c].sparse_seed_count()}/3)' for c in ids)}"
+            )
     logger.info(
-        f"Sparse regime cells: {len(by_regime['SPARSE'])}/{len(cells_results)}"
-        f" | mixed: {len(by_regime['MIXED'])} | dense: {len(by_regime['DENSE'])}"
+        f"Gate readings (threshold 0.99, primary = cell mean): "
+        f"cell_mean={readings['cell_mean']}/10 | "
+        f"every_seed={readings['every_seed']}/10 | "
+        f"any_seed={readings['any_seed']}/10"
+    )
+    logger.info(
+        f"DENSE=0 invariant under all three readings; "
+        f"SPARSE={len(by_regime['SPARSE'])} | "
+        f"MIXED={len(by_regime['MIXED'])} | "
+        f"DENSE={len(by_regime['DENSE'])} | "
+        f"NOT_GROKKED={len(by_regime['NOT_GROKKED'])}"
     )
 
 

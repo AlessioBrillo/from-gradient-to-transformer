@@ -711,6 +711,7 @@ its GPU run. The short version:
 
 <!-- manifest: results/induction_content_derisk_fixed.json -->
 <!-- manifest: results/induction_content_derisk_standard.json -->
+<!-- manifest: results/exp4_content.json -->
 
 **Status: [x] run complete — verdict PARTIAL.** GPU run completed 2026-11-09
 (3 seeds × 3000 epochs, manifest `results/induction_content.json` pinned at
@@ -724,9 +725,13 @@ ref `v1.1.0-rc2`). Per-seed results from `results/content_verdict.json`:
 
 **Decision:** per the pre-registration, a PARTIAL verdict is reported as-is.
 No re-run: the missing criteria (content mass on seeds 1-2, path patching on
-all seeds) are reported, not fabricated. exp4 was correctly not required for
-this negative-capable run. The verdict artifact is `results/content_verdict.json`
-(a derived artifact, regenerated with `make content-verdict`).
+all seeds) are reported, not fabricated. exp4 was executed afterward as a
+dated addendum on the existing 3000-epoch checkpoints
+(`make reproduce-induction-content-exp4`, manifest `results/exp4_content.json`,
+git_sha 88147ee, CPU) — its causal measurements are recorded in the addendum
+manifest but do not change the per-seed verdicts above. The verdict artifact
+is `results/content_verdict.json` (a derived artifact, regenerated with
+`make content-verdict`).
 
 ### Quick scale (the historical scale, for continuity)
 
@@ -1184,7 +1189,7 @@ every cell, so no reader has to infer them from an aggregate.
 | 4 — Circuit Patching | ✅ **Cascade ran end to end on Rung 1's checkpoint** (2026-10-20) | Head ablation **0.4445 ± 0.0425**, path patching **0.8215 ± 0.1255** — the first end-to-end path-patching result against a real head; activation recovery 0.0834 |
 | 5 — SAE Dashboard | ✅ Synthetic reproduced; ✅ **the real-activation gap closed** (2026-10-20) | On the confirmed-head checkpoint the SAE is now *sparse*: L0 15.1/512 (3.0%), FVE 99.998%, MSE 0.0004 — against 53% L0 for the old undertrained model. What remains is a dictionary 8× too large (78% dead features) |
 | 6 — ACDC | ❌ Deleted | Was fabricated data; removed 2026-08-01 rather than fixed |
-| 1b — Content-based induction (issue #200) | [ ] **Pre-registered, run pending** | The task that removes the positional shortcut (repeats at varying distances; the best fixed offset explains 17.6% of the copy queries), its seven criteria, its budget and its decision rule are frozen in [ADR-0033](../docs/adr/0033-content-based-induction-task.md) and the [pre-registration](../07_capstone/notes/variable-distance-induction-preregistration.md). The instrument is audited and tested: criteria 1–2 read the confirmed head's mass, head-dependent criteria are `NOT MEASURED` instead of a fabricated zero, the exp4/exp5 cascade is pinned to exp1's final epoch, commit, seed and task, and the standard-geometry de-risk already shows a distributed content circuit (3 candidates, group drop 0.9956, max single-head 0.0986) with no confirmed head. If the full run reproduces it, the verdict is the literal per-head NEGATIVE and the circuit is the pre-specified secondary finding — the headline is not rewritten. It is reported whatever it says |
+| 1b — Content-based induction (issue #200) | [x] **Complete, verdict PARTIAL (2026-11-09)** | The task that removes the positional shortcut (repeats at varying distances; the best fixed offset explains 17.6% of the copy queries), its seven criteria, its budget and its decision rule are frozen in [ADR-0033](../docs/adr/0033-content-based-induction-task.md) and the [pre-registration](../07_capstone/notes/variable-distance-induction-preregistration.md). GPU run completed 2026-11-09 (3 seeds × 3000 epochs, manifest `results/induction_content.json` pinned at ref `v1.1.0-rc2`). exp4 causal ablation was executed afterward as a dated addendum on the existing 3000-epoch checkpoints (`make reproduce-induction-content-exp4`, manifest `results/exp4_content.json`, CPU); its measurements are recorded in the addendum manifest but do not change the per-seed verdicts. The verdict artifact is `results/content_verdict.json` (derived, regenerated with `make content-verdict`). Per-seed results: seed 0 PARTIAL, seeds 1–2 NEGATIVE; content mass NOT MEASURED on seeds 1–2; path patching NOT MEASURED on all seeds.
 
 **What to trust right now, in order**: (1) Rung 2's sparse-circuit reproduction —
 GPU, 3 seeds, both protocols, post-audit energy metric, manifests pinned with
