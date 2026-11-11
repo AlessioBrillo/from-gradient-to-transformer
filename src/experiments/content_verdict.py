@@ -49,6 +49,26 @@ otherwise. The run verdict requires the pre-registered three seeds:
 is partial, and ``NEGATIVE`` otherwise. Fewer seeds are a pilot, not the
 run, and report ``INCOMPLETE``.
 
+Two verdicts, never one (2026-11-11)
+------------------------------------
+The training run was pinned at commit ``88147ee``; the cascade that
+measures criterion 7 was executed **afterwards**, at ``891ef46``. The
+pre-registration's decision rule was applied to the run *as it was
+launched* — criterion 7 was a post-hoc addendum, and the ledger says so in
+the same words. So the module computes two verdicts and publishes them
+side by side:
+
+* ``pre_registered`` — the training run alone. Criterion 7 is
+  ``NOT MEASURED`` there, because the cascade was not part of that run.
+* ``causal_addendum`` — the same run plus the cascade, with the commit
+  difference **declared** in its provenance.
+
+Merging them is what made ``make content-verdict`` refuse to compute
+anything at all (the cascade's commit is not the training run's commit), and
+merging them would also hide which instrument produced which label. The
+strict refusal still exists for the merged mode (:func:`run_verdict`): a
+cascade measured at a different commit is not the pre-registered instrument.
+
 What the module refuses to do
 -----------------------------
 It never guesses. A criterion whose measurement is missing is reported as
@@ -69,7 +89,7 @@ import argparse
 import json
 import sys
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
 
@@ -208,6 +228,10 @@ class RunVerdict:
     status: str
     verdict: str
     note: str = ""
+    #: Facts about *which* instrument produced the verdict. A verdict that
+    #: merges a pre-registered run with a later cascade must say so here, or
+    #: the reader cannot tell which measurement produced which label.
+    provenance: Mapping[str, Any] = field(default_factory=dict)
 
     @property
     def complete(self) -> bool:
@@ -387,13 +411,12 @@ def _same_commit(left: str, right: str) -> bool:
     )
 
 
-def _provenance_problem(exp1: Mapping[str, Any], exp4: Optional[Mapping[str, Any]]) -> str:
-    """Why these manifests are not one pre-registered run, or ``""``.
+def _exp1_problem(exp1: Mapping[str, Any]) -> str:
+    """Why the exp1 manifest is not a measurement of the content task, or "".
 
-    The seven criteria answer the content task only. A periodic manifest, a
-    manifest recorded on a dirty tree, or an exp4 cascade run against a
-    different commit did not measure the same thing, and the verdict must
-    refuse rather than attach the word ``NEGATIVE`` to it.
+    The seven criteria answer the content task only. A periodic manifest, or
+    one recorded on a dirty tree, did not measure the thing the verdict is
+    about, and the verdict must refuse rather than attach a label to it.
     """
     task = _manifest_arg(exp1, "task")
     if task is None:
@@ -411,8 +434,19 @@ def _provenance_problem(exp1: Mapping[str, Any], exp4: Optional[Mapping[str, Any
             "the exp1 manifest was recorded with a dirty working tree; its "
             "numbers do not correspond to a committed instrument"
         )
-    if exp4 is None:
-        return ""
+    return ""
+
+
+def _exp4_problem(exp1: Mapping[str, Any], exp4: Mapping[str, Any]) -> str:
+    """Why the exp4 manifest is not a cascade of this exp1 run, or "".
+
+    The *commit* difference between the two manifests is **not** checked
+    here: whether a cascade measured at a later commit may be merged into
+    the pre-registered verdict is a decision about the record, not a fact
+    about the measurement, and it is taken by the caller (see
+    :func:`run_verdict` and :func:`run_addendum_verdict`).
+    """
+    task = _manifest_arg(exp1, "task")
     source_task = _manifest_arg(exp4, "source_task")
     if source_task is not None and source_task != task:
         return (
@@ -424,20 +458,37 @@ def _provenance_problem(exp1: Mapping[str, Any], exp4: Optional[Mapping[str, Any
             "the exp4 manifest was recorded with a dirty working tree; its "
             "causal measurement does not correspond to a committed instrument"
         )
+    return ""
+
+
+def _commit_drift(exp1: Mapping[str, Any], exp4: Mapping[str, Any]) -> dict[str, Any]:
+    """The fact that the cascade was measured at a different commit, or {}.
+
+    On 2026-11-09 the content task's training run was pinned at
+    ``88147ee``; the causal cascade — the addendum that measures criterion 7
+    — was executed later, at ``891ef46``. The two are the same experiment
+    (the cascade loads the training run's own checkpoints, and its
+    ``source_provenance`` says so), but they are two instruments, and a
+    record that merges them has to say which is which.
+    """
     exp1_sha = exp1.get("git_sha")
     exp4_sha = exp4.get("git_sha")
-    if (
-        exp1_sha
-        and exp4_sha
-        and exp1_sha != "unknown"
-        and exp4_sha != "unknown"
-        and not _same_commit(str(exp1_sha), str(exp4_sha))
-    ):
-        return (
-            f"exp1 was run at {exp1_sha} and exp4 at {exp4_sha}; a cascade "
-            "from a different commit is not the pre-registered instrument"
-        )
-    return ""
+    if not exp1_sha or not exp4_sha:
+        return {}
+    if str(exp1_sha) == "unknown" or str(exp4_sha) == "unknown":
+        return {}
+    if _same_commit(str(exp1_sha), str(exp4_sha)):
+        return {}
+    return {
+        "exp1_git_sha": str(exp1_sha),
+        "exp4_git_sha": str(exp4_sha),
+        "declared": True,
+        "reason": (
+            "the cascade was executed after the pre-registered training run, "
+            "at a later commit; it loads that run's own checkpoints and its "
+            "source_provenance records them"
+        ),
+    }
 
 
 def _cascade_problem(
@@ -522,6 +573,9 @@ def run_verdict(
     exp4: Optional[Mapping[str, Any]] = None,
     criteria: Sequence[Criterion] = CRITERIA,
     expected_seeds: Sequence[int] = (0, 1, 2),
+    *,
+    allow_commit_drift: bool = False,
+    label: str = "run",
 ) -> RunVerdict:
     """The verdict of a run, from the exp1 manifest and (optionally) exp4's.
 
@@ -530,11 +584,19 @@ def run_verdict(
     verdict, so neither a one-seed pilot nor an extra seed can be reported
     as the pre-registered POSITIVE. An empty manifest is likewise
     ``INCOMPLETE`` rather than a vacuous negative.
+
+    ``allow_commit_drift`` decides what happens when the cascade was measured
+    at a **later commit** than the training run. Off (the default), the
+    verdict refuses: two instruments are two instruments, and a merged label
+    would hide which one produced it. On, the difference is **declared** in
+    ``RunVerdict.provenance`` and the verdict is computed — the mode the
+    causal addendum uses, where the cascade is reported separately from the
+    pre-registered verdict rather than merged into it.
     """
     exp1_problem = _manifest_seed_problem(exp1, "the exp1 manifest")
     if exp1_problem:
         return RunVerdict(
-            label="run",
+            label=label,
             seeds=(),
             status=STATUS_INCOMPLETE,
             verdict="",
@@ -543,11 +605,12 @@ def run_verdict(
     exp1_rows = per_seed_metrics(exp1)
     exp1_seeds = [int(s) for s in exp1.get("seeds", [])]
     exp4_rows: dict[int, Mapping[str, Any]] = {}
+    drift: dict[str, Any] = {}
     if exp4 is not None:
         exp4_problem = _manifest_seed_problem(exp4, "the exp4 manifest")
         if exp4_problem:
             return RunVerdict(
-                label="run",
+                label=label,
                 seeds=(),
                 status=STATUS_INCOMPLETE,
                 verdict="",
@@ -563,7 +626,7 @@ def run_verdict(
             if extra_exp4:
                 parts.append(f"unexpected {extra_exp4}")
             return RunVerdict(
-                label="run",
+                label=label,
                 seeds=(),
                 status=STATUS_INCOMPLETE,
                 verdict="",
@@ -579,21 +642,44 @@ def run_verdict(
         seeds.append(evaluate_seed(seed, exp1_rows[seed], exp4_rows.get(seed), criteria))
     if not exp1_seeds:
         return RunVerdict(
-            label="run",
+            label=label,
             seeds=(),
             status=STATUS_INCOMPLETE,
             verdict="",
             note="the exp1 manifest carries no seeds",
         )
-    provenance = _provenance_problem(exp1, exp4)
-    if provenance:
+    exp1_issue = _exp1_problem(exp1)
+    if exp1_issue:
         return RunVerdict(
-            label="run",
+            label=label,
             seeds=tuple(seeds),
             status=STATUS_INCOMPLETE,
             verdict="",
-            note=provenance,
+            note=exp1_issue,
         )
+    if exp4 is not None:
+        exp4_issue = _exp4_problem(exp1, exp4)
+        if exp4_issue:
+            return RunVerdict(
+                label=label,
+                seeds=tuple(seeds),
+                status=STATUS_INCOMPLETE,
+                verdict="",
+                note=exp4_issue,
+            )
+        drift = _commit_drift(exp1, exp4)
+        if drift and not allow_commit_drift:
+            return RunVerdict(
+                label=label,
+                seeds=tuple(seeds),
+                status=STATUS_INCOMPLETE,
+                verdict="",
+                note=(
+                    f"exp1 was run at {drift['exp1_git_sha']} and exp4 at "
+                    f"{drift['exp4_git_sha']}; a cascade from a different "
+                    "commit is not the pre-registered instrument"
+                ),
+            )
     cascade_problems = [
         problem
         for seed in seeds
@@ -609,7 +695,7 @@ def run_verdict(
     ]
     if cascade_problems:
         return RunVerdict(
-            label="run",
+            label=label,
             seeds=tuple(seeds),
             status=STATUS_INCOMPLETE,
             verdict="",
@@ -625,7 +711,7 @@ def run_verdict(
         if extra:
             parts.append(f"unexpected {extra}")
         return RunVerdict(
-            label="run",
+            label=label,
             seeds=tuple(seeds),
             status=STATUS_INCOMPLETE,
             verdict="",
@@ -644,7 +730,7 @@ def run_verdict(
         if notes:
             parts.append("; ".join(notes))
         return RunVerdict(
-            label="run",
+            label=label,
             seeds=tuple(seeds),
             status=STATUS_INCOMPLETE,
             verdict="",
@@ -659,11 +745,82 @@ def run_verdict(
     else:
         overall = VERDICT_NEGATIVE
     return RunVerdict(
-        label="run",
+        label=label,
         seeds=tuple(seeds),
         status=STATUS_COMPLETE,
         verdict=overall,
+        provenance=drift,
     )
+
+
+def run_addendum_verdict(
+    exp1: Mapping[str, Any],
+    exp4: Mapping[str, Any],
+    criteria: Sequence[Criterion] = CRITERIA,
+    expected_seeds: Sequence[int] = (0, 1, 2),
+) -> RunVerdict:
+    """The verdict of the **causal addendum**: the pre-registered run plus
+    the cascade that measures criterion 7.
+
+    The addendum is reported **beside** the pre-registered verdict, never
+    merged into it. Its provenance is declared in
+    ``RunVerdict.provenance``: the cascade was executed after the training
+    run, at a later commit, and it analyses that run's own checkpoints
+    (the ``source_provenance`` of the exp4 manifest records them).
+
+    Every other refusal still applies — a cascade that analysed a different
+    model, a stale checkpoint, another task or a dirty tree is not an
+    addendum of this run and gets ``INCOMPLETE`` with no label.
+    """
+    return run_verdict(
+        exp1,
+        exp4,
+        criteria=criteria,
+        expected_seeds=expected_seeds,
+        allow_commit_drift=True,
+        label="causal_addendum",
+    )
+
+
+@dataclass(frozen=True)
+class VerdictBundle:
+    """The two verdicts of the content task, kept apart.
+
+    * ``pre_registered`` — the verdict of the run the pre-registration
+      froze: the training run alone. Criterion 7 (path patching) is
+      ``NOT MEASURED`` there, because the cascade was not part of that run.
+    * ``addendum`` — the same run plus the causal cascade, reported
+      separately with its own provenance.
+    """
+
+    pre_registered: RunVerdict
+    addendum: Optional[RunVerdict] = None
+
+    @property
+    def complete(self) -> bool:
+        return self.pre_registered.complete
+
+
+def run_verdicts(
+    exp1: Mapping[str, Any],
+    exp4: Optional[Mapping[str, Any]] = None,
+    criteria: Sequence[Criterion] = CRITERIA,
+    expected_seeds: Sequence[int] = (0, 1, 2),
+) -> VerdictBundle:
+    """The pre-registered verdict and, when a cascade exists, the addendum."""
+    pre_registered = run_verdict(
+        exp1,
+        None,
+        criteria=criteria,
+        expected_seeds=expected_seeds,
+        label="pre_registered",
+    )
+    addendum = (
+        run_addendum_verdict(exp1, exp4, criteria=criteria, expected_seeds=expected_seeds)
+        if exp4 is not None
+        else None
+    )
+    return VerdictBundle(pre_registered=pre_registered, addendum=addendum)
 
 
 def mechanism_report(metrics: Mapping[str, Any]) -> tuple[str, str]:
@@ -834,7 +991,35 @@ def _negative_lines(
             (_row_metric(exp1_rows.get(seed, {}), "peak_content_mass") or 0.0) < 0.30
             for seed in high_copy
         )
-        if low_content:
+        # A single head that carries the copy is the strongest thing the
+        # mechanism report can say, and it is what the 2026-11-09 GPU run
+        # measured on the seeds whose per-head screen confirmed nothing:
+        # ablating one head removed 0.93-0.94 of the copy accuracy while the
+        # screen saw 0.09-0.12 of content mass on that head. The report has
+        # to name the carrier — the negative is about the *confirmation*,
+        # not about the absence of a circuit.
+        carried = {
+            seed: value
+            for seed, value in (
+                (seed, _row_metric(exp1_rows.get(seed, {}), "max_single_ablation_drop"))
+                for seed in high_copy
+            )
+            if value is not None and value >= 0.20
+        }
+        if carried:
+            values = list(carried.values())
+            lines.append(
+                "The mechanism report names the carrier: ablating a single "
+                f"head removes {min(values):.4f}–{max(values):.4f} of the copy "
+                "accuracy (seed(s) "
+                + ", ".join(str(s) for s in sorted(carried))
+                + "). The copy is therefore carried by one head; the per-head "
+                "rule does not confirm it because the content-mass screen and "
+                "the K-composition confirmation do not fire on that head. That "
+                "is the detector's granularity, not the absence of a copy "
+                "circuit."
+            )
+        elif low_content:
             lines.append(
                 "Copy accuracy is high but no head passes the content-mass "
                 "screen. The mechanism report says which heads carry the copy."
@@ -936,32 +1121,29 @@ def format_report(
 # ---------------------------------------------------------------------------
 # The saved artifact
 # ---------------------------------------------------------------------------
-VERDICT_SCHEMA = "content-verdict/1"
+#: Schema 1 merged the training run and the cascade into one verdict.
+#: Schema 2 (2026-11-11) keeps them apart: ``pre_registered`` is the verdict
+#: of the run the pre-registration froze, ``causal_addendum`` is the same
+#: run plus the cascade that measures criterion 7, with its provenance
+#: declared. The reason is a fact about the record, not about the code: the
+#: cascade was executed **after** the training run, at a later commit, and
+#: the pre-registration's own decision rule was applied to the run as it was
+#: launched (criterion 7 was a post-hoc addendum, and the ledger says so).
+VERDICT_SCHEMA = "content-verdict/2"
 
 
-def verdict_payload(
+def _verdict_section(
     result: RunVerdict,
-    exp1_rows: Optional[Mapping[int, Mapping[str, Any]]] = None,
-    exp4_rows: Optional[Mapping[int, Mapping[str, Any]]] = None,
-    task: Optional[str] = None,
-    sources: Optional[Mapping[str, Optional[str]]] = None,
+    exp1_rows: Mapping[int, Mapping[str, Any]],
+    exp4_rows: Mapping[int, Mapping[str, Any]],
 ) -> dict[str, Any]:
-    """The verdict as a JSON-serialisable record.
-
-    This is the artifact the GPU session saves next to the manifests. It is
-    *not* a ``ResultsManifest`` and must not be pinned as one: it records the
-    decision, the per-seed checks and the secondary mechanism numbers, all of
-    which are re-derivable from the manifests named in ``sources``.
-    """
-    exp1_rows = exp1_rows or {}
-    exp4_rows = exp4_rows or {}
+    """One verdict (pre-registered or addendum) as a JSON-serialisable dict."""
     return {
-        "schema": VERDICT_SCHEMA,
-        "task": task,
+        "label": result.label,
         "status": result.status,
         "verdict": result.verdict,
         "note": result.note,
-        "sources": dict(sources or {}),
+        "provenance": dict(result.provenance),
         "seeds": [
             {
                 "seed": seed.seed,
@@ -989,6 +1171,66 @@ def verdict_payload(
     }
 
 
+def verdict_payload(
+    result: RunVerdict,
+    exp1_rows: Optional[Mapping[int, Mapping[str, Any]]] = None,
+    exp4_rows: Optional[Mapping[int, Mapping[str, Any]]] = None,
+    task: Optional[str] = None,
+    sources: Optional[Mapping[str, Optional[str]]] = None,
+    addendum: Optional[RunVerdict] = None,
+) -> dict[str, Any]:
+    """The verdict as a JSON-serialisable record.
+
+    This is the artifact the GPU session saves next to the manifests. It is
+    *not* a ``ResultsManifest`` and must not be pinned as one: it records the
+    decision, the per-seed checks and the secondary mechanism numbers, all of
+    which are re-derivable from the manifests named in ``sources``.
+
+    The top level keeps the **pre-registered** verdict (the run the
+    pre-registration froze). The causal addendum, when it exists, is in
+    ``verdicts["causal_addendum"]`` with its provenance — never merged into
+    the pre-registered one.
+    """
+    exp1_rows = exp1_rows or {}
+    exp4_rows = exp4_rows or {}
+    payload: dict[str, Any] = {
+        "schema": VERDICT_SCHEMA,
+        "task": task,
+        "status": result.status,
+        "verdict": result.verdict,
+        "note": result.note,
+        "sources": dict(sources or {}),
+        "verdicts": {"pre_registered": _verdict_section(result, exp1_rows, exp4_rows)},
+    }
+    if addendum is not None:
+        payload["verdicts"]["causal_addendum"] = _verdict_section(
+            addendum, exp1_rows, exp4_rows
+        )
+        payload["provenance"] = dict(addendum.provenance)
+    # The legacy top-level seed list stays the pre-registered one, so an old
+    # reader of the artifact still finds the same shape it knows.
+    payload["seeds"] = payload["verdicts"]["pre_registered"]["seeds"]
+    return payload
+
+
+def bundle_payload(
+    bundle: VerdictBundle,
+    exp1_rows: Optional[Mapping[int, Mapping[str, Any]]] = None,
+    exp4_rows: Optional[Mapping[int, Mapping[str, Any]]] = None,
+    task: Optional[str] = None,
+    sources: Optional[Mapping[str, Optional[str]]] = None,
+) -> dict[str, Any]:
+    """The payload of both verdicts."""
+    return verdict_payload(
+        bundle.pre_registered,
+        exp1_rows,
+        exp4_rows,
+        task,
+        sources,
+        addendum=bundle.addendum,
+    )
+
+
 def write_verdict_json(payload: Mapping[str, Any], path: str | Path) -> Path:
     """Write the verdict payload to ``path``, creating its directory."""
     out = Path(path)
@@ -999,6 +1241,37 @@ def write_verdict_json(payload: Mapping[str, Any], path: str | Path) -> Path:
     return out
 
 
+def format_bundle_report(
+    bundle: VerdictBundle,
+    exp1_rows: Mapping[int, Mapping[str, Any]],
+    exp4_rows: Mapping[int, Mapping[str, Any]],
+) -> str:
+    """The printable report of **both** verdicts, kept apart.
+
+    The pre-registered verdict comes first and is the one the record
+    publishes. The causal addendum follows, with its provenance in the
+    header — a reader must be able to tell which instrument produced which
+    label without opening a manifest.
+    """
+    parts = [
+        "=== 1. PRE-REGISTERED VERDICT (the training run alone; "
+        "criterion 7 was not part of it) ===",
+        format_report(bundle.pre_registered, exp1_rows, exp4_rows),
+    ]
+    if bundle.addendum is not None:
+        drift = bundle.addendum.provenance
+        header = "=== 2. CAUSAL ADDENDUM (the cascade that measures criterion 7) ==="
+        if drift:
+            header += (
+                f"\n    provenance: training run at {drift.get('exp1_git_sha')}, "
+                f"cascade at {drift.get('exp4_git_sha')} — "
+                f"{drift.get('reason', '')}"
+            )
+        parts.append(header)
+        parts.append(format_report(bundle.addendum, exp1_rows, exp4_rows))
+    return "\n".join(parts)
+
+
 # ---------------------------------------------------------------------------
 # The CLI
 # ---------------------------------------------------------------------------
@@ -1007,6 +1280,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     ``python -m src.experiments.content_verdict --exp1 results/induction_content.json
     --exp4 results/exp4_content.json --output results/content_verdict.json``
+
+    Two verdicts are printed and saved: the **pre-registered** one (the run
+    the pre-registration froze — the training manifest alone) and the
+    **causal addendum** (the same run plus the cascade that measures
+    criterion 7, with its commit provenance declared). They are never merged:
+    the addendum was measured after the fact, and the record has to show it.
     """
     parser = argparse.ArgumentParser(
         description="The pre-registered verdict of the content-based induction task."
@@ -1038,11 +1317,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 file=sys.stderr,
             )
 
-    result = run_verdict(exp1, exp4)
+    bundle = run_verdicts(exp1, exp4)
     exp1_rows = per_seed_metrics(exp1)
     exp4_rows = per_seed_metrics(exp4) if exp4 is not None else {}
-    payload = verdict_payload(
-        result,
+    payload = bundle_payload(
+        bundle,
         exp1_rows,
         exp4_rows,
         task,
@@ -1054,7 +1333,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     if args.json:
         print(json.dumps(payload, indent=2))
-        return 0 if result.complete else 1
+        return 0 if bundle.complete else 1
 
     print(f"=== content task verdict: {args.exp1} ===")
     if task is not None and task != "variable":
@@ -1063,8 +1342,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             "not the content-based run, and its numbers answer a different "
             "question."
         )
-    print(format_report(result, exp1_rows, exp4_rows))
-    return 0 if result.complete else 1
+    print(format_bundle_report(bundle, exp1_rows, exp4_rows))
+    return 0 if bundle.complete else 1
 
 
 if __name__ == "__main__":
