@@ -39,7 +39,11 @@ The manifests behind that table: Rung 1
 <!-- manifest: results/grokking_nanda_p113.json -->, Rung 3
 <!-- manifest: results/exp3_superposition.json -->, Rung 4
 <!-- manifest: results/exp4_standard.json -->, Rung 5
-<!-- manifest: results/exp5_real_activations.json -->.
+<!-- manifest: results/exp5_real_activations.json -->, Rung 1 fixed-vs-fresh
+<!-- manifest: results/exp1_induction_fixed_batches.json -->,
+<!-- manifest: results/exp1_induction_fresh_batches.json -->, Rung 1b content task
+<!-- manifest: results/induction_content.json -->, Rung 1b causal addendum
+<!-- manifest: results/exp4_content.json -->.
 
 Read the Honesty Ledger in [`portfolio/RESULTS.md`](portfolio/RESULTS.md) before citing any
 number from this repository: eleven audits have now examined these claims — they found numbers

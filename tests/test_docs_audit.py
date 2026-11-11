@@ -22,7 +22,10 @@ from scripts.docs_audit import (
     REQUIRED_MANIFESTS,
     STALE_CLAIMS,
     check_audit_count,
+    check_numbers_against_manifests,
+    check_referenced_manifests_exist,
     check_required_manifests,
+    check_results_index,
     check_stale_claims,
 )
 
@@ -40,6 +43,18 @@ class TestTheAuditPassesOnTheCurrentTree:
 
     def test_public_documents_agree_on_the_audit_count(self) -> None:
         problems = check_audit_count()
+        assert problems == [], "\n".join(problems)
+
+    def test_the_numbers_in_the_tables_match_their_manifests(self) -> None:
+        problems = check_numbers_against_manifests()
+        assert problems == [], "\n".join(problems)
+
+    def test_every_tracked_manifest_is_indexed(self) -> None:
+        problems = check_results_index()
+        assert problems == [], "\n".join(problems)
+
+    def test_every_manifest_a_document_names_exists(self) -> None:
+        problems = check_referenced_manifests_exist()
         assert problems == [], "\n".join(problems)
 
 
@@ -70,16 +85,76 @@ class TestTheAuditFires:
         target = REPO_ROOT / "README.md"
         original = target.read_bytes()
         text = original.decode("utf-8")
-        assert "ten audits" in text
+        assert "eleven audits" in text
         try:
             target.write_bytes(
-                text.replace("ten audits", "nine audits", 1).encode("utf-8")
+                text.replace("eleven audits", "nine audits", 1).encode("utf-8")
             )
             problems = check_audit_count()
             assert any("README.md" in p and "nine" in p for p in problems), problems
         finally:
             target.write_bytes(original)
         assert check_audit_count() == []
+
+    def test_a_number_that_contradicts_its_manifest_is_caught(self) -> None:
+        """The 2026-11-11 drift: a table carried the right tag and the wrong
+        numbers. A tag proves that evidence exists; it does not prove that
+        the number next to it is that evidence."""
+        target = REPO_ROOT / "portfolio/RESULTS.md"
+        original = target.read_bytes()
+        text = original.decode("utf-8")
+        # The Rung 2 section cites results/grokking_nanda_p113.json, whose
+        # final validation accuracy is 0.9999 to four decimals.
+        assert "| **0.9999 ± 0.0002** |" in text
+        try:
+            target.write_bytes(
+                text.replace("| **0.9999 ± 0.0002** |", "| **0.9989 ± 0.0002** |", 1).encode(
+                    "utf-8"
+                )
+            )
+            problems = check_numbers_against_manifests()
+            assert any("RESULTS.md" in p for p in problems), problems
+        finally:
+            target.write_bytes(original)
+        assert check_numbers_against_manifests() == []
+
+    def test_a_manifest_missing_from_the_index_is_caught(self) -> None:
+        target = REPO_ROOT / "results/INDEX.md"
+        original = target.read_bytes()
+        text = original.decode("utf-8")
+        assert "results/exp4_content.json" in text
+        try:
+            target.write_bytes(
+                text.replace(
+                    "| `results/exp4_content.json` |",
+                    "| `results/exp4_content_removed.json` |",
+                    1,
+                ).encode("utf-8")
+            )
+            problems = check_results_index()
+            assert any("exp4_content.json" in p for p in problems), problems
+        finally:
+            target.write_bytes(original)
+        assert check_results_index() == []
+
+    def test_a_document_naming_a_manifest_that_does_not_exist_is_caught(self) -> None:
+        """The paper described the cells of a sweep that has never run, and
+        named manifests that do not exist."""
+        target = REPO_ROOT / "portfolio/RESULTS.md"
+        original = target.read_bytes()
+        text = original.decode("utf-8")
+        try:
+            target.write_bytes(
+                (
+                    text
+                    + "\n<!-- manifest: results/phase_diagram_p113_nanda_wd10.json -->\n"
+                ).encode("utf-8")
+            )
+            problems = check_referenced_manifests_exist()
+            assert any("phase_diagram_p113_nanda_wd10.json" in p for p in problems), problems
+        finally:
+            target.write_bytes(original)
+        assert check_referenced_manifests_exist() == []
 
     def test_a_document_that_stops_naming_its_manifest_is_caught(
         self, tmp_path: Path

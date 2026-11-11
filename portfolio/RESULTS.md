@@ -13,6 +13,14 @@ smoke tests (`make reproduce-quick`) and a full-scale mode (`make reproduce`).
 
 ## Honesty Ledger
 
+<!-- manifest: results/grokking_nanda_p113.json -->
+<!-- manifest: results/grokking_repo_p113_energy.json -->
+<!-- manifest: results/grokking_p59_repo_energy.json -->
+<!-- manifest: results/induction_content.json -->
+<!-- manifest: results/exp4_content.json -->
+<!-- manifest: results/exp1_induction_fixed_batches.json -->
+<!-- manifest: results/exp1_induction_fresh_batches.json -->
+
 Eleven audits have now caught real problems in this repository's causal claims and
 evidence base. They include claims that were wrong or unbacked, a claim that was
 **right and had been called wrong by its own metric** (2026-10-14), and four
@@ -462,9 +470,12 @@ carry a manifest tag, and this one never had one.
 Re-run for real, 3 seeds per arm, identical config, batch regime the only difference
 (`make reproduce-induction-batches`):
 
+<!-- manifest: results/exp1_induction_fixed_batches.json -->
+<!-- manifest: results/exp1_induction_fresh_batches.json -->
+
 | | Fixed | Fresh |
 |---|---|---|
-| Was claimed (prose only) | 0.05% | 52.2% |
+| Was claimed (prose only — no tracked manifest, and never had one) | 0.05% | 52.2% |
 | Actually measured | **0.45% ± 0.03%** | **53.53% ± 0.03%** |
 
 Same conclusion — two orders of magnitude in the same direction — but different numbers,
@@ -900,7 +911,6 @@ batch_size=32, num_train=256`).
 | Peak previous-token mass (the old "diag+1") | 0.217 ± 0.010 | 0.201 ± 0.012 |
 | Induction heads (>0.3 threshold) | **RETRACTED** (old detector) | **RETRACTED** (old detector) |
 | K-composition score | 0.145 ± 0.011 | 0.157 ± 0.012 |
-
 Both arms are far apart in accuracy — two orders of magnitude, in the same
 direction as the original prose-only claim — and neither crosses the 0.3
 detection threshold in this budget.
@@ -1048,7 +1058,7 @@ real bottleneck (see Honesty Ledger and
 [superposition-setup-validity](../05_llm_engineering/proofs/superposition-setup-validity.md)). Rewritten to the canonical
 Elhage et al. setup; the transition reproduces on the first run, cleanly, with no tuning.
 
-| Sparsity | Features represented | Mean dimensionality | Mean \|corr\| |
+| Sparsity | Features represented (no tracked manifest — the sweep path wrote figures and stdout, never a record; a three-seed sweep is running) | Mean dimensionality | Mean \|corr\| |
 |----------|----------------------|----------------------|--------------|
 | 0.500 | 10 / 20 | 0.250 | 0.302 |
 | 0.200 | 15 / 20 | 0.250 | 0.316 |
@@ -1060,16 +1070,22 @@ Elhage et al. setup; the transition reproduces on the first run, cleanly, with n
 | 0.002 | 20 / 20 | 0.249 | 0.350 |
 | 0.001 | 16 / 20 | 0.250 | 0.326 |
 
-Multi-seed manifest (3 seeds, `single_sparsity=0.01`, otherwise identical config):
-`n_represented` = 19.67 ± 0.47 (one seed of three landed at 19/20 rather than 20/20 — a
-real, small seed-to-seed spread, not noise-free).
+Multi-seed manifest at the reference sparsity (3 seeds, `single_sparsity=0.01`, otherwise
+identical config): `n_represented` = 19.67 ± 0.47 (one seed of three landed at 19/20
+rather than 20/20 — a real, small seed-to-seed spread, not noise-free).
+
+**The sweep above has no manifest behind it (2026-11-11), and that is now fixed.** The
+2026-11-11 audit's number check found what the record had been hiding: the sweep path of
+this experiment wrote figures and a stdout table and **never a record** — the only
+tracked exp3 manifest was the multi-seed run at a single sparsity, so Rung 3's headline
+table was the one public table in this ledger with no evidence behind it. `exp3` now
+grows a `--sweep-seeds` flag and writes `results/exp3_superposition_sweep.json`; the
+three-seed sweep is running, and this table is replaced by its numbers when it lands.
 
 Expected (Elhage et al.): as sparsity decreases (features rarely co-active), interference
 pressure drops and the model represents more features. **Observed: exactly this — 10/20 at
-the densest setting rising to 20/20 by sparsity=0.05, holding through 0.002.** (The drop to
-16/20 at the sparsest setting, 0.001, is a genuine capacity limit — the 2000-vs-600-epoch
-drill (2026-08-06) refuted the under-training hypothesis (see the MP10 honesty
-ledger).) The old flat/near-zero "recovery" numbers above the fix are struck through in
+the densest setting rising to 20/20 by sparsity=0.05.** The old
+flat/near-zero "recovery" numbers above the fix are struck through in
 spirit, not deleted from this table's history: the root cause was that the model had no
 actual compression to perform (the dataset pre-embedded features before the model saw
 them), not a metric-scale issue, not a training-budget issue, and not the untied-weights
@@ -1212,7 +1228,7 @@ head**, which is the pending item this rung had been carrying: the SAE now sees 
 
 <!-- manifest: results/exp5_real_activations.json -->
 
-| Metric | Synthetic (d_model=64, 8× dict, manifest 2026-08-13) | Real, old (d_model=32, from a 2000-step shakedown checkpoint) | Real, **new** (d_model=64, from the standard-scale confirmed-head checkpoint, 2026-10-20) |
+| Metric | Synthetic (d_model=64, 8× dict, manifest 2026-08-13) | Real, old (d_model=32, from a 2000-step shakedown checkpoint — no tracked manifest, historical) | Real, **new** (d_model=64, from the standard-scale confirmed-head checkpoint, 2026-10-20) |
 |--------|-------|-------|-------|
 | Dictionary size | 512 | 256 | 512 |
 | L0 sparsity | 96.60 / 512 (18.9%) | 136.25 / 256 (**53.2%**) | **15.12 / 512 (3.0%)** |
