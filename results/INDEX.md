@@ -25,6 +25,7 @@ al documento che lo cita.
 | `results/exp1_induction_heads.json` | RESULTS.md | attivo | Rung 1 standard |
 | `results/exp2_grokking.json` | RESULTS.md | attivo | Rung 2 grokking |
 | `results/exp3_superposition.json` | paper, RESULTS.md | attivo | Rung 3 |
+| `results/exp3_superposition_sweep.json` | RESULTS.md | attivo | Rung 3 sparsity sweep |
 | `results/exp4_circuit_patching.json` | paper, RESULTS.md | attivo | Rung 4 |
 | `results/exp4_content.json` | RESULTS.md, writeup.md, checklist.md, paper | attivo | Addendum causale del content task (criterio 7), eseguito dopo il run su commit `89147ee`; i due verdetti sono pubblicati separatamente |
 | `results/exp4_standard.json` | paper, RESULTS.md | attivo | Rung 4 standard |
