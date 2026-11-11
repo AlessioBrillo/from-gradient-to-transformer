@@ -115,8 +115,33 @@ contain the question the rung asks. The honest name for this head is a
 The task that does contain the question — the same structure with the repeats
 at *varying* distances, where the best single fixed offset explains 17.6% of
 the copy queries — is specified in ADR-0033 and pre-registered in
-[[07_capstone/notes/variable-distance-induction-preregistration]]. Its run is
-the open item of issue #200, and this section is updated when it lands.
+[[07_capstone/notes/variable-distance-induction-preregistration]]. It **ran on
+GPU on 2026-11-09** (3 seeds × 3000 epochs, manifest
+`results/induction_content.json`), and the result is sharper than the
+pre-registration could have predicted:
+
+- the **behaviour** is content-based on 3/3 seeds — copy accuracy 1.0000 /
+  0.9976 / 0.9988 and non-modal accuracy 1.0000 / 0.9972 / 0.9986, against
+  a best-single-fixed-offset baseline of 0.1646 / 0.1550 / 0.1584;
+- the **causal** measurement is a **single head** on 3/3 seeds — the largest
+  single-head ablation drop is 0.2067 / 0.9298 / 0.9402 and the group
+  ablation 0.9989 / 0.9298 / 0.9852;
+- the **pre-registered per-head rule** confirms a head on 1/3 seeds only: on
+  seeds 1–2 the confirmed head's content mass (0.0886 / 0.1223) stays below
+  the 0.30 screen and the K-composition score (0.0580 / 0.0711) far below
+  the 0.40 bar.
+
+So the verdict is **PARTIAL** (pre-registered) with a causal addendum that
+certifies seed 0 only, and the open question is no longer "does the model
+copy by content" — it is **"why does the head that carries the copy not put
+its attention mass on the content key"**. The candidate explanation (a
+two-stage circuit in which the first layer writes *where* and the second
+reads *what*) is untested, and the K-composition measure cannot see it,
+because it assumes the first layer's argmax *is* the previous occurrence.
+See [[portfolio/RESULTS]] for the full table and the audit entry of
+2026-11-11.
+<!-- manifest: results/induction_content.json -->
+<!-- manifest: results/exp4_content.json -->
 
 The one solid, matched finding is **fixed versus fresh batches** at otherwise
 identical configs: validation accuracy **0.45% ± 0.03%** (fixed, reused every
@@ -237,20 +262,29 @@ See [[07_capstone/notes/mp-89-retune-verdict]].
   head forms at standard scale and the causal interventions land on it
   (ablation 0.4445, path patching 0.8215), but on the periodic task the two
   mechanisms are the same function, and the probe says the copy is the
-  positional one. The content-based task that separates them is pre-registered
-  (ADR-0033) and its run is the open item of issue #200.
-  The standard-geometry CPU de-risk (2026-10-25,
-  `results/induction_content_derisk_standard.json`) was run at pilot geometry -
-  600 epochs on 2048 training samples, against the pre-registered full run's
-  3000 epochs on 8192 samples - so its numbers are a shape-check, not the
-  verdict. It already shows the shape the full run may reproduce: copy
-  accuracy 0.9993 against a 0.1646 fixed-offset
-  baseline, three candidate heads, a group ablation drop of 0.9956 and a
-  largest single-head drop of 0.0986 - a **distributed** content circuit, with
-  0/8 heads confirmed by the per-head K-composition rule (0.0918 < 0.40). The
-  seven criteria are unchanged: if the full run reproduces this, the verdict is
-  the literal per-head NEGATIVE and the distributed circuit is the
-  pre-specified secondary finding, not a rewritten headline.
+  positional one. The content-based task that separates them ran on GPU
+  (issue #200, 2026-11-09): the copy **is** content-based on 3/3 seeds
+  (0.9976–1.0000, non-modal 0.9972–1.0000, against a 0.155–0.165
+  fixed-offset baseline) and **is** carried by a single head on 3/3 seeds
+  (largest single-head ablation drop 0.9298 / 0.9402), but the pre-registered
+  per-head rule — content mass ≥ 0.30 on the confirmed head, K-composition
+  ≥ 0.40 — confirms a head on 1/3 seeds only. The pre-registered verdict is
+  therefore **PARTIAL** and the word "induction head" is not used for this
+  task. What is still missing is the *mechanism*: the head that carries the
+  copy does not put its attention mass on the content key, and the candidate
+  explanation (a two-stage circuit the K-composition measure cannot see)
+  is untested. Two verdicts are published side by side — the pre-registered
+  one and the causal addendum — with the commit difference declared.
+  <!-- manifest: results/induction_content.json -->
+  <!-- manifest: results/exp4_content.json -->
+  The standard-geometry CPU de-risk of 2026-10-25
+  (`results/induction_content_derisk_standard.json`) was a pilot — 600
+  epochs on 2048 training samples against the run's 3000 epochs on 8192 —
+  and it read differently from the full run: a group ablation of 0.9956 with
+  a largest single-head drop of 0.0986, i.e. a **distributed** circuit where
+  the full run measures a **single** head. The verdict did not depend on it
+  (the full run's own numbers are the ones that count), but it is the reason
+  the pre-registration asked for a circuit-level report at all.
   <!-- manifest: results/induction_content_derisk_standard.json -->
 - The real-activation SAE is sparse (L0 3.0%) but its dictionary is ~8× wider
   than the residual stream and 78% of its features never fire: the sparsity is
@@ -278,7 +312,7 @@ See [[07_capstone/notes/mp-89-retune-verdict]].
 - The hardest part of MI is not running experiments — it is forming precise,
   falsifiable hypotheses. The tools are easier than the thinking.
 - **A negative result honestly reported is more valuable than a positive result
-  overclaimed.** Ten audits have caught real bugs in this repo's own claims, and
+  overclaimed.** Eleven audits have caught real bugs in this repo's own claims, and
   they are all still visible in [[portfolio/RESULTS]].
 
 ## Links

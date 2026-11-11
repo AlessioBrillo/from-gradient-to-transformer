@@ -13,17 +13,86 @@ smoke tests (`make reproduce-quick`) and a full-scale mode (`make reproduce`).
 
 ## Honesty Ledger
 
-Ten audits have now caught real problems in this repository's causal claims and
+Eleven audits have now caught real problems in this repository's causal claims and
 evidence base. They include claims that were wrong or unbacked, a claim that was
-**right and had been called wrong by its own metric** (2026-10-14), and three
-content-task audits (2026-10-22, 2026-10-25 and 2026-11-01) that found the
+**right and had been called wrong by its own metric** (2026-10-14), and four
+content-task audits (2026-10-22, 2026-10-25, 2026-11-01 and 2026-11-11) that found the
 experiment supposed to close the last open question **could not have produced a
 verdict at all** — first because its verdict code would crash, then because its
 instrument measured the wrong position, then because the verdict read the wrong
-head and the cascade could silently analyse another model — and fixed it before
-the run. All entries stay here — the point of this section is to make it easy to
+head and the cascade could silently analyse another model, and finally because
+the published verdict was not the one the code computes — and fixed it before
+the run or, in the last case, before the next reader could rely on it. All
+entries stay here — the point of this section is to make it easy to
 see the trend (are correctness problems getting caught faster, or accumulating?),
 not to keep only the latest one.
+
+### 2026-11-11 — The published verdict was not the verdict the code computes, and the run's strongest numbers were never published
+
+The eleventh audit, and the first one that audits the repository's own
+*conclusion* rather than its instrument: it found that the headline result of
+issue #200 — the content-based induction task — was published with a verdict
+that the committed code could not reproduce, and that the run's strongest
+measurements were missing from the record entirely.
+
+**What was broken.** Four things, each independent of the others:
+
+1. **The verdict could not be computed at all.** The training run was pinned
+   at commit `88147ee`; the cascade that measures criterion 7 was executed
+   afterwards, at `891ef46`. The verdict module refused the whole run for
+   that difference ("a cascade from a different commit is not the
+   pre-registered instrument"), so `make content-verdict` exited 1 with
+   `RUN STATUS: INCOMPLETE` and **no verdict**, while
+   `portfolio/RESULTS.md` published a PARTIAL verdict and told the reader the
+   artifact was "regenerated with `make content-verdict`". The published
+   number was not derivable from the committed evidence.
+
+2. **The published per-seed table did not match the manifests.** The table
+   said "Path patching: NOT MEASURED" on every seed. The exp4 addendum
+   manifest records `path_patch_measured = 1` and
+   `mean_path_patch_effect = 1.0771` on seed 0 — the criterion is *measured*
+   and it *passes*. With the cascade joined, seed 0 is POSITIVE (7/7), not
+   PARTIAL.
+
+3. **The strongest numbers of the run were never published.** The mechanism
+   report — the *secondary* report the pre-registration asks for — was
+   computed, written into the manifest and then left out of the record. It
+   says that on the two seeds the per-head rule calls NEGATIVE, the model
+   copies at **0.9976 / 0.9988** (non-modal 0.9972 / 0.9986) against a
+   fixed-offset baseline of **0.155 / 0.158**, and that **one head alone
+   removes 0.9298 / 0.9402 of the copy accuracy**. The published table's
+   "NOT MEASURED" cells made that look like an absence of evidence where the
+   evidence was in the manifest all along.
+
+4. **The paper described a sweep that has never run.** `main.tex` carried a
+   "Deviations from Pre-Registration" paragraph about the phase-diagram
+   cells ("no cell is DENSE", a SPARSE count of "4 / 2 / 6", a
+   `NOT_GROKKED` gate). No `results/phase_diagram_*.json` manifest exists
+   anywhere in the repository or in the downloaded GPU outputs, and
+   `configs/phase_diagram_ablation.yaml` claimed the reduction decision was
+   taken "after the sweep ran on GPU". The sweep has not run. This is the
+   "documentation ahead of its evidence" failure the ledger exists to
+   prevent, in the one document a reader is most likely to take at face
+   value.
+
+**What it changes.** The verdict is now **two verdicts, published side by
+side**: the pre-registered one (the training run alone — criterion 7 was not
+part of it, so it is `NOT MEASURED` there — seed 0 PARTIAL, seeds 1–2
+NEGATIVE, run PARTIAL) and the causal addendum (the same run plus the
+cascade, with the commit difference declared in its provenance — seed 0
+POSITIVE, seeds 1–2 NEGATIVE, run NEGATIVE by the frozen majority rule). The
+strict refusal still exists for the merged mode. The mechanism report is
+published with its numbers. The paper's paragraph about the sweep is deleted
+until the sweep has run.
+
+**What it does not change.** The seven criteria, their thresholds and the
+decision rule are untouched. No number is re-tuned after seeing the data, no
+seed is dropped, and the budget is not extended. The word "induction head" is
+still not used for this task. The retraction of the two "NEGATIVE" seeds as a
+statement about the *model* is **not** a retraction of the verdict: the
+verdict stands as the frozen rule applied to the frozen instrument, and what
+changes is that the record now also carries the measurements that explain
+what the verdict is about.
 
 ### 2026-11-04 — Finalization of Content Task Instrumentation
 The standard-geometry CPU de-risk (`results/induction_content_derisk_standard.json`) was successfully run, and the verdict module (`src/experiments/content_verdict.py`) computed the verdict. The run is `INCOMPLETE` (due to being a de-risk pilot with seed 0 only), but the instrumentation and verdict criteria are verified. The full GPU run is queued and pending.
@@ -713,25 +782,92 @@ its GPU run. The short version:
 <!-- manifest: results/induction_content_derisk_standard.json -->
 <!-- manifest: results/exp4_content.json -->
 
-**Status: [x] run complete — verdict PARTIAL.** GPU run completed 2026-11-09
-(3 seeds × 3000 epochs, manifest `results/induction_content.json` pinned at
-ref `v1.1.0-rc2`). Per-seed results from `results/content_verdict.json`:
+**Status: [x] run complete — two verdicts, kept apart.** GPU run completed
+2026-11-09 (3 seeds × 3000 epochs, manifest `results/induction_content.json`,
+pinned at ref `v1.1.0-rc2`, commit `88147ee`).
 
-| Seed | Verdict | Heads | Copy acc. | Non-modal acc. | Beats fixed offset | Content mass | Ablation drop | Path patching |
-|------|---------|-------|-----------|----------------|-------------------|--------------|---------------|---------------|
-| 0 | PARTIAL | 2 | 1.0000 | 1.0000 | 0.8354 | 0.7555 (PASS) | 0.1797 (PASS) | NOT MEASURED |
+The training run and the causal cascade are **two instruments**: the cascade
+that measures criterion 7 (path patching) was executed *after* the training
+run, at commit `891ef46`, and the pre-registration's decision rule was
+applied to the run as it was launched. So there are two verdicts, and they
+are reported side by side (`make content-verdict`, module
+`src/experiments/content_verdict.py`, artifact schema `content-verdict/2`):
+
+| Verdict | Instrument | Seed 0 | Seed 1 | Seed 2 | Run |
+|---|---|---|---|---|---|
+| **Pre-registered** | the training run alone (`88147ee`); criterion 7 was not part of it | PARTIAL | NEGATIVE | NEGATIVE | **PARTIAL** |
+| **Causal addendum** | the same run + the cascade (`891ef46`), declared as a post-hoc addendum | **POSITIVE** (7/7) | NEGATIVE | NEGATIVE | NEGATIVE (1/3 seeds positive, the frozen majority rule) |
+
+Per-seed detail of the pre-registered verdict (the one the record publishes),
+with the addendum's extra measurement in the last column:
+
+| Seed | Verdict | Confirmed heads | Copy acc. | Non-modal acc. | Beats fixed offset | Content mass (confirmed head) | Ablation drop | Path patching (addendum) |
+|------|---------|-----------------|-----------|----------------|-------------------|------------------------------|---------------|------------------------|
+| 0 | PARTIAL | 2 | 1.0000 | 1.0000 | 0.8354 | 0.7555 (PASS) | 0.1797 (PASS) | 1.0771 (PASS, addendum) |
 | 1 | NEGATIVE | 0 | 0.9976 | 0.9972 | 0.8426 | NOT MEASURED | NOT MEASURED | NOT MEASURED |
 | 2 | NEGATIVE | 0 | 0.9988 | 0.9986 | 0.8403 | NOT MEASURED | NOT MEASURED | NOT MEASURED |
 
-**Decision:** per the pre-registration, a PARTIAL verdict is reported as-is.
-No re-run: the missing criteria (content mass on seeds 1-2, path patching on
-all seeds) are reported, not fabricated. exp4 was executed afterward as a
-dated addendum on the existing 3000-epoch checkpoints
-(`make reproduce-induction-content-exp4`, manifest `results/exp4_content.json`,
-git_sha 88147ee, CPU) — its causal measurements are recorded in the addendum
-manifest but do not change the per-seed verdicts above. The verdict artifact
-is `results/content_verdict.json` (a derived artifact, regenerated with
-`make content-verdict`).
+<!-- manifest: results/induction_content.json -->
+<!-- manifest: results/exp4_content.json -->
+
+**Decision:** per the pre-registration, the verdicts are reported as they
+come out. No re-run: the missing measurements (content mass on seeds 1–2)
+are reported, not fabricated.
+
+### The secondary mechanism report — what the run actually shows
+
+The mechanism report is *secondary* by construction (the seven criteria
+decide; the report explains), and it was **not published** with the first
+reading of this run. It carries the strongest numbers the run produced, and
+they change how the verdict has to be read:
+
+| Measurement (from `results/induction_content.json`) | Seed 0 | Seed 1 | Seed 2 |
+|---|---|---|---|
+| Copy accuracy on the copy queries | 1.0000 | 0.9976 | 0.9988 |
+| Copy accuracy on the **non-modal** distance group | 1.0000 | 0.9972 | 0.9986 |
+| Best single fixed offset (the positional baseline) | 0.1646 | 0.1550 | 0.1584 |
+| Aggregate content mass (vs chance) | 1.6378 (10.0×) | 0.2641 (1.6×) | 0.3977 (2.4×) |
+| **Group ablation drop** (candidate group removed) | 0.9989 | 0.9298 | 0.9852 |
+| **Largest single-head ablation drop** | 0.2067 | **0.9298** | **0.9402** |
+| Exploratory group ablation (top-80% mass, 4 heads) | 0.9989 | 0.9942 | 0.9954 |
+| K-composition score (the per-head confirmation bar is 0.40) | 0.7054 | 0.0580 | 0.0711 |
+| Logit attribution: positive share on the content-vs-position contrast | 0.9996 | 0.9981 | 0.9967 |
+
+**What this says, stated as sharply as the evidence allows.** On **all three
+seeds** the model copies by *content*: the copy queries are answered at
+0.997–1.000 while the best single fixed offset explains only 15.5–16.5% of
+them, and the logit attribution favours the content answer on 99.8–99.96% of
+the queries. On seeds 1 and 2 the per-head rule reports `NEGATIVE` — and yet
+the mechanism report shows that **one head alone carries 93–94% of the copy**
+(ablation drop 0.9298 / 0.9402). So on those seeds the copy is real,
+content-based and causally attributable to a single head; what is missing is
+the *confirmation* the frozen rule asks for: that head's own attention mass
+on the content key (0.0886 / 0.1223) stays below the 0.30 screen, and the
+K-composition score (0.058 / 0.071) stays far below the 0.40 bar.
+
+**That is a finding about the instrument, not about the model** — the same
+class of error this repository has retracted three times before (the
+previous-token detector of 2026-10-19, the L1-mass Fourier classifier of
+2026-10-08, the chance-level bug of 2026-10-25). The honest wording is
+therefore:
+
+- the **behaviour** is content-based on 3/3 seeds (copy accuracy, non-modal
+  accuracy, the margin over the best fixed offset, and the logit attribution);
+- the **causal** measurement is a single head on 3/3 seeds (ablation drop
+  0.93–0.99, group ablation 0.93–0.99);
+- the **pre-registered per-head rule** confirms a head on 1/3 seeds only, so
+  the pre-registered verdict is PARTIAL and the addendum's run-level label
+  (by the frozen majority rule) is NEGATIVE;
+- the word "induction head" is **not** used for this task: the pre-registration
+  requires the per-head confirmation for it, and 2 of 3 seeds do not carry it.
+
+The open question is now sharp and measurable: **why does the head that
+carries the copy not put its attention mass on the content key?** The
+candidate explanation — a two-stage circuit in which the first layer writes
+*where* the previous occurrence is and the second layer reads *what* follows
+it — is not yet tested, and the K-composition measure cannot see it, because
+it assumes that the first layer's argmax *is* the previous occurrence (which
+on this task it need not be). That is the next experiment, not a conclusion.
 
 ### Quick scale (the historical scale, for continuity)
 

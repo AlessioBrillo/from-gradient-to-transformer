@@ -26,6 +26,7 @@ al documento che lo cita.
 | `results/exp2_grokking.json` | RESULTS.md | attivo | Rung 2 grokking |
 | `results/exp3_superposition.json` | paper, RESULTS.md | attivo | Rung 3 |
 | `results/exp4_circuit_patching.json` | paper, RESULTS.md | attivo | Rung 4 |
+| `results/exp4_content.json` | RESULTS.md, writeup.md, checklist.md, paper | attivo | Addendum causale del content task (criterio 7), eseguito dopo il run su commit `89147ee`; i due verdetti sono pubblicati separatamente |
 | `results/exp4_standard.json` | paper, RESULTS.md | attivo | Rung 4 standard |
 | `results/exp5_real_activations.json` | paper, RESULTS.md | attivo | Rung 5 |
 | `results/exp5_sae_dashboard.json` | RESULTS.md | attivo | Rung 5 SAE |
@@ -34,7 +35,7 @@ al documento che lo cita.
 | `results/grokking_p113_gpu_reanalysis.json` | RESULTS.md | attivo | Re-analisi GPU |
 | `results/grokking_p59_repo_energy.json` | paper | attivo | Positive control P=59, 2/3 seed sparse (MIXED) |
 | `results/grokking_repo_p113_energy.json` | paper | attivo | Repo protocol P=113 |
-| `results/induction_content.json` | paper (§content-task), writeup.md | attivo | Content task run, 3 seed x 3000 epoca |
+| `results/induction_content.json` | RESULTS.md, writeup.md, checklist.md, paper (§content-task) | attivo | Content task run, 3 seed x 3000 epoca — verdetto pre-registrato |
 | `results/induction_content_derisk.json` | — | orfano (scratch) | CPU smoke, non record |
 | `results/induction_content_derisk_fixed.json` | — | orfano (scratch) | CPU derisk fixed |
 | `results/induction_content_derisk_standard.json` | paper (§content-task) | attivo | CPU derisk standard |
