@@ -154,6 +154,18 @@ def main() -> None:
         "--force", action="store_true", help="Overwrite an existing file in results/"
     )
     parser.add_argument(
+        "--results-dir",
+        type=str,
+        default=None,
+        help=(
+            "Where the validated manifests are installed (default: the "
+            "repository's results/). A dry run against a directory that is not "
+            "the repository's own is the supported way to rehearse a pinning "
+            "without touching the tracked record — and it is what the test "
+            "suite uses, so a test can never write into the repository."
+        ),
+    )
+    parser.add_argument(
         "--only",
         default=None,
         help=(
@@ -251,11 +263,30 @@ def main() -> None:
         raise SystemExit(1)
 
     installed: list[Path] = []
+    results_dir = Path(args.results_dir) if args.results_dir else RESULTS_DIR
+    if not results_dir.is_absolute():
+        results_dir = REPO_ROOT / results_dir
     for path in candidates:
-        target = RESULTS_DIR / path.name
+        target = results_dir / path.name
         if target.exists() and not args.force:
             if target.read_bytes() == path.read_bytes():
                 logger.info("%s already pinned and identical", target.name)
+                continue
+            if args.dry_run:
+                # A dry run installs nothing, so it must not refuse either:
+                # the refusal exists to protect the tracked record from a
+                # silent overwrite, and a rehearsal that cannot even report
+                # "this would overwrite" is useless. The check that matters
+                # for the rehearsal — provenance, seeds, aggregate — already
+                # ran above. (The refusal *did* fire in --dry-run until
+                # 2026-11-11, which made `make remote-pin` unusable as soon
+                # as a tracked manifest had the same name as the file being
+                # rehearsed, and broke three tests of the test suite.)
+                print(
+                    f"would overwrite {target.name} (different content; "
+                    "pass --force to install it deliberately)",
+                    file=sys.stderr,
+                )
                 continue
             print(
                 f"refusing to overwrite tracked {target.name} "
@@ -279,7 +310,7 @@ def main() -> None:
     # manifest is cited — an uncited manifest is not a claim, it is just
     # data. So an uncited manifest cannot make verify-claims RED; print the
     # citation snippets as a reminder, not as a gate.
-    problems = verify_claims(RESULTS_DIR, CLAIMS_FILE)
+    problems = verify_claims(results_dir, CLAIMS_FILE)
     print()
     print("verify-claims after install:", "GREEN" if not problems else "RED")
     for p in problems:
