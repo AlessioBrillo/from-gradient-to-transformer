@@ -15,6 +15,9 @@ number traced to a committed run manifest**.
 
 | Term | Meaning here |
 |---|---|
+<!-- manifest: results/induction_standard.json -->
+<!-- manifest: results/induction_content.json -->
+<!-- manifest: results/grokking_nanda_p113.json -->
 | **Rung** | One experiment on the capstone ladder (1–5; Rung 6 descoped 2026-08-01). Lives in `src/experiments/expN_*.py`. |
 | **Manifest** | `results/<experiment>.json` written by `src/results.py::ResultsManifest`. Carries seeds, args, per-seed metrics, aggregate (mean/std/min/max/n), wall clock, git SHA + dirty flag, device, param count. |
 | **Ledger** | `portfolio/RESULTS.md` — the Honesty Ledger. Audit findings, retractions, and pending items. The authority on what is true. |
@@ -25,7 +28,8 @@ number traced to a committed run manifest**.
 | **energy_sparse** | The post-audit sparsity criterion: whether the frequencies holding 90% of the embedding *energy* number < P/2. Replaces the L1-mass k99, which misclassifies noisy sparse embeddings as dense (audit 2026-10-08; reversal 2026-10-14). |
 | **Induction head** | An attention head attending from the current query `q` to the token **after the previous occurrence of the current token** — on this repo's `prefix + prefix` task, the key `q-(L-1)`. Detected by the shared detector (`src/experiments/induction_detection.py`): induction mass ≥ 0.3 **and** a K-composition score ≥ 0.4 with an earlier layer. The previous "diag+1" detector measured `q-1` (the previous token) and the "0/8" counts it produced were retracted on 2026-10-19 — see the Honesty Ledger. |
 | **Prefix-copying head** | What the standard-scale run actually found (2026-10-20): 2–3 heads per seed with a copy-offset mass of 0.95, all in the first layer, K-composition 0.05 — and the dissociation probe puts the copy on the **fixed offset**, not on the previous occurrence of the same token. On a perfectly periodic task the two are the same function in-distribution; only the probe (a second half that is a permuted copy of the prefix) can tell them apart, and it says the copy is positional. |
-| **Variable-distance task** | The content-based task of ADR-0033: a key of distinct tokens, verbatim copy blocks whose source windows and positions are resampled per sequence, so the distance between a token and its previous occurrence changes from block to block. The best single fixed offset explains 17.6% of its copy queries, so a fixed-offset head cannot solve it and the content hypothesis is testable. `src/experiments/induction_tasks.py`. |
+| **Variable-distance task** | The content-based task of ADR-0033: a key of distinct tokens, verbatim copy blocks whose source windows and positions are resampled per sequence, so the distance between a token and its previous occurrence changes from block to block. The best single fixed offset explains 0.155–0.165 of its copy queries (measured on the run), so a fixed-offset head cannot solve it and the content hypothesis is testable. `src/experiments/induction_tasks.py`. Run on GPU 2026-11-09: the copy is content-based on 3/3 seeds (0.9976–1.0000 against the fixed-offset baseline) and carried by one head, but the per-head confirmation fires on 1/3 seeds. |
+| **Two verdicts** | The content task publishes **two** verdicts, never one: the **pre-registered** one (the training run alone — criterion 7 was not part of it) and the **causal addendum** (the same run plus the cascade that measures criterion 7, executed later, at another commit, and declared as such in the artifact's provenance). `src/experiments/content_verdict.py`, schema `content-verdict/2`. |
 | **Copy query** | A position `q` where "copy the token that followed the previous occurrence" is the right answer: `tokens[q+1] == tokens[prev(q)+1]`. Derived from the tokens alone, so the detector never has to trust the generator. |
 | **Superposition** | More features than dimensions, represented as non-orthogonal directions. Rung 3 is the only fully reproduced rung. |
 | **k₉₀ / k₉₉** | Number of Fourier frequencies needed to hold 90% / 99% of embedding energy. `k₉₉ < P/2` is the sparsity criterion. |
@@ -35,7 +39,7 @@ number traced to a committed run manifest**.
 
 | Rung | Module | Status |
 |---|---|---|
-| 1 Prefix-copying heads | `src/experiments/exp1_induction_heads.py` | **A head forms at standard scale (GPU, 3 seeds, 2026-10-20)** and the causal interventions land (ablation 0.44, path patching 0.82) — but the copy is *positional*, not content-based: the periodic task admits the shortcut. The content-based task that removes it is pre-registered (ADR-0033); its run is the open item of issue #200 |
+| 1 Prefix-copying heads | `src/experiments/exp1_induction_heads.py` | **A head forms at standard scale (GPU, 3 seeds, 2026-10-20)** and the causal interventions land (ablation 0.44, path patching 0.82) — but the copy is *positional*, not content-based: the periodic task admits the shortcut. On the **content-based** task (ADR-0033, GPU run 2026-11-09) the copy is content-based on 3/3 seeds and carried by a single head (ablation drop 0.93–0.94 on the two seeds the per-head screen confirms none), but the pre-registered per-head rule confirms a head on 1/3 seeds: the verdict is **PARTIAL** (pre-registered) with a **causal addendum** whose run label is NEGATIVE by the frozen majority rule. Two verdicts, kept apart |
 | 2 Grokking (flagship) | `src/experiments/exp2_grokking.py` | **REPRODUCED 2026-10-14**: sparse circuit on the Nanda protocol and the repo protocol, GPU, 3 seeds each |
 | 3 Superposition | `src/experiments/exp3_superposition.py` | **Fully reproduced** (the first rung to be; Rung 2 followed on 2026-10-14) |
 | 4 Circuit patching | `src/experiments/exp4_circuit_patching.py` | **The cascade ran end to end on Rung 1's own checkpoint**: head ablation 0.4445 ± 0.0425, path patching 0.8215 ± 0.1255 — on a prefix-copying head, so it validates the method, not yet an induction circuit |
@@ -47,7 +51,9 @@ The manifests behind that table, one per rung: Rung 1
 <!-- manifest: results/grokking_nanda_p113.json -->, Rung 3
 <!-- manifest: results/exp3_superposition.json -->, Rung 4
 <!-- manifest: results/exp4_standard.json -->, Rung 5
-<!-- manifest: results/exp5_real_activations.json -->.
+<!-- manifest: results/exp5_real_activations.json -->, Rung 1b content task
+<!-- manifest: results/induction_content.json -->, Rung 1b causal addendum
+<!-- manifest: results/exp4_content.json -->.
 
 Shared model: `src/models/decoder_only_transformer.py` (RMSNorm + RoPE + causal
 multi-head attention + KV cache). Experiments `exp1`–`exp5` use their own local

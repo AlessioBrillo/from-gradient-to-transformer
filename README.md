@@ -28,6 +28,7 @@ included:
 | Rung | Where it stands |
 |------|-----------------|
 | 1 Prefix-copying heads | A head **does** form at standard scale (GPU, 3 seeds, 3000 epochs): 2–3 heads per seed, copy-offset mass 0.945, ablation effect 0.44, path-patch effect 0.82 — but the dissociation probe shows the copy follows a **fixed offset**, not the previous occurrence of the same token, so it is a *prefix-copying* head, not an induction head (the repeated-token task is perfectly periodic and hands the model that shortcut). The retracted "0 / 8" was a detector artifact: the detector measured the previous-token offset. The fixed-vs-fresh-batches comparison remains the one solid finding (53.5% vs 0.45% validation accuracy). |
+| 1b Content-based induction | The task that removes the shortcut ran on GPU (2026-11-09, 3 seeds × 3000 epochs). **Behaviour: content-based on 3/3 seeds** — copy accuracy 0.9976–1.0000 (non-modal 0.9972–1.0000) against a 15.5–16.5% fixed-offset baseline — and **causally carried by one head on 3/3 seeds** (single-head ablation drop 0.93–0.99). The pre-registered *per-head* rule, however, confirms a head on 1/3 seeds only (content mass 0.09–0.12 < 0.30; K-composition 0.06–0.07 < 0.40), so the pre-registered verdict is **PARTIAL** and the causal addendum's run label is NEGATIVE by the frozen majority rule. Two verdicts, kept apart, with the mechanism report published — see [RESULTS](portfolio/RESULTS.md). |
 | 2 Grokking | ✅ **REPRODUCED 2026-10-14**: val accuracy 0.9999 ± 0.0002, sparse circuit (k_energy_90 = 5.7 ± 1.2 of 56) on both the Nanda protocol and the historical repo protocol, 3/3 seeds each. The 2026-08-11 NO-GROK was a metric artifact — retracted. |
 | 3 Superposition | Phase transition reproduced (10/20 → 20/20 features represented; pentagon geometry at sparsity ≤ 0.1). |
 | 4 Circuit patching | ✅ The cascade ran end to end on Rung 1's own checkpoint: head ablation 0.4445 ± 0.0425, path patching 0.8215 ± 0.1255 — the first end-to-end path-patching result against a real head (a prefix-copying one: it validates the method, not yet an induction circuit). |
@@ -38,13 +39,18 @@ The manifests behind that table: Rung 1
 <!-- manifest: results/grokking_nanda_p113.json -->, Rung 3
 <!-- manifest: results/exp3_superposition.json -->, Rung 4
 <!-- manifest: results/exp4_standard.json -->, Rung 5
-<!-- manifest: results/exp5_real_activations.json -->.
+<!-- manifest: results/exp5_real_activations.json -->, Rung 1 fixed-vs-fresh
+<!-- manifest: results/exp1_induction_fixed_batches.json -->,
+<!-- manifest: results/exp1_induction_fresh_batches.json -->, Rung 1b content task
+<!-- manifest: results/induction_content.json -->, Rung 1b causal addendum
+<!-- manifest: results/exp4_content.json -->.
 
 Read the Honesty Ledger in [`portfolio/RESULTS.md`](portfolio/RESULTS.md) before citing any
-number from this repository: ten audits have now examined these claims — they found numbers
+number from this repository: eleven audits have now examined these claims — they found numbers
 that were wrong or unbacked, a negative verdict its own metric had manufactured, and a
 content-task experiment that could not have produced a verdict until its instrument was fixed
-before the GPU run.
+before the GPU run — and, on 2026-11-11, a **published verdict that the code could not
+reproduce**.
 `make verify-claims` (run in CI) fails if a claim tag has no committed
 manifest behind it; `make docs-audit` checks the prose around those tags.
 
@@ -128,7 +134,7 @@ NN_name/
 - [x] **Phase 4 — NLP & Transformers** (LOAD-BEARING for MI — QK/OV circuits, induction heads, activation patching, logit lens, TransformerLens)
 - [~] **Phase 5 - LLM Engineering** (instrumentation done: hooks, deterministic inference, activation harvesting, circuit datasets; nnsight pending - not installed, and the capture protocol the repo uses does not need it)
 - [~] **Phase 6 - Production AI** (reproducible research infra - pinned env, manifests, `verify-claims` in CI; W&B descoped 2026-09-08, HF Spaces descoped 2026-10-11, the compiled paper PDF ships with the site)
-- [~] **Phase 7 — Capstone: train + reverse-engineer** (model built, rungs 1-5 implemented; Rung 2 reproduced on GPU 2026-10-14; the planned 3×20k joint run executed 2026-10-14 — the modular/induction dissociation persists at full budget; the standard-scale induction run landed 2026-10-20 and found a *prefix-copying* head, so the content-based task of issue #200 is the open measurement)
+- [~] **Phase 7 — Capstone: train + reverse-engineer** (model built, rungs 1-5 implemented; Rung 2 reproduced on GPU 2026-10-14; the planned 3×20k joint run executed 2026-10-14 — the modular/induction dissociation persists at full budget; the standard-scale induction run landed 2026-10-20 and found a *prefix-copying* head; the content-based task of issue #200 ran on GPU 2026-11-09 — the copy is content-based on 3/3 seeds and causally carried by a single head, but the pre-registered per-head rule confirms a head on 1/3 seeds, so the verdict is PARTIAL and the open question is now *why that head does not put its attention mass on the content key*)
 
 See [03_progress-log](00_meta/03_progress-log.md) for the dated journal and [02_skill-tree](00_meta/02_skill-tree.md) for the complete skill tree.
 

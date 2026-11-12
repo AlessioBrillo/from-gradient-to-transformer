@@ -37,6 +37,7 @@ from src.experiments.content_verdict import (
     main,
     per_seed_metrics,
     run_verdict,
+    run_verdicts,
     verdict_payload,
     write_verdict_json,
 )
@@ -728,6 +729,121 @@ class TestTheDeRiskManifestReadsNotMeasured:
             assert check.status == CHECK_PASS, name
 
 
+class TestTheTwoVerdicts:
+    """The pre-registered verdict and the causal addendum are two verdicts.
+
+    Why they are two (2026-11-11): the content task's training run was
+    pinned at commit ``88147ee``; the cascade that measures criterion 7 was
+    executed **afterwards**, at ``891ef46``. The pre-registration's decision
+    rule was applied to the run as it was launched — the ledger says so, in
+    the same words: criterion 7 was a post-hoc addendum. So the record has
+    two verdicts: the pre-registered one (criterion 7 NOT MEASURED) and the
+    causal addendum (criterion 7 measured, with the commit difference
+    declared). Merging them would hide which instrument produced which label
+    — and the merged version is what made ``make content-verdict`` refuse to
+    compute anything at all.
+    """
+
+    def test_the_pre_registered_verdict_ignores_the_cascade(self) -> None:
+        exp1 = _manifest([0, 1, 2], [_exp1_metrics()] * 3)
+        exp4 = {"seeds": [0, 1, 2], "per_seed_metrics": [{"mean_path_patch_effect": 0.55}] * 3}
+        bundle = run_verdicts(exp1, exp4)
+        assert bundle.pre_registered.verdict == VERDICT_PARTIAL
+        assert bundle.addendum is not None
+        assert bundle.addendum.verdict == VERDICT_POSITIVE
+
+    def test_the_pre_registered_verdict_has_criterion_7_not_measured(self) -> None:
+        exp1 = _manifest([0, 1, 2], [_exp1_metrics()] * 3)
+        exp4 = {"seeds": [0, 1, 2], "per_seed_metrics": [{"mean_path_patch_effect": 0.55}] * 3}
+        bundle = run_verdicts(exp1, exp4)
+        seed0 = bundle.pre_registered.seeds[0]
+        assert "path patching" in seed0.not_measured
+        assert "path patching" not in seed0.failed
+
+    def test_without_a_cascade_there_is_no_addendum(self) -> None:
+        exp1 = _manifest([0, 1, 2], [_exp1_metrics()] * 3)
+        bundle = run_verdicts(exp1, None)
+        assert bundle.addendum is None
+        assert bundle.pre_registered.verdict == VERDICT_PARTIAL
+
+    def test_a_cascade_at_a_later_commit_is_declared_not_refused(self) -> None:
+        """The addendum's whole point: the cascade ran later, and that is a
+        fact to declare, not a reason to refuse to compute anything."""
+        exp1 = _manifest([0, 1, 2], [_exp1_metrics()] * 3, git_sha="aaaaaaa")
+        exp4 = {
+            "seeds": [0, 1, 2],
+            "git_sha": "bbbbbbb",
+            "per_seed_metrics": [{"mean_path_patch_effect": 0.55}] * 3,
+        }
+        bundle = run_verdicts(exp1, exp4)
+        assert bundle.addendum is not None
+        assert bundle.addendum.status == STATUS_COMPLETE
+        assert bundle.addendum.verdict == VERDICT_POSITIVE
+        assert bundle.addendum.provenance["exp1_git_sha"] == "aaaaaaa"
+        assert bundle.addendum.provenance["exp4_git_sha"] == "bbbbbbb"
+        assert bundle.addendum.provenance["declared"] is True
+
+    def test_the_strict_verdict_still_refuses_a_cascade_from_another_commit(self) -> None:
+        """The refusal is not deleted — it is only *not* the addendum's mode."""
+        exp1 = _manifest([0, 1, 2], [_exp1_metrics()] * 3, git_sha="aaaaaaa")
+        exp4 = {
+            "seeds": [0, 1, 2],
+            "git_sha": "bbbbbbb",
+            "per_seed_metrics": [{"mean_path_patch_effect": 0.55}] * 3,
+        }
+        result = run_verdict(exp1, exp4)
+        assert result.status == STATUS_INCOMPLETE
+        assert "different commit" in result.note
+
+    def test_the_addendum_still_refuses_a_cascade_of_another_model(self) -> None:
+        """Declaring the commit difference does not relax the *model* checks."""
+        rows = [
+            {
+                "mean_path_patch_effect": 0.55,
+                "path_patch_measured": 1.0,
+                "source_model_seed": 0.0,
+                "counterfactual_minimal_pair": 1.0,
+                "checkpoint_epoch": 3000.0,
+                "total_induction_heads": 1.0,
+            }
+            for _ in range(3)
+        ]
+        rows[1]["source_model_seed"] = 2.0  # seed 1 analysed the wrong model
+        exp1 = _manifest(
+            [0, 1, 2],
+            [_exp1_metrics(), _exp1_metrics(), _exp1_metrics(epochs_run=3000.0)],
+            git_sha="aaaaaaa",
+        )
+        exp4 = {"seeds": [0, 1, 2], "git_sha": "bbbbbbb", "per_seed_metrics": rows}
+        bundle = run_verdicts(exp1, exp4)
+        assert bundle.addendum is not None
+        assert bundle.addendum.status == STATUS_INCOMPLETE
+        assert "model seed" in bundle.addendum.note
+
+    def test_the_artifact_carries_both_verdicts(self, tmp_path) -> None:
+        exp1_path = tmp_path / "exp1.json"
+        exp4_path = tmp_path / "exp4.json"
+        exp1_path.write_text(
+            json.dumps(_manifest([0, 1, 2], [_exp1_metrics()] * 3)), encoding="utf-8"
+        )
+        exp4_path.write_text(
+            json.dumps(
+                {"seeds": [0, 1, 2], "per_seed_metrics": [{"mean_path_patch_effect": 0.55}] * 3}
+            ),
+            encoding="utf-8",
+        )
+        out = tmp_path / "verdict.json"
+        code = main(
+            ["--exp1", str(exp1_path), "--exp4", str(exp4_path), "--output", str(out)]
+        )
+        assert code == 0
+        payload = json.loads(out.read_text(encoding="utf-8"))
+        assert payload["schema"] == "content-verdict/2"
+        assert set(payload["verdicts"]) == {"pre_registered", "causal_addendum"}
+        assert payload["verdicts"]["pre_registered"]["label"] == "pre_registered"
+        assert payload["verdicts"]["causal_addendum"]["label"] == "causal_addendum"
+
+
 class TestTheCommandLine:
     def _write(self, tmp_path, name, payload):
         path = tmp_path / name
@@ -816,9 +932,12 @@ class TestTheCommandLine:
         code = main(["--exp1", exp1, "--exp4", exp4, "--output", str(output)])
         assert code == 0
         payload = json.loads(output.read_text(encoding="utf-8"))
-        assert payload["schema"] == "content-verdict/1"
-        assert payload["verdict"] == VERDICT_POSITIVE
+        assert payload["schema"] == "content-verdict/2"
         assert payload["sources"]["exp1"] == exp1
+        # The two verdicts are kept apart: the pre-registered one has no
+        # cascade (criterion 7 was not part of that run), the addendum has it.
+        assert payload["verdicts"]["pre_registered"]["verdict"] == VERDICT_PARTIAL
+        assert payload["verdicts"]["causal_addendum"]["verdict"] == VERDICT_POSITIVE
         assert payload["seeds"][0]["mechanism"]["peak_content_mass"] == 0.45
         assert payload["seeds"][0]["cascade"]["mean_path_patch_effect"] == 0.55
 

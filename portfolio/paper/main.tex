@@ -294,10 +294,51 @@ non-modal-distance group, the margin over the fixed-offset baseline, the
 ablation drop and the path-patching effect), computed from the manifests by
 a tested module rather than written by hand, on three seeds at the same budget
 as the periodic run, with a negative reported as a negative. The run
-completed 2026-11-09 with overall verdict PARTIAL (see
-\S\ref{sec:limitations}); this paper therefore does not claim a
-content-based induction head: it claims a prefix-copying head, and it says
-why the difference is structural.
+completed on 2026-11-09 (GPU, $3$ seeds $\times$ $3000$ epochs). Because the
+cascade that measures criterion 7 was executed \emph{after} the training run,
+at a different commit, the module publishes \textbf{two} verdicts and never
+merges them: the \emph{pre-registered} one (the training run alone, in which
+criterion 7 is \texttt{NOT MEASURED}) and the \emph{causal addendum} (the same
+run plus the cascade, with the commit difference declared in the artifact).
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+ & Seed 0 & Seeds 1--2 & Run \\
+\midrule
+Pre-registered verdict & PARTIAL & NEGATIVE & \textbf{PARTIAL} \\
+Causal addendum & POSITIVE ($7/7$) & NEGATIVE & NEGATIVE ($1/3$ seeds positive) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{What the run actually shows.} The mechanism report --- the
+\emph{secondary} report the pre-registration asks for, which describes the
+circuit instead of deciding the verdict --- is where the informative numbers
+are, and they are not what the verdict's labels suggest. On \emph{all three
+seeds} the model copies by content: copy accuracy $1.0000$, $0.9976$ and
+$0.9988$ (non-modal $1.0000$, $0.9972$, $0.9986$) against a best-fixed-offset
+baseline of $0.1646$, $0.1550$ and $0.1584$, with the logit attribution
+favouring the content answer on $99.8$--$99.96\%$ of the queries. And the
+copy is carried by a \emph{single head} on all three seeds: the largest
+single-head ablation drop is $0.2067$, $0.9298$ and $0.9402$, and the group
+ablation is $0.9989$, $0.9298$ and $0.9852$. What the per-head rule does
+\emph{not} confirm on seeds 1 and 2 is the form of the circuit, not the copy
+itself: that head's own attention mass on the content key ($0.0886$ and
+$0.1223$) stays below the $0.30$ screen, and its K-composition score
+($0.058$ and $0.071$) stays far below the $0.40$ confirmation bar.
+
+The honest reading is therefore a statement about the \emph{instrument}: the
+behaviour is content-based, the causal measurement is a single head, and the
+pre-registered per-head rule certifies only one of three seeds. This paper
+does not claim a content-based induction head; it claims a content-based copy
+carried by one head, and it names the question the run leaves open: why the
+carrier does not put its attention mass on the content key. The candidate
+explanation --- a two-stage circuit in which the first layer writes
+\emph{where} the previous occurrence is and the second reads \emph{what}
+follows it --- is not tested here, and the K-composition measure cannot see
+it, because it assumes that the first layer's argmax \emph{is} the previous
+occurrence, which on this task it need not be.
 
 The audit of that instrument, on 2026-10-22, found that the run as written
 could not have produced a verdict: the cell that evaluated the criteria read
@@ -325,38 +366,38 @@ per-head screen in each of them. If the seven criteria are not met, this
 paper will not claim an induction head, whatever that report says.
 
 % manifest: results/induction_content_derisk_standard.json
-The standard-geometry CPU de-risk of 2026-10-25 was run at pilot geometry -
-600 epochs on 2048 training samples, against the pre-registered full run's
-3000 epochs on 8192 samples - so its numbers are a shape-check, not the
-verdict. It already shows the shape the GPU run may reproduce. At the run's
-geometry (vocabulary $256$,
-$\text{seq\_len}=64$, a key of $36$ distinct tokens, four verbatim copy
-blocks of five, $d_\text{model}=64$, two layers, four heads, fresh batches),
-seed 0 copies at $0.9993$ against a $0.1646$ fixed-offset baseline, the
-candidate screen selects three heads, ablating the group removes $0.9956$ of
-the copy accuracy, and the largest single-head drop is $0.0986$. The
-per-head rule confirms $0/8$ heads because the K-composition score is
-$0.0918 < 0.40$: the copy is carried by a \emph{distributed} circuit. The
-seven criteria are unchanged. If the full run reproduces this shape, the
-verdict is the literal per-head NEGATIVE and the distributed circuit is the
-pre-specified \emph{secondary} finding, not a rewritten headline.
+% manifest: results/induction_content.json
+% manifest: results/exp4_content.json
+The standard-geometry CPU de-risk of 2026-10-25 was run at pilot geometry ---
+$600$ epochs on $2048$ training samples, against the pre-registered full
+run's $3000$ epochs on $8192$ samples --- so its numbers are a shape-check, not
+the verdict, and it read differently from the full run: a group ablation of
+$0.9956$ with a largest single-head drop of $0.0986$, i.e. a \emph{distributed}
+circuit where the full run measures a \emph{single} head. The verdict did not
+depend on it, but it is why the pre-registration asked for a circuit-level
+report at all.
 
 \subsection{Deviations from Pre-Registration}
 The pre-registration (issue \#200, ADR-0033) fixes the seven criteria and
-the 0.99 generalization threshold but does not specify the reduction across
-the three seeds. This paper reports the \emph{cell mean} as the primary
-reading, with every-seed and any-seed as sensitivity readings; all three
-share the invariant that no cell is DENSE. The gate (mean \texttt{val\_acc}
-$\ge$ 0.99) is applied before any sparsity or head-count label, so a cell
-that never generalized receives \emph{NOT\_GROKKED}, not SPARSE / MIXED /
-DENSE. The positive control $P=59$ was re-measured on 2026-10-19 with the
-post-audit energy metric and reads MIXED (2 of 3 seeds sparse). Criterion 7
-(exp4 causal ablation) was added as a post-hoc addendum measured on the
-existing 3000-epoch checkpoints; it was not part of the original GPU run,
-and the verdict remains PARTIAL precisely because that criterion is
-measured after the fact. None of these deviations change a headline claim:
-the paper claims a prefix-copying head and a distributed content circuit,
-and explicitly makes no phase-diagram boundary claim.
+their thresholds; it does not specify the reduction across the three seeds.
+The run-level reading applied here is the one the pre-registration's own
+decision table defines: a seed is \textsc{positive} when all seven criteria
+are met, \textsc{partial} when a head is confirmed but they are not all met,
+and \textsc{negative} otherwise; the run is positive when a majority of the
+seeds are, partial when any seed is partial, and negative otherwise. On the
+pre-registered instrument that gives \textsc{partial} (seed 0 partial, seeds
+1--2 negative); with the causal addendum joined it gives \textsc{negative},
+because one positive seed in three is not a majority. Both readings are
+published, and the reduction is stated here rather than chosen after the
+fact. Criterion 7 (the exp4 causal ablation) was measured \textbf{after} the
+original GPU run, on the existing $3000$-epoch checkpoints, and is therefore
+reported as a dated addendum rather than folded into the pre-registered
+verdict. The positive control $P=59$ was re-measured on 2026-10-19 with the
+post-audit energy metric and reads MIXED (2 of 3 seeds sparse). None of these
+deviations change a headline claim: this paper claims a prefix-copying head
+and a content-based copy carried by one head, and it explicitly makes no
+phase-diagram boundary claim.
+<!-- manifest: results/grokking_p59_repo_energy.json -->
 
 \subsection{Multi-Seed Quick-Scale Manifest}
 Three seeds at quick scale ($V=256$, $\text{seq\_len}=16$,
@@ -630,17 +671,22 @@ seeds -- the joint solution is \textbf{dense}, not a sparse Fourier circuit.
   \item \textbf{Algorithmic tasks:} modular addition and repeated tokens
     are cleaner than natural language; circuits found here may not be
     representative of circuits in language models.
-  \item \textbf{No content-based induction head yet:} at standard scale the
-    model forms a \emph{prefix-copying} head -- it copies from a fixed
+  \item \textbf{No content-based induction head confirmed:} at standard scale
+    the model forms a \emph{prefix-copying} head -- it copies from a fixed
     offset, not from the previous occurrence of the same token. The
     standard-scale run with the corrected detector ($d_\text{model}=64$,
     3000 epochs, three seeds) is reported above. The task it was trained
     on is perfectly periodic, so a fixed offset and a content match are
-    the same function there; a task with the repeats at \emph{varying}
-    distances is required to separate them, and that run has been executed
-    (issue \#200, GPU run completed 2026-11-09; overall verdict PARTIAL ---
-    see portfolio/RESULTS.md).
+    the same function there; the variable-distance task that separates them
+    was run on 2026-11-09 (issue \#200). On it the copy \emph{is} content-based
+    on all three seeds and \emph{is} carried by a single head, but the
+    pre-registered per-head confirmation fires on one seed of three, so the
+    verdict is PARTIAL (pre-registered) with a causal addendum that certifies
+    seed 0 only. The open question is the mechanism of the carrier, not its
+    behaviour -- see Section~\ref{sec:content-task}.
     % manifest: results/induction_standard.json
+    % manifest: results/induction_content.json
+    % manifest: results/exp4_content.json
   \item \textbf{The head counts in this paper were retracted}
     (2026-10-19): the detectors measured the previous-token offset, so
     every ``$0 / N$'' figure was a statement about the detector. With the
@@ -697,11 +743,19 @@ the detector fixed (2026-10-19) and the standard-scale run in hand
 (2026-10-20), the model forms a head that copies by a \emph{fixed offset},
 not by content: on a perfectly periodic task the two hypotheses are the
 same function, and the dissociation probe separates them in favour of the
-offset. A content-based task with the repeats at varying distances is
-pre-registered (ADR-0033); the Rung 4 and Rung 5 results in this paper
-are measured on the prefix-copying head, and are reported as a validation
-of the \emph{method} rather than of an induction circuit.
+offset. The variable-distance task that contains the question was
+pre-registered (ADR-0033) and run on 2026-11-09. On it the copy is
+content-based on all three seeds and is carried by a single head, while the
+pre-registered per-head confirmation fires on one seed of three: the verdict
+is PARTIAL, the causal addendum certifies seed 0, and the question the run
+leaves open is the mechanism of the carrier -- why a head that removes 93\%
+of the copy accuracy puts only 9--12\% of its attention mass on the content
+key. The Rung 4 and Rung 5 results in this paper are measured on the
+prefix-copying head, and are reported as a validation of the \emph{method}
+rather than of an induction circuit.
 % manifest: results/induction_standard.json
+% manifest: results/induction_content.json
+% manifest: results/exp4_content.json
 % manifest: results/exp4_standard.json
 
 The capstone 3$\times$20k run reveals a dissociation under joint training

@@ -18,6 +18,28 @@ from scripts.pin_remote_run import validate_manifest
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
+def _pinner_cmd(source: Path, results_dir: Path, *extra: str) -> list[str]:
+    """The pinner's command line, always aimed at a throwaway results dir.
+
+    Every test that shells out to the pinner installs into ``results_dir``
+    (a tmp_path), never into the repository's own ``results/``. Two reasons:
+    a test must never be able to overwrite the tracked record, and the
+    pinner's refusal to overwrite a *different* file with the same name used
+    to make the tests depend on what happens to be tracked in ``results/``
+    (three of them failed on 2026-11-11, the day ``exp4_content.json``
+    landed there).
+    """
+    return [
+        sys.executable,
+        str(REPO_ROOT / "scripts" / "pin_remote_run.py"),
+        "--from",
+        str(source),
+        "--results-dir",
+        str(results_dir),
+        *extra,
+    ]
+
+
 def _head_sha() -> str:
     return subprocess.run(
         ["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=REPO_ROOT
@@ -130,13 +152,7 @@ class TestZipExpansion:
     def test_dry_run_pins_from_a_zip(self, tmp_path: Path) -> None:
         self._zip_with_manifest(tmp_path)
         proc = subprocess.run(
-            [
-                sys.executable,
-                str(REPO_ROOT / "scripts" / "pin_remote_run.py"),
-                "--from",
-                str(tmp_path),
-                "--dry-run",
-            ],
+            _pinner_cmd(tmp_path, tmp_path / "results", "--dry-run"),
             capture_output=True,
             text=True,
             cwd=REPO_ROOT,
@@ -151,13 +167,7 @@ class TestZipExpansion:
         `kaggle kernels output` hands them one archive."""
         archive = self._zip_with_manifest(tmp_path)
         proc = subprocess.run(
-            [
-                sys.executable,
-                str(REPO_ROOT / "scripts" / "pin_remote_run.py"),
-                "--from",
-                str(archive),
-                "--dry-run",
-            ],
+            _pinner_cmd(archive, tmp_path / "results", "--dry-run"),
             capture_output=True,
             text=True,
             cwd=REPO_ROOT,
@@ -171,13 +181,7 @@ class TestDryRunEntryPoint:
     def test_dry_run_installs_nothing(self, tmp_path: Path) -> None:
         src = _write_manifest(tmp_path / "good.json")
         proc = subprocess.run(
-            [
-                sys.executable,
-                str(REPO_ROOT / "scripts" / "pin_remote_run.py"),
-                "--from",
-                str(src),
-                "--dry-run",
-            ],
+            _pinner_cmd(src, tmp_path / "results", "--dry-run"),
             capture_output=True,
             text=True,
             cwd=REPO_ROOT,
@@ -186,6 +190,50 @@ class TestDryRunEntryPoint:
         assert proc.returncode == 0, proc.stdout + proc.stderr
         assert "DRY RUN OK" in proc.stdout
         assert not (REPO_ROOT / "results" / "good.json").exists()
+
+    def test_dry_run_reports_an_overwrite_instead_of_refusing(self, tmp_path: Path) -> None:
+        """A rehearsal must not fail because the file it would install already
+        exists with different content.
+
+        The refusal to overwrite exists to protect the tracked record from a
+        silent overwrite — and it is still the behaviour of a real install.
+        But a dry run installs nothing, so refusing there made
+        `make remote-pin --dry-run` unusable the moment a tracked manifest
+        had the same name as the file being rehearsed (and it broke three
+        tests of this suite on 2026-11-11, the day `exp4_content.json`
+        landed in `results/`).
+        """
+        src = _write_manifest(tmp_path / "good.json")
+        results = tmp_path / "results"
+        results.mkdir()
+        (results / "good.json").write_text('{"different": true}', encoding="utf-8")
+        proc = subprocess.run(
+            _pinner_cmd(src, results, "--dry-run"),
+            capture_output=True,
+            text=True,
+            cwd=REPO_ROOT,
+            timeout=300,
+        )
+        assert proc.returncode == 0, proc.stdout + proc.stderr
+        assert "would overwrite good.json" in proc.stderr
+        # …and nothing was installed.
+        assert (results / "good.json").read_text(encoding="utf-8") == '{"different": true}'
+
+    def test_a_real_install_refuses_to_overwrite(self, tmp_path: Path) -> None:
+        """The refusal itself must survive the dry-run change."""
+        src = _write_manifest(tmp_path / "good.json")
+        results = tmp_path / "results"
+        results.mkdir()
+        (results / "good.json").write_text('{"different": true}', encoding="utf-8")
+        proc = subprocess.run(
+            _pinner_cmd(src, results),
+            capture_output=True,
+            text=True,
+            cwd=REPO_ROOT,
+            timeout=300,
+        )
+        assert proc.returncode != 0
+        assert "refusing to overwrite" in proc.stderr
 
     def test_invalid_manifest_fails_closed(self, tmp_path: Path) -> None:
         bad = tmp_path / "bad.json"
@@ -250,15 +298,9 @@ class TestProfile:
             tmp_path, ["induction_content.json", "exp4_content.json", "exp5_content.json"]
         )
         proc = subprocess.run(
-            [
-                sys.executable,
-                str(REPO_ROOT / "scripts" / "pin_remote_run.py"),
-                "--from",
-                str(src),
-                "--profile",
-                "induction-content",
-                "--dry-run",
-            ],
+            _pinner_cmd(
+                src, tmp_path / "results", "--profile", "induction-content", "--dry-run"
+            ),
             capture_output=True,
             text=True,
             cwd=REPO_ROOT,
@@ -267,7 +309,7 @@ class TestProfile:
         assert proc.returncode == 0, proc.stdout + proc.stderr
         assert "DRY RUN OK" in proc.stdout
         # Nothing installed in dry run.
-        assert not (REPO_ROOT / "results" / "induction_content.json").exists()
+        assert not (tmp_path / "results" / "induction_content.json").exists()
 
     def test_profile_induction_content_passes_with_exp1_only(self, tmp_path: Path) -> None:
         """exp4 è opzionale: un run negativo valido che salta exp4 è pinnabile."""
@@ -275,15 +317,9 @@ class TestProfile:
             tmp_path, ["induction_content.json"]  # exp4_content.json missing — OK
         )
         proc = subprocess.run(
-            [
-                sys.executable,
-                str(REPO_ROOT / "scripts" / "pin_remote_run.py"),
-                "--from",
-                str(src),
-                "--profile",
-                "induction-content",
-                "--dry-run",
-            ],
+            _pinner_cmd(
+                src, tmp_path / "results", "--profile", "induction-content", "--dry-run"
+            ),
             capture_output=True,
             text=True,
             cwd=REPO_ROOT,
@@ -300,15 +336,9 @@ class TestProfile:
             tmp_path, ["induction_content.json", "exp4_content.json"]
         )  # exp5_content.json missing (optional)
         proc = subprocess.run(
-            [
-                sys.executable,
-                str(REPO_ROOT / "scripts" / "pin_remote_run.py"),
-                "--from",
-                str(src),
-                "--profile",
-                "induction-content",
-                "--dry-run",
-            ],
+            _pinner_cmd(
+                src, tmp_path / "results", "--profile", "induction-content", "--dry-run"
+            ),
             capture_output=True,
             text=True,
             cwd=REPO_ROOT,
@@ -339,15 +369,7 @@ class TestProfile:
             )],
         )
         proc = subprocess.run(
-            [
-                sys.executable,
-                str(REPO_ROOT / "scripts" / "pin_remote_run.py"),
-                "--from",
-                str(src),
-                "--profile",
-                "phase-diagram",
-                "--dry-run",
-            ],
+            _pinner_cmd(src, tmp_path / "results", "--profile", "phase-diagram", "--dry-run"),
             capture_output=True,
             text=True,
             cwd=REPO_ROOT,
@@ -360,17 +382,15 @@ class TestProfile:
     def test_profile_and_only_are_mutually_exclusive(self, tmp_path: Path) -> None:
         src = self._write_manifests(tmp_path, ["induction_content.json"])
         proc = subprocess.run(
-            [
-                sys.executable,
-                str(REPO_ROOT / "scripts" / "pin_remote_run.py"),
-                "--from",
-                str(src),
+            _pinner_cmd(
+                src,
+                tmp_path / "results",
                 "--profile",
                 "induction-content",
                 "--only",
                 "induction_content.json",
                 "--dry-run",
-            ],
+            ),
             capture_output=True,
             text=True,
             cwd=REPO_ROOT,
