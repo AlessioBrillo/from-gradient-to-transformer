@@ -22,6 +22,7 @@ from pathlib import Path
 from scripts.docs_audit import (
     REQUIRED_MANIFESTS,
     STALE_CLAIMS,
+    _is_gitignored,
     check_audit_count,
     check_numbers_against_manifests,
     check_referenced_manifests_exist,
@@ -168,9 +169,12 @@ class TestTheAuditFires:
         `results/*.json` prose mention as a manifest, so the audit failed
         on any clone that had not run `make content-verdict`.)
         """
-        verdict = REPO_ROOT / "results" / "content_verdict.json"
-        assert not verdict.exists() or True  # may or may not be present locally
-        # The check must be satisfied whether or not the artifact is on disk.
+        # The exemption must come from .gitignore, not from the artifact
+        # happening to be on this machine's disk.
+        assert _is_gitignored("results/content_verdict.json"), (
+            "the derived verdict is expected to be gitignored; if that "
+            "changed, this exemption needs re-deciding"
+        )
         problems = check_referenced_manifests_exist()
         assert not any("content_verdict.json" in p for p in problems), problems
 
