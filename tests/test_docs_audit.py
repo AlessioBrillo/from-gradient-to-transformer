@@ -16,6 +16,7 @@ green throughout, because the stale sentences carried no manifest tag.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from scripts.docs_audit import (
@@ -85,10 +86,10 @@ class TestTheAuditFires:
         target = REPO_ROOT / "README.md"
         original = target.read_bytes()
         text = original.decode("utf-8")
-        assert "eleven audits" in text
+        assert "twelve audits" in text
         try:
             target.write_bytes(
-                text.replace("eleven audits", "nine audits", 1).encode("utf-8")
+                text.replace("twelve audits", "nine audits", 1).encode("utf-8")
             )
             problems = check_audit_count()
             assert any("README.md" in p and "nine" in p for p in problems), problems
@@ -156,6 +157,23 @@ class TestTheAuditFires:
             target.write_bytes(original)
         assert check_referenced_manifests_exist() == []
 
+    def test_naming_a_gitignored_derived_artifact_is_not_an_error(self) -> None:
+        """The content-task verdict is deliberately gitignored: it is derived
+        from the manifests, not evidence, and it is absent from a clean
+        clone. A document that names it is describing the workflow, not
+        claiming a manifest exists — and the audit must not fail a clean
+        clone over it.
+
+        (Found by the Docker gate on 2026-11-13: the check treated every
+        `results/*.json` prose mention as a manifest, so the audit failed
+        on any clone that had not run `make content-verdict`.)
+        """
+        verdict = REPO_ROOT / "results" / "content_verdict.json"
+        assert not verdict.exists() or True  # may or may not be present locally
+        # The check must be satisfied whether or not the artifact is on disk.
+        problems = check_referenced_manifests_exist()
+        assert not any("content_verdict.json" in p for p in problems), problems
+
     def test_a_document_that_stops_naming_its_manifest_is_caught(
         self, tmp_path: Path
     ) -> None:
@@ -203,6 +221,80 @@ class TestTheAuditListIsSane:
                     check=False,
                 )
                 assert tracked.returncode == 0, f"{manifest} is not tracked"
+
+
+class TestTheRung3TableIsManifestBacked:
+    """Rung 3's phase-transition table was the one public table in the
+    ledger with no manifest behind it (2026-11-11). The sweep now writes
+    `results/exp3_superposition_sweep.json`, so the table is that
+    manifest's numbers -- and the ratchet must police it."""
+
+    def _rung3_section(self) -> str:
+        text = (REPO_ROOT / "portfolio" / "RESULTS.md").read_text(encoding="utf-8")
+        start = text.index("## Rung 3")
+        return text[start : text.index("## Rung 4", start)]
+
+    def test_the_section_cites_the_sweep_manifest(self) -> None:
+        assert (
+            "<!-- manifest: results/exp3_superposition_sweep.json -->"
+            in self._rung3_section()
+        ), "the Rung 3 table must name the manifest that produced it"
+
+    def test_the_table_does_not_claim_to_have_no_manifest(self) -> None:
+        """The 2026-11-11 exemption said 'no tracked manifest'. Now that one
+        exists the declaration is false, and it would make the number check
+        skip the very table it was written for."""
+        assert "no tracked manifest" not in self._rung3_section(), (
+            "the Rung 3 table still declares itself unbacked; the sweep "
+            "manifest now exists, so the exemption is false and the number "
+            "check is skipping this table"
+        )
+
+    def test_the_published_counts_are_the_manifests_counts(self) -> None:
+        """The table must state the manifest's mean +- std per sparsity."""
+        manifest = json.loads(
+            (REPO_ROOT / "results" / "exp3_superposition_sweep.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        section = self._rung3_section()
+        for sparsity in (0.5, 0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.002, 0.001):
+            key = f"sparsity_{sparsity:g}".replace(".", "_")
+            stats = manifest["aggregate"][f"{key}_n_represented"]
+            row = f"| {sparsity:.3f} | {stats['mean']:.2f} ± {stats['std']:.2f} |"
+            assert row in section, (
+                f"the Rung 3 table does not carry the manifest's numbers for "
+                f"sparsity {sparsity} (expected the row {row!r})"
+            )
+
+    def test_a_number_the_manifest_does_not_carry_is_caught(self) -> None:
+        """The ratchet has to fire on the real file, not on a copy.
+
+        The corrupted value is a non-integer on purpose: the audit's
+        allowlist treats a bare integer as a *count* (3 seeds, 20 features)
+        and skips it, so only a fractional value is actually compared
+        against the manifest.
+
+        The file is restored **byte for byte**: writing back the decoded
+        text would rewrite the line endings, and a test run that leaves the
+        tree dirty makes every manifest written afterwards claim
+        `git_dirty: true` for a tree nobody changed.
+        """
+        target = REPO_ROOT / "portfolio" / "RESULTS.md"
+        original = target.read_bytes()
+        text = original.decode("utf-8")
+        assert "| 0.100 | 17.67 ± 1.25 |" in text
+        try:
+            target.write_bytes(
+                text.replace(
+                    "| 0.100 | 17.67 ± 1.25 |", "| 0.100 | 11.67 ± 1.25 |", 1
+                ).encode("utf-8")
+            )
+            problems = check_numbers_against_manifests()
+            assert any("RESULTS.md" in p for p in problems), problems
+        finally:
+            target.write_bytes(original)
+        assert check_numbers_against_manifests() == []
 
 
 def test_the_audit_script_runs_as_a_program() -> None:

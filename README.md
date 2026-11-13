@@ -46,11 +46,12 @@ The manifests behind that table: Rung 1
 <!-- manifest: results/exp4_content.json -->.
 
 Read the Honesty Ledger in [`portfolio/RESULTS.md`](portfolio/RESULTS.md) before citing any
-number from this repository: eleven audits have now examined these claims — they found numbers
-that were wrong or unbacked, a negative verdict its own metric had manufactured, and a
+number from this repository: twelve audits have now examined these claims — they found numbers
+that were wrong or unbacked, a negative verdict its own metric had manufactured, a
 content-task experiment that could not have produced a verdict until its instrument was fixed
-before the GPU run — and, on 2026-11-11, a **published verdict that the code could not
-reproduce**.
+before the GPU run, a **published verdict that the code could not reproduce**
+(2026-11-11), and a run seed that did not pin the model's initial weights, so two
+commands of one configuration disagreed (2026-11-12).
 `make verify-claims` (run in CI) fails if a claim tag has no committed
 manifest behind it; `make docs-audit` checks the prose around those tags.
 

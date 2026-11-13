@@ -419,6 +419,7 @@ exactly; self-patching must be a no-op.
 \section{Toy Models of Superposition}
 \label{sec:superposition}
 % manifest: results/exp3_superposition.json
+% manifest: results/exp3_superposition_sweep.json
 
 \subsection{Root Cause of Prior Non-Reproduction}
 The 2026-07-26 and 2026-08-01 audits observed flat, near-zero ``feature
@@ -448,10 +449,14 @@ sparsity $0.01$:
   \item Mean absolute correlation: $0.351 \pm 0.001$.
 \end{itemize}
 
-Sparsity sweep (single seed): features represented rises from 10/20 at
-sparsity 0.5 to 20/20 by sparsity 0.05, holding through 0.002. The drop
-to 16/20 at sparsity 0.001 is a genuine capacity limit (2000 vs 600 epoch
-drill refuted under-training).
+Sparsity sweep (three seeds): features represented rises from
+$10.00 \pm 0.00$ of 20 at sparsity 0.5 to $20.00 \pm 0.00$ by sparsity
+0.05, holding at 20/20 through sparsity 0.005. Below that the model
+degrades gradually rather than at a cliff: $18.67 \pm 0.47$ of 20 at
+sparsity 0.002 and $17.00 \pm 0.82$ at sparsity 0.001. The extreme-sparsity
+limit is real (a 2000- vs 600-epoch drill refuted under-training), but its
+exact value moves with the seed, so it is quoted as a mean $\pm$ spread
+rather than a single count.
 
 \subsection{Geometric Verification: Pentagon Check}
 5 features $\to$ 2 dimensions at sparsity $\le 0.1$: the 5 directions
