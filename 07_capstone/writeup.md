@@ -163,9 +163,13 @@ See [[04_nlp_and_transformers/notes/induction-heads]].
 
 **Verdict: fully reproduced.**
 <!-- manifest: results/exp3_superposition.json -->
+<!-- manifest: results/exp3_superposition_sweep.json -->
 
 Tiny ReLU autoencoder with a real bottleneck, sparse features. As sparsity
-drops, represented features rise from 10/20 to 19.67 ± 0.47 of 20. In the sparse
+drops, represented features rise from 10/20 to 19.67 ± 0.47 of 20 — and the
+three-seed sweep records the same transition (10.00 ± 0.00 of 20 at sparsity
+0.5, 20.00 ± 0.00 by sparsity 0.05, degrading to 17.00 ± 0.82 at sparsity
+0.001). In the sparse
 regime five features settle on a regular pentagon in two dimensions (inter-angle
 gaps 70.2–73.8°, standard deviation ≤ 1.4°), matching the geometry Elhage et
 al. (2022) predicts. See [[04_nlp_and_transformers/notes/superposition-and-feature-capacity]].
@@ -312,7 +316,7 @@ See [[07_capstone/notes/mp-89-retune-verdict]].
 - The hardest part of MI is not running experiments — it is forming precise,
   falsifiable hypotheses. The tools are easier than the thinking.
 - **A negative result honestly reported is more valuable than a positive result
-  overclaimed.** Eleven audits have caught real bugs in this repo's own claims, and
+  overclaimed.** Twelve audits have caught real bugs in this repo's own claims, and
   they are all still visible in [[portfolio/RESULTS]].
 
 ## Links

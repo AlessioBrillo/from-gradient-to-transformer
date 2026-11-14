@@ -109,9 +109,11 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
 - [x] **Toy Models of Superposition** — feature geometry, phase changes. Root cause of the
   flat/near-zero recovery found and fixed 2026-08-02 (no real bottleneck in the
   architecture, not the untied-weights hypothesis tested 2026-08-01): the phase transition
-  now reproduces cleanly (10/20 → 20/20 features represented). See
+  now reproduces cleanly (10/20 → 20/20 features represented; three-seed sweep:
+  10.00 ± 0.00 → 20.00 ± 0.00). See
   [[05_llm_engineering/proofs/superposition-setup-validity]].
   <!-- manifest: results/exp3_superposition.json -->
+  <!-- manifest: results/exp3_superposition_sweep.json -->
 - [x] **Circuit discovery via activation + path patching** — find + causally validate
   (patch site and metric fixed 2026-08-01). The cascade ran end to end on Rung 1's
   own checkpoint: head ablation 0.4445 ± 0.0425, path patching 0.8215 ± 0.1255

@@ -23,7 +23,7 @@ The capstone question (roadmap, Phase 7 gate): *"How does your transformer imple
   - Evidence: [[07_capstone/notes/grokking-verdict-p113|Grokking verdict P=113]]
 - [x] **Teachable artifact** — `notebooks/capstone_teaching_artifact_v23.ipynb` trains its own tiny joint model and runs the full loop **in CI** (`make reproduce-notebook`), so a notebook that CI never executes can never rot again
   - Evidence: `tests/test_teaching_artifact.py`
-- [x] **Honesty ledger maintained** — eleven audits, all entries kept visible: [[portfolio/RESULTS|Honesty Ledger]]
+- [x] **Honesty ledger maintained** — twelve audits, all entries kept visible: [[portfolio/RESULTS|Honesty Ledger]]
 
 ## Still open (tracked in GitHub Issues, not checklist items)
 - [x] **3 seeds × 20k steps, capstone** — issue #170 (GPU: `make remote-run-capstone`); run executed 2026-10-14, dissociation persists at full budget (`results/capstone_20k.json`). W&B never connected (no credentials) — closed-with-reason.

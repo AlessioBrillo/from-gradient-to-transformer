@@ -33,6 +33,20 @@ exp5_*_figures.log
 !07_capstone/data/.gitkeep
 07_capstone/experiments/*.log
 
+# LaTeX build products of the mini-paper. `make paper-check` compiles
+# portfolio/paper/main.tex in place, so the aux files land next to the
+# source; they are build products, not sources (the PDF is a build product
+# too -- the site workflow copies it into _site/).
+portfolio/paper/*.aux
+portfolio/paper/*.bbl
+portfolio/paper/*.blg
+portfolio/paper/*.fdb_latexmk
+portfolio/paper/*.fls
+portfolio/paper/*.log
+portfolio/paper/*.out
+portfolio/paper/*.pdf
+portfolio/paper/*.toc
+
 # Rolling resume checkpoints + heartbeat/launch logs (runtime state)
 checkpoints/
 

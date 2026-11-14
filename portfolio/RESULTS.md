@@ -21,19 +21,116 @@ smoke tests (`make reproduce-quick`) and a full-scale mode (`make reproduce`).
 <!-- manifest: results/exp1_induction_fixed_batches.json -->
 <!-- manifest: results/exp1_induction_fresh_batches.json -->
 
-Eleven audits have now caught real problems in this repository's causal claims and
+Twelve audits have now caught real problems in this repository's causal claims and
 evidence base. They include claims that were wrong or unbacked, a claim that was
-**right and had been called wrong by its own metric** (2026-10-14), and four
+**right and had been called wrong by its own metric** (2026-10-14), four
 content-task audits (2026-10-22, 2026-10-25, 2026-11-01 and 2026-11-11) that found the
 experiment supposed to close the last open question **could not have produced a
 verdict at all** — first because its verdict code would crash, then because its
 instrument measured the wrong position, then because the verdict read the wrong
 head and the cascade could silently analyse another model, and finally because
-the published verdict was not the one the code computes — and fixed it before
-the run or, in the last case, before the next reader could rely on it. All
+the published verdict was not the one the code computes — and a twelfth (2026-11-12)
+that found the run seed does not pin the model's initial weights, so two
+commands of one configuration disagreed. All
 entries stay here — the point of this section is to make it easy to
 see the trend (are correctness problems getting caught faster, or accumulating?),
 not to keep only the latest one.
+
+### 2026-11-12 — The run seed did not pin the model's initial weights: two commands of one configuration disagreed
+
+The twelfth audit, and the first one about *what a seed means* rather than
+about a number being wrong: it found that the seed this repository reports
+for every run does not determine the model that run starts from — and that
+two commands differing only in which rung code path they take had been
+published side by side as if they measured the same thing.
+
+**What was broken.** In `exp3`, the model is constructed **before**
+`train_autoencoder` calls `set_seed(seed)` — the seeding happens inside the
+training function, one line after the weights have already been drawn. The data
+is pinned (the dataset has its own `np.random.default_rng(seed)`), and the
+training is pinned, but the **initialization is not**: the weights come from
+whatever ambient torch RNG state happened to be at construction time. So a
+"seed" pins the data and the batch order, but not the starting point of the
+trajectory.
+
+**How it was found.** The Rung 3 sweep manifest and the Rung 3 single-sparsity
+manifest record **the same nominal configuration** — sparsity 0.01, epochs 600,
+8000 samples, batch 512, lr 0.01, seeds 0, 1, 2 — and they disagree:
+`results/exp3_superposition.json` says `n_represented` = 19.67 ± 0.47, while
+`results/exp3_superposition_sweep.json` says 20.00 ± 0.00 for the same level.
+Two commands that differ only in which code path they take should not report
+different answers for one configuration.
+
+**Why they disagree, measured rather than argued.** The two code paths build
+the model at different points in the ambient RNG stream, so they start from
+different weights:
+
+- the **single-sparsity** path builds its model right after `set_seed(args.seed)`,
+  so seed 0's weights are the same whether seed 0 runs alone or with seeds 1
+  and 2;
+- the **sweep** path builds nine models per seed, one per sparsity level, each
+  after the previous level's training has consumed the ambient RNG — so the
+  model at sparsity 0.01 (the sixth level) starts from different weights than
+  the same seed's single-sparsity model.
+
+Reconstructing both positions end to end reproduces both numbers exactly: the
+single-sparsity position gives 19/20 and the sweep position gives 20/20 at
+sparsity 0.01, seed 0. The mechanism is confirmed, not inferred.
+
+**How far the defect reaches, also measured.** Only the *first* seed of a
+multi-seed run is pinned by its own seed; later seeds inherit whatever the
+earlier seeds' training left behind. Hashing the initial weights of the same
+seed in two contexts: seed 0 alone and seed 0 as the first of two agree
+(`fcea0c2b467a6709`), while seed 1 alone and seed 1 after seed 0 disagree
+(`fcea0c2b467a6709` vs `0ae834eafda3d9c0`). So "seed N" determines a run's
+*data* and *batch order* but not its starting point — which is why
+`--seeds 1` alone happens to land on 20/20 (the same saturated value the
+manifest records for seed 1) while starting from different weights.
+
+**What it changes.** The Rung 3 sweep table is now published from the sweep
+manifest (mean ± std over three seeds, and the per-seed range at the two
+sparsest levels), instead of from a single untracked run — the sweep's numbers
+are now the record, and the audit's number check polices them (the table's
+exemption from that check is gone, and a test fails if a number in it stops
+matching the manifest). The paper's sweep paragraph and the Rung 3 portfolio
+page carry the same manifest-backed numbers.
+
+**What it does not change.** The phase transition itself: **10/20 at sparsity
+0.5 rising to 20/20 by sparsity 0.05**, reproduced by the three-seed sweep.
+No threshold, budget, seed or decision rule changed, and no number was
+re-tuned after seeing the data. The published 19.67 ± 0.47 for the
+single-sparsity manifest is **not** retracted — it is exactly what that run
+measured, and it is still what that manifest says. What changes is that the
+repository now knows *why* it cannot be compared with the sweep's 20.00 ± 0.00
+at the same nominal configuration, and the extreme-sparsity "capacity limit"
+is quoted as a three-seed mean ± spread (17.00 ± 0.82 at sparsity 0.001)
+rather than as one seed's 16/20.
+
+**What is reproducible, measured.** Each path reproduces **its own** manifest
+exactly, which is why this was never caught: re-running the single-sparsity
+command reproduces its per-seed `n_represented` values (19, 20, 20) to the
+digit, and re-running the sweep reproduces the tracked sweep's seed-0 row on
+all 27 recorded fields to eight decimals. The defect is therefore not
+non-determinism — it is that **two different commands that differ only in
+which rung's code path they take were published as if they measured the same
+thing**. The numbers were always reproducible; what was wrong was the
+comparison between them.
+
+**What it does not change either.** No other experiment's published number
+moves, and the scoping was checked rather than assumed: `exp2` and `exp5` seed
+**before** constructing their model, so their seeds are pinned; `exp1` and
+`exp4` construct theirs before the seeding call, in the same way `exp3` does —
+but each of them records one path per experiment, so no two tracked manifests
+of this repository contradict each other because of it. The fixed-vs-fresh
+comparison — this repository's one solid Rung 1 finding — is unaffected, and
+was checked directly: the two arms draw **identical** per-seed initial weights
+(`50b106e83b3bb8c7`, `26cec94b0ea967ef`, `19b718a593a9e645`), because both
+arms consume the same number of permutations per epoch, so the batch regime
+really is their only difference. The defect is in the *seed's meaning*, not in
+any published figure. Fixing it properly (seeding before construction, then
+re-running the affected rungs) is a separate measurement campaign with new
+numbers, and it is not performed here: it would replace published manifests
+rather than explain them.
 
 ### 2026-11-11 — The published verdict was not the verdict the code computes, and the run's strongest numbers were never published
 
@@ -1058,33 +1155,54 @@ real bottleneck (see Honesty Ledger and
 [superposition-setup-validity](../05_llm_engineering/proofs/superposition-setup-validity.md)). Rewritten to the canonical
 Elhage et al. setup; the transition reproduces on the first run, cleanly, with no tuning.
 
-| Sparsity | Features represented (no tracked manifest — the sweep path wrote figures and stdout, never a record; a three-seed sweep is running) | Mean dimensionality | Mean \|corr\| |
+<!-- manifest: results/exp3_superposition_sweep.json -->
+
+| Sparsity | Features represented (mean ± std over 3 seeds) | Mean dimensionality | Mean \|corr\| |
 |----------|----------------------|----------------------|--------------|
-| 0.500 | 10 / 20 | 0.250 | 0.302 |
-| 0.200 | 15 / 20 | 0.250 | 0.316 |
-| 0.100 | 19 / 20 | 0.250 | 0.340 |
-| 0.050 | 20 / 20 | 0.250 | 0.349 |
-| 0.020 | 20 / 20 | 0.250 | 0.348 |
-| 0.010 | 20 / 20 | 0.248 | 0.352 |
-| 0.005 | 20 / 20 | 0.248 | 0.352 |
-| 0.002 | 20 / 20 | 0.249 | 0.350 |
-| 0.001 | 16 / 20 | 0.250 | 0.326 |
+| 0.500 | 10.00 ± 0.00 | 0.250 ± 0.000 | 0.299 ± 0.003 |
+| 0.200 | 14.67 ± 0.47 | 0.250 ± 0.000 | 0.315 ± 0.005 |
+| 0.100 | 17.67 ± 1.25 | 0.250 ± 0.000 | 0.336 ± 0.003 |
+| 0.050 | 20.00 ± 0.00 | 0.250 ± 0.000 | 0.348 ± 0.001 |
+| 0.020 | 20.00 ± 0.00 | 0.249 ± 0.000 | 0.349 ± 0.002 |
+| 0.010 | 20.00 ± 0.00 | 0.249 ± 0.000 | 0.350 ± 0.002 |
+| 0.005 | 20.00 ± 0.00 | 0.249 ± 0.000 | 0.351 ± 0.001 |
+| 0.002 | 18.67 ± 0.47 | 0.247 ± 0.001 | 0.348 ± 0.006 |
+| 0.001 | 17.00 ± 0.82 | 0.249 ± 0.001 | 0.335 ± 0.002 |
 
-Multi-seed manifest at the reference sparsity (3 seeds, `single_sparsity=0.01`, otherwise
-identical config): `n_represented` = 19.67 ± 0.47 (one seed of three landed at 19/20
-rather than 20/20 — a real, small seed-to-seed spread, not noise-free).
-
-**The sweep above has no manifest behind it (2026-11-11), and that is now fixed.** The
+**The sweep above had no manifest behind it (2026-11-11), and now it does.** The
 2026-11-11 audit's number check found what the record had been hiding: the sweep path of
 this experiment wrote figures and a stdout table and **never a record** — the only
 tracked exp3 manifest was the multi-seed run at a single sparsity, so Rung 3's headline
-table was the one public table in this ledger with no evidence behind it. `exp3` now
-grows a `--sweep-seeds` flag and writes `results/exp3_superposition_sweep.json`; the
-three-seed sweep is running, and this table is replaced by its numbers when it lands.
+table was the one public table in this ledger with no evidence behind it. `exp3` grew a
+`--sweep-seeds` flag, the three-seed sweep ran on a clean tree
+(`results/exp3_superposition_sweep.json`, 3 seeds x 9 sparsity levels), and the table
+above is now **that manifest's numbers**, read back from it rather than from the
+sweep's stdout.
+
+**What the three-seed sweep changed, and what it did not.** The phase transition is
+unchanged in shape: **10/20 at sparsity 0.5 rising to 20/20 by sparsity 0.05**, and
+20/20 held down to sparsity 0.005. What the seed spread adds is the *tail*, which the
+single-seed table could not show: at sparsity 0.002 the three seeds land at 19, 19, 18
+of 20 (mean 18.67 ± 0.47) and at sparsity 0.001 at 18, 17, 16 (mean 17.00 ± 0.82).
+The old table's single-seed "16 / 20" at sparsity 0.001 was one draw from that spread —
+so the previously published "capacity limit at extreme sparsity" number is now a
+**three-seed mean of 17.00 ± 0.82** rather than a single observation. The honest
+statement of the limit is the mean ± spread, and the level at which the model stops
+representing every feature moves with the seed.
+
+The three-seed manifest at the reference sparsity (`results/exp3_superposition.json`,
+3 seeds, `single_sparsity=0.01`) records `n_represented` = 19.67 ± 0.47 — one seed of
+three landed at 19/20 rather than 20/20. That is the *same* configuration as the
+sweep's 0.010 row (20.00 ± 0.00), and the two disagree: see the audit entry of
+2026-11-12 above, which explains why two runs of one configuration on one machine
+produced two different answers. (Re-running that manifest's exact command
+reproduces its per-seed `n_represented` values, 19, 20 and 20, to the digit — the
+disagreement is between the two *code paths*, not between runs of the same one.)
 
 Expected (Elhage et al.): as sparsity decreases (features rarely co-active), interference
 pressure drops and the model represents more features. **Observed: exactly this — 10/20 at
-the densest setting rising to 20/20 by sparsity=0.05.** The old
+the densest setting rising to 20/20 by sparsity=0.05**, now measured over three seeds
+rather than one. The old
 flat/near-zero "recovery" numbers above the fix are struck through in
 spirit, not deleted from this table's history: the root cause was that the model had no
 actual compression to perform (the dataset pre-embedded features before the model saw
