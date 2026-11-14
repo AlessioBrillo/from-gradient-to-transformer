@@ -22,6 +22,11 @@ steps:
       - uv run python -m src.results verify
 
   - name: paper-check
-    image: xu-cheng/latex-action:ubuntu-latest  # LuaLaTeX + latexmk for paper compilation
+    # The image was `xu-cheng/latex-action:ubuntu-latest` until 2026-11-13,
+    # when the Docker Hub account was emptied and the pull started failing
+    # with "pull access denied" -- an upstream deletion, not a paper error.
+    # `ghcr.io/xu-cheng/texlive-full` is what the upstream action itself
+    # runs on today (see its action.sh), and it carries latexmk + LuaLaTeX.
+    image: ghcr.io/xu-cheng/texlive-full:latest
     commands:
       - make paper-check
