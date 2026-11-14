@@ -117,19 +117,20 @@ thing**. The numbers were always reproducible; what was wrong was the
 comparison between them.
 
 **What it does not change either.** No other experiment's published number
-moves. `exp2` seeds **before** constructing its model, and `exp1`/`exp4`/
-`exp5` construct theirs before the seeding call in the same way `exp3` does —
-but their manifests each record one path per experiment, so no two tracked
-manifests of this repository contradict each other because of it. The
-fixed-vs-fresh comparison — this repository's one solid Rung 1 finding — is
-unaffected: checked directly, the two arms draw **identical** per-seed initial
-weights (both `50b106e83b3bb8c7`, `26cec94b0ea967ef`, `19b718a593a9e645`),
-because both arms consume the same number of permutations per epoch, so the
-batch regime really is their only difference. The defect is in the *seed's
-meaning*, not in any published figure. Fixing it properly (seeding before
-construction, then re-running the affected rungs) is a separate measurement
-campaign with new numbers, and it is not performed here: it would replace
-published manifests rather than explain them.
+moves, and the scoping was checked rather than assumed: `exp2` and `exp5` seed
+**before** constructing their model, so their seeds are pinned; `exp1` and
+`exp4` construct theirs before the seeding call, in the same way `exp3` does —
+but each of them records one path per experiment, so no two tracked manifests
+of this repository contradict each other because of it. The fixed-vs-fresh
+comparison — this repository's one solid Rung 1 finding — is unaffected, and
+was checked directly: the two arms draw **identical** per-seed initial weights
+(`50b106e83b3bb8c7`, `26cec94b0ea967ef`, `19b718a593a9e645`), because both
+arms consume the same number of permutations per epoch, so the batch regime
+really is their only difference. The defect is in the *seed's meaning*, not in
+any published figure. Fixing it properly (seeding before construction, then
+re-running the affected rungs) is a separate measurement campaign with new
+numbers, and it is not performed here: it would replace published manifests
+rather than explain them.
 
 ### 2026-11-11 — The published verdict was not the verdict the code computes, and the run's strongest numbers were never published
 
