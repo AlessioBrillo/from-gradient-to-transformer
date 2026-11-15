@@ -39,8 +39,8 @@ not to keep only the latest one.
 ### 2026-11-12 — The run seed did not pin the model's initial weights: two commands of one configuration disagreed
 
 The twelfth audit, and the first one about *what a seed means* rather than
-about a number being wrong: it found that the seed this repository reports
-for every run does not determine the model that run starts from — and that
+about a number being wrong: it found that the run seed `exp3` reports does
+not determine the model that run starts from — and that
 two commands differing only in which rung code path they take had been
 published side by side as if they measured the same thing.
 
@@ -65,27 +65,28 @@ different answers for one configuration.
 the model at different points in the ambient RNG stream, so they start from
 different weights:
 
-- the **single-sparsity** path builds its model right after `set_seed(args.seed)`,
-  so seed 0's weights are the same whether seed 0 runs alone or with seeds 1
-  and 2;
-- the **sweep** path builds nine models per seed, one per sparsity level, each
-  after the previous level's training has consumed the ambient RNG — so the
-  model at sparsity 0.01 (the sixth level) starts from different weights than
-  the same seed's single-sparsity model.
+- the **single-sparsity** path calls `set_seed(args.seed)` once in `main()`,
+  before the per-seed loop: the first seed's model is built from that pinned
+  state, and each later seed's model is built after the previous seed's
+  training has consumed the ambient stream;
+- the **sweep** path builds nine models per seed, one per sparsity level, so
+  the model at sparsity 0.01 (the sixth level) is built after five trainings
+  have consumed the stream — a different position in it, and therefore
+  different initial weights, than the single-sparsity path's.
 
 Reconstructing both positions end to end reproduces both numbers exactly: the
 single-sparsity position gives 19/20 and the sweep position gives 20/20 at
 sparsity 0.01, seed 0. The mechanism is confirmed, not inferred.
 
-**How far the defect reaches, also measured.** Only the *first* seed of a
-multi-seed run is pinned by its own seed; later seeds inherit whatever the
-earlier seeds' training left behind. Hashing the initial weights of the same
-seed in two contexts: seed 0 alone and seed 0 as the first of two agree
-(`fcea0c2b467a6709`), while seed 1 alone and seed 1 after seed 0 disagree
-(`fcea0c2b467a6709` vs `0ae834eafda3d9c0`). So "seed N" determines a run's
-*data* and *batch order* but not its starting point — which is why
-`--seeds 1` alone happens to land on 20/20 (the same saturated value the
-manifest records for seed 1) while starting from different weights.
+**How far the defect reaches, also measured.** The initialization never
+depends on the per-seed value at all: a fresh process starts from the state
+`main()` sets once with `set_seed(args.seed)`, so seed 0 alone and seed 1
+alone build **identical** initial weights (`fcea0c2b467a6709`). What varies
+is the position in the sequence: seed 1 after seed 0 starts from
+`0ae834eafda3d9c0`. So "seed N" determines a run's *data* and *batch order*
+but not its starting point — which is why `--seeds 1` alone happens to land
+on 20/20 (the same saturated value the manifest records for seed 1) while
+starting from different weights than seed 1 in a multi-seed run.
 
 **What it changes.** The Rung 3 sweep table is now published from the sweep
 manifest (mean ± std over three seeds, and the per-seed range at the two
@@ -120,8 +121,8 @@ comparison between them.
 moves, and the scoping was checked rather than assumed: `exp2` and `exp5` seed
 **before** constructing their model, so their seeds are pinned; `exp1` and
 `exp4` construct theirs before the seeding call, in the same way `exp3` does —
-but each of them records one path per experiment, so no two tracked manifests
-of this repository contradict each other because of it. The fixed-vs-fresh
+but neither records two code paths of one configuration, so no two tracked
+manifests of this repository contradict each other because of it. The fixed-vs-fresh
 comparison — this repository's one solid Rung 1 finding — is unaffected, and
 was checked directly: the two arms draw **identical** per-seed initial weights
 (`50b106e83b3bb8c7`, `26cec94b0ea967ef`, `19b718a593a9e645`), because both
@@ -1194,8 +1195,8 @@ The three-seed manifest at the reference sparsity (`results/exp3_superposition.j
 3 seeds, `single_sparsity=0.01`) records `n_represented` = 19.67 ± 0.47 — one seed of
 three landed at 19/20 rather than 20/20. That is the *same* configuration as the
 sweep's 0.010 row (20.00 ± 0.00), and the two disagree: see the audit entry of
-2026-11-12 above, which explains why two runs of one configuration on one machine
-produced two different answers. (Re-running that manifest's exact command
+2026-11-12 above, which explains why the two code paths, run on the same
+machine, produced two different answers. (Re-running that manifest's exact command
 reproduces its per-seed `n_represented` values, 19, 20 and 20, to the digit — the
 disagreement is between the two *code paths*, not between runs of the same one.)
 
