@@ -165,7 +165,7 @@ class TestTheAuditFires:
         claiming a manifest exists — and the audit must not fail a clean
         clone over it.
 
-        (Found by the Docker gate on 2026-11-13: the check treated every
+        (Found by the Docker gate: the check treated every
         `results/*.json` prose mention as a manifest, so the audit failed
         on any clone that had not run `make content-verdict`.)
         """
