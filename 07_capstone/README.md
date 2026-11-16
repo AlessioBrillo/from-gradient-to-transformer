@@ -107,8 +107,10 @@ the writeup.
   <!-- manifest: results/grokking_nanda_p113.json -->
 - [x] At least one circuit verification (activation + path patching, `src/experiments/exp4_circuit_patching.py`, fixed 2026-08-01 — see [[05_llm_engineering/proofs/intervention-validity]])
   <!-- manifest: results/exp4_standard.json -->
-- [x] Rungs 1–5 completed and results documented in [[portfolio/RESULTS]] — Rung 2 reproduced, Rung 3 reproduced, Rung 4's cascade ran end to end, Rung 5's real-activation dictionary is sparse; **Rung 1's content-based claim is the open item** (issue #200)
+- [x] Rungs 1–5 completed and results documented in [[portfolio/RESULTS]] — Rung 2 reproduced, Rung 3 reproduced, Rung 4's cascade ran end to end, Rung 5's real-activation dictionary is sparse; **Rung 1's content-based task ran on 2026-11-09** (issue #200): the copy is content-based on 3/3 seeds and carried by a single head, the pre-registered per-head rule confirms a head on 1/3 seeds, and the verdict is published as two verdicts (pre-registered PARTIAL, causal addendum NEGATIVE by the frozen majority rule)
   <!-- manifest: results/induction_standard.json -->
+  <!-- manifest: results/induction_content.json -->
+  <!-- manifest: results/exp4_content.json -->
 - [x] Mini-paper (LaTeX) written with abstract, method, results, ablations, limitations, references to primary literature — `portfolio/paper/main.tex`
   <!-- manifest: results/grokking_nanda_p113.json -->
 - [x] Reproducibility harness: `uv sync && make reproduce` regenerates flagship figures

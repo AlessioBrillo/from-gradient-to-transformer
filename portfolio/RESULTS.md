@@ -13,17 +13,192 @@ smoke tests (`make reproduce-quick`) and a full-scale mode (`make reproduce`).
 
 ## Honesty Ledger
 
-Ten audits have now caught real problems in this repository's causal claims and
+<!-- manifest: results/grokking_nanda_p113.json -->
+<!-- manifest: results/grokking_repo_p113_energy.json -->
+<!-- manifest: results/grokking_p59_repo_energy.json -->
+<!-- manifest: results/induction_content.json -->
+<!-- manifest: results/exp4_content.json -->
+<!-- manifest: results/exp1_induction_fixed_batches.json -->
+<!-- manifest: results/exp1_induction_fresh_batches.json -->
+
+Twelve audits have now caught real problems in this repository's causal claims and
 evidence base. They include claims that were wrong or unbacked, a claim that was
-**right and had been called wrong by its own metric** (2026-10-14), and three
-content-task audits (2026-10-22, 2026-10-25 and 2026-11-01) that found the
+**right and had been called wrong by its own metric** (2026-10-14), four
+content-task audits (2026-10-22, 2026-10-25, 2026-11-01 and 2026-11-11) that found the
 experiment supposed to close the last open question **could not have produced a
 verdict at all** — first because its verdict code would crash, then because its
 instrument measured the wrong position, then because the verdict read the wrong
-head and the cascade could silently analyse another model — and fixed it before
-the run. All entries stay here — the point of this section is to make it easy to
+head and the cascade could silently analyse another model, and finally because
+the published verdict was not the one the code computes — and a twelfth (2026-11-12)
+that found the run seed does not pin the model's initial weights, so two
+commands of one configuration disagreed. All
+entries stay here — the point of this section is to make it easy to
 see the trend (are correctness problems getting caught faster, or accumulating?),
 not to keep only the latest one.
+
+### 2026-11-12 — The run seed did not pin the model's initial weights: two commands of one configuration disagreed
+
+The twelfth audit, and the first one about *what a seed means* rather than
+about a number being wrong: it found that the run seed `exp3` reports does
+not determine the model that run starts from — and that
+two commands differing only in which rung code path they take had been
+published side by side as if they measured the same thing.
+
+**What was broken.** In `exp3`, the model is constructed **before**
+`train_autoencoder` calls `set_seed(seed)` — the seeding happens inside the
+training function, one line after the weights have already been drawn. The data
+is pinned (the dataset has its own `np.random.default_rng(seed)`), and the
+training is pinned, but the **initialization is not**: the weights come from
+whatever ambient torch RNG state happened to be at construction time. So a
+"seed" pins the data and the batch order, but not the starting point of the
+trajectory.
+
+**How it was found.** The Rung 3 sweep manifest and the Rung 3 single-sparsity
+manifest record **the same nominal configuration** — sparsity 0.01, epochs 600,
+8000 samples, batch 512, lr 0.01, seeds 0, 1, 2 — and they disagree:
+`results/exp3_superposition.json` says `n_represented` = 19.67 ± 0.47, while
+`results/exp3_superposition_sweep.json` says 20.00 ± 0.00 for the same level.
+Two commands that differ only in which code path they take should not report
+different answers for one configuration.
+
+**Why they disagree, measured rather than argued.** The two code paths build
+the model at different points in the ambient RNG stream, so they start from
+different weights:
+
+- the **single-sparsity** path calls `set_seed(args.seed)` once in `main()`,
+  before the per-seed loop: the first seed's model is built from that pinned
+  state, and each later seed's model is built after the previous seed's
+  training has consumed the ambient stream;
+- the **sweep** path builds nine models per seed, one per sparsity level, so
+  the model at sparsity 0.01 (the sixth level) is built after five trainings
+  have consumed the stream — a different position in it, and therefore
+  different initial weights, than the single-sparsity path's.
+
+Reconstructing both positions end to end reproduces both numbers exactly: the
+single-sparsity position gives 19/20 and the sweep position gives 20/20 at
+sparsity 0.01, seed 0. The mechanism is confirmed, not inferred.
+
+**How far the defect reaches, also measured.** The initialization never
+depends on the per-seed value at all: a fresh process starts from the state
+`main()` sets once with `set_seed(args.seed)`, so seed 0 alone and seed 1
+alone build **identical** initial weights (`fcea0c2b467a6709`). What varies
+is the position in the sequence: seed 1 after seed 0 starts from
+`0ae834eafda3d9c0`. So "seed N" determines a run's *data* and *batch order*
+but not its starting point — which is why `--seeds 1` alone happens to land
+on 20/20 (the same saturated value the manifest records for seed 1) while
+starting from different weights than seed 1 in a multi-seed run.
+
+**What it changes.** The Rung 3 sweep table is now published from the sweep
+manifest (mean ± std over three seeds, and the per-seed range at the two
+sparsest levels), instead of from a single untracked run — the sweep's numbers
+are now the record, and the audit's number check polices them (the table's
+exemption from that check is gone, and a test fails if a number in it stops
+matching the manifest). The paper's sweep paragraph and the Rung 3 portfolio
+page carry the same manifest-backed numbers.
+
+**What it does not change.** The phase transition itself: **10/20 at sparsity
+0.5 rising to 20/20 by sparsity 0.05**, reproduced by the three-seed sweep.
+No threshold, budget, seed or decision rule changed, and no number was
+re-tuned after seeing the data. The published 19.67 ± 0.47 for the
+single-sparsity manifest is **not** retracted — it is exactly what that run
+measured, and it is still what that manifest says. What changes is that the
+repository now knows *why* it cannot be compared with the sweep's 20.00 ± 0.00
+at the same nominal configuration, and the extreme-sparsity "capacity limit"
+is quoted as a three-seed mean ± spread (17.00 ± 0.82 at sparsity 0.001)
+rather than as one seed's 16/20.
+
+**What is reproducible, measured.** Each path reproduces **its own** manifest
+exactly, which is why this was never caught: re-running the single-sparsity
+command reproduces its per-seed `n_represented` values (19, 20, 20) to the
+digit, and re-running the sweep reproduces the tracked sweep's seed-0 row on
+all 27 recorded fields to eight decimals. The defect is therefore not
+non-determinism — it is that **two different commands that differ only in
+which rung's code path they take were published as if they measured the same
+thing**. The numbers were always reproducible; what was wrong was the
+comparison between them.
+
+**What it does not change either.** No other experiment's published number
+moves, and the scoping was checked rather than assumed: `exp2` and `exp5` seed
+**before** constructing their model, so their seeds are pinned; `exp1` and
+`exp4` construct theirs before the seeding call, in the same way `exp3` does —
+but neither records two code paths of one configuration, so no two tracked
+manifests of this repository contradict each other because of it. The fixed-vs-fresh
+comparison — this repository's one solid Rung 1 finding — is unaffected, and
+was checked directly: the two arms draw **identical** per-seed initial weights
+(`50b106e83b3bb8c7`, `26cec94b0ea967ef`, `19b718a593a9e645`), because both
+arms consume the same number of permutations per epoch, so the batch regime
+really is their only difference. The defect is in the *seed's meaning*, not in
+any published figure. Fixing it properly (seeding before construction, then
+re-running the affected rungs) is a separate measurement campaign with new
+numbers, and it is not performed here: it would replace published manifests
+rather than explain them.
+
+### 2026-11-11 — The published verdict was not the verdict the code computes, and the run's strongest numbers were never published
+
+The eleventh audit, and the first one that audits the repository's own
+*conclusion* rather than its instrument: it found that the headline result of
+issue #200 — the content-based induction task — was published with a verdict
+that the committed code could not reproduce, and that the run's strongest
+measurements were missing from the record entirely.
+
+**What was broken.** Four things, each independent of the others:
+
+1. **The verdict could not be computed at all.** The training run was pinned
+   at commit `88147ee`; the cascade that measures criterion 7 was executed
+   afterwards, at `891ef46`. The verdict module refused the whole run for
+   that difference ("a cascade from a different commit is not the
+   pre-registered instrument"), so `make content-verdict` exited 1 with
+   `RUN STATUS: INCOMPLETE` and **no verdict**, while
+   `portfolio/RESULTS.md` published a PARTIAL verdict and told the reader the
+   artifact was "regenerated with `make content-verdict`". The published
+   number was not derivable from the committed evidence.
+
+2. **The published per-seed table did not match the manifests.** The table
+   said "Path patching: NOT MEASURED" on every seed. The exp4 addendum
+   manifest records `path_patch_measured = 1` and
+   `mean_path_patch_effect = 1.0771` on seed 0 — the criterion is *measured*
+   and it *passes*. With the cascade joined, seed 0 is POSITIVE (7/7), not
+   PARTIAL.
+
+3. **The strongest numbers of the run were never published.** The mechanism
+   report — the *secondary* report the pre-registration asks for — was
+   computed, written into the manifest and then left out of the record. It
+   says that on the two seeds the per-head rule calls NEGATIVE, the model
+   copies at **0.9976 / 0.9988** (non-modal 0.9972 / 0.9986) against a
+   fixed-offset baseline of **0.155 / 0.158**, and that **one head alone
+   removes 0.9298 / 0.9402 of the copy accuracy**. The published table's
+   "NOT MEASURED" cells made that look like an absence of evidence where the
+   evidence was in the manifest all along.
+
+4. **The paper described a sweep that has never run.** `main.tex` carried a
+   "Deviations from Pre-Registration" paragraph about the phase-diagram
+   cells ("no cell is DENSE", a SPARSE count of "4 / 2 / 6", a
+   `NOT_GROKKED` gate). No `results/phase_diagram_*.json` manifest exists
+   anywhere in the repository or in the downloaded GPU outputs, and
+   `configs/phase_diagram_ablation.yaml` claimed the reduction decision was
+   taken "after the sweep ran on GPU". The sweep has not run. This is the
+   "documentation ahead of its evidence" failure the ledger exists to
+   prevent, in the one document a reader is most likely to take at face
+   value.
+
+**What it changes.** The verdict is now **two verdicts, published side by
+side**: the pre-registered one (the training run alone — criterion 7 was not
+part of it, so it is `NOT MEASURED` there — seed 0 PARTIAL, seeds 1–2
+NEGATIVE, run PARTIAL) and the causal addendum (the same run plus the
+cascade, with the commit difference declared in its provenance — seed 0
+POSITIVE, seeds 1–2 NEGATIVE, run NEGATIVE by the frozen majority rule). The
+strict refusal still exists for the merged mode. The mechanism report is
+published with its numbers. The paper's paragraph about the sweep is deleted
+until the sweep has run.
+
+**What it does not change.** The seven criteria, their thresholds and the
+decision rule are untouched. No number is re-tuned after seeing the data, no
+seed is dropped, and the budget is not extended. The word "induction head" is
+still not used for this task. The retraction of the two "NEGATIVE" seeds as a
+statement about the *model* is **not** a retraction of the verdict: the
+verdict stands as the frozen rule applied to the frozen instrument, and what
+changes is that the record now also carries the measurements that explain
+what the verdict is about.
 
 ### 2026-11-04 — Finalization of Content Task Instrumentation
 The standard-geometry CPU de-risk (`results/induction_content_derisk_standard.json`) was successfully run, and the verdict module (`src/experiments/content_verdict.py`) computed the verdict. The run is `INCOMPLETE` (due to being a de-risk pilot with seed 0 only), but the instrumentation and verdict criteria are verified. The full GPU run is queued and pending.
@@ -393,9 +568,12 @@ carry a manifest tag, and this one never had one.
 Re-run for real, 3 seeds per arm, identical config, batch regime the only difference
 (`make reproduce-induction-batches`):
 
+<!-- manifest: results/exp1_induction_fixed_batches.json -->
+<!-- manifest: results/exp1_induction_fresh_batches.json -->
+
 | | Fixed | Fresh |
 |---|---|---|
-| Was claimed (prose only) | 0.05% | 52.2% |
+| Was claimed (prose only — no tracked manifest, and never had one) | 0.05% | 52.2% |
 | Actually measured | **0.45% ± 0.03%** | **53.53% ± 0.03%** |
 
 Same conclusion — two orders of magnitude in the same direction — but different numbers,
@@ -713,25 +891,92 @@ its GPU run. The short version:
 <!-- manifest: results/induction_content_derisk_standard.json -->
 <!-- manifest: results/exp4_content.json -->
 
-**Status: [x] run complete — verdict PARTIAL.** GPU run completed 2026-11-09
-(3 seeds × 3000 epochs, manifest `results/induction_content.json` pinned at
-ref `v1.1.0-rc2`). Per-seed results from `results/content_verdict.json`:
+**Status: [x] run complete — two verdicts, kept apart.** GPU run completed
+2026-11-09 (3 seeds × 3000 epochs, manifest `results/induction_content.json`,
+pinned at ref `v1.1.0-rc2`, commit `88147ee`).
 
-| Seed | Verdict | Heads | Copy acc. | Non-modal acc. | Beats fixed offset | Content mass | Ablation drop | Path patching |
-|------|---------|-------|-----------|----------------|-------------------|--------------|---------------|---------------|
-| 0 | PARTIAL | 2 | 1.0000 | 1.0000 | 0.8354 | 0.7555 (PASS) | 0.1797 (PASS) | NOT MEASURED |
+The training run and the causal cascade are **two instruments**: the cascade
+that measures criterion 7 (path patching) was executed *after* the training
+run, at commit `891ef46`, and the pre-registration's decision rule was
+applied to the run as it was launched. So there are two verdicts, and they
+are reported side by side (`make content-verdict`, module
+`src/experiments/content_verdict.py`, artifact schema `content-verdict/2`):
+
+| Verdict | Instrument | Seed 0 | Seed 1 | Seed 2 | Run |
+|---|---|---|---|---|---|
+| **Pre-registered** | the training run alone (`88147ee`); criterion 7 was not part of it | PARTIAL | NEGATIVE | NEGATIVE | **PARTIAL** |
+| **Causal addendum** | the same run + the cascade (`891ef46`), declared as a post-hoc addendum | **POSITIVE** (7/7) | NEGATIVE | NEGATIVE | NEGATIVE (1/3 seeds positive, the frozen majority rule) |
+
+Per-seed detail of the pre-registered verdict (the one the record publishes),
+with the addendum's extra measurement in the last column:
+
+| Seed | Verdict | Confirmed heads | Copy acc. | Non-modal acc. | Beats fixed offset | Content mass (confirmed head) | Ablation drop | Path patching (addendum) |
+|------|---------|-----------------|-----------|----------------|-------------------|------------------------------|---------------|------------------------|
+| 0 | PARTIAL | 2 | 1.0000 | 1.0000 | 0.8354 | 0.7555 (PASS) | 0.1797 (PASS) | 1.0771 (PASS, addendum) |
 | 1 | NEGATIVE | 0 | 0.9976 | 0.9972 | 0.8426 | NOT MEASURED | NOT MEASURED | NOT MEASURED |
 | 2 | NEGATIVE | 0 | 0.9988 | 0.9986 | 0.8403 | NOT MEASURED | NOT MEASURED | NOT MEASURED |
 
-**Decision:** per the pre-registration, a PARTIAL verdict is reported as-is.
-No re-run: the missing criteria (content mass on seeds 1-2, path patching on
-all seeds) are reported, not fabricated. exp4 was executed afterward as a
-dated addendum on the existing 3000-epoch checkpoints
-(`make reproduce-induction-content-exp4`, manifest `results/exp4_content.json`,
-git_sha 88147ee, CPU) — its causal measurements are recorded in the addendum
-manifest but do not change the per-seed verdicts above. The verdict artifact
-is `results/content_verdict.json` (a derived artifact, regenerated with
-`make content-verdict`).
+<!-- manifest: results/induction_content.json -->
+<!-- manifest: results/exp4_content.json -->
+
+**Decision:** per the pre-registration, the verdicts are reported as they
+come out. No re-run: the missing measurements (content mass on seeds 1–2)
+are reported, not fabricated.
+
+### The secondary mechanism report — what the run actually shows
+
+The mechanism report is *secondary* by construction (the seven criteria
+decide; the report explains), and it was **not published** with the first
+reading of this run. It carries the strongest numbers the run produced, and
+they change how the verdict has to be read:
+
+| Measurement (from `results/induction_content.json`) | Seed 0 | Seed 1 | Seed 2 |
+|---|---|---|---|
+| Copy accuracy on the copy queries | 1.0000 | 0.9976 | 0.9988 |
+| Copy accuracy on the **non-modal** distance group | 1.0000 | 0.9972 | 0.9986 |
+| Best single fixed offset (the positional baseline) | 0.1646 | 0.1550 | 0.1584 |
+| Aggregate content mass (vs chance) | 1.6378 (10.0×) | 0.2641 (1.6×) | 0.3977 (2.4×) |
+| **Group ablation drop** (candidate group removed) | 0.9989 | 0.9298 | 0.9852 |
+| **Largest single-head ablation drop** | 0.2067 | **0.9298** | **0.9402** |
+| Exploratory group ablation (top-80% mass, 4 heads) | 0.9989 | 0.9942 | 0.9954 |
+| K-composition score (the per-head confirmation bar is 0.40) | 0.7054 | 0.0580 | 0.0711 |
+| Logit attribution: positive share on the content-vs-position contrast | 0.9996 | 0.9981 | 0.9967 |
+
+**What this says, stated as sharply as the evidence allows.** On **all three
+seeds** the model copies by *content*: the copy queries are answered at
+0.997–1.000 while the best single fixed offset explains only 15.5–16.5% of
+them, and the logit attribution favours the content answer on 99.8–99.96% of
+the queries. On seeds 1 and 2 the per-head rule reports `NEGATIVE` — and yet
+the mechanism report shows that **one head alone carries 93–94% of the copy**
+(ablation drop 0.9298 / 0.9402). So on those seeds the copy is real,
+content-based and causally attributable to a single head; what is missing is
+the *confirmation* the frozen rule asks for: that head's own attention mass
+on the content key (0.0886 / 0.1223) stays below the 0.30 screen, and the
+K-composition score (0.058 / 0.071) stays far below the 0.40 bar.
+
+**That is a finding about the instrument, not about the model** — the same
+class of error this repository has retracted three times before (the
+previous-token detector of 2026-10-19, the L1-mass Fourier classifier of
+2026-10-08, the chance-level bug of 2026-10-25). The honest wording is
+therefore:
+
+- the **behaviour** is content-based on 3/3 seeds (copy accuracy, non-modal
+  accuracy, the margin over the best fixed offset, and the logit attribution);
+- the **causal** measurement is a single head on 3/3 seeds (ablation drop
+  0.93–0.99, group ablation 0.93–0.99);
+- the **pre-registered per-head rule** confirms a head on 1/3 seeds only, so
+  the pre-registered verdict is PARTIAL and the addendum's run-level label
+  (by the frozen majority rule) is NEGATIVE;
+- the word "induction head" is **not** used for this task: the pre-registration
+  requires the per-head confirmation for it, and 2 of 3 seeds do not carry it.
+
+The open question is now sharp and measurable: **why does the head that
+carries the copy not put its attention mass on the content key?** The
+candidate explanation — a two-stage circuit in which the first layer writes
+*where* the previous occurrence is and the second layer reads *what* follows
+it — is not yet tested, and the K-composition measure cannot see it, because
+it assumes that the first layer's argmax *is* the previous occurrence (which
+on this task it need not be). That is the next experiment, not a conclusion.
 
 ### Quick scale (the historical scale, for continuity)
 
@@ -764,7 +1009,6 @@ batch_size=32, num_train=256`).
 | Peak previous-token mass (the old "diag+1") | 0.217 ± 0.010 | 0.201 ± 0.012 |
 | Induction heads (>0.3 threshold) | **RETRACTED** (old detector) | **RETRACTED** (old detector) |
 | K-composition score | 0.145 ± 0.011 | 0.157 ± 0.012 |
-
 Both arms are far apart in accuracy — two orders of magnitude, in the same
 direction as the original prose-only claim — and neither crosses the 0.3
 detection threshold in this budget.
@@ -912,28 +1156,55 @@ real bottleneck (see Honesty Ledger and
 [superposition-setup-validity](../05_llm_engineering/proofs/superposition-setup-validity.md)). Rewritten to the canonical
 Elhage et al. setup; the transition reproduces on the first run, cleanly, with no tuning.
 
-| Sparsity | Features represented | Mean dimensionality | Mean \|corr\| |
-|----------|----------------------|----------------------|--------------|
-| 0.500 | 10 / 20 | 0.250 | 0.302 |
-| 0.200 | 15 / 20 | 0.250 | 0.316 |
-| 0.100 | 19 / 20 | 0.250 | 0.340 |
-| 0.050 | 20 / 20 | 0.250 | 0.349 |
-| 0.020 | 20 / 20 | 0.250 | 0.348 |
-| 0.010 | 20 / 20 | 0.248 | 0.352 |
-| 0.005 | 20 / 20 | 0.248 | 0.352 |
-| 0.002 | 20 / 20 | 0.249 | 0.350 |
-| 0.001 | 16 / 20 | 0.250 | 0.326 |
+<!-- manifest: results/exp3_superposition_sweep.json -->
 
-Multi-seed manifest (3 seeds, `single_sparsity=0.01`, otherwise identical config):
-`n_represented` = 19.67 ± 0.47 (one seed of three landed at 19/20 rather than 20/20 — a
-real, small seed-to-seed spread, not noise-free).
+| Sparsity | Features represented (mean ± std over 3 seeds) | Mean dimensionality | Mean \|corr\| |
+|----------|----------------------|----------------------|--------------|
+| 0.500 | 10.00 ± 0.00 | 0.250 ± 0.000 | 0.299 ± 0.003 |
+| 0.200 | 14.67 ± 0.47 | 0.250 ± 0.000 | 0.315 ± 0.005 |
+| 0.100 | 17.67 ± 1.25 | 0.250 ± 0.000 | 0.336 ± 0.003 |
+| 0.050 | 20.00 ± 0.00 | 0.250 ± 0.000 | 0.348 ± 0.001 |
+| 0.020 | 20.00 ± 0.00 | 0.249 ± 0.000 | 0.349 ± 0.002 |
+| 0.010 | 20.00 ± 0.00 | 0.249 ± 0.000 | 0.350 ± 0.002 |
+| 0.005 | 20.00 ± 0.00 | 0.249 ± 0.000 | 0.351 ± 0.001 |
+| 0.002 | 18.67 ± 0.47 | 0.247 ± 0.001 | 0.348 ± 0.006 |
+| 0.001 | 17.00 ± 0.82 | 0.249 ± 0.001 | 0.335 ± 0.002 |
+
+**The sweep above had no manifest behind it (2026-11-11), and now it does.** The
+2026-11-11 audit's number check found what the record had been hiding: the sweep path of
+this experiment wrote figures and a stdout table and **never a record** — the only
+tracked exp3 manifest was the multi-seed run at a single sparsity, so Rung 3's headline
+table was the one public table in this ledger with no evidence behind it. `exp3` grew a
+`--sweep-seeds` flag, the three-seed sweep ran on a clean tree
+(`results/exp3_superposition_sweep.json`, 3 seeds x 9 sparsity levels), and the table
+above is now **that manifest's numbers**, read back from it rather than from the
+sweep's stdout.
+
+**What the three-seed sweep changed, and what it did not.** The phase transition is
+unchanged in shape: **10/20 at sparsity 0.5 rising to 20/20 by sparsity 0.05**, and
+20/20 held down to sparsity 0.005. What the seed spread adds is the *tail*, which the
+single-seed table could not show: at sparsity 0.002 the three seeds land at 19, 19, 18
+of 20 (mean 18.67 ± 0.47) and at sparsity 0.001 at 18, 17, 16 (mean 17.00 ± 0.82).
+The old table's single-seed "16 / 20" at sparsity 0.001 was one draw from that spread —
+so the previously published "capacity limit at extreme sparsity" number is now a
+**three-seed mean of 17.00 ± 0.82** rather than a single observation. The honest
+statement of the limit is the mean ± spread, and the level at which the model stops
+representing every feature moves with the seed.
+
+The three-seed manifest at the reference sparsity (`results/exp3_superposition.json`,
+3 seeds, `single_sparsity=0.01`) records `n_represented` = 19.67 ± 0.47 — one seed of
+three landed at 19/20 rather than 20/20. That is the *same* configuration as the
+sweep's 0.010 row (20.00 ± 0.00), and the two disagree: see the audit entry of
+2026-11-12 above, which explains why the two code paths, run on the same
+machine, produced two different answers. (Re-running that manifest's exact command
+reproduces its per-seed `n_represented` values, 19, 20 and 20, to the digit — the
+disagreement is between the two *code paths*, not between runs of the same one.)
 
 Expected (Elhage et al.): as sparsity decreases (features rarely co-active), interference
 pressure drops and the model represents more features. **Observed: exactly this — 10/20 at
-the densest setting rising to 20/20 by sparsity=0.05, holding through 0.002.** (The drop to
-16/20 at the sparsest setting, 0.001, is a genuine capacity limit — the 2000-vs-600-epoch
-drill (2026-08-06) refuted the under-training hypothesis (see the MP10 honesty
-ledger).) The old flat/near-zero "recovery" numbers above the fix are struck through in
+the densest setting rising to 20/20 by sparsity=0.05**, now measured over three seeds
+rather than one. The old
+flat/near-zero "recovery" numbers above the fix are struck through in
 spirit, not deleted from this table's history: the root cause was that the model had no
 actual compression to perform (the dataset pre-embedded features before the model saw
 them), not a metric-scale issue, not a training-budget issue, and not the untied-weights
@@ -1076,7 +1347,7 @@ head**, which is the pending item this rung had been carrying: the SAE now sees 
 
 <!-- manifest: results/exp5_real_activations.json -->
 
-| Metric | Synthetic (d_model=64, 8× dict, manifest 2026-08-13) | Real, old (d_model=32, from a 2000-step shakedown checkpoint) | Real, **new** (d_model=64, from the standard-scale confirmed-head checkpoint, 2026-10-20) |
+| Metric | Synthetic (d_model=64, 8× dict, manifest 2026-08-13) | Real, old (d_model=32, from a 2000-step shakedown checkpoint — no tracked manifest, historical) | Real, **new** (d_model=64, from the standard-scale confirmed-head checkpoint, 2026-10-20) |
 |--------|-------|-------|-------|
 | Dictionary size | 512 | 256 | 512 |
 | L0 sparsity | 96.60 / 512 (18.9%) | 136.25 / 256 (**53.2%**) | **15.12 / 512 (3.0%)** |

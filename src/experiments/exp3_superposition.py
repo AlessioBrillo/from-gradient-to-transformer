@@ -47,7 +47,7 @@ from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
-from src.experiments.runner import parse_seeds, run_seeds
+from src.experiments.runner import aggregate_metrics, parse_seeds, run_seeds
 from src.reproducibility import set_seed
 from src.results import ResultsManifest, count_parameters, resolve_manifest_path
 
@@ -377,6 +377,78 @@ def plot_phase_change(
 # ---------------------------------------------------------------------------
 # Multi-seed headline run
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# The sparsity sweep, and the manifest it finally writes
+# ---------------------------------------------------------------------------
+#: The sparsities of the phase-transition sweep, dense to extremely sparse.
+SWEEP_SPARSITIES = (0.5, 0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.002, 0.001)
+
+
+def run_sweep_seed(seed: int, args: argparse.Namespace) -> list[dict]:
+    """Train one autoencoder per sparsity of the sweep and return the rows.
+
+    One seed, the whole sweep: the figures and the phase-transition table
+    come from here.
+    """
+    rows: list[dict] = []
+    for sparsity in SWEEP_SPARSITIES:
+        logger.info("=" * 60)
+        logger.info(f"Sparsity: {sparsity:.4f} (seed {seed})")
+        logger.info("=" * 60)
+
+        dataset = SparseFeatureDataset(
+            n_features=args.n_features,
+            sparsity=sparsity,
+            num_samples=args.num_samples,
+            importance_decay=args.importance_decay,
+            seed=seed,
+        )
+        loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+        model = ToyAutoencoder(
+            n_features=args.n_features, n_dimensions=args.n_dimensions
+        )
+        train_autoencoder(
+            model=model,
+            loader=loader,
+            importance=dataset.importance,
+            epochs=args.epochs,
+            lr=args.lr,
+            seed=seed,
+        )
+        geometry = compute_feature_geometry(model, threshold=args.threshold)
+        logger.info(
+            f"Represented: {geometry['n_represented']}/{args.n_features} | "
+            f"Mean dimensionality: {geometry['mean_dimensionality']:.3f} | "
+            f"Mean abs corr: {geometry['mean_abs_correlation']:.3f}"
+        )
+        rows.append(
+            {
+                "sparsity": sparsity,
+                "n_features": args.n_features,
+                **geometry,
+            }
+        )
+    return rows
+
+
+def sweep_row(results: list[dict]) -> dict[str, float]:
+    """One seed's sweep as a flat row of manifest metrics.
+
+    The keys carry the sparsity, so the aggregate over seeds is a
+    mean ± std *per sparsity level* — the phase-transition table is
+    exactly that, and a manifest that does not carry it cannot back the
+    table (which is what the 2026-11-11 audit found: Rung 3's headline
+    sweep had no manifest behind it at all).
+    """
+    row: dict[str, float] = {}
+    for r in results:
+        key = f"sparsity_{r['sparsity']:g}".replace(".", "_")
+        row[f"{key}_n_represented"] = float(r["n_represented"])
+        row[f"{key}_mean_dimensionality"] = float(r["mean_dimensionality"])
+        row[f"{key}_mean_abs_correlation"] = float(r["mean_abs_correlation"])
+    return row
+
+
 def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
     """Train one autoencoder at a single representative sparsity and return
     the headline geometry metrics for one seed.
@@ -475,6 +547,32 @@ def main() -> None:
             "headline single-sparsity config across all seeds, saves a "
             "results/exp3_superposition.json manifest, and skips the "
             "plot-producing sweep."
+        ),
+    )
+    parser.add_argument(
+        "--sweep-seeds",
+        type=str,
+        default=None,
+        help=(
+            "Comma-separated seeds for the *sweep* (e.g. '0,1,2'). The sweep "
+            "is Rung 3's headline claim — the phase transition from 10/20 to "
+            "20/20 represented features — and until 2026-11-11 it wrote "
+            "figures and stdout but never a manifest, so the table had no "
+            "record behind it. With this flag every seed's sweep lands in "
+            "results/exp3_superposition_sweep.json, with a mean ± std per "
+            "sparsity level."
+        ),
+    )
+    parser.add_argument(
+        "--manifest-path",
+        type=str,
+        default=None,
+        help=(
+            "Where to write the manifest. Default: results/exp3_superposition.json "
+            "for the single-sparsity multi-seed run and "
+            "results/exp3_superposition_sweep.json for the sweep. A --quick run "
+            "goes to the scratch path instead, so a smoke test can never "
+            "overwrite the record."
         ),
     )
     args = parser.parse_args()
@@ -592,52 +690,45 @@ def main() -> None:
         sparsity_values = [args.single_sparsity]
     else:
         # Sweep sparsity from dense to extremely sparse
-        sparsity_values = [0.5, 0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.002, 0.001]
+        sparsity_values = list(SWEEP_SPARSITIES)
 
-    results = []
-    for sparsity in sparsity_values:
-        logger.info("=" * 60)
-        logger.info(f"Sparsity: {sparsity:.4f}")
-        logger.info("=" * 60)
+    # The sweep runs once per seed when `--sweep-seeds` is given, and every
+    # seed's sweep lands in a manifest: the phase-transition table is a
+    # public claim, and until 2026-11-11 it had no manifest behind it at
+    # all (the sweep path wrote figures and stdout, never a record).
+    sweep_seeds = parse_seeds(args.sweep_seeds) if args.sweep_seeds else [args.seed]
+    per_seed_rows: list[dict[str, float]] = []
+    results: list[dict] = []
+    for seed in sweep_seeds:
+        results = run_sweep_seed(seed, args)
+        per_seed_rows.append(sweep_row(results))
+        if seed != sweep_seeds[0]:
+            continue  # the figures come from the first seed
 
-        dataset = SparseFeatureDataset(
-            n_features=args.n_features,
-            sparsity=sparsity,
-            num_samples=args.num_samples,
-            importance_decay=args.importance_decay,
-            seed=args.seed,
+    if args.sweep_seeds:
+        aggregate = aggregate_metrics(per_seed_rows)
+        manifest = ResultsManifest.from_run(
+            experiment="exp3_superposition_sweep",
+            seeds=sweep_seeds,
+            args={k: v for k, v in vars(args).items() if k != "sweep_seeds"},
+            per_seed_metrics=per_seed_rows,
+            aggregate=aggregate,
+            wall_clock_seconds=0.0,
+            device=str(DEVICE),
+            n_parameters=count_parameters(
+                ToyAutoencoder(
+                    n_features=args.n_features, n_dimensions=args.n_dimensions
+                )
+            ),
         )
-        loader = DataLoader(
-            dataset, batch_size=args.batch_size, shuffle=True
+        manifest_path = resolve_manifest_path(
+            "exp3_superposition_sweep",
+            Path("results") / "exp3_superposition_sweep.json",
+            args.manifest_path,
+            args.quick,
         )
-
-        model = ToyAutoencoder(
-            n_features=args.n_features,
-            n_dimensions=args.n_dimensions,
-        )
-
-        train_autoencoder(
-            model=model,
-            loader=loader,
-            importance=dataset.importance,
-            epochs=args.epochs,
-            lr=args.lr,
-            seed=args.seed,
-        )
-
-        geometry = compute_feature_geometry(model, threshold=args.threshold)
-
-        logger.info(
-            f"Represented: {geometry['n_represented']}/{args.n_features} | "
-            f"Mean dimensionality: {geometry['mean_dimensionality']:.3f} | "
-            f"Mean abs corr: {geometry['mean_abs_correlation']:.3f}"
-        )
-
-        results.append({
-            "sparsity": sparsity,
-            "n_features": args.n_features,
-            **geometry,
-        })
+        manifest.save(manifest_path)
+        logger.info(f"Saved the sweep manifest to {manifest_path}")
 
     # Plot phase change if we did a sweep
     if len(sparsity_values) > 1:
