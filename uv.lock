@@ -701,13 +701,11 @@ name = "from-gradient-to-transformer"
 version = "1.1.0"
 source = { virtual = "." }
 dependencies = [
-    { name = "kaggle" },
     { name = "matplotlib" },
     { name = "numpy" },
     { name = "pyyaml" },
     { name = "torch" },
     { name = "tqdm" },
-    { name = "wandb" },
 ]
 
 [package.optional-dependencies]
@@ -724,12 +722,18 @@ notebook = [
     { name = "ipykernel" },
     { name = "jupyter" },
 ]
+remote = [
+    { name = "kaggle" },
+]
+tracking = [
+    { name = "wandb" },
+]
 
 [package.metadata]
 requires-dist = [
     { name = "ipykernel", marker = "extra == 'notebook'", specifier = ">=6.29" },
     { name = "jupyter", marker = "extra == 'notebook'", specifier = ">=1.0" },
-    { name = "kaggle", specifier = ">=1.6" },
+    { name = "kaggle", marker = "extra == 'remote'", specifier = ">=1.6" },
     { name = "markdown", marker = "extra == 'dev'", specifier = ">=3.5" },
     { name = "matplotlib", specifier = ">=3.8" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
@@ -742,9 +746,9 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.4" },
     { name = "torch", specifier = ">=2.2" },
     { name = "tqdm", specifier = ">=4.66" },
-    { name = "wandb", specifier = ">=0.17" },
+    { name = "wandb", marker = "extra == 'tracking'", specifier = ">=0.17" },
 ]
-provides-extras = ["dev", "notebook"]
+provides-extras = ["dev", "notebook", "tracking", "remote"]
 
 [[package]]
 name = "fsspec"

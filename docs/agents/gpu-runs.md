@@ -63,8 +63,9 @@ manifest and skips completed cells.
 
 ## One-time host setup
 
-- `python -m pip install kaggle` into the project venv (the driver invokes it
-  as `sys.executable -m kaggle`, so no PATH gymnastics are needed).
+- The Kaggle CLI is the optional `remote` extra: `uv sync --extra remote`
+  (the `make remote-run-*` targets request it themselves). The driver invokes
+  it as `sys.executable -m kaggle`, so no PATH gymnastics are needed.
 - Credentials: kaggle.com → Settings → Account → **Create New Token** →
   save the `KGAT_...` token to `~/.kaggle/access_token`
   (Windows: `C:\Users\<you>\.kaggle\access_token`), or export

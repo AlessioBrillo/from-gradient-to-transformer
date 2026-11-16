@@ -454,11 +454,11 @@ remote-dry-grokking:
 
 remote-run-grokking:
 	@echo "=== Rung 2: P=113 positive control + energy-metric re-judgement (GPU) ==="
-	uv run python scripts/kaggle_run.py --notebook notebooks/kaggle_grokking_p113.ipynb --branch $(GPU_BRANCH) --user $(GPU_USER) --poll --download
+	uv run --extra remote python scripts/kaggle_run.py --notebook notebooks/kaggle_grokking_p113.ipynb --branch $(GPU_BRANCH) --user $(GPU_USER) --poll --download
 
 remote-run-induction:
 	@echo "=== Rung 1/4/5: scaled induction run + head-validation cascade (GPU) ==="
-	uv run python scripts/kaggle_run.py --notebook notebooks/kaggle_induction_standard.ipynb --branch $(GPU_BRANCH) --user $(GPU_USER) --poll --download
+	uv run --extra remote python scripts/kaggle_run.py --notebook notebooks/kaggle_induction_standard.ipynb --branch $(GPU_BRANCH) --user $(GPU_USER) --poll --download
 
 remote-dry-induction-content:
 	@echo "=== Validate the content-based induction GPU notebook without pushing ==="
@@ -466,15 +466,15 @@ remote-dry-induction-content:
 
 remote-run-induction-content:
 	@echo "=== Rung 1: content-based induction task, 3 seeds x 3000 epochs (GPU, issue #200) ==="
-	uv run python scripts/kaggle_run.py --notebook notebooks/kaggle_induction_content.ipynb --branch $(GPU_BRANCH) --user $(GPU_USER) --poll --download
+	uv run --extra remote python scripts/kaggle_run.py --notebook notebooks/kaggle_induction_content.ipynb --branch $(GPU_BRANCH) --user $(GPU_USER) --poll --download
 
 remote-run-capstone:
 	@echo "=== Capstone: 3 seeds x 20k steps (GPU) ==="
-	uv run python scripts/kaggle_run.py --notebook notebooks/kaggle_capstone_20k.ipynb --branch $(GPU_BRANCH) --user $(GPU_USER) --poll --download
+	uv run --extra remote python scripts/kaggle_run.py --notebook notebooks/kaggle_capstone_20k.ipynb --branch $(GPU_BRANCH) --user $(GPU_USER) --poll --download
 
 remote-run-sweep:
 	@echo "=== Phase-diagram sweep: protocol ablation from the Nanda-faithful baseline (GPU) ==="
-	uv run python scripts/kaggle_run.py --notebook notebooks/kaggle_phase_sweep.ipynb --branch $(GPU_BRANCH) --user $(GPU_USER) --poll --download
+	uv run --extra remote python scripts/kaggle_run.py --notebook notebooks/kaggle_phase_sweep.ipynb --branch $(GPU_BRANCH) --user $(GPU_USER) --poll --download
 
 remote-pin:
 	@echo "=== Validating and installing remote-run manifests (fail-closed) ==="
