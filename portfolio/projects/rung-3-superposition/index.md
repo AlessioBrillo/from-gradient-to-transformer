@@ -16,7 +16,8 @@ rung: 3
 
 **Key Result**:
 <!-- manifest: results/exp3_superposition.json -->
-Phase transition reproduced: 10/20 features represented at sparsity 0.5, rising to 20/20 by sparsity 0.05. Regular pentagon geometry (gaps 70.2–73.8 deg, std <= 1.4 deg vs ideal 72 deg) is the sparse-phase attractor at sparsity <= 0.1; the dense regime sits off-pentagon.
+<!-- manifest: results/exp3_superposition_sweep.json -->
+Phase transition reproduced: 10.00 ± 0.00 of 20 features represented at sparsity 0.5, rising to 20.00 ± 0.00 by sparsity 0.05 (three seeds, `results/exp3_superposition_sweep.json`). Regular pentagon geometry (gaps 70.2–73.8 deg, std <= 1.4 deg vs ideal 72 deg) is the sparse-phase attractor at sparsity <= 0.1; the dense regime sits off-pentagon.
 
 **Figure**:
 ![Pentagon Geometry](../../figures/exp3_pentagon_geometry.png) <!-- manifest: results/exp3_superposition.json -->
@@ -27,7 +28,7 @@ Phase transition reproduced: 10/20 features represented at sparsity 0.5, rising 
 
 **Limitations**:
 - Synthetic data only — no real model activations yet
-- Capacity limit at extreme sparsity (0.001): 16/20 features represented (RESULTS table)
+- Capacity limit at extreme sparsity (0.001): 17.00 ± 0.82 of 20 features represented over three seeds (RESULTS table); the level moves with the seed
 - Pentagon geometry is a property of the *sparse phase*, not universal
 
 **Links**:
