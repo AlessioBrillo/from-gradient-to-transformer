@@ -51,7 +51,7 @@ The manifests behind that table: Rung 1
 
 ## Why the record can be trusted
 
-Twelve audits have examined these claims, and each one is written up in the
+These claims have been through twelve audits, and each one is written up in the
 [Honesty Ledger](portfolio/RESULTS.md) with what was wrong and what changed.
 They found numbers that were wrong or unbacked, a negative verdict that its own
 metric had manufactured (the 2026-08-11 "no grokking" result, retracted on
