@@ -79,7 +79,7 @@ capstone working, not the capstone failing.
 
 ## Links
 - [[07_capstone/notes/grokking-verdict-p113|Grokking verdict P=113]] — the full P=113 analysis
-- [[07_capstone/notes/mp-94-positive-control-results|MP-94 positive control]] — P=59 NO-GROK
+- [[archive/process/capstone-notes/mp-94-positive-control-results|MP-94 positive control]] — P=59 NO-GROK
 - [[07_capstone/notes/dense-solutions-modular-addition|Dense solutions on modular addition]] — the characterization
 - [[portfolio/RESULTS|Honesty Ledger]] — the audit trail this gate answer sits on
 - [[00_meta/01_roadmap|Roadmap]] — the gate text this note answers

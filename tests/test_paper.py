@@ -1,7 +1,7 @@
 """Static checks on portfolio/paper/main.tex.
 
 There is no LaTeX toolchain on the author's machine or on most contributors'
-(see checklists/gate-debt.md's LaTeX row), so `make paper` degrades to a
+(see archive/process/gate-debt.md's LaTeX row), so `make paper` degrades to a
 message and CI is the only place the paper actually compiles. These checks
 run everywhere and catch the failure classes that a compile would, without
 needing texlive:

@@ -63,13 +63,14 @@ model classes; `exp6` (capstone) uses the shared one.
 
 ```
 CONTEXT.md            ← this file
-docs/adr/             ← dated architecture/research decisions (0001–0033)
+docs/adr/             ← dated architecture/research decisions (0031 onward)
+archive/process/      ← frozen process history: micro-phase roadmaps, ledger ADRs 0001–0030
 portfolio/RESULTS.md  ← Honesty Ledger: the authority on what is true
 src/results.py        ← manifests + verify-claims
 src/experiments/      ← one module per rung
 scripts/              ← plotting, site build, external-run pinning, vault checks
 configs/              ← YAML configs for exp6 and the phase-diagram sweep
-checklists/           ← reproducibility checklist, gate debt
+checklists/           ← reproducibility checklist
 07_capstone/          ← capstone plan, execution log, writeup, notes
 ```
 
@@ -84,4 +85,4 @@ checklists/           ← reproducibility checklist, gate debt
 
 Current status lives in `portfolio/RESULTS.md` and the `v1.0` GitHub milestone.
 Do not re-derive status from the ADR ledgers (0001–0030 are historical and closed,
-see `docs/adr/0031-closure.md`).
+see `docs/adr/0031-closure.md`; they live in `archive/process/adr/`).

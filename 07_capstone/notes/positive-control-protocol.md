@@ -82,11 +82,11 @@ interaction, not with renormalization.
 
 ## Links
 
-- [[00_meta/28_micro-phase-29-the-positive-negative]] — the roadmap that
+- [[archive/process/micro-phases/28_micro-phase-29-the-positive-negative]] — the roadmap that
   pre-registered this protocol (Session 0–1).
 - [[07_capstone/notes/grokking-verdict-p113]] — the NO-GROK verdict this
   control exists to attribute.
-- [[docs/adr/0003-research-return-ledger]] — the frozen protocol the scan
+- [[archive/process/adr/0003-research-return-ledger]] — the frozen protocol the scan
   inherits; row 2's trial budget it does not consume.
 - [[07_capstone/notes/microscope-trial-table]] — the trials the control
   gates.

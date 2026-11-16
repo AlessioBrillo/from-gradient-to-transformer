@@ -24,6 +24,7 @@ Obsidian vault + mechanistic interpretability research codebase: from gradient d
 - `portfolio/figures/` — the curated, tracked figure set (a build product: `make figures`)
 - `portfolio/` — RESULTS.md (Honesty Ledger), mini-paper (LaTeX), model card
 - `checklists/` — reproducibility checklist, datasets
+- `archive/process/` — frozen process history (micro-phase roadmaps, ledger ADRs 0001–0030). Not current; do not derive status from it.
 - `CONTEXT.md` — domain map, vocabulary, rung→module map. **Read it first.**
 - `scripts/new_note.sh` — create notes from templates
 - `templates/` — note.md, exercise.md, proof.md, project.md, paper-note.md

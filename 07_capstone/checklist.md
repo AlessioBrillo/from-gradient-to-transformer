@@ -16,7 +16,7 @@ The capstone question (roadmap, Phase 7 gate): *"How does your transformer imple
   - Exercise: [[04_nlp_and_transformers/exercises/ex-01-transformer-from-scratch|Transformer From Scratch]]
   - Proof: [[04_nlp_and_transformers/proofs/circuit-analysis-complete|Circuit Analysis Complete]]
 - [x] **Joint training pipeline with full instrumentation** — `src/experiments/exp6_capstone.py`: hooks, Fourier decomposition, K-composition, activation patching, checkpoint/resume (bit-identical, kill-drill validated)
-  - Evidence: [[07_capstone/notes/mp-88-shakedown-verdict|MP-88 shakedown verdict]] (induction 0.5041 vs modular 0.0047 — the joint-training dissociation)
+  - Evidence: [[archive/process/capstone-notes/mp-88-shakedown-verdict|MP-88 shakedown verdict]] (induction 0.5041 vs modular 0.0047 — the joint-training dissociation)
 - [x] **Progress measures** (Nanda et al.): Fourier sparsity, excluded loss, k₉₀/k₉₉, generalization epoch — plus the post-audit energy metric in exp2
   - Proof: [[07_capstone/notes/capstone-gate-honest-negative|Capstone gate — the honest negative]]
 - [x] **Causal ablations that confirm the mechanism**: frequency ablation (keep 59/59 frequencies → 0.0000 accuracy) and neuron-vs-Fourier ablation (`src/experiments/neuron_ablation.py`)

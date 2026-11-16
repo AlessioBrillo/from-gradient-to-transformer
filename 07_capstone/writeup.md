@@ -234,7 +234,7 @@ seed 0) dissociates the two tasks: induction accuracy rises to 0.5041 while
 modular stays at chance (0.0047 against 1/113 = 0.0088), with dense Fourier
 (k₉₉ = 98.1 of P=113) and a K-composition score of 0.394 that is explicitly
 `_vacuous` — no head exists to attribute it to.
-See [[07_capstone/notes/mp-88-shakedown-verdict]].
+See [[archive/process/capstone-notes/mp-88-shakedown-verdict]].
 
 The 3×20,000-step capstone run (configs/capstone.yaml, d_model=256, 4 layers,
 8 heads, GPU, 3 seeds) shows the dissociation **persists at full budget**:
@@ -252,7 +252,7 @@ Control: 0.0062. All three *below* chance. **NO-MOVE.**
 <!-- manifest: results/probe_capstone_ab_offset.json -->
 <!-- manifest: results/probe_capstone_ab_reweight.json -->
 
-See [[07_capstone/notes/mp-89-retune-verdict]].
+See [[archive/process/capstone-notes/mp-89-retune-verdict]].
 
 ## 8. Limitations
 

@@ -7,13 +7,19 @@ on 2026-10-11 rewrote ~130 references, and a missed one would leave a dead link
 that nothing else catches. This script is that safety net.
 
 Scope: the **live** vault (01..07), `portfolio/`, `docs/` and the root
-documents. `00_meta/` is the dated historical archive that ADR-0031 freezes —
-it is excluded by default and reported separately, because it carries real
-pre-existing dead links (`[[04_nlp_and_transformers/notes/attribution-patching]]
-points at a note that was never written, `[[03-progress-log]]` uses hyphens
-where the file uses underscores, and `04_conventions.md` uses `[[links]]` and
-`[[wikilink]]` as literal examples). Fixing those is a separate, dated piece of
-work; silently ignoring them is not, so the count is printed either way.
+documents. `archive/` (the process documents ADR-0031 froze, moved there on
+2026-11-16) and `00_meta/` (whose progress log is a dated journal) are excluded
+by default and reported separately, because they carry real pre-existing dead
+links (`[[04_nlp_and_transformers/notes/attribution-patching]] points at a note
+that was never written, `[[03-progress-log]]` uses hyphens where the file uses
+underscores, and `04_conventions.md` uses `[[links]]` and `[[wikilink]]` as
+literal examples). Fixing those is a separate, dated piece of work; silently
+ignoring them is not, so the count is printed either way.
+
+`results/remote/` is skipped outright: it is gitignored staging that holds
+whole downloaded copies of this repository, and until 2026-11-16 a link could
+resolve against a file that exists only in one of those untracked copies - a
+locally-green check that a clean clone would not reproduce.
 
 Run: `make check-links` (also a CI step), or `--archive` to fold the archive
 into the failure set.
@@ -40,9 +46,10 @@ PHASES = (
 
 LIVE_TOP = PHASES + ("portfolio", "docs", "references", "templates", "configs", "scripts", "src")
 LIVE_ROOT_DOCS = ("README.md", "CLAUDE.md", "CONTEXT.md")
-ARCHIVE_DIR = "00_meta"
+ARCHIVE_DIRS = "archive/ and 00_meta/"
 
 SKIP_DIRS = {".venv", ".git", ".obsidian", "_site", "node_modules", "__pycache__", ".pytest_cache"}
+SKIP_DIRS.add("remote")
 # The alias separator may be written `\|` — the Markdown-table escape for a
 # pipe, which is how wikilinks with aliases must appear inside tables
 # (e.g. `[[note\|alias]]` in a `|`-delimited row). Without the optional
@@ -83,7 +90,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--archive",
         action="store_true",
-        help="Also fail on dead links inside the frozen 00_meta/ archive.",
+        help="Also fail on dead links inside the frozen archive/ and 00_meta/.",
     )
     args = parser.parse_args(argv)
 
@@ -120,7 +127,7 @@ def main(argv: list[str] | None = None) -> int:
     if archive_broken:
         print(
             f"check-links: {len(archive_broken)} dead link(s) in the frozen "
-            f"{ARCHIVE_DIR}/ archive (reported, not enforced).\n"
+            f"{ARCHIVE_DIRS} (reported, not enforced).\n"
         )
 
     if broken:

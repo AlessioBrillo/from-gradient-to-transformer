@@ -7,13 +7,13 @@ tags: [type/moc, phase/7, capstone, state/review]
 Index and links for the capstone phase. Detailed plan: [[07_capstone/README]].
 
 ## Key documents
-- [[07_capstone/notes/mp-78-session-0-preparation-capstone-integration-publication-roadmap|MP-78 Session 0: Capstone Integration Roadmap]] — the integration plan that set the shakedown sequence.
-- [[07_capstone/notes/mp-78-session-capstone-checkpoint-fix|MP-78 Checkpoint Fix]] — the step-500 crash that broke the shakedown, fixed test-first.
-- [[07_capstone/notes/mp-88-shakedown-verdict|MP-88 Shakedown Verdict]] — the joint-training dissociation: induction 0.504, modular at chance.
-- [[07_capstone/notes/mp-89-retune-verdict|MP-89 Retune Verdict]] — NO-MOVE: vocab-offset and reweight arms both fail to lift modular off chance.
-- [[07_capstone/notes/mp-90-wandb-gpu-close|MP-90 W&B and GPU-Watch Close]] — the closed-with-one-reason verdicts for W&B and the GPU watch.
-- [[07_capstone/notes/mp-94-positive-control-results|MP-94 Positive Control Results]] — P=59, Nanda config, 3 seeds, k_99 = 58/59: NO-GROK.
-- [[07_capstone/notes/mp-95-session-0-transition|MP-95 Session 0 Transition]] — pivot from the dense-attractor characterisation to scaled Rung 1.
+- [[archive/process/capstone-notes/mp-78-session-0-preparation-capstone-integration-publication-roadmap|MP-78 Session 0: Capstone Integration Roadmap]] — the integration plan that set the shakedown sequence.
+- [[archive/process/capstone-notes/mp-78-session-capstone-checkpoint-fix|MP-78 Checkpoint Fix]] — the step-500 crash that broke the shakedown, fixed test-first.
+- [[archive/process/capstone-notes/mp-88-shakedown-verdict|MP-88 Shakedown Verdict]] — the joint-training dissociation: induction 0.504, modular at chance.
+- [[archive/process/capstone-notes/mp-89-retune-verdict|MP-89 Retune Verdict]] — NO-MOVE: vocab-offset and reweight arms both fail to lift modular off chance.
+- [[archive/process/capstone-notes/mp-90-wandb-gpu-close|MP-90 W&B and GPU-Watch Close]] — the closed-with-one-reason verdicts for W&B and the GPU watch.
+- [[archive/process/capstone-notes/mp-94-positive-control-results|MP-94 Positive Control Results]] — P=59, Nanda config, 3 seeds, k_99 = 58/59: NO-GROK.
+- [[archive/process/capstone-notes/mp-95-session-0-transition|MP-95 Session 0 Transition]] — pivot from the dense-attractor characterisation to scaled Rung 1.
 - [[07_capstone/notes/capstone-gate-honest-negative|Capstone Gate — the honest negative]] — the Phase 7 gate answer: dense mechanism defended with manifests.
 - [[07_capstone/checklist|Capstone checklist]] — phase items and the stamped gate.
 - [[07_capstone/design|Capstone design]] — the joint-training pipeline: model, tasks, instrumentation, analysis chain, honest limits.

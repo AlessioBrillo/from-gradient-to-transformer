@@ -78,7 +78,7 @@ science either way.
 
 ## Links
 
-- [[00_meta/28_micro-phase-29-the-positive-negative]] — the roadmap whose
+- [[archive/process/micro-phases/28_micro-phase-29-the-positive-negative]] — the roadmap whose
   Session 3 executes this study.
 - [[07_capstone/notes/grokking-verdict-p113]] — the verdict note this
   study extends; checkpoints and figures indexed there.

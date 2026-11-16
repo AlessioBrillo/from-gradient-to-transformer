@@ -88,8 +88,8 @@ cosine schedule) are the microscope lane (ADR-0003 row 2):
 
 ## Links
 
-- [[docs/adr/0003-research-return-ledger]] — row 1 stamped, row 2 opened.
+- [[archive/process/adr/0003-research-return-ledger]] — row 1 stamped, row 2 opened.
 - [[07_capstone/notes/scheduled-negatives-mp28]] — Negative 1 lands as
   written, one line added: the accuracy-perfect-but-dense reading.
-- [[00_meta/27_micro-phase-28-the-execution]] — Session 4 record.
+- [[archive/process/micro-phases/27_micro-phase-28-the-execution]] — Session 4 record.
 - [[portfolio/RESULTS]] — per-rung status updated.
