@@ -1611,6 +1611,25 @@ def _probe_parameter_count(args: argparse.Namespace) -> int:
     )
 
 
+def build_seeded_model(args: argparse.Namespace, seed: int) -> "AttentionOnlyTransformer":
+    """The model one seed starts from: seeded **before** it is constructed.
+
+    Until 2026-11-16 the model was built first and seeded inside the
+    training function, after the weights had been drawn, so a seed pinned
+    the data and the batch order but not the initialization (Honesty Ledger,
+    2026-11-12). In a multi-seed run the stream position even depended on
+    `_probe_parameter_count`, which builds a throwaway model between seeds.
+    """
+    set_seed(seed)
+    return AttentionOnlyTransformer(
+        vocab_size=args.vocab_size,
+        d_model=args.d_model,
+        n_layers=args.n_layers,
+        n_heads=args.n_heads,
+        max_seq_len=args.seq_len,
+    )
+
+
 def _resolved_manifest_path(args: argparse.Namespace) -> Path:
     """Where this run's (multi-seed) manifest goes.
 
@@ -1698,13 +1717,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
 
-    model = AttentionOnlyTransformer(
-        vocab_size=args.vocab_size,
-        d_model=args.d_model,
-        n_layers=args.n_layers,
-        n_heads=args.n_heads,
-        max_seq_len=args.seq_len,
-    )
+    model = build_seeded_model(args, seed)
 
     fresh_batches_fn = _make_fresh_batches_fn(args, seed) if args.fresh_batches else None
 
@@ -2258,13 +2271,7 @@ def main() -> None:
     logger.info(f"Data: train={len(train_dataset)}, val={len(val_dataset)} | task={task}")
 
     # Model
-    model = AttentionOnlyTransformer(
-        vocab_size=args.vocab_size,
-        d_model=args.d_model,
-        n_layers=args.n_layers,
-        n_heads=args.n_heads,
-        max_seq_len=args.seq_len,
-    )
+    model = build_seeded_model(args, args.seed)
     n_params = sum(p.numel() for p in model.parameters())
     logger.info(f"Model parameters: {n_params:,}")
 

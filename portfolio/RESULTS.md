@@ -133,6 +133,20 @@ re-running the affected rungs) is a separate measurement campaign with new
 numbers, and it is not performed here: it would replace published manifests
 rather than explain them.
 
+**2026-11-16 — the code is fixed; the manifests are not yet re-measured.**
+`exp1`, `exp3` and `exp4` now seed **before** constructing the model
+(`build_seeded_model`, `build_autoencoder`, `_build_model`), and
+`tests/test_seed_pins_init.py` holds the property with the audit's own
+instrument: the digest of a seed's initial weights is the same alone, after
+another seed, and at every level of the sparsity sweep. The consequence is
+stated here rather than left to be discovered: the tracked manifests of those
+three experiments were recorded **before** this change, so re-running their
+commands today starts from different initial weights and will not reproduce
+their per-seed values to the digit. They remain the record of what the pre-fix
+code measured. The re-measurement that replaces them is open work, and no
+published number has been changed in anticipation of it. `exp2`, `exp5` and the
+capstone are unaffected: they already seeded before construction.
+
 ### 2026-11-11 — The published verdict was not the verdict the code computes, and the run's strongest numbers were never published
 
 The eleventh audit, and the first one that audits the repository's own

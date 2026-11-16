@@ -19,13 +19,14 @@ natural-language model.
 
 ## Known defects that are still open
 
-- **Seeding.** In `exp1`, `exp3` and `exp4` the model is constructed before the
-  per-seed `set_seed` call, so a seed pins the data and the batch order but not
-  the initial weights. Each command still reproduces its own manifest exactly;
-  what is not valid is comparing two code paths at the same nominal
-  configuration. See the 2026-11-12 entry of the
-  [Honesty Ledger](../portfolio/RESULTS.md). The fix and the re-measurement are
-  planned work.
+- **Manifests older than the seeding fix.** Until 2026-11-16, `exp1`, `exp3`
+  and `exp4` constructed the model before the per-seed `set_seed` call, so a
+  seed pinned the data and the batch order but not the initial weights. The
+  code is fixed and tested, but the tracked manifests of those three
+  experiments predate the fix: re-running their commands today will not
+  reproduce their per-seed values to the digit. The re-measurement is open
+  work. See the 2026-11-12 entry of the
+  [Honesty Ledger](../portfolio/RESULTS.md).
 - **Open question on Rung 1b.** One head carries the copy causally, yet it does
   not put its attention mass on the content key. Why is not known.
 - **Phase diagram.** The protocol-ablation sweep (issue #168) has not produced a
