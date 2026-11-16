@@ -122,8 +122,8 @@ class TestTheRun:
         assert "--source-model-seed {seed}" in text
 
     def test_the_sae_pins_exp1_epoch_and_commit(self) -> None:
-        """exp5 deve rifiutare uno checkpoint da un'altra epoca/commit: passa
-        --source-epochs e --source-git-sha presi dal manifesto di exp1."""
+        """exp5 must refuse a checkpoint from another epoch or commit: it is
+        given --source-epochs and --source-git-sha taken from exp1's manifest."""
         text = _all_text(json.loads(NOTEBOOK.read_text(encoding="utf-8")))
         assert "--source-epochs {EXP1_EPOCHS}" in text
         assert "--source-git-sha {EXP1_SHA}" in text
