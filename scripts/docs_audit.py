@@ -261,6 +261,35 @@ STALE_CLAIMS: list[tuple[str, str, str, str]] = [
         "results/exp3_superposition_sweep.json)",
         "2026-11-12",
     ),
+    (
+        "portfolio/model-card.md",
+        "1–50M",
+        "the models span 120 to 4259584 parameters (n_parameters in "
+        "results/exp3_superposition.json and results/capstone_20k.json)",
+        "2026-11-16",
+    ),
+    (
+        "portfolio/model-card.md",
+        "Synthetic IOI",
+        "Rung 4 analyses Rung 1's own checkpoint on the prefix-copying task "
+        "(results/exp4_standard.json); no IOI task was ever run",
+        "2026-11-16",
+    ),
+    (
+        "portfolio/model-card.md",
+        "BPE (for natural-text experiments)",
+        "no experiment uses a tokenizer or natural-language text; every "
+        "task trains on synthetic integer token ids",
+        "2026-11-16",
+    ),
+    (
+        "00_meta/00_home.md",
+        "223 tests green",
+        "a dated release note from 2026-09-17 that the vault home presented "
+        "as current; the gate's test count is whatever `make test-cov` "
+        "prints today",
+        "2026-11-16",
+    ),
 ]
 
 

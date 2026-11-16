@@ -23,4 +23,4 @@ multi-seed manifest. See [RESULTS](RESULTS.md) for exact status per rung.
 <!-- manifest: results/exp5_real_activations.json -->
 | Experiment tracking | descoped 2026-10-11: no W&B credentials; manifests on disk are the record (issue #167/#169/#170) |
 | Code (experiments) | `src/experiments/` |
-| Code (capstone models) | `src/models/decoder_only_transformer.py` — `07_capstone/src/` is empty; see [_MOC](../07_capstone/_MOC.md) |
+| Code (capstone model) | `src/models/decoder_only_transformer.py`; see [_MOC](../07_capstone/_MOC.md) |
