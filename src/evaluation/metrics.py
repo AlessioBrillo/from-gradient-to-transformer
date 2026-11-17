@@ -91,6 +91,7 @@ def roc_auc_score(y_true: np.ndarray, y_score: np.ndarray) -> float:
 
     order = np.argsort(y_score)[::-1]
     y_true_sorted = y_true[order]
+    score_sorted = y_score[order]
 
     tpr = [0.0]
     fpr = [0.0]
@@ -100,8 +101,14 @@ def roc_auc_score(y_true: np.ndarray, y_score: np.ndarray) -> float:
             tp += 1
         else:
             fp += 1
-        tpr.append(tp / n_pos)
-        fpr.append(fp / n_neg)
+        # A ROC point exists only where the threshold changes. Scores that are
+        # tied cannot be told apart, so the curve must cross the whole tie group
+        # in one diagonal step; emitting a point per sample ranked a constant
+        # scorer 1.0 or 0.0 depending on the order its ties happened to be in
+        # (fixed 2026-11-17).
+        if i == len(score_sorted) - 1 or score_sorted[i + 1] != score_sorted[i]:
+            tpr.append(tp / n_pos)
+            fpr.append(fp / n_neg)
 
     return float(np.trapezoid(tpr, fpr))
 
@@ -112,14 +119,18 @@ def cross_val_score(
     y: np.ndarray,
     cv: int = 5,
     metric: str = "accuracy",
+    seed: int | None = None,
 ) -> np.ndarray:
-    """Simple k-fold cross-validation.
+    """Simple k-fold cross-validation (not stratified).
 
     model must have .fit(X, y) and .predict(X) methods.
     metric: "accuracy", "rmse", "r2", "mae"
+    seed: fixes the fold assignment. Left as None the folds come from numpy's
+        global RNG, so two calls differ unless the caller seeded it.
     """
     n = len(X)
-    indices = np.random.permutation(n)
+    rng = np.random.default_rng(seed) if seed is not None else None
+    indices = rng.permutation(n) if rng is not None else np.random.permutation(n)
     fold_sizes = np.full(cv, n // cv, dtype=int)
     fold_sizes[: n % cv] += 1
     scores = np.empty(cv)
