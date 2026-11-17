@@ -49,10 +49,19 @@ Those numbers are context, not targets: this ADR uses different, simpler prompts
 
 ### Stage 1: parity with the reference implementation (gate)
 
-On 8 fixed prompts (listed in the experiment module), the maximum absolute difference
-between this implementation and `transformers.GPT2LMHeadModel` is at most **1e-3** for
-(a) the logits and (b) every layer's residual stream (`hidden_states`).
-PASS needs both.
+On 8 fixed prompts (listed in the experiment module), the scale-normalised error between
+this implementation and `transformers.GPT2LMHeadModel` is at most **1e-5** for (a) the
+logits and (b) every layer's residual stream (`hidden_states`), where for a tensor `a`
+against the reference `b` the error is `max|a - b| / max(1, max|b|)`. PASS needs both.
+
+*Amendment, 2026-11-17, before any run on the real weights.* This stage was first
+written as an absolute tolerance of 1e-3. GPT-2's residual stream is known to carry a few
+very large activations (values in the thousands at the first position), where one float32
+unit in the last place is already of the order of 1e-4, so an absolute 1e-3 would fail on
+rounding alone and say nothing about correctness. The tolerance is therefore relative to
+the tensor's scale. This is a correction of an ill-posed criterion made without having
+seen a single comparison against the real weights; no other threshold in this ADR is
+touched.
 
 ### Stage 2: induction heads by attention mass
 
