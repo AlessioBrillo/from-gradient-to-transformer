@@ -46,9 +46,9 @@ Some exercises and proofs were written by an AI assistant to close gaps this rul
 
 ## Phase 4 — NLP & Transformers (LOAD-BEARING for MI)
 - [~] BPE tokenizer from scratch — code: `src/models/bpe_tokenizer.py`
-- [~] Self-attention implemented (scaled dot-product) — code: `src/models/decoder_only_transformer.py`
-- [~] Multi-head + positional encoding (RoPE, sinusoidal) — code: `src/models/decoder_only_transformer.py`
-- [~] Decoder-only transformer from scratch (causal masking) — code: `src/models/decoder_only_transformer.py`
+- [x] Self-attention implemented (scaled dot-product) — code: `src/models/decoder_only_transformer.py` — exercise: [[04_nlp_and_transformers/exercises/ex-01-transformer-from-scratch]]; proof: [[04_nlp_and_transformers/proofs/attention-rope-and-the-cache]]
+- [x] Multi-head + positional encoding (RoPE) — code: `src/models/decoder_only_transformer.py` — exercise: [[04_nlp_and_transformers/exercises/ex-01-transformer-from-scratch]]; proof: [[04_nlp_and_transformers/proofs/attention-rope-and-the-cache]]
+- [x] Decoder-only transformer from scratch (causal masking) — code: `src/models/decoder_only_transformer.py` — exercise: [[04_nlp_and_transformers/exercises/ex-01-transformer-from-scratch]]; proof: [[04_nlp_and_transformers/proofs/attention-rope-and-the-cache]]
 - [x] **QK/OV circuit decomposition** — proof: [[04_nlp_and_transformers/proofs/qk-ov-decomposition]] — exercise: [[04_nlp_and_transformers/exercises/ex-02-induction-head-detection]]
 - [x] **Residual stream as communication channel** — proof: [[04_nlp_and_transformers/proofs/residual-stream-communication-channel]] — exercise: [[04_nlp_and_transformers/exercises/ex-01-transformer-from-scratch]]
 - [x] **Induction heads: prefix-matching + copying mechanism** — proof: [[04_nlp_and_transformers/proofs/circuit-analysis-complete]] — exercise: [[04_nlp_and_transformers/exercises/ex-02-induction-head-detection]]; proof: [[04_nlp_and_transformers/proofs/circuit-analysis-complete]]
@@ -136,7 +136,7 @@ Some exercises and proofs were written by an AI assistant to close gaps this rul
   <!-- manifest: results/induction_standard.json -->
 
 ## Phase 7 — Capstone
-- [~] From-scratch decoder-only transformer (the model to reverse-engineer) — `src/models/decoder_only_transformer.py`
+- [x] From-scratch decoder-only transformer (the model to reverse-engineer) — `src/models/decoder_only_transformer.py` — exercise: [[04_nlp_and_transformers/exercises/ex-01-transformer-from-scratch]]; proof: [[04_nlp_and_transformers/proofs/attention-rope-and-the-cache]]
 - [x] Grokking experiment end-to-end (training + analysis + figures) — reproduced on GPU (3 seeds, both protocols); the CPU-bound P=113 run is no longer the flagship
   <!-- manifest: results/grokking_nanda_p113.json -->
 - [x] At least one circuit verification (activation patching on the capstone model) — exp4, end to end on Rung 1's own checkpoint
