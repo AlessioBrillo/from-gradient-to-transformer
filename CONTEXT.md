@@ -45,6 +45,7 @@ number traced to a committed run manifest**.
 | 4 Circuit patching | `src/experiments/exp4_circuit_patching.py` | **The cascade ran end to end on Rung 1's own checkpoint**: head ablation 0.4445 ± 0.0425, path patching 0.8215 ± 0.1255 — on a prefix-copying head, so it validates the method, not yet an induction circuit |
 | 5 SAE dashboard | `src/experiments/exp5_sae_dashboard.py` | Synthetic reproduces; on real activations the dictionary is sparse (L0 3.0%) but ~8× too wide, with 78% of its features dead |
 | 6 Automated circuits | — | **Descoped 2026-08-01** |
+| 7 GPT-2 small | `src/experiments/exp7_gpt2_small.py`, model in `src/models/gpt2.py` | Pre-registered (ADR-0034), run 2026-11-17: parity, induction-head ranking and the indirect-object task pass; the causal stages (ablating the two induction heads, the three name movers) do **not** reproduce under zero ablation |
 
 The manifests behind that table, one per rung: Rung 1
 <!-- manifest: results/induction_standard.json -->, Rung 2

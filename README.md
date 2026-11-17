@@ -35,6 +35,8 @@ included. The full record, with every retraction, is the
 | [4 Circuit patching](portfolio/projects/rung-4-circuit-patching/index.md) | Can a circuit be validated causally, end to end? | Yes, on Rung 1's own checkpoint: head ablation 0.4445 ± 0.0425, path patching 0.8215 ± 0.1255 |
 | [5 Sparse autoencoder](portfolio/projects/rung-5-sae/index.md) | Can a dictionary recover features from a real residual stream? | Partly: the dictionary is sparse (3.0% of 512 features active) but 78% of its features never fire. The dictionary size is the open question |
 
+| [7 GPT-2 small](portfolio/projects/rung-7-gpt2-small/index.md) | Do the same instruments work on a real pretrained model? | **The instruments do**: the implementation matches the Hugging Face reference, and the detector ranks the two induction heads of the literature first and second of 144. **The causal stages did not reproduce**: ablating those two heads, or the name movers, changed the behaviour no more than random heads do. Pre-registered (ADR-0034); two of five stages failed and are reported |
+
 ★ Flagship. A sixth rung (automated circuit discovery) was descoped on
 2026-08-01: its placeholder simulated the comparison with random draws.
 
@@ -47,11 +49,12 @@ The manifests behind that table: Rung 1
 <!-- manifest: results/exp1_induction_fixed_batches.json -->,
 <!-- manifest: results/exp1_induction_fresh_batches.json -->, Rung 1b content task
 <!-- manifest: results/induction_content.json -->, Rung 1b causal addendum
-<!-- manifest: results/exp4_content.json -->.
+<!-- manifest: results/exp4_content.json -->, Rung 7
+<!-- manifest: results/gpt2_small_stage2.json -->.
 
 ## Why the record can be trusted
 
-These claims have been through twelve audits, and each one is written up in the
+These claims have been through thirteen audits, and each one is written up in the
 [Honesty Ledger](portfolio/RESULTS.md) with what was wrong and what changed.
 They found numbers that were wrong or unbacked, a negative verdict that its own
 metric had manufactured (the 2026-08-11 "no grokking" result, retracted on

@@ -21,7 +21,7 @@ smoke tests (`make reproduce-quick`) and a full-scale mode (`make reproduce`).
 <!-- manifest: results/exp1_induction_fixed_batches.json -->
 <!-- manifest: results/exp1_induction_fresh_batches.json -->
 
-Twelve audits have now caught real problems in this repository's causal claims and
+Thirteen audits have now caught real problems in this repository's causal claims and
 evidence base. They include claims that were wrong or unbacked, a claim that was
 **right and had been called wrong by its own metric** (2026-10-14), four
 content-task audits (2026-10-22, 2026-10-25, 2026-11-01 and 2026-11-11) that found the
@@ -29,12 +29,54 @@ experiment supposed to close the last open question **could not have produced a
 verdict at all** — first because its verdict code would crash, then because its
 instrument measured the wrong position, then because the verdict read the wrong
 head and the cascade could silently analyse another model, and finally because
-the published verdict was not the one the code computes — and a twelfth (2026-11-12)
+the published verdict was not the one the code computes — a twelfth (2026-11-12)
 that found the run seed does not pin the model's initial weights, so two
-commands of one configuration disagreed. All
+commands of one configuration disagreed — and a thirteenth (2026-11-17) that found
+the repository's own documentation of itself (a model card, a skill tree) stating
+things its evidence did not. All
 entries stay here — the point of this section is to make it easy to
 see the trend (are correctness problems getting caught faster, or accumulating?),
 not to keep only the latest one.
+
+### 2026-11-17 — The record described models it never trained, and a rule nobody enforced
+
+The thirteenth audit, and the first to audit the repository's *own documentation of
+itself* rather than a result. It started from one question: does every sentence a
+visitor reads match a manifest, and does every checked box have the evidence its own
+rule demands?
+
+**What was broken.**
+
+1. **The model card described models this repository never trained.** It said
+   "~1–50M parameters", "BPE for natural-text experiments", "English", and a "Synthetic
+   IOI" Rung 4. The manifests say 120 to 4,259,584 parameters, integer token ids and no
+   text at all, and a Rung 4 that analyses Rung 1's own checkpoint. It was rewritten from
+   the manifests, and the false phrases joined the `docs-audit` ratchet.
+2. **The skill tree's rule was written and never checked.** "Check a skill only when an
+   exercise **and** a proof demonstrate it." Eighty-five checked items linked neither or
+   one of the two: 32 of 44 skill-tree entries, a Phase 3 with eight checked skills and
+   one proof, and checklists that ticked tools the repository had descoped or never used
+   (TransformerLens, SAELens, nnsight, attribution patching) and a top-p sampler that was
+   never implemented. `make vault-check` now enforces the rule. Of the 85: 32 linked to
+   exercises and proofs that already existed, 22 became `[~]` (studied, not verified), 11
+   became `[-]` (descoped, with a reason), and the rest cite the manifest or deliverable
+   that already backed them. Exercises and proofs written afterwards to close gaps are
+   marked `authorship: claude`: they show a skill is demonstrated and checkable, not that
+   the repository owner reconstructed it from memory.
+3. **Two defects in code that nothing published used**, found by writing the exercises
+   whose tests then failed on the old code: the BPE tokenizer silently dropped newlines,
+   tabs and repeated or trailing spaces, so `decode(encode(text))` was not `text`; and
+   `roc_auc_score` ranked tied scores in the order they appeared, so a constant scorer
+   got an AUC of 1.0 or 0.0 instead of 0.5.
+4. **The seeding defect of the 2026-11-12 audit was documented but not fixed.** It is
+   fixed now in `exp1`, `exp3` and `exp4` (see that entry's addendum).
+
+**What it changes.** The model card, the README, the vault home, the descope register and
+`results/INDEX.md` now say what the manifests say. Process documents (the micro-phase
+roadmaps and ledger ADRs) moved to `archive/process/`, where they are marked as history.
+
+**What it does not change.** No published number moved: none of the defects touched a
+manifest. The two code defects are in functions no experiment calls.
 
 ### 2026-11-12 — The run seed did not pin the model's initial weights: two commands of one configuration disagreed
 
@@ -1412,6 +1454,73 @@ own configuration, and the re-run reproduces the manifest's numbers exactly
 from the evidence is a claim, not a figure.
 
 ---
+
+## Rung 7 — The instrumentation on GPT-2 small (pre-registered, ADR-0034; instrument validated, causal stages not reproduced)
+
+<!-- manifest: results/gpt2_small_stage1.json -->
+<!-- manifest: results/gpt2_small_stage2.json -->
+<!-- manifest: results/gpt2_small_stage3.json -->
+<!-- manifest: results/gpt2_small_stage4.json -->
+<!-- manifest: results/gpt2_small_stage5.json -->
+
+Every other rung here studies a model of at most 4.3 million parameters trained on a
+synthetic task. This one runs the same hand-written instruments (the hook cache, the
+shared attention-mass detector, head ablation) on **GPT-2 small**, 124 million
+parameters, 12 layers of 12 heads, loaded from `openai-community/gpt2` into a
+pure-PyTorch implementation (`src/models/gpt2.py`). The five stages, their thresholds
+and their reference (Wang et al. 2022, arXiv:2211.00593) were frozen in
+[ADR-0034](../docs/adr/0034-gpt2-small-real-model-test.md) **before any code touched the
+weights**; stage 1 was amended once, before any run, because an absolute tolerance of
+1e-3 is below float32 resolution on GPT-2's very large residual activations. No
+threshold was changed after a number was seen. Everything ran on CPU, three seeds
+where a stage uses seeds.
+
+| Stage | Frozen criterion | Measured (mean ± std) | Outcome |
+|---|---|---|---|
+| 1. Parity with the Hugging Face reference (gate) | scale-normalised error at most 1e-5 on logits and on every residual stream | the largest error is about 1e-6 on 8 fixed prompts | **PASS** |
+| 2. Induction heads by attention mass | heads L5H5 and L6H9 both in the top 10 of 144 and at least 0.3, on every seed | L5H5: mass 0.9291 ± 0.0006, rank 1; L6H9: mass 0.9180 ± 0.0015, rank 2 | **PASS** |
+| 3. Induction heads are causally used | ablating L5H5 and L6H9 cuts the in-context gain by at least 10% | gain 12.8604 ± 0.0237 unablated, 12.9398 ± 0.0346 ablated (see text); ablating the stage-2 top 10 instead cuts it by 0.7723 ± 0.0089 | **FAIL** |
+| 4. The model solves the indirect-object task | mean logit difference at least 2, positive on at least 90% of prompts | 2.7535 ± 0.1134, positive on 0.99 of 100 prompts per seed | **PASS** |
+| 5. Name movers matter for that task | ablating L9H6, L9H9 and L10H0 cuts the logit difference by at least 30% and more than the 95th percentile of 20 random triples | cut by 0.0168 ± 0.0192; random-triple 95th percentile 0.1847 ± 0.0157 | **FAIL** |
+
+**What passed.** The implementation equals the reference. On repeated random tokens the
+repository's detector, written for a 4-head toy model, ranks the two induction heads the
+literature reports (5.5 and 6.9) **first and second of 144** on all three seeds, at
+roughly 0.93 and 0.92 of their attention mass. The next three heads by this score were
+not in the reference set: 7.10 (about 0.91), 5.1 (about 0.90 to 0.91) and 7.2 (about 0.83
+to 0.84), after which the mass falls to about 0.5 (10.1, 9.6, 9.9, 10.7, 5.0). The
+instrument transfers to a real model, and it found more induction-like heads than the
+two it was asked about. On the indirect-object prompts the model prefers the indirect
+object by a mean logit difference of about 2.75 (the paper's 3.56 is on different
+prompts and is not a comparison).
+
+**What failed, and what that does and does not mean.**
+
+- *Stage 3.* Zero-ablating heads 5.5 and 6.9 left the in-context gain **unchanged**: it
+  rose by 0.6% (the relative fall, a negative number, was -0.0062 ± 0.0008; the criterion
+  asked for at least 0.1), while ablating the whole stage-2 top 10 removed
+  77% of it. The criterion expected a small effect and got none. The reading the data
+  support is *redundancy*: at least five heads attend to the copy position about as
+  strongly as 6.9 does, so removing two is compensated. It does not show that 5.5 and
+  6.9 are unused.
+- *Stage 5.* Ablating the three name movers cut the logit difference by about 1.7% and
+  twenty random triples had a 95th percentile of about 18%, so by the frozen rule the
+  name movers do **not** stand out. Two known effects could produce this and neither was
+  separated here: the circuit has *backup* name movers that take over when the primary
+  ones are removed, and zero ablation (used here, as in Rung 4) is off-distribution where
+  Wang et al. used mean ablation. The ADR said in advance that a FAIL in this stage is
+  weaker evidence than a FAIL in stage 1.
+
+**What this establishes and what it does not.** It establishes that the hand-written
+hook cache, detector and ablation machinery work on a pretrained 124-million-parameter
+model and agree with the literature on *which heads attend like induction heads*. It
+does **not** reproduce the causal claims about the indirect-object circuit, and the
+repository does not claim that circuit. A follow-up with mean ablation and with path
+patching, which is how the paper localised the name movers, would be a new
+pre-registered ADR superseding none of this one; it has not been run.
+
+**Reproduce**: `uv run --extra real python -m src.experiments.exp7_gpt2_small` (about 15
+minutes on CPU after a one-time weight download).
 
 ## Open Question — Solution-Regime Phase Diagram (protocol ablation, unblocked 2026-10-14; scheduled for v1.1)
 

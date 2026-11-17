@@ -1,0 +1,75 @@
+{
+  "experiment": "gpt2_small_stage4",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "args": {
+    "model": "openai-community/gpt2",
+    "adr": "0034",
+    "stage": 4
+  },
+  "per_seed_metrics": [
+    {
+      "mean_logit_diff": 2.816622257232666,
+      "fraction_positive": 0.99,
+      "n_prompts": 100.0,
+      "stage4_pass": 1.0
+    },
+    {
+      "mean_logit_diff": 2.849574565887451,
+      "fraction_positive": 0.99,
+      "n_prompts": 100.0,
+      "stage4_pass": 1.0
+    },
+    {
+      "mean_logit_diff": 2.594299554824829,
+      "fraction_positive": 0.99,
+      "n_prompts": 100.0,
+      "stage4_pass": 1.0
+    }
+  ],
+  "aggregate": {
+    "n_prompts": {
+      "mean": 100.0,
+      "std": 0.0,
+      "min": 100.0,
+      "max": 100.0,
+      "n": 3.0
+    },
+    "mean_logit_diff": {
+      "mean": 2.7534987926483154,
+      "std": 0.11337184146016822,
+      "min": 2.594299554824829,
+      "max": 2.849574565887451,
+      "n": 3.0
+    },
+    "fraction_positive": {
+      "mean": 0.9899999999999999,
+      "std": 1.1102230246251565e-16,
+      "min": 0.99,
+      "max": 0.99,
+      "n": 3.0
+    },
+    "stage4_pass": {
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0,
+      "n": 3.0
+    }
+  },
+  "wall_clock_seconds": 894.9642260999535,
+  "git_sha": "886b74c",
+  "git_dirty": false,
+  "device": "cpu",
+  "torch_version": "2.14.1+cpu",
+  "numpy_version": "2.5.3",
+  "python_version": "3.14.7",
+  "n_parameters": 124439808,
+  "created_at": "2026-11-17T10:17:31+00:00",
+  "notes": "weights revision 607a30d783dfa663caf39e06633721c8d4cfcd7e. names dropped (not one token): []",
+  "neuron_ablation": null,
+  "source_provenance": null
+}
