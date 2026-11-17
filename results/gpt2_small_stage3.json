@@ -1,0 +1,85 @@
+{
+  "experiment": "gpt2_small_stage3",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "args": {
+    "model": "openai-community/gpt2",
+    "adr": "0034",
+    "stage": 3
+  },
+  "per_seed_metrics": [
+    {
+      "icl_gain": 12.862025260925293,
+      "icl_gain_ablated": 12.939494132995605,
+      "icl_gain_drop": -0.006023069501011025,
+      "icl_gain_drop_top10_control": 0.7827647321520261,
+      "stage3_pass": 0.0
+    },
+    {
+      "icl_gain": 12.830525398254395,
+      "icl_gain_ablated": 12.89755916595459,
+      "icl_gain_drop": -0.005224553603184116,
+      "icl_gain_drop_top10_control": 0.773266266189408,
+      "stage3_pass": 0.0
+    },
+    {
+      "icl_gain": 12.888620376586914,
+      "icl_gain_ablated": 12.982250213623047,
+      "icl_gain_drop": -0.007264535248956358,
+      "icl_gain_drop_top10_control": 0.7609612142276505,
+      "stage3_pass": 0.0
+    }
+  ],
+  "aggregate": {
+    "icl_gain": {
+      "mean": 12.860390345255533,
+      "std": 0.023745334121315936,
+      "min": 12.830525398254395,
+      "max": 12.888620376586914,
+      "n": 3.0
+    },
+    "stage3_pass": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 3.0
+    },
+    "icl_gain_ablated": {
+      "mean": 12.939767837524414,
+      "std": 0.03457551710311824,
+      "min": 12.89755916595459,
+      "max": 12.982250213623047,
+      "n": 3.0
+    },
+    "icl_gain_drop_top10_control": {
+      "mean": 0.7723307375230283,
+      "std": 0.008925796281335578,
+      "min": 0.7609612142276505,
+      "max": 0.7827647321520261,
+      "n": 3.0
+    },
+    "icl_gain_drop": {
+      "mean": -0.0061707194510505,
+      "std": 0.0008393376990547967,
+      "min": -0.007264535248956358,
+      "max": -0.005224553603184116,
+      "n": 3.0
+    }
+  },
+  "wall_clock_seconds": 894.9642260999535,
+  "git_sha": "886b74c",
+  "git_dirty": false,
+  "device": "cpu",
+  "torch_version": "2.14.1+cpu",
+  "numpy_version": "2.5.3",
+  "python_version": "3.14.7",
+  "n_parameters": 124439808,
+  "created_at": "2026-11-17T10:17:31+00:00",
+  "notes": "weights revision 607a30d783dfa663caf39e06633721c8d4cfcd7e. zero-ablation of 5.5 and 6.9; control is the stage-2 top-10",
+  "neuron_ablation": null,
+  "source_provenance": null
+}

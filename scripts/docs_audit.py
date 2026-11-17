@@ -771,6 +771,7 @@ NUMBER_WORDS = {
     "ten",
     "eleven",
     "twelve",
+    "thirteen",
 }
 
 

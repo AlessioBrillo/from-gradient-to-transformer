@@ -31,6 +31,11 @@ document that cites it.
 | `results/exp5_real_activations.json` | paper, RESULTS.md | active | Rung 5 |
 | `results/exp5_sae_dashboard.json` | RESULTS.md | active | Rung 5 SAE |
 | `results/exp6_capstone.json` | — | **ORPHAN** | Old run of 2026-09-04, git_sha=c9f9df1, P=17, 100 steps; probably superseded by capstone_20k. Do not delete: it is historical evidence. |
+| `results/gpt2_small_stage1.json` | RESULTS.md | active | Rung 7 stage 1: parity with the Hugging Face GPT-2 (gate). ADR-0034 |
+| `results/gpt2_small_stage2.json` | RESULTS.md | active | Rung 7 stage 2: induction heads by attention mass. ADR-0034 |
+| `results/gpt2_small_stage3.json` | RESULTS.md | active | Rung 7 stage 3: causal use of the induction heads (FAIL, reported). ADR-0034 |
+| `results/gpt2_small_stage4.json` | RESULTS.md | active | Rung 7 stage 4: the indirect-object task. ADR-0034 |
+| `results/gpt2_small_stage5.json` | RESULTS.md | active | Rung 7 stage 5: name movers against a random-triple control (FAIL, reported). ADR-0034 |
 | `results/grokking_nanda_p113.json` | paper, RESULTS.md | active | Rung 2 flagship |
 | `results/grokking_p113_gpu_reanalysis.json` | RESULTS.md | active | GPU re-analysis |
 | `results/grokking_p59_repo_energy.json` | paper | active | Positive control P=59, 2/3 seeds sparse (MIXED) |

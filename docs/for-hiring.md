@@ -17,7 +17,7 @@ GPUs.
 | Designing an experiment that can fail | A pre-registered task, thresholds and decision rule, frozen before the GPU run: [pre-registration](../07_capstone/notes/variable-distance-induction-preregistration.md), [ADR-0033](adr/0033-content-based-induction-task.md) |
 | Catching a wrong instrument | The detector measured the wrong attention offset, and the "0 of 8 heads" it produced was retracted: [ADR-0032](adr/0032-induction-detector-and-the-positional-shortcut.md) |
 | Reporting negative and partial results | A PARTIAL verdict published next to the stronger numbers that explain it, kept apart rather than merged: [`content_verdict.py`](../src/experiments/content_verdict.py), [Honesty Ledger](../portfolio/RESULTS.md) |
-| Retracting my own conclusions | Twelve dated audits, each with what was wrong and what changed, including a "no grokking" verdict my own metric had manufactured: [Honesty Ledger](../portfolio/RESULTS.md) |
+| Retracting my own conclusions | Thirteen dated audits, each with what was wrong and what changed, including a "no grokking" verdict my own metric had manufactured: [Honesty Ledger](../portfolio/RESULTS.md) |
 | Writing it up | A LaTeX mini-paper compiled in CI: [`main.tex`](../portfolio/paper/main.tex) |
 
 ## Software engineering

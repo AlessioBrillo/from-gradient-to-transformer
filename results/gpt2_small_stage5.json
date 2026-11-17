@@ -1,0 +1,75 @@
+{
+  "experiment": "gpt2_small_stage5",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "args": {
+    "model": "openai-community/gpt2",
+    "adr": "0034",
+    "stage": 5
+  },
+  "per_seed_metrics": [
+    {
+      "name_mover_drop": 0.0430539954646146,
+      "control_drop_mean": 0.010205518644767925,
+      "control_drop_p95": 0.1653708638309363,
+      "stage5_pass": 0.0
+    },
+    {
+      "name_mover_drop": -0.002454739305999624,
+      "control_drop_mean": 0.009929997384534215,
+      "control_drop_p95": 0.20371119618486713,
+      "stage5_pass": 0.0
+    },
+    {
+      "name_mover_drop": 0.009745635647126473,
+      "control_drop_mean": 0.010132772970388318,
+      "control_drop_p95": 0.1848745336141949,
+      "stage5_pass": 0.0
+    }
+  ],
+  "aggregate": {
+    "name_mover_drop": {
+      "mean": 0.016781630601913816,
+      "std": 0.019233480424481555,
+      "min": -0.002454739305999624,
+      "max": 0.0430539954646146,
+      "n": 3.0
+    },
+    "control_drop_p95": {
+      "mean": 0.18465219787666612,
+      "std": 0.015653164666984666,
+      "min": 0.1653708638309363,
+      "max": 0.20371119618486713,
+      "n": 3.0
+    },
+    "control_drop_mean": {
+      "mean": 0.010089429666563487,
+      "std": 0.00011658179589178801,
+      "min": 0.009929997384534215,
+      "max": 0.010205518644767925,
+      "n": 3.0
+    },
+    "stage5_pass": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 3.0
+    }
+  },
+  "wall_clock_seconds": 894.9642260999535,
+  "git_sha": "886b74c",
+  "git_dirty": false,
+  "device": "cpu",
+  "torch_version": "2.14.1+cpu",
+  "numpy_version": "2.5.3",
+  "python_version": "3.14.7",
+  "n_parameters": 124439808,
+  "created_at": "2026-11-17T10:17:31+00:00",
+  "notes": "weights revision 607a30d783dfa663caf39e06633721c8d4cfcd7e. 20 control triples, generator seed 1234",
+  "neuron_ablation": null,
+  "source_provenance": null
+}

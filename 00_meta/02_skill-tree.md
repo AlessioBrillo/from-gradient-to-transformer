@@ -130,6 +130,7 @@ Some exercises and proofs were written by an AI assistant to close gaps this rul
   open question — see [[portfolio/RESULTS]] Rung 5.
   <!-- manifest: results/exp5_real_activations.json -->
 - [ ] **Automated circuit discovery** — ACDC, AtP, attribution patching. Descoped 2026-08-01: the placeholder implementation simulated results with random draws instead of running ACDC; deleted.
+- [x] **Instrumentation validated on a pretrained model (GPT-2 small)** — pure-PyTorch GPT-2 with parity to the reference, the shared detector ranks the two induction heads of the literature first and second of 144; the causal stages failed and are reported as such: `results/gpt2_small_stage2.json`
 - [x] Mini-paper writing (LaTeX, citations, ablations, limitations) — `portfolio/paper/`
   is written from the manifests, with the retracted claims retracted in place.
   <!-- manifest: results/grokking_nanda_p113.json -->

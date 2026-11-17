@@ -87,10 +87,10 @@ class TestTheAuditFires:
         target = REPO_ROOT / "README.md"
         original = target.read_bytes()
         text = original.decode("utf-8")
-        assert "twelve audits" in text
+        assert "thirteen audits" in text
         try:
             target.write_bytes(
-                text.replace("twelve audits", "nine audits", 1).encode("utf-8")
+                text.replace("thirteen audits", "nine audits", 1).encode("utf-8")
             )
             problems = check_audit_count()
             assert any("README.md" in p and "nine" in p for p in problems), problems
