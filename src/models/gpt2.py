@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, cast
 
 import torch
 from torch import nn
@@ -123,14 +123,15 @@ class GPT2(nn.Module):
     def set_head_mask(self, heads: Iterable[tuple[int, int]]) -> None:
         """Zero the output of the given (layer, head) pairs; an empty list clears it."""
         heads = list(heads)
-        for block in self.blocks:
-            block.attn.head_mask = None
+        attns = [cast(GPT2Block, block).attn for block in self.blocks]
+        for attn in attns:
+            attn.head_mask = None
         for layer in {layer for layer, _ in heads}:
             mask = torch.ones(self.cfg.n_heads)
             for lay, head in heads:
                 if lay == layer:
                     mask[head] = 0.0
-            self.blocks[layer].attn.head_mask = mask
+            attns[layer].head_mask = mask
 
     # ------------------------------------------------------------------ weights
     def load_hf_state_dict(self, sd: dict[str, torch.Tensor]) -> None:
