@@ -62,6 +62,12 @@ notebook = [
 tracking = [
     "wandb>=0.17",
 ]
+# Rung 7 (ADR-0034): the Hugging Face reference that GPT-2 weights are loaded from
+# and checked against, and the GPT-2 tokenizer. Nothing else in the repository
+# imports it, and the unit tests skip the parity check when it is absent.
+real = [
+    "transformers>=4.40,<5",
+]
 # The Kaggle CLI, used only by scripts/kaggle_run.py through a subprocess to
 # push and fetch remote GPU runs. No module in src/ imports it.
 remote = [

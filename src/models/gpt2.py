@@ -57,9 +57,7 @@ class GPT2Attention(nn.Module):
     ) -> torch.Tensor:
         B, S, D = x.shape
         q, k, v = self.c_attn(x).split(D, dim=2)
-        q, k, v = (
-            t.view(B, S, self.n_heads, self.d_head).transpose(1, 2) for t in (q, k, v)
-        )
+        q, k, v = (t.view(B, S, self.n_heads, self.d_head).transpose(1, 2) for t in (q, k, v))
         scores = q @ k.transpose(-2, -1) / self.d_head**0.5
         scores = scores.masked_fill(~self.causal[:S, :S], float("-inf"))  # type: ignore[index]
         probs = scores.softmax(dim=-1)
