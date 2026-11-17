@@ -302,3 +302,35 @@ class TestLayerEntropy:
             probs[0, 0, q, q] = 1.0
         entropy = layer_entropy([probs])
         assert entropy[0] < 1e-3
+
+
+class TestInputsFollowTheModelToItsDevice:
+    """The exp4 cascade crashed on a GPU, after a three-hour run, because tokens built on the
+    CPU were fed to a model on `cuda:0` (2026-11-17). With no GPU here, the test checks the
+    cause directly: the inputs are moved to the device the model lives on before the forward."""
+
+    def test_the_inputs_are_sent_to_the_models_device(self) -> None:
+        from unittest.mock import MagicMock
+
+        import torch
+        from torch import nn
+
+        from src.experiments.induction_detection import attention_patterns_for_inputs
+
+        class Tiny(nn.Module):
+            def __init__(self) -> None:
+                super().__init__()
+                self.blocks = nn.ModuleList([nn.Identity()])
+                self.embed = nn.Embedding(8, 4)
+
+            def forward(self, x: torch.Tensor, cache: dict | None = None):
+                h = self.embed(x)
+                if cache is not None:
+                    cache["blocks.0.attn.attn_probs"] = h.unsqueeze(1)
+                return h, cache
+
+        x = MagicMock()
+        x.to.return_value = torch.zeros(2, 3, dtype=torch.long)
+        patterns = attention_patterns_for_inputs(Tiny(), x)
+        x.to.assert_called_once_with(torch.device("cpu"))
+        assert len(patterns) == 1
