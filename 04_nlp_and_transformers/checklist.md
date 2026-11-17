@@ -12,14 +12,14 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
 - [x] **Proof passed** → I can move to the capstone. (gate proof: [[04_nlp_and_transformers/proofs/circuit-analysis-complete]])
 
 ## Core Transformer Architecture
-- [~] BPE tokenizer: implementation from scratch (note: [[04_nlp_and_transformers/notes/bpe-tokenizer]], code: `src/models/bpe_tokenizer.py`)
+- [x] BPE tokenizer: implementation from scratch (note: [[04_nlp_and_transformers/notes/bpe-tokenizer]], code: `src/models/bpe_tokenizer.py`) — exercise: [[04_nlp_and_transformers/exercises/ex-04-bpe-from-scratch]]; proof: [[04_nlp_and_transformers/proofs/bpe-is-lossless-and-ordered]]
 - [x] Self-attention: scaled dot-product, implementation in PyTorch (code: `src/models/decoder_only_transformer.py`) — exercise: [[04_nlp_and_transformers/exercises/ex-01-transformer-from-scratch]]; proof: [[04_nlp_and_transformers/proofs/attention-rope-and-the-cache]]
 - [x] Multi-head attention: concatenation, projection (code: `src/models/decoder_only_transformer.py`) — exercise: [[04_nlp_and_transformers/exercises/ex-01-transformer-from-scratch]]; proof: [[04_nlp_and_transformers/proofs/attention-rope-and-the-cache]]
 - [x] Positional encoding: RoPE (code: `src/models/decoder_only_transformer.py`) — exercise: [[04_nlp_and_transformers/exercises/ex-01-transformer-from-scratch]]; proof: [[04_nlp_and_transformers/proofs/attention-rope-and-the-cache]]
 - [x] Decoder-only transformer: causal masking, autoregressive generation, full implementation (code: `src/models/decoder_only_transformer.py`) — exercise: [[04_nlp_and_transformers/exercises/ex-01-transformer-from-scratch]]; proof: [[04_nlp_and_transformers/proofs/attention-rope-and-the-cache]]
 - [~] Encoder-only (BERT): masked language modeling, bidirectional context (breadth)
 - [~] Scaling Laws: Kaplan & Chinchilla — compute-optimal training (note: [[04_nlp_and_transformers/notes/scaling-laws]])
-- [~] Sampling: temperature, top-k, top-p for generation (built into `DecoderOnlyTransformer.generate()`)
+- [~] Sampling: temperature and top-k for generation (top-p is not implemented) (built into `DecoderOnlyTransformer.generate()`)
 
 ## Mechanistic Interpretability (Core MI Skills)
 - [x] QK/OV circuit decomposition — exercise: [[04_nlp_and_transformers/exercises/ex-02-induction-head-detection]]; proof: [[04_nlp_and_transformers/proofs/qk-ov-decomposition]]

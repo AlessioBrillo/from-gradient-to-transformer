@@ -45,7 +45,7 @@ Some exercises and proofs were written by an AI assistant to close gaps this rul
 - [x] RNN/LSTM (vanishing gradient context for why attention matters) — note: [[03_deep_learning/notes/rnn-from-scratch]], exercise: [[03_deep_learning/exercises/ex-02-rnn-and-cnn]] — proof: [[03_deep_learning/proofs/gradient-flow-and-architectures]]
 
 ## Phase 4 — NLP & Transformers (LOAD-BEARING for MI)
-- [~] BPE tokenizer from scratch — code: `src/models/bpe_tokenizer.py`
+- [x] BPE tokenizer from scratch — code: `src/models/bpe_tokenizer.py` — exercise: [[04_nlp_and_transformers/exercises/ex-04-bpe-from-scratch]]; proof: [[04_nlp_and_transformers/proofs/bpe-is-lossless-and-ordered]]
 - [x] Self-attention implemented (scaled dot-product) — code: `src/models/decoder_only_transformer.py` — exercise: [[04_nlp_and_transformers/exercises/ex-01-transformer-from-scratch]]; proof: [[04_nlp_and_transformers/proofs/attention-rope-and-the-cache]]
 - [x] Multi-head + positional encoding (RoPE) — code: `src/models/decoder_only_transformer.py` — exercise: [[04_nlp_and_transformers/exercises/ex-01-transformer-from-scratch]]; proof: [[04_nlp_and_transformers/proofs/attention-rope-and-the-cache]]
 - [x] Decoder-only transformer from scratch (causal masking) — code: `src/models/decoder_only_transformer.py` — exercise: [[04_nlp_and_transformers/exercises/ex-01-transformer-from-scratch]]; proof: [[04_nlp_and_transformers/proofs/attention-rope-and-the-cache]]
