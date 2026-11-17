@@ -442,18 +442,18 @@ superposition pays for itself.
 $n_\text{features}=20$, $n_\text{dimensions}=5$, three seeds at
 sparsity $0.01$:
 \begin{itemize}
-  \item Features represented ($\|W_i\| > 0.5$): $19.67 \pm 0.47$ (range
-    19--20 / 20).
-  \item Mean dimensionality per feature: $0.249 \pm 0.001$ (expected
+  \item Features represented ($\|W_i\| > 0.5$): $20.00 \pm 0.00$ (range
+    20--20 / 20).
+  \item Mean dimensionality per feature: $0.249 \pm 0.000$ (expected
     $\approx 1/n_\text{dimensions} \times n_\text{avg}$).
-  \item Mean absolute correlation: $0.351 \pm 0.001$.
+  \item Mean absolute correlation: $0.349 \pm 0.002$.
 \end{itemize}
 
 Sparsity sweep (three seeds): features represented rises from
 $10.00 \pm 0.00$ of 20 at sparsity 0.5 to $20.00 \pm 0.00$ by sparsity
 0.05, holding at 20/20 through sparsity 0.005. Below that the model
-degrades gradually rather than at a cliff: $18.67 \pm 0.47$ of 20 at
-sparsity 0.002 and $17.00 \pm 0.82$ at sparsity 0.001. The extreme-sparsity
+degrades gradually rather than at a cliff: $18.00 \pm 0.82$ of 20 at
+sparsity 0.002 and $16.33 \pm 0.94$ at sparsity 0.001. The extreme-sparsity
 limit is real (a 2000- vs 600-epoch drill refuted under-training), but its
 exact value moves with the seed, so it is quoted as a mean $\pm$ spread
 rather than a single count.
