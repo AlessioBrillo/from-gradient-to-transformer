@@ -19,10 +19,10 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
 - [~] Gradient boosting: XGBoost/LightGBM hands-on (note: [[02_classical_ml/notes/gradient-boosting]], exercise: [[02_classical_ml/exercises/ex-04-gradient-boosting-and-naive-bayes]])
 - [~] Support Vector Machines: maximum margin, kernel trick — **forward link: circuit intuition (attention separability)** (note: [[02_classical_ml/notes/svm-and-margin]])
 - [~] Naive Bayes: probabilistic classifier, conditional independence assumption (note: [[02_classical_ml/notes/naive-bayes]], exercise: [[02_classical_ml/exercises/ex-04-gradient-boosting-and-naive-bayes]])
-- [~] Cross-validation: k-fold, stratified, grouped (code: `src/evaluation/metrics.py` — `cross_val_score`)
-- [~] Metrics: accuracy, precision, recall, F1, ROC-AUC, RMSE, MAE (code: `src/evaluation/metrics.py`)
+- [x] Cross-validation: k-fold, stratified, grouped (code: `src/evaluation/metrics.py` — `cross_val_score`) — exercise: [[02_classical_ml/exercises/ex-05-metrics-cross-validation-and-leakage]]; proof: [[02_classical_ml/proofs/cross-validation-estimates-and-leakage]]
+- [x] Metrics: accuracy, precision, recall, F1, ROC-AUC, RMSE, MAE (code: `src/evaluation/metrics.py`) — exercise: [[02_classical_ml/exercises/ex-05-metrics-cross-validation-and-leakage]]; proof: [[02_classical_ml/proofs/cross-validation-estimates-and-leakage]]
 - [x] Bias/variance diagnosis: learning curves, regularization path (note: [[02_classical_ml/notes/bias-variance-and-evaluation]]) — exercise: [[02_classical_ml/exercises/ex-04-gradient-boosting-and-naive-bayes]]; proof: [[01_foundations/proofs/bias-variance-decomposition]]
 - [~] Feature engineering: encoding, scaling, interactions (note: [[02_classical_ml/notes/bias-variance-and-evaluation]])
-- [~] Data leakage: detection and prevention (note: [[02_classical_ml/notes/bias-variance-and-evaluation]])
+- [x] Data leakage: detection and prevention (note: [[02_classical_ml/notes/bias-variance-and-evaluation]]) — exercise: [[02_classical_ml/exercises/ex-05-metrics-cross-validation-and-leakage]]; proof: [[02_classical_ml/proofs/cross-validation-estimates-and-leakage]]
 - [x] PCA: implementation, variance explanation, connection to SAEs (proof: [[02_classical_ml/proofs/trees-ensembles-pca]], exercise: [[02_classical_ml/exercises/ex-03-pca-and-feature-geometry]], code: `src/models/pca.py`)
 - [~] k-means: elbow method, silhouette score (code: `src/models/pca.py` — KMeans class)

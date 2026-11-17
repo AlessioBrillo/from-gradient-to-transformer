@@ -32,7 +32,7 @@ Some exercises and proofs were written by an AI assistant to close gaps this rul
 - [x] Trees / ensembles / boosting — proof: [[02_classical_ml/proofs/trees-ensembles-pca]] (exercise: [[02_classical_ml/exercises/ex-02-decision-trees-and-ensembles]], code: `src/models/tree_model.py`)
 - [~] Support Vector Machines (margin, kernel trick — circuit intuition) — note: [[02_classical_ml/notes/svm-and-margin]]
 - [~] Naive Bayes — exercise: [[02_classical_ml/exercises/ex-04-gradient-boosting-and-naive-bayes]]
-- [~] Cross-validation + correct metrics — code: `src/evaluation/metrics.py`
+- [x] Cross-validation + correct metrics — code: `src/evaluation/metrics.py` — exercise: [[02_classical_ml/exercises/ex-05-metrics-cross-validation-and-leakage]]; proof: [[02_classical_ml/proofs/cross-validation-estimates-and-leakage]]
 - [x] Bias/variance diagnosis — note: [[02_classical_ml/notes/bias-variance-and-evaluation]] — exercise: [[02_classical_ml/exercises/ex-04-gradient-boosting-and-naive-bayes]]; proof: [[01_foundations/proofs/bias-variance-decomposition]]
 - [x] PCA / dictionary learning — **conceptual ancestor of sparse autoencoders** — proof: [[02_classical_ml/proofs/trees-ensembles-pca]] (exercise: [[02_classical_ml/exercises/ex-03-pca-and-feature-geometry]], code: `src/models/pca.py`)
 
