@@ -6,7 +6,9 @@ tags: [moc, skills, checklist]
 
 Rule: check a skill **only** when an exercise (in `exercises/`) **and** a proof (in `proofs/`) demonstrate it. A checked box without proof is a lie you tell yourself.
 
-Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
+Legend: `[ ]` todo · `[~]` studied or implemented, not yet verified by an exercise **and** a proof · `[x]` verified (linked exercise and proof, or a manifest or deliverable for research items; enforced by `make vault-check`) · `[-]` descoped with a dated reason.
+
+Some exercises and proofs were written by an AI assistant to close gaps this rule exposed on 2026-11-17. Those files carry `authorship: claude` in their front matter and say so at the top: they show that the skill is demonstrated and checkable, not that the repository owner reconstructed it from memory.
 
 ## Phase 1 — Foundations
 - [x] Applied linear algebra (NumPy) — proof: [[01_foundations/proofs/linear-algebra-foundations]] (exercises: [[01_foundations/exercises/2d-transformation-analysis]], [[01_foundations/exercises/dot-products-norms-and-basis-change]])
@@ -15,7 +17,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
 - [x] Information theory (entropy, cross-entropy, KL divergence) — proof: [[01_foundations/proofs/information-theory-foundations]] (exercise: [[01_foundations/exercises/cross-entropy-from-first-principles]])
 - [x] pandas + EDA + visualization — proof: [[01_foundations/proofs/pandas-eda-proof]] (exercise: [[01_foundations/exercises/pipeline-eda-and-visualization]])
 - [x] SQL + data pipeline basics — proof: [[01_foundations/proofs/sql-data-fundamentals]] (exercise: [[01_foundations/exercises/sql-queries-for-ml]])
-- [x] Git + reproducible environment — note: [[01_foundations/notes/git-and-reproducible-environments]]
+- [x] Git + reproducible environment — note: [[01_foundations/notes/git-and-reproducible-environments]] — exercise: [[06_production_ai/exercises/ex-02-results-manifest]]; proof: [[06_production_ai/proofs/reproducible-from-clean-clone]]
 
 ### MI forward-links from foundations
 > These links connect Phase 1 concepts to their mechanistic interpretability analogues:
@@ -28,41 +30,41 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
 ## Phase 2 — Classical ML
 - [x] Linear/logistic regression (linear feature intuition) — proof: [[02_classical_ml/proofs/linear-logistic-regression]] (exercise: [[02_classical_ml/exercises/ex-01-linear-and-logistic-regression]])
 - [x] Trees / ensembles / boosting — proof: [[02_classical_ml/proofs/trees-ensembles-pca]] (exercise: [[02_classical_ml/exercises/ex-02-decision-trees-and-ensembles]], code: `src/models/tree_model.py`)
-- [x] Support Vector Machines (margin, kernel trick — circuit intuition) — note: [[02_classical_ml/notes/svm-and-margin]]
-- [x] Naive Bayes — exercise: [[02_classical_ml/exercises/ex-04-gradient-boosting-and-naive-bayes]]
-- [x] Cross-validation + correct metrics — code: `src/evaluation/metrics.py`
-- [x] Bias/variance diagnosis — note: [[02_classical_ml/notes/bias-variance-and-evaluation]]
+- [~] Support Vector Machines (margin, kernel trick — circuit intuition) — note: [[02_classical_ml/notes/svm-and-margin]]
+- [~] Naive Bayes — exercise: [[02_classical_ml/exercises/ex-04-gradient-boosting-and-naive-bayes]]
+- [~] Cross-validation + correct metrics — code: `src/evaluation/metrics.py`
+- [x] Bias/variance diagnosis — note: [[02_classical_ml/notes/bias-variance-and-evaluation]] — exercise: [[02_classical_ml/exercises/ex-04-gradient-boosting-and-naive-bayes]]; proof: [[01_foundations/proofs/bias-variance-decomposition]]
 - [x] PCA / dictionary learning — **conceptual ancestor of sparse autoencoders** — proof: [[02_classical_ml/proofs/trees-ensembles-pca]] (exercise: [[02_classical_ml/exercises/ex-03-pca-and-feature-geometry]], code: `src/models/pca.py`)
 
 ## Phase 3 — Deep Learning
-- [x] Backprop from scratch (micrograd) — code: `src/training/micrograd.py` (exercise: [[03_deep_learning/exercises/ex-01-micrograd]])
-- [x] PyTorch training loop from memory — note: [[03_deep_learning/notes/backpropagation-from-scratch]]
-- [x] Optimization (Adam/AdamW, LR schedulers) — note: [[03_deep_learning/notes/training-dynamics-and-grokking]]
-- [x] Regularization (dropout, norm, **weight decay — critical for grokking**) — same note
-- [x] **Grokking dynamics: delayed generalization, phase transitions, progress measures** — same note
-- [x] RNN/LSTM (vanishing gradient context for why attention matters) — note: [[03_deep_learning/notes/rnn-from-scratch]], exercise: [[03_deep_learning/exercises/ex-02-rnn-and-cnn]]
+- [x] Backprop from scratch (micrograd) — code: `src/training/micrograd.py` (exercise: [[03_deep_learning/exercises/ex-01-micrograd]]) — proof: [[01_foundations/proofs/chain-rule-and-gradient-check]]
+- [~] PyTorch training loop from memory — note: [[03_deep_learning/notes/backpropagation-from-scratch]]
+- [x] Optimization (Adam/AdamW, LR schedulers) — note: [[03_deep_learning/notes/training-dynamics-and-grokking]] — exercise: [[03_deep_learning/exercises/ex-03-adamw-and-schedules]]; proof: [[03_deep_learning/proofs/weight-decay-and-the-cleanup-phase]]
+- [x] Regularization (dropout, norm, **weight decay — critical for grokking**) — same note — exercise: [[03_deep_learning/exercises/ex-03-adamw-and-schedules]]; proof: [[03_deep_learning/proofs/weight-decay-and-the-cleanup-phase]]
+- [x] **Grokking dynamics: delayed generalization, phase transitions, progress measures** — same note — exercise: [[03_deep_learning/exercises/ex-03-adamw-and-schedules]]; proof: [[03_deep_learning/proofs/weight-decay-and-the-cleanup-phase]]
+- [x] RNN/LSTM (vanishing gradient context for why attention matters) — note: [[03_deep_learning/notes/rnn-from-scratch]], exercise: [[03_deep_learning/exercises/ex-02-rnn-and-cnn]] — proof: [[03_deep_learning/proofs/gradient-flow-and-architectures]]
 
 ## Phase 4 — NLP & Transformers (LOAD-BEARING for MI)
-- [x] BPE tokenizer from scratch — code: `src/models/bpe_tokenizer.py`
-- [x] Self-attention implemented (scaled dot-product) — code: `src/models/decoder_only_transformer.py`
-- [x] Multi-head + positional encoding (RoPE, sinusoidal) — code: `src/models/decoder_only_transformer.py`
-- [x] Decoder-only transformer from scratch (causal masking) — code: `src/models/decoder_only_transformer.py`
-- [x] **QK/OV circuit decomposition** — proof: [[04_nlp_and_transformers/proofs/qk-ov-decomposition]]
-- [x] **Residual stream as communication channel** — proof: [[04_nlp_and_transformers/proofs/residual-stream-communication-channel]]
-- [x] **Induction heads: prefix-matching + copying mechanism** — proof: [[04_nlp_and_transformers/proofs/circuit-analysis-complete]]
-- [x] **Logit lens: projecting residual stream to vocabulary** — proof: [[04_nlp_and_transformers/proofs/logit-lens]]
-- [x] **Activation patching / path patching** — proof: [[04_nlp_and_transformers/proofs/circuit-analysis-complete]], [[05_llm_engineering/proofs/intervention-validity]].
+- [~] BPE tokenizer from scratch — code: `src/models/bpe_tokenizer.py`
+- [~] Self-attention implemented (scaled dot-product) — code: `src/models/decoder_only_transformer.py`
+- [~] Multi-head + positional encoding (RoPE, sinusoidal) — code: `src/models/decoder_only_transformer.py`
+- [~] Decoder-only transformer from scratch (causal masking) — code: `src/models/decoder_only_transformer.py`
+- [x] **QK/OV circuit decomposition** — proof: [[04_nlp_and_transformers/proofs/qk-ov-decomposition]] — exercise: [[04_nlp_and_transformers/exercises/ex-02-induction-head-detection]]
+- [x] **Residual stream as communication channel** — proof: [[04_nlp_and_transformers/proofs/residual-stream-communication-channel]] — exercise: [[04_nlp_and_transformers/exercises/ex-01-transformer-from-scratch]]
+- [x] **Induction heads: prefix-matching + copying mechanism** — proof: [[04_nlp_and_transformers/proofs/circuit-analysis-complete]] — exercise: [[04_nlp_and_transformers/exercises/ex-02-induction-head-detection]]; proof: [[04_nlp_and_transformers/proofs/circuit-analysis-complete]]
+- [x] **Logit lens: projecting residual stream to vocabulary** — proof: [[04_nlp_and_transformers/proofs/logit-lens]] — exercise: [[04_nlp_and_transformers/exercises/ex-01-transformer-from-scratch]]
+- [x] **Activation patching / path patching** — proof: [[04_nlp_and_transformers/proofs/circuit-analysis-complete]], [[05_llm_engineering/proofs/intervention-validity]]. — exercise: [[04_nlp_and_transformers/exercises/ex-03-activation-patching]]
   Both had real bugs (wrong patch site, wrong metric; path patching had no implementation at all) fixed 2026-08-01 — see the intervention-validity proof.
   Attribution patching (AtP) is a distinct gradient-based approximation and is genuinely not implemented — see the Research Skills section below.
-- [x] **TransformerLens: HookedTransformer, hook points, ActivationCache** — note: [[04_nlp_and_transformers/notes/mi-tooling]]
-- [x] Scaling Laws (Kaplan, Chinchilla) — note: [[04_nlp_and_transformers/notes/scaling-laws]]
+- [~] **TransformerLens: HookedTransformer, hook points, ActivationCache** — note: [[04_nlp_and_transformers/notes/mi-tooling]]
+- [~] Scaling Laws (Kaplan, Chinchilla) — note: [[04_nlp_and_transformers/notes/scaling-laws]]
 - [ ] Computational optimizations (FlashAttention, KV cache) — breadth
 
 ## Phase 5 — LLM Engineering (reframed: model instrumentation)
 - [x] **Hooks and activation caching** — exercise: [[05_llm_engineering/exercises/ex-01-hook-instrumentation]], proof: [[05_llm_engineering/proofs/hook-intervention]]
 - [x] **Deterministic inference for reproducible circuit analysis** — exercise: [[05_llm_engineering/exercises/ex-02-activation-harvesting]], proof: [[05_llm_engineering/proofs/determinism-necessity]]
 - [x] **Activation harvesting at scale** — exercise: [[05_llm_engineering/exercises/ex-02-activation-harvesting]], proof: [[05_llm_engineering/proofs/activation-patching]]
-- [x] **Dataset construction for circuit tasks** — exercise: [[05_llm_engineering/exercises/ex-03-circuit-dataset]]
+- [x] **Dataset construction for circuit tasks** — exercise: [[05_llm_engineering/exercises/ex-03-circuit-dataset]] — proof: [[05_llm_engineering/proofs/intervention-validity]]
 - [ ] RAG (light touch — retrieval as circuit analysis context)
 - [ ] LoRA fine-tuning (light touch)
 
@@ -134,7 +136,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` verified (with link to proof).
   <!-- manifest: results/induction_standard.json -->
 
 ## Phase 7 — Capstone
-- [x] From-scratch decoder-only transformer (the model to reverse-engineer) — `src/models/decoder_only_transformer.py`
+- [~] From-scratch decoder-only transformer (the model to reverse-engineer) — `src/models/decoder_only_transformer.py`
 - [x] Grokking experiment end-to-end (training + analysis + figures) — reproduced on GPU (3 seeds, both protocols); the CPU-bound P=113 run is no longer the flagship
   <!-- manifest: results/grokking_nanda_p113.json -->
 - [x] At least one circuit verification (activation patching on the capstone model) — exp4, end to end on Rung 1's own checkpoint

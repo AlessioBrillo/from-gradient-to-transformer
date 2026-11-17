@@ -17,9 +17,11 @@ Index and links for this phase. Detailed topics/resources/exercises: see [[00_me
 ## Exercises
 - [[03_deep_learning/exercises/ex-01-micrograd|Build micrograd: Autograd from Scratch]]
 - [[03_deep_learning/exercises/ex-02-rnn-and-cnn|RNN and CNN for Context]]
+- [[03_deep_learning/exercises/ex-03-adamw-and-schedules|AdamW and a cosine schedule from scratch]] (written by Claude)
 
 ## Proofs to myself
 - [[03_deep_learning/proofs/gradient-flow-and-architectures|Gate Proof: Gradient Flow and Architecture Design]]
+- [[03_deep_learning/proofs/weight-decay-and-the-cleanup-phase|Why decoupled weight decay drives the cleanup phase]] (written by Claude)
 
 ## Phase checklist → [[03_deep_learning/checklist]]
 

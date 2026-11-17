@@ -12,10 +12,10 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
 - [x] **Proof passed** → I can move to the next phase. (chain rule + gradient check: [[01_foundations/proofs/chain-rule-and-gradient-check]] ✅)
 
 ## Skills
-- [x] NumPy: matrix operations, vectorization, broadcasting (exercises: [[01_foundations/exercises/2d-transformation-analysis]], [[01_foundations/exercises/dot-products-norms-and-basis-change]])
+- [x] NumPy: matrix operations, vectorization, broadcasting (exercises: [[01_foundations/exercises/2d-transformation-analysis]], [[01_foundations/exercises/dot-products-norms-and-basis-change]]) — proof: [[01_foundations/proofs/linear-algebra-foundations]]
 - [x] Gradient + chain rule: numerical gradient check implemented and verified (exercise: [[01_foundations/exercises/gradient-verification]], proof: [[01_foundations/proofs/chain-rule-and-gradient-check]])
 - [x] Probability and MLE: MLE, Bayes, expectation derived and applied (exercises: [[01_foundations/exercises/maximum-likelihood-estimation-in-practice]], [[01_foundations/exercises/probability-sampling-and-expectation]]; proof: [[01_foundations/proofs/probability-and-mle]])
 - [x] Information theory: entropy, cross-entropy, KL divergence derived and applied (exercise: [[01_foundations/exercises/cross-entropy-from-first-principles]]; proof: [[01_foundations/proofs/information-theory-foundations]])
 - [x] pandas + EDA + visualization: notes + exercise + proof (exercise: [[01_foundations/exercises/pipeline-eda-and-visualization]], proof: [[01_foundations/proofs/pandas-eda-proof]])
 - [x] SQL + data pipeline basics: note + exercise + proof (note: [[01_foundations/notes/sql-for-data-pipelines]], exercise: [[01_foundations/exercises/sql-queries-for-ml]], proof: [[01_foundations/proofs/sql-data-fundamentals]])
-- [x] Git + reproducible environment: note created ([[01_foundations/notes/git-and-reproducible-environments]])
+- [x] Git + reproducible environment: note created ([[01_foundations/notes/git-and-reproducible-environments]]) — exercise: [[06_production_ai/exercises/ex-02-results-manifest]]; proof: [[06_production_ai/proofs/reproducible-from-clean-clone]]

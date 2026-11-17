@@ -17,6 +17,15 @@ This script checks, for every markdown file under `01_*` .. `07_*`:
    allowed set, and at least one `state/<value>`.
 4. **MOC coverage** — every note, exercise and proof must be listed in its
    phase's `_MOC.md`. A note nobody can navigate to is functionally an orphan.
+5. **Skill evidence** — the rule `00_meta/02_skill-tree.md` has always stated
+   ("check a skill only when an exercise **and** a proof demonstrate it"),
+   enforced on the skill tree and on every phase checklist. A `[x]` item must
+   link an existing exercise and an existing proof, or cite a tracked manifest
+   (a research deliverable is evidenced by its run, not by an exercise). A gate
+   line (`**Proof passed**`) needs only the proof, and a deliverable (a tracked
+   file under `portfolio/`, `notebooks/` or `src/experiments/`) is evidenced by
+   the file itself. Anything else is `[~]` (studied, not yet verified). An item
+   deliberately not pursued is `[-]` and must say `descoped`.
 
 Run: `make vault-check` (also a CI step, and part of `make ci-check`).
 """
@@ -234,6 +243,80 @@ def _plain_paths(body: str) -> set[str]:
     return set(re.findall(r"[\w./-]+\.md", body))
 
 
+CHECKED = re.compile(r"^(\s*)- \[x\]\s*(.*)$")
+UNCHECKED_OR_ITEM = re.compile(r"^\s*- \[[ x~-]\]")
+DESCOPED_ITEM = re.compile(r"^\s*- \[-\]\s*(.*)$")
+DELIVERABLE_REF = re.compile(r"`((?:notebooks|portfolio|src/experiments)/[^`\s]+)`")
+MANIFEST_REF = re.compile(r"results/([A-Za-z0-9_\-]+\.json)")
+SKILL_FILES = ("00_meta/02_skill-tree.md",)
+
+
+def _items(text: str) -> list[tuple[int, str]]:
+    """Every checked item as (line number, its text with continuation lines).
+
+    A continuation is an indented line that is not itself a list item: the
+    skill tree wraps long evidence onto the following lines.
+    """
+    lines = text.splitlines()
+    out: list[tuple[int, str]] = []
+    for i, line in enumerate(lines):
+        m = CHECKED.match(line)
+        if not m:
+            continue
+        block = [m.group(2)]
+        for follow in lines[i + 1 :]:
+            if not follow.strip() or UNCHECKED_OR_ITEM.match(follow) or not follow.startswith(" "):
+                break
+            block.append(follow.strip())
+        out.append((i + 1, " ".join(block)))
+    return out
+
+
+def _exists(target: str, kind: str, root: Path) -> bool:
+    """Does a wikilink to `<phase>/<kind>/<name>` (or a bare name) resolve?"""
+    if "/" in target:
+        return (root / f"{target}.md").is_file() and f"/{kind}/" in f"/{target}"
+    return any(root.glob(f"0[1-7]_*/{kind}/{target}.md"))
+
+
+def check_skill_evidence(root: Path, problems: list[str]) -> None:
+    """A checked skill needs an exercise and a proof, or a manifest.
+
+    Also: a `[-]` (descoped) item has to say so, so that the box cannot be
+    used to quietly drop a skill."""
+    paths = [root / f for f in SKILL_FILES]
+    paths += [root / phase / "checklist.md" for phase in PHASES]
+    for path in paths:
+        if not path.is_file():
+            continue
+        rel = path.relative_to(root).as_posix()
+        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            m = DESCOPED_ITEM.match(line)
+            if m and "descoped" not in m.group(1).lower():
+                problems.append(f"{rel}:{lineno}: `[-]` item does not say `descoped` and why.")
+        for lineno, text in _items(path.read_text(encoding="utf-8")):
+            targets = [m.group(1).strip() for m in WIKILINK.finditer(text)]
+            has_exercise = any(_exists(x, "exercises", root) for x in targets)
+            has_proof = any(_exists(x, "proofs", root) for x in targets)
+            if any((root / "results" / m).is_file() for m in MANIFEST_REF.findall(text)):
+                continue
+            if any((root / d).exists() for d in DELIVERABLE_REF.findall(text)):
+                continue
+            if any(x.startswith("portfolio/") and (root / f"{x}.md").is_file() for x in targets):
+                continue
+            if text.lstrip("* ").startswith("Proof passed") and has_proof:
+                continue
+            if has_exercise and has_proof:
+                continue
+            missing = " or ".join(
+                n for n, ok in (("exercise", has_exercise), ("proof", has_proof)) if not ok
+            )
+            problems.append(
+                f"{rel}:{lineno}: checked `[x]` but links no existing {missing} "
+                f"({text[:70].strip()}...). Link them, or mark the item `[~]`."
+            )
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -243,6 +326,11 @@ def main(argv: list[str] | None = None) -> int:
         help="Repository root (default: this file's parent).",
     )
     args = parser.parse_args(argv)
+
+    # Problem messages quote vault text (arrows, dashes). A legacy console
+    # code page would crash `print` on them and hide the verdict.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
     root = args.root.resolve()
     files: list[Path] = []
@@ -267,6 +355,7 @@ def main(argv: list[str] | None = None) -> int:
     check_link_degree(files, problems)
     check_schema(files, problems)
     check_moc_coverage(files, problems)
+    check_skill_evidence(root, problems)
 
     if problems:
         print(f"check-vault: {len(problems)} problem(s) found\n")
