@@ -13,10 +13,10 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
 
 ## Core Transformer Architecture
 - [~] BPE tokenizer: implementation from scratch (note: [[04_nlp_and_transformers/notes/bpe-tokenizer]], code: `src/models/bpe_tokenizer.py`)
-- [~] Self-attention: scaled dot-product, implementation in PyTorch (code: `src/models/decoder_only_transformer.py`)
-- [~] Multi-head attention: concatenation, projection (code: `src/models/decoder_only_transformer.py`)
-- [~] Positional encoding: RoPE (code: `src/models/decoder_only_transformer.py`)
-- [~] Decoder-only transformer: causal masking, autoregressive generation, full implementation (code: `src/models/decoder_only_transformer.py`)
+- [x] Self-attention: scaled dot-product, implementation in PyTorch (code: `src/models/decoder_only_transformer.py`) — exercise: [[04_nlp_and_transformers/exercises/ex-01-transformer-from-scratch]]; proof: [[04_nlp_and_transformers/proofs/attention-rope-and-the-cache]]
+- [x] Multi-head attention: concatenation, projection (code: `src/models/decoder_only_transformer.py`) — exercise: [[04_nlp_and_transformers/exercises/ex-01-transformer-from-scratch]]; proof: [[04_nlp_and_transformers/proofs/attention-rope-and-the-cache]]
+- [x] Positional encoding: RoPE (code: `src/models/decoder_only_transformer.py`) — exercise: [[04_nlp_and_transformers/exercises/ex-01-transformer-from-scratch]]; proof: [[04_nlp_and_transformers/proofs/attention-rope-and-the-cache]]
+- [x] Decoder-only transformer: causal masking, autoregressive generation, full implementation (code: `src/models/decoder_only_transformer.py`) — exercise: [[04_nlp_and_transformers/exercises/ex-01-transformer-from-scratch]]; proof: [[04_nlp_and_transformers/proofs/attention-rope-and-the-cache]]
 - [~] Encoder-only (BERT): masked language modeling, bidirectional context (breadth)
 - [~] Scaling Laws: Kaplan & Chinchilla — compute-optimal training (note: [[04_nlp_and_transformers/notes/scaling-laws]])
 - [~] Sampling: temperature, top-k, top-p for generation (built into `DecoderOnlyTransformer.generate()`)

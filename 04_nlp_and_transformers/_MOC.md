@@ -30,6 +30,7 @@ Index and links for this phase. Detailed topics/resources/exercises: see [[00_me
 - [[04_nlp_and_transformers/exercises/ex-03-activation-patching|Activation Patching to Verify Circuit Components]]
 
 ## Proofs to myself
+- [[04_nlp_and_transformers/proofs/attention-rope-and-the-cache|Proof: attention, RoPE and the cache are correct]] (written by Claude)
 - [[04_nlp_and_transformers/proofs/qk-ov-decomposition|QK/OV Circuit Decomposition]]
 - [[04_nlp_and_transformers/proofs/residual-stream-communication-channel|Residual Stream as Communication Channel]]
 - [[04_nlp_and_transformers/proofs/logit-lens|Logit Lens — Reading the Residual Stream]]
