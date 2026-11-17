@@ -166,9 +166,9 @@ See [[04_nlp_and_transformers/notes/induction-heads]].
 <!-- manifest: results/exp3_superposition_sweep.json -->
 
 Tiny ReLU autoencoder with a real bottleneck, sparse features. As sparsity
-drops, represented features rise from 10/20 to 19.67 ± 0.47 of 20 — and the
+drops, represented features rise from 10/20 to 20.00 ± 0.00 of 20 — and the
 three-seed sweep records the same transition (10.00 ± 0.00 of 20 at sparsity
-0.5, 20.00 ± 0.00 by sparsity 0.05, degrading to 17.00 ± 0.82 at sparsity
+0.5, 20.00 ± 0.00 by sparsity 0.05, degrading to 16.33 ± 0.94 at sparsity
 0.001). In the sparse
 regime five features settle on a regular pentagon in two dimensions (inter-angle
 gaps 70.2–73.8°, standard deviation ≤ 1.4°), matching the geometry Elhage et

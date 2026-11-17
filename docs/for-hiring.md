@@ -37,6 +37,7 @@ GPUs.
 | Skill | Evidence |
 |---|---|
 | Turning a principle into a mechanism | "No public number without evidence" is a program, not a guideline: manifests carry seeds, arguments, git SHA and device, and CI fails on an unbacked claim: [`results.py`](../src/results.py) |
+| Extracting a reusable tool | The record-checking mechanism, extracted into its own dependency-free library with its own tests: [claimcheck](https://github.com/AlessioBrillo/claimcheck) |
 | Guarding against regression of the record | A ratchet of retracted sentences that must never reappear, and a check of table numbers against the manifests they cite: [`docs_audit.py`](../scripts/docs_audit.py) |
 | Recording decisions with their alternatives | [ADRs](adr/README.md), and a [descope register](../06_production_ai/notes/descope-register.md) that gives a dated reason for everything deliberately not built |
 | Stopping a process that stopped paying | The planning method used for two months was closed when it cost more than it returned: [ADR-0031](adr/0031-closure.md) |

@@ -1216,15 +1216,15 @@ Elhage et al. setup; the transition reproduces on the first run, cleanly, with n
 
 | Sparsity | Features represented (mean ± std over 3 seeds) | Mean dimensionality | Mean \|corr\| |
 |----------|----------------------|----------------------|--------------|
-| 0.500 | 10.00 ± 0.00 | 0.250 ± 0.000 | 0.299 ± 0.003 |
+| 0.500 | 10.00 ± 0.00 | 0.250 ± 0.000 | 0.299 ± 0.004 |
 | 0.200 | 14.67 ± 0.47 | 0.250 ± 0.000 | 0.315 ± 0.005 |
-| 0.100 | 17.67 ± 1.25 | 0.250 ± 0.000 | 0.336 ± 0.003 |
-| 0.050 | 20.00 ± 0.00 | 0.250 ± 0.000 | 0.348 ± 0.001 |
-| 0.020 | 20.00 ± 0.00 | 0.249 ± 0.000 | 0.349 ± 0.002 |
-| 0.010 | 20.00 ± 0.00 | 0.249 ± 0.000 | 0.350 ± 0.002 |
+| 0.100 | 18.33 ± 0.47 | 0.250 ± 0.000 | 0.337 ± 0.003 |
+| 0.050 | 20.00 ± 0.00 | 0.250 ± 0.000 | 0.349 ± 0.000 |
+| 0.020 | 20.00 ± 0.00 | 0.249 ± 0.000 | 0.350 ± 0.001 |
+| 0.010 | 20.00 ± 0.00 | 0.249 ± 0.000 | 0.349 ± 0.002 |
 | 0.005 | 20.00 ± 0.00 | 0.249 ± 0.000 | 0.351 ± 0.001 |
-| 0.002 | 18.67 ± 0.47 | 0.247 ± 0.001 | 0.348 ± 0.006 |
-| 0.001 | 17.00 ± 0.82 | 0.249 ± 0.001 | 0.335 ± 0.002 |
+| 0.002 | 18.00 ± 0.82 | 0.248 ± 0.000 | 0.346 ± 0.006 |
+| 0.001 | 16.33 ± 0.94 | 0.248 ± 0.001 | 0.336 ± 0.006 |
 
 **The sweep above had no manifest behind it (2026-11-11), and now it does.** The
 2026-11-11 audit's number check found what the record had been hiding: the sweep path of
@@ -1239,22 +1239,24 @@ sweep's stdout.
 **What the three-seed sweep changed, and what it did not.** The phase transition is
 unchanged in shape: **10/20 at sparsity 0.5 rising to 20/20 by sparsity 0.05**, and
 20/20 held down to sparsity 0.005. What the seed spread adds is the *tail*, which the
-single-seed table could not show: at sparsity 0.002 the three seeds land at 19, 19, 18
-of 20 (mean 18.67 ± 0.47) and at sparsity 0.001 at 18, 17, 16 (mean 17.00 ± 0.82).
+single-seed table could not show: at sparsity 0.002 the three seeds land at 19, 17, 18
+of 20 (mean 18.00 ± 0.82) and at sparsity 0.001 at 17, 17, 15 (mean 16.33 ± 0.94).
 The old table's single-seed "16 / 20" at sparsity 0.001 was one draw from that spread —
 so the previously published "capacity limit at extreme sparsity" number is now a
-**three-seed mean of 17.00 ± 0.82** rather than a single observation. The honest
+**three-seed mean of 16.33 ± 0.94** rather than a single observation. The honest
 statement of the limit is the mean ± spread, and the level at which the model stops
 representing every feature moves with the seed.
 
-The three-seed manifest at the reference sparsity (`results/exp3_superposition.json`,
-3 seeds, `single_sparsity=0.01`) records `n_represented` = 19.67 ± 0.47 — one seed of
-three landed at 19/20 rather than 20/20. That is the *same* configuration as the
-sweep's 0.010 row (20.00 ± 0.00), and the two disagree: see the audit entry of
-2026-11-12 above, which explains why the two code paths, run on the same
-machine, produced two different answers. (Re-running that manifest's exact command
-reproduces its per-seed `n_represented` values, 19, 20 and 20, to the digit — the
-disagreement is between the two *code paths*, not between runs of the same one.)
+**Re-measured after the seeding fix (2026-11-17).** The three-seed manifest at the
+reference sparsity (`results/exp3_superposition.json`, 3 seeds, `single_sparsity=0.01`)
+now records `n_represented` = 20.00 ± 0.00, and the sweep's 0.010 row is
+20.00 ± 0.00: **the two code paths agree**, which is what the 2026-11-12 audit
+said they would once the model was seeded before it was constructed. Before the fix the
+single-sparsity manifest recorded 19.67 ± 0.47 (19, 20, 20) and the sweep 20.00 ± 0.00; both
+are kept as `results/exp3_superposition_pre_seedfix.json` and
+`results/exp3_superposition_sweep_pre_seedfix.json`, the record of what the old code
+measured. The phase transition did not move: 10/20 at sparsity 0.5 and 20/20 from
+sparsity 0.05 to 0.005. What moved is the tail, within its spread (see the table).
 
 Expected (Elhage et al.): as sparsity decreases (features rarely co-active), interference
 pressure drops and the model represents more features. **Observed: exactly this — 10/20 at

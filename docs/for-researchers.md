@@ -80,6 +80,10 @@ different hardware are especially welcome; see
 
 ## Reusing the method
 
-The manifest and the two checks do not depend on this project's experiments.
-Extracting them into a standalone library is planned; until then,
-`src/results.py` and `scripts/docs_audit.py` can be copied under the MIT license.
+The manifest and the two checks do not depend on this project's experiments, and
+they have been extracted into a standalone, dependency-free library:
+[**claimcheck**](https://github.com/AlessioBrillo/claimcheck) (`claimcheck verify`,
+`claimcheck audit`, driven by a `claimcheck.toml`). It loads this repository's
+manifests unchanged and passes on its real record. This repository still uses its own
+copy (`src/results.py`, `scripts/docs_audit.py`) with project-specific lists; it will
+switch to the library once the library has a release.
