@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import logging
 import time
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -221,7 +222,9 @@ def single_token_names(tokenizer: Any) -> tuple[list[str], list[str]]:
     return kept, [n for n in NAMES if n not in kept]
 
 
-def ioi_batches(tokenizer: Any, names: list[str], seed: int, n: int = N_SEQUENCES):
+def ioi_batches(
+    tokenizer: Any, names: list[str], seed: int, n: int = N_SEQUENCES
+) -> Iterator[tuple[torch.Tensor, torch.Tensor, torch.Tensor]]:
     """Prompts grouped by template (equal token length within a group).
 
     Yields `(tokens, io_ids, s_ids)`; the logit difference of a prompt is
