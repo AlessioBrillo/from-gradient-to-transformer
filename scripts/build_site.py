@@ -60,6 +60,7 @@ blockquote {{ margin:0; padding:0 16px; color:var(--muted); border-left:4px soli
 <a href="{root}docs/for-hiring.html">For hiring</a>
 <a href="{root}docs/for-researchers.html">For researchers</a>
 <a href="{root}docs/for-learners.html">For learners</a>
+<a href="{root}portfolio/essay/index.html">Essays</a>
 <a href="{root}portfolio/model-card.html">Model card</a><a href="{repo}">GitHub</a></nav>
 <main>
 {body}

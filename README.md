@@ -64,6 +64,10 @@ Two checks keep it that way, and both run in CI:
 - `make docs-audit` fails if the prose or a table around a tag contradicts the
   manifest, or if a retracted sentence comes back.
 
+## Essays
+
+Four short pieces on how results here went wrong and how each was caught: [portfolio/essay](portfolio/essay/README.md).
+
 ## Quickstart
 
 Requires Python 3.12, [uv](https://docs.astral.sh/uv/) and `make`. On Windows,
