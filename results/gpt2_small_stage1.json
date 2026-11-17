@@ -1,0 +1,53 @@
+{
+  "experiment": "gpt2_small_stage1",
+  "seeds": [
+    0
+  ],
+  "args": {
+    "model": "openai-community/gpt2",
+    "adr": "0034",
+    "stage": 1
+  },
+  "per_seed_metrics": [
+    {
+      "max_logit_error": 8.021872304198041e-07,
+      "max_hidden_error": 5.256551389720698e-07,
+      "stage1_pass": 1.0
+    }
+  ],
+  "aggregate": {
+    "max_logit_error": {
+      "mean": 8.021872304198041e-07,
+      "std": 0.0,
+      "min": 8.021872304198041e-07,
+      "max": 8.021872304198041e-07,
+      "n": 1.0
+    },
+    "max_hidden_error": {
+      "mean": 5.256551389720698e-07,
+      "std": 0.0,
+      "min": 5.256551389720698e-07,
+      "max": 5.256551389720698e-07,
+      "n": 1.0
+    },
+    "stage1_pass": {
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0,
+      "n": 1.0
+    }
+  },
+  "wall_clock_seconds": 2.439411800005473,
+  "git_sha": "191cde3",
+  "git_dirty": false,
+  "device": "cpu",
+  "torch_version": "2.14.1+cpu",
+  "numpy_version": "2.5.3",
+  "python_version": "3.14.7",
+  "n_parameters": 124439808,
+  "created_at": "2026-11-17T10:02:35+00:00",
+  "notes": "weights revision 607a30d783dfa663caf39e06633721c8d4cfcd7e. 8 fixed prompts; tolerance 1e-05 (scale-normalised)",
+  "neuron_ablation": null,
+  "source_provenance": null
+}
