@@ -39,7 +39,7 @@ instrumented transformers from scratch on algorithmic tasks where the
 ground-truth algorithm is known, then trace the learning dynamics and
 final circuits with full causal access.
 
-The experimental arc spans six rungs:
+The experimental arc spans seven rungs:
 \begin{enumerate}
   \item \textbf{Induction heads} -- the canonical in-context learning
     circuit (\citep{olsson2022induction}), trained on repeated-token sequences.
@@ -56,6 +56,8 @@ The experimental arc spans six rungs:
   \item \textbf{Capstone} -- a joint modular-addition + induction
     transformer with full instrumentation (Fourier, K-composition,
     patching, SAE).
+  \item \textbf{GPT-2 small} -- the same instruments on a pretrained
+    124M-parameter model, pre-registered (Section~\ref{sec:gpt2}).
 \end{enumerate}
 
 Every quantitative claim in this paper is backed by a manifest file in
@@ -666,6 +668,56 @@ the solo-run 1.0. Its Fourier density is measured with the post-audit energy
 criterion: $k_{\mathrm{energy},90}=49/56$ (of 56), energy\_sparse on 0/3
 seeds -- the joint solution is \textbf{dense}, not a sparse Fourier circuit.
 % manifest: results/capstone_20k_energy.json
+
+\section{The Instrumentation on a Pretrained Model: GPT-2 Small}
+\label{sec:gpt2}
+
+% manifest: results/gpt2_small_stage1.json
+% manifest: results/gpt2_small_stage2.json
+% manifest: results/gpt2_small_stage3.json
+% manifest: results/gpt2_small_stage4.json
+% manifest: results/gpt2_small_stage5.json
+
+Every model above has at most $4.3$ million parameters and is trained here on a
+synthetic task. A method that only meets such models has not been shown to be a
+method, so the last rung runs the same hand-written instruments (the hook cache,
+the shared attention-mass detector, head ablation) on GPT-2 small
+(124\,million parameters, 12 layers of 12 heads), loaded into a pure-PyTorch
+implementation. The five stages, their thresholds and their reference
+\citep{wang2023interpretability} were frozen in a pre-registration
+(ADR-0034) before any code touched the weights. Stage~1 was amended once, before
+any run, because an absolute tolerance of $10^{-3}$ lies below float32
+resolution on GPT-2's very large residual activations; no threshold changed after a
+number was seen.
+
+\paragraph{What passed.} The implementation equals the Hugging Face reference
+(scale-normalised error about $10^{-6}$, threshold $10^{-5}$). On repeated random
+tokens the shared detector, written for a four-head toy model, ranks the two
+induction heads the literature reports (layer~5 head~5 and layer~6 head~9)
+\emph{first and second of 144} on all three seeds, with attention mass
+$0.9291 \pm 0.0006$ and $0.9180 \pm 0.0015$ on the induction key
+(threshold $0.3$). Three more heads score above $0.8$ without being in the
+reference set. On indirect-object prompts the model prefers the indirect object by
+a mean logit difference of $2.7535 \pm 0.1134$, positive on
+$99\%$ of prompts (threshold: $2.0$ and $90\%$).
+
+\paragraph{What failed.} Zero-ablating the two induction heads left the
+in-context gain unchanged ($12.8604 \pm 0.0237$ against $12.9398 \pm 0.0346$
+ablated; the criterion asked for a $10\%$ fall), while ablating the ten
+highest-scoring heads removed $0.7723 \pm 0.0089$ of it:
+the behaviour is carried redundantly. Zero-ablating the three reference name
+movers cut the logit difference by $0.0168 \pm 0.0192$, against a
+$95$th percentile of $0.1847 \pm 0.0157$ for twenty random triples of
+heads, so by the frozen rule the name movers do not stand out. Backup name movers
+and the off-distribution nature of zero ablation (the reference used mean ablation)
+are two known candidate explanations; neither was separated here, and the
+pre-registration said in advance that this stage is weaker evidence than the
+parity gate.
+
+\paragraph{What it establishes.} The hand-written instruments work on a real
+pretrained model and agree with the literature on \emph{which heads attend like
+induction heads}. The causal claims about the indirect-object circuit did not
+reproduce under zero ablation, and the repository does not claim that circuit.
 
 \section{Limitations}
 \label{sec:limitations}
