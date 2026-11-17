@@ -26,6 +26,7 @@ PUBLISHED_GLOBS = [
     "portfolio/model-card.md",
     "portfolio/projects/*/index.md",
     "portfolio/essay/*.md",
+    "docs/for-*.md",
 ]
 FRONT_MATTER_RE = re.compile(r"\A---\n.*?\n---\n", re.DOTALL)
 ATTR_RE = re.compile(r'(href|src)="([^"]+)"')
@@ -56,6 +57,9 @@ pre {{ padding:12px; overflow-x:auto; }} pre code {{ padding:0; }}
 blockquote {{ margin:0; padding:0 16px; color:var(--muted); border-left:4px solid var(--line); }}
 </style></head><body>
 <nav><a href="{root}index.html">Home</a><a href="{root}portfolio/RESULTS.html">Results</a>
+<a href="{root}docs/for-hiring.html">For hiring</a>
+<a href="{root}docs/for-researchers.html">For researchers</a>
+<a href="{root}docs/for-learners.html">For learners</a>
 <a href="{root}portfolio/model-card.html">Model card</a><a href="{repo}">GitHub</a></nav>
 <main>
 {body}
