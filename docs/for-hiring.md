@@ -16,7 +16,7 @@ GPUs.
 | Causal interpretability methods, written by hand | Activation patching, head ablation and path patching without an interpretability library: [`exp4_circuit_patching.py`](../src/experiments/exp4_circuit_patching.py), [`copy_circuit.py`](../src/experiments/copy_circuit.py) |
 | Designing an experiment that can fail | A pre-registered task, thresholds and decision rule, frozen before the GPU run: [pre-registration](../07_capstone/notes/variable-distance-induction-preregistration.md), [ADR-0033](adr/0033-content-based-induction-task.md) |
 | Catching a wrong instrument | The detector measured the wrong attention offset, and the "0 of 8 heads" it produced was retracted: [ADR-0032](adr/0032-induction-detector-and-the-positional-shortcut.md) |
-| Reporting negative and partial results | A PARTIAL verdict published next to the stronger numbers that explain it, kept apart rather than merged: [`content_verdict.py`](../src/experiments/content_verdict.py), [Honesty Ledger](../portfolio/RESULTS.md) |
+| Reporting negative and partial results | A verdict that changed from PARTIAL to NEGATIVE when the experiment was re-run after a bug fix, published with the numbers that explain it and the first run kept: [`content_verdict.py`](../src/experiments/content_verdict.py), [Honesty Ledger](../portfolio/RESULTS.md) |
 | Retracting my own conclusions | Thirteen dated audits, each with what was wrong and what changed, including a "no grokking" verdict my own metric had manufactured: [Honesty Ledger](../portfolio/RESULTS.md) |
 | Writing it up | A LaTeX mini-paper compiled in CI: [`main.tex`](../portfolio/paper/main.tex) |
 
@@ -52,7 +52,7 @@ Stated plainly, because the rest of the repository is:
 - **Teamwork.** This is solo work. The review discipline is real (pull requests,
   a gate, written audits), but the reviewer was me.
 - **Open results.** Two rungs are not clean wins: the content-based copying
-  verdict is PARTIAL, and the sparse autoencoder's dictionary is mostly dead
+  verdict is NEGATIVE, and the sparse autoencoder's dictionary is mostly dead
   features. Both are in the [Honesty Ledger](../portfolio/RESULTS.md).
 
 ## Where to look next

@@ -114,7 +114,7 @@ the writeup.
 - [x] Mini-paper (LaTeX) written with abstract, method, results, ablations, limitations, references to primary literature — `portfolio/paper/main.tex`
   <!-- manifest: results/grokking_nanda_p113.json -->
 - [x] Reproducibility harness: `uv sync && make reproduce` regenerates flagship figures
-- [ ] One interactive artifact: SAE feature dashboard on HF Spaces (Rung 5) — **descoped 2026-10-11**: the dashboard is a browsable product, and the science it would show (a sparse dictionary on a 64-dimensional residual stream, 78% of its features dead) is already in the manifests.
+- [ ] One interactive artifact: SAE feature dashboard on HF Spaces (Rung 5) — **descoped 2026-10-11**: the dashboard is a browsable product, and the science it would show (a sparse dictionary on a 64-dimensional residual stream, 66% of its features dead) is already in the manifests.
 
 ## Datasets (synthetic, generated on-the-fly)
 
