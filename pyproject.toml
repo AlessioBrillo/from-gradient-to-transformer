@@ -118,8 +118,8 @@ branch = true
 [tool.coverage.report]
 # Ratchet: the floor is the current measured value, and it only goes up.
 # Before this existed there was no threshold anywhere, so coverage could fall
-# indefinitely without CI noticing. Measured 2026-10-11 — raise via PR.
-fail_under = 55
+# indefinitely without CI noticing. Measured 73.79% on 2026-11-17 — raise via PR.
+fail_under = 73
 show_missing = true
 exclude_lines = [
     "pragma: no cover",
