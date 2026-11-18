@@ -28,12 +28,12 @@ included. The full record, with every retraction, is the
 
 | Rung | Question | Where it stands |
 |------|----------|-----------------|
-| [1 Prefix copying](portfolio/projects/rung-1-induction-heads/index.md) | Do copying heads form in a 2-layer attention-only model? | Yes: 2–3 heads per seed, copy-offset mass 0.945, ablation effect 0.44, path-patch effect 0.82. The copy follows a **fixed offset**, so these are prefix-copying heads, not induction heads. Fixed batches memorize (53.5% vs 0.45% validation accuracy with fresh batches) |
-| 1b Content-based copying | Does the copy become content-based when the positional shortcut is removed? | Behaviour: yes on 3/3 seeds (copy accuracy 0.9976–1.0000 against a 15.5–16.5% fixed-offset baseline), carried by one head (ablation drop 0.93–0.99). The pre-registered per-head rule confirms a head on 1/3 seeds, so the verdict is **PARTIAL** |
+| [1 Prefix copying](portfolio/projects/rung-1-induction-heads/index.md) | Do copying heads form in a 2-layer attention-only model? | Yes: 3 heads per seed, copy-offset mass 0.81 at the final checkpoint, ablation effect 0.59, path-patch effect 0.71. The copy follows a **fixed offset**, so these are prefix-copying heads, not induction heads. Fixed batches memorize (0.46% against 53.5% validation accuracy with fresh batches) |
+| 1b Content-based copying | Does the copy become content-based when the positional shortcut is removed? | Behaviour: yes on 3/3 seeds (copy accuracy 0.9968–0.9997 against a 15.5–16.5% fixed-offset baseline). The circuit is **not stable across seeds** (one head on one seed, a distributed group on the other two), and the pre-registered per-head rule confirms **no** head on any seed, so both verdicts are **NEGATIVE** (before the seeding fix: PARTIAL, one head on 1/3 seeds) |
 | [2 Grokking ★](portfolio/projects/rung-2-grokking/index.md) | Does the sparse Fourier circuit of Nanda et al. appear? | **Reproduced**: validation accuracy 0.9999 ± 0.0002, embedding energy in 5.7 ± 1.2 of 56 frequencies, 3/3 seeds |
 | [3 Superposition](portfolio/projects/rung-3-superposition/index.md) | How do features pack into fewer dimensions as sparsity changes? | Phase transition reproduced: 10/20 features represented when features are dense, 20/20 when they are sparse |
-| [4 Circuit patching](portfolio/projects/rung-4-circuit-patching/index.md) | Can a circuit be validated causally, end to end? | Yes, on Rung 1's own checkpoint: head ablation 0.4445 ± 0.0425, path patching 0.8215 ± 0.1255 |
-| [5 Sparse autoencoder](portfolio/projects/rung-5-sae/index.md) | Can a dictionary recover features from a real residual stream? | Partly: the dictionary is sparse (3.0% of 512 features active) but 78% of its features never fire. The dictionary size is the open question |
+| [4 Circuit patching](portfolio/projects/rung-4-circuit-patching/index.md) | Can a circuit be validated causally, end to end? | Yes, on Rung 1's own checkpoint: head ablation 0.5895 ± 0.1405, path patching 0.7052 ± 0.0411 |
+| [5 Sparse autoencoder](portfolio/projects/rung-5-sae/index.md) | Can a dictionary recover features from a real residual stream? | Partly: the dictionary is sparse (3.7% of 512 features active) but 66% of its features never fire. The dictionary size is the open question |
 
 | [7 GPT-2 small](portfolio/projects/rung-7-gpt2-small/index.md) | Do the same instruments work on a real pretrained model? | **The instruments do**: the implementation matches the Hugging Face reference, and the detector ranks the two induction heads of the literature first and second of 144. **The causal stages did not reproduce**: ablating those two heads, or the name movers, changed the behaviour no more than random heads do. Pre-registered (ADR-0034); two of five stages failed and are reported |
 
@@ -66,6 +66,9 @@ Two checks keep it that way, and both run in CI:
 - `make verify-claims` fails if a claim tag has no committed manifest behind it;
 - `make docs-audit` fails if the prose or a table around a tag contradicts the
   manifest, or if a retracted sentence comes back.
+
+The mechanism is also available on its own, for any research repository:
+[claimcheck](https://github.com/AlessioBrillo/claimcheck).
 
 ## Essays
 

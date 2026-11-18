@@ -28,7 +28,7 @@ Phase transition reproduced: 10.00 ± 0.00 of 20 features represented at sparsit
 
 **Limitations**:
 - Synthetic data only — no real model activations yet
-- Capacity limit at extreme sparsity (0.001): 17.00 ± 0.82 of 20 features represented over three seeds (RESULTS table); the level moves with the seed
+- Capacity limit at extreme sparsity (0.001): 16.33 ± 0.94 of 20 features represented over three seeds (RESULTS table); the level moves with the seed
 - Pentagon geometry is a property of the *sparse phase*, not universal
 
 **Links**:
