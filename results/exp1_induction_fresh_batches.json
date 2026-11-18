@@ -6,9 +6,13 @@
     2
   ],
   "args": {
-    "seed": 42,
     "vocab_size": 256,
     "seq_len": 16,
+    "content_standard": false,
+    "task": "periodic",
+    "key_len": null,
+    "copy_blocks": null,
+    "copy_block_len": null,
     "d_model": 24,
     "n_layers": 2,
     "n_heads": 4,
@@ -21,12 +25,18 @@
     "quick": false,
     "standard": false,
     "wandb": false,
+    "scale": null,
     "save_model": false,
     "fresh_batches": true,
     "checkpoint_dir": "checkpoints",
     "checkpoint_every": 0,
     "resume": false,
     "resume_from": null,
+    "detect_every": 50,
+    "stop_on_confirmed": false,
+    "stop_rule": "mechanism",
+    "detect_patience": 2,
+    "probe_dissociation": true,
     "save_manifest": false,
     "manifest_path": "results/exp1_induction_fresh_batches.json",
     "batches": null,
@@ -35,52 +45,160 @@
   "per_seed_metrics": [
     {
       "final_val_acc": 0.53515625,
-      "total_induction_heads": 0.0,
-      "peak_diag1_mass": 0.2028006911277771,
-      "k_composition_score": 0.1612614095211029,
-      "l0_duplicate_head_mass": 0.11487642675638199,
-      "mean_ablation_drop": 0.0,
+      "total_induction_heads": 4.0,
+      "total_mass_heads": 4.0,
+      "confirmed_heads_first_layer": 4.0,
+      "confirmed_heads_later_layers": 0.0,
+      "mechanism_confirmed": 0.0,
+      "peak_induction_mass": 0.9980275630950928,
+      "peak_prev_token_mass": 0.12495381385087967,
+      "peak_content_mass": 0.9712978005409241,
+      "peak_offset_mass": 0.9916262030601501,
+      "k_composition_score": 0.14447663724422455,
+      "l0_duplicate_head_mass": 0.030662648379802704,
+      "confirmed_epoch": -1.0,
+      "epochs_run": 800.0,
+      "steps_run": 6400.0,
+      "probe_content_mass": 0.09231849014759064,
+      "probe_period_mass": 0.9896522760391235,
+      "probe_offset_mass": 0.9896522760391235,
+      "probe_content_wins": 0.0,
+      "copy_accuracy": 1.0,
+      "copy_accuracy_nonmodal": 1.0,
+      "fixed_offset_baseline": 1.0,
+      "copy_gap": 0.0,
+      "n_copy_queries": 7026.0,
+      "n_copy_distances": 3.0,
+      "confirmed_content_mass": 0.9712978005409241,
+      "mean_ablation_drop": 0.14158528645833332,
+      "mean_copy_ablation_drop": 0.25092513521206944,
       "batch_mode": 1.0
     },
     {
-      "final_val_acc": 0.5356770833333333,
-      "total_induction_heads": 0.0,
-      "peak_diag1_mass": 0.18555115535855293,
-      "k_composition_score": 0.140727236866951,
-      "l0_duplicate_head_mass": 0.12045826762914658,
-      "mean_ablation_drop": 0.0,
+      "final_val_acc": 0.5350260416666667,
+      "total_induction_heads": 4.0,
+      "total_mass_heads": 4.0,
+      "confirmed_heads_first_layer": 4.0,
+      "confirmed_heads_later_layers": 0.0,
+      "mechanism_confirmed": 0.0,
+      "peak_induction_mass": 0.9957728385925293,
+      "peak_prev_token_mass": 0.1204746812582016,
+      "peak_content_mass": 0.9508320689201355,
+      "peak_offset_mass": 0.9801791906356812,
+      "k_composition_score": 0.15871860086917877,
+      "l0_duplicate_head_mass": 0.12617263197898865,
+      "confirmed_epoch": -1.0,
+      "epochs_run": 800.0,
+      "steps_run": 6400.0,
+      "probe_content_mass": 0.08882994204759598,
+      "probe_period_mass": 0.9809104204177856,
+      "probe_offset_mass": 0.9809104204177856,
+      "probe_content_wins": 0.0,
+      "copy_accuracy": 1.0,
+      "copy_accuracy_nonmodal": 0.0,
+      "fixed_offset_baseline": 1.0,
+      "copy_gap": 0.0,
+      "n_copy_queries": 6953.0,
+      "n_copy_distances": 1.0,
+      "confirmed_content_mass": 0.9508320689201355,
+      "mean_ablation_drop": 0.08076171875000002,
+      "mean_copy_ablation_drop": 0.12735509851862503,
       "batch_mode": 1.0
     },
     {
-      "final_val_acc": 0.5350911458333333,
-      "total_induction_heads": 0.0,
-      "peak_diag1_mass": 0.21430669352412224,
-      "k_composition_score": 0.16853711009025574,
-      "l0_duplicate_head_mass": 0.12442381680011749,
-      "mean_ablation_drop": 0.0,
+      "final_val_acc": 0.5352864583333333,
+      "total_induction_heads": 4.0,
+      "total_mass_heads": 4.0,
+      "confirmed_heads_first_layer": 4.0,
+      "confirmed_heads_later_layers": 0.0,
+      "mechanism_confirmed": 0.0,
+      "peak_induction_mass": 0.9937832355499268,
+      "peak_prev_token_mass": 0.23471514880657196,
+      "peak_content_mass": 0.9522556662559509,
+      "peak_offset_mass": 0.9822331666946411,
+      "k_composition_score": 0.14511637389659882,
+      "l0_duplicate_head_mass": 0.007769608870148659,
+      "confirmed_epoch": -1.0,
+      "epochs_run": 800.0,
+      "steps_run": 6400.0,
+      "probe_content_mass": 0.08486528694629669,
+      "probe_period_mass": 0.9826498627662659,
+      "probe_offset_mass": 0.9826498627662659,
+      "probe_content_wins": 0.0,
+      "copy_accuracy": 0.9998561565017261,
+      "copy_accuracy_nonmodal": 0.6666666666666666,
+      "fixed_offset_baseline": 1.0,
+      "copy_gap": -0.00014384349827389897,
+      "n_copy_queries": 6952.0,
+      "n_copy_distances": 3.0,
+      "confirmed_content_mass": 0.9522556662559509,
+      "mean_ablation_drop": 0.1122884114583333,
+      "mean_copy_ablation_drop": 0.19386507479861909,
       "batch_mode": 1.0
     }
   ],
   "aggregate": {
+    "probe_content_wins": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 3.0
+    },
+    "confirmed_heads_later_layers": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 3.0
+    },
+    "probe_offset_mass": {
+      "mean": 0.984404186407725,
+      "std": 0.0037782931336178844,
+      "min": 0.9809104204177856,
+      "max": 0.9896522760391235,
+      "n": 3.0
+    },
     "final_val_acc": {
-      "mean": 0.5353081597222222,
-      "std": 0.00026221887963529927,
-      "min": 0.5350911458333333,
-      "max": 0.5356770833333333,
+      "mean": 0.53515625,
+      "std": 0.00010631465897495829,
+      "min": 0.5350260416666667,
+      "max": 0.5352864583333333,
       "n": 3.0
     },
-    "l0_duplicate_head_mass": {
-      "mean": 0.11991950372854869,
-      "std": 0.00391627919223043,
-      "min": 0.11487642675638199,
-      "max": 0.12442381680011749,
+    "confirmed_heads_first_layer": {
+      "mean": 4.0,
+      "std": 0.0,
+      "min": 4.0,
+      "max": 4.0,
       "n": 3.0
     },
-    "peak_diag1_mass": {
-      "mean": 0.2008861800034841,
-      "std": 0.011817198157252547,
-      "min": 0.18555115535855293,
-      "max": 0.21430669352412224,
+    "epochs_run": {
+      "mean": 800.0,
+      "std": 0.0,
+      "min": 800.0,
+      "max": 800.0,
+      "n": 3.0
+    },
+    "copy_accuracy": {
+      "mean": 0.999952052167242,
+      "std": 6.780847537271294e-05,
+      "min": 0.9998561565017261,
+      "max": 1.0,
+      "n": 3.0
+    },
+    "probe_period_mass": {
+      "mean": 0.984404186407725,
+      "std": 0.0037782931336178844,
+      "min": 0.9809104204177856,
+      "max": 0.9896522760391235,
+      "n": 3.0
+    },
+    "confirmed_epoch": {
+      "mean": -1.0,
+      "std": 0.0,
+      "min": -1.0,
+      "max": -1.0,
       "n": 3.0
     },
     "batch_mode": {
@@ -90,37 +208,150 @@
       "max": 1.0,
       "n": 3.0
     },
-    "k_composition_score": {
-      "mean": 0.1568419188261032,
-      "std": 0.011775573182835227,
-      "min": 0.140727236866951,
-      "max": 0.16853711009025574,
+    "n_copy_distances": {
+      "mean": 2.3333333333333335,
+      "std": 0.9428090415820634,
+      "min": 1.0,
+      "max": 3.0,
+      "n": 3.0
+    },
+    "copy_accuracy_nonmodal": {
+      "mean": 0.5555555555555555,
+      "std": 0.41573970964154905,
+      "min": 0.0,
+      "max": 1.0,
       "n": 3.0
     },
     "mean_ablation_drop": {
+      "mean": 0.11154513888888888,
+      "std": 0.02483667902890022,
+      "min": 0.08076171875000002,
+      "max": 0.14158528645833332,
+      "n": 3.0
+    },
+    "peak_prev_token_mass": {
+      "mean": 0.16004788130521774,
+      "std": 0.05282938755582155,
+      "min": 0.1204746812582016,
+      "max": 0.23471514880657196,
+      "n": 3.0
+    },
+    "peak_induction_mass": {
+      "mean": 0.9958612124125162,
+      "std": 0.001733865916905161,
+      "min": 0.9937832355499268,
+      "max": 0.9980275630950928,
+      "n": 3.0
+    },
+    "total_induction_heads": {
+      "mean": 4.0,
+      "std": 0.0,
+      "min": 4.0,
+      "max": 4.0,
+      "n": 3.0
+    },
+    "copy_gap": {
+      "mean": -4.7947832757966324e-05,
+      "std": 6.780847537271294e-05,
+      "min": -0.00014384349827389897,
+      "max": 0.0,
+      "n": 3.0
+    },
+    "l0_duplicate_head_mass": {
+      "mean": 0.05486829640964667,
+      "std": 0.05127867664527912,
+      "min": 0.007769608870148659,
+      "max": 0.12617263197898865,
+      "n": 3.0
+    },
+    "peak_offset_mass": {
+      "mean": 0.9846795201301575,
+      "std": 0.00498310527081818,
+      "min": 0.9801791906356812,
+      "max": 0.9916262030601501,
+      "n": 3.0
+    },
+    "peak_content_mass": {
+      "mean": 0.9581285119056702,
+      "std": 0.009330211848706187,
+      "min": 0.9508320689201355,
+      "max": 0.9712978005409241,
+      "n": 3.0
+    },
+    "n_copy_queries": {
+      "mean": 6977.0,
+      "std": 34.650637319776195,
+      "min": 6952.0,
+      "max": 7026.0,
+      "n": 3.0
+    },
+    "mechanism_confirmed": {
       "mean": 0.0,
       "std": 0.0,
       "min": 0.0,
       "max": 0.0,
       "n": 3.0
     },
-    "total_induction_heads": {
-      "mean": 0.0,
+    "fixed_offset_baseline": {
+      "mean": 1.0,
       "std": 0.0,
-      "min": 0.0,
-      "max": 0.0,
+      "min": 1.0,
+      "max": 1.0,
+      "n": 3.0
+    },
+    "total_mass_heads": {
+      "mean": 4.0,
+      "std": 0.0,
+      "min": 4.0,
+      "max": 4.0,
+      "n": 3.0
+    },
+    "mean_copy_ablation_drop": {
+      "mean": 0.19071510284310453,
+      "std": 0.050496404060719646,
+      "min": 0.12735509851862503,
+      "max": 0.25092513521206944,
+      "n": 3.0
+    },
+    "steps_run": {
+      "mean": 6400.0,
+      "std": 0.0,
+      "min": 6400.0,
+      "max": 6400.0,
+      "n": 3.0
+    },
+    "probe_content_mass": {
+      "mean": 0.08867123971382777,
+      "std": 0.0030448261376748794,
+      "min": 0.08486528694629669,
+      "max": 0.09231849014759064,
+      "n": 3.0
+    },
+    "confirmed_content_mass": {
+      "mean": 0.9581285119056702,
+      "std": 0.009330211848706187,
+      "min": 0.9508320689201355,
+      "max": 0.9712978005409241,
+      "n": 3.0
+    },
+    "k_composition_score": {
+      "mean": 0.14943720400333405,
+      "std": 0.006568133249870519,
+      "min": 0.14447663724422455,
+      "max": 0.15871860086917877,
       "n": 3.0
     }
   },
-  "wall_clock_seconds": 404.0245467000641,
-  "git_sha": "62685e7",
+  "wall_clock_seconds": 1719.5925457999692,
+  "git_sha": "4406229",
   "git_dirty": false,
   "device": "cpu",
-  "torch_version": "2.12.1+cpu",
-  "numpy_version": "2.5.0",
+  "torch_version": "2.14.1+cpu",
+  "numpy_version": "2.5.3",
   "python_version": "3.14.7",
   "n_parameters": 17424,
-  "created_at": "2026-10-12T15:38:56+00:00",
+  "created_at": "2026-11-17T18:17:13+00:00",
   "notes": null,
-  "neuron_ablation": null
+  "neuron_ablation": null,
+  "source_provenance": null
 }

@@ -16,58 +16,34 @@
     "batch_size": 256,
     "quick": false,
     "manifest_path": "results/exp5_real_activations.json",
-    "activations_from": "results\\remote\\induction-standard\\output\\repo\\checkpoints\\induction_standard\\exp1_checkpoint_seed0.pt",
+    "activations_from": "results\\remote\\induction-standard-v2\\output\\repo\\checkpoints\\induction_standard\\exp1_checkpoint_seed0.pt",
     "source_vocab_size": 2048,
     "source_seq_len": 64,
     "source_d_model": 64,
     "source_n_layers": 2,
-    "source_n_heads": 4
+    "source_n_heads": 4,
+    "source_task": "periodic",
+    "source_model_seed": null,
+    "source_git_sha": null,
+    "source_epochs": null
   },
   "per_seed_metrics": [
     {
-      "reconstruction_mse": 0.000408384163081646,
-      "fve": 0.9999789131103325,
-      "l0_sparsity": 15.124380111694336,
-      "dead_rate": 0.78125,
-      "never_fires_rate": 0.78125,
+      "reconstruction_mse": 0.000543003890067339,
+      "fve": 0.9999827501304183,
+      "l0_sparsity": 19.011259078979492,
+      "dead_rate": 0.65625,
+      "never_fires_rate": 0.65625,
       "n_parameters": 66112,
       "d_model": 64.0
     }
   ],
   "aggregate": {
-    "never_fires_rate": {
-      "mean": 0.78125,
-      "std": 0.0,
-      "min": 0.78125,
-      "max": 0.78125,
-      "n": 1.0
-    },
-    "d_model": {
-      "mean": 64.0,
-      "std": 0.0,
-      "min": 64.0,
-      "max": 64.0,
-      "n": 1.0
-    },
-    "l0_sparsity": {
-      "mean": 15.124380111694336,
-      "std": 0.0,
-      "min": 15.124380111694336,
-      "max": 15.124380111694336,
-      "n": 1.0
-    },
-    "reconstruction_mse": {
-      "mean": 0.000408384163081646,
-      "std": 0.0,
-      "min": 0.000408384163081646,
-      "max": 0.000408384163081646,
-      "n": 1.0
-    },
     "dead_rate": {
-      "mean": 0.78125,
+      "mean": 0.65625,
       "std": 0.0,
-      "min": 0.78125,
-      "max": 0.78125,
+      "min": 0.65625,
+      "max": 0.65625,
       "n": 1.0
     },
     "n_parameters": {
@@ -77,23 +53,72 @@
       "max": 66112.0,
       "n": 1.0
     },
-    "fve": {
-      "mean": 0.9999789131103325,
+    "l0_sparsity": {
+      "mean": 19.011259078979492,
       "std": 0.0,
-      "min": 0.9999789131103325,
-      "max": 0.9999789131103325,
+      "min": 19.011259078979492,
+      "max": 19.011259078979492,
+      "n": 1.0
+    },
+    "never_fires_rate": {
+      "mean": 0.65625,
+      "std": 0.0,
+      "min": 0.65625,
+      "max": 0.65625,
+      "n": 1.0
+    },
+    "fve": {
+      "mean": 0.9999827501304183,
+      "std": 0.0,
+      "min": 0.9999827501304183,
+      "max": 0.9999827501304183,
+      "n": 1.0
+    },
+    "d_model": {
+      "mean": 64.0,
+      "std": 0.0,
+      "min": 64.0,
+      "max": 64.0,
+      "n": 1.0
+    },
+    "reconstruction_mse": {
+      "mean": 0.000543003890067339,
+      "std": 0.0,
+      "min": 0.000543003890067339,
+      "max": 0.000543003890067339,
       "n": 1.0
     }
   },
-  "wall_clock_seconds": 3103.8759055000264,
-  "git_sha": "a4bb83f",
+  "wall_clock_seconds": 7881.033557899995,
+  "git_sha": "4406229",
   "git_dirty": false,
   "device": "cpu",
-  "torch_version": "2.12.1+cpu",
-  "numpy_version": "2.5.0",
+  "torch_version": "2.14.1+cpu",
+  "numpy_version": "2.5.3",
   "python_version": "3.14.7",
   "n_parameters": 66112,
-  "created_at": "2026-10-20T07:35:43+00:00",
+  "created_at": "2026-11-17T17:20:23+00:00",
   "notes": null,
-  "neuron_ablation": null
+  "neuron_ablation": null,
+  "source_provenance": {
+    "checkpoints": [
+      {
+        "path": "results\\remote\\induction-standard-v2\\output\\repo\\checkpoints\\induction_standard\\exp1_checkpoint_seed0.pt",
+        "format": "rolling",
+        "seed": 0,
+        "epoch": 3000,
+        "task": "periodic",
+        "git_sha": "191cde3",
+        "git_dirty": false,
+        "arch": {
+          "class": "AttentionOnlyTransformer",
+          "n_layers": 2,
+          "vocab_size": 2048,
+          "d_model": 64,
+          "n_heads": 4,
+          "max_seq_len": 64
+        }
+      }
+    ]
+  }
 }

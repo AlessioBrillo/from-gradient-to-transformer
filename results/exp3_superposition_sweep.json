@@ -1,0 +1,316 @@
+{
+  "experiment": "exp3_superposition_sweep",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "args": {
+    "seed": 42,
+    "n_features": 20,
+    "n_dimensions": 5,
+    "importance_decay": 1.0,
+    "threshold": 0.5,
+    "epochs": 600,
+    "lr": 0.01,
+    "num_samples": 8000,
+    "batch_size": 512,
+    "single_sparsity": null,
+    "quick": false,
+    "geometry_check": false,
+    "seeds": null,
+    "manifest_path": "results/exp3_superposition_sweep.json"
+  },
+  "per_seed_metrics": [
+    {
+      "sparsity_0_5_n_represented": 10.0,
+      "sparsity_0_5_mean_dimensionality": 0.2499719113111496,
+      "sparsity_0_5_mean_abs_correlation": 0.3004835844039917,
+      "sparsity_0_2_n_represented": 15.0,
+      "sparsity_0_2_mean_dimensionality": 0.24950727820396423,
+      "sparsity_0_2_mean_abs_correlation": 0.3209754526615143,
+      "sparsity_0_1_n_represented": 18.0,
+      "sparsity_0_1_mean_dimensionality": 0.24973630905151367,
+      "sparsity_0_1_mean_abs_correlation": 0.33667173981666565,
+      "sparsity_0_05_n_represented": 20.0,
+      "sparsity_0_05_mean_dimensionality": 0.24975767731666565,
+      "sparsity_0_05_mean_abs_correlation": 0.3482210636138916,
+      "sparsity_0_02_n_represented": 20.0,
+      "sparsity_0_02_mean_dimensionality": 0.24932518601417542,
+      "sparsity_0_02_mean_abs_correlation": 0.35023507475852966,
+      "sparsity_0_01_n_represented": 20.0,
+      "sparsity_0_01_mean_dimensionality": 0.24961169064044952,
+      "sparsity_0_01_mean_abs_correlation": 0.34532272815704346,
+      "sparsity_0_005_n_represented": 20.0,
+      "sparsity_0_005_mean_dimensionality": 0.2492700070142746,
+      "sparsity_0_005_mean_abs_correlation": 0.351757287979126,
+      "sparsity_0_002_n_represented": 19.0,
+      "sparsity_0_002_mean_dimensionality": 0.24742205440998077,
+      "sparsity_0_002_mean_abs_correlation": 0.3490186333656311,
+      "sparsity_0_001_n_represented": 17.0,
+      "sparsity_0_001_mean_dimensionality": 0.24851369857788086,
+      "sparsity_0_001_mean_abs_correlation": 0.34345611929893494
+    },
+    {
+      "sparsity_0_5_n_represented": 10.0,
+      "sparsity_0_5_mean_dimensionality": 0.2499498426914215,
+      "sparsity_0_5_mean_abs_correlation": 0.303221732378006,
+      "sparsity_0_2_n_represented": 15.0,
+      "sparsity_0_2_mean_dimensionality": 0.24978725612163544,
+      "sparsity_0_2_mean_abs_correlation": 0.31225740909576416,
+      "sparsity_0_1_n_represented": 19.0,
+      "sparsity_0_1_mean_dimensionality": 0.24969086050987244,
+      "sparsity_0_1_mean_abs_correlation": 0.3412725031375885,
+      "sparsity_0_05_n_represented": 20.0,
+      "sparsity_0_05_mean_dimensionality": 0.24989104270935059,
+      "sparsity_0_05_mean_abs_correlation": 0.3489513397216797,
+      "sparsity_0_02_n_represented": 20.0,
+      "sparsity_0_02_mean_dimensionality": 0.2496548891067505,
+      "sparsity_0_02_mean_abs_correlation": 0.3482651114463806,
+      "sparsity_0_01_n_represented": 20.0,
+      "sparsity_0_01_mean_dimensionality": 0.24942827224731445,
+      "sparsity_0_01_mean_abs_correlation": 0.35127484798431396,
+      "sparsity_0_005_n_represented": 20.0,
+      "sparsity_0_005_mean_dimensionality": 0.24876070022583008,
+      "sparsity_0_005_mean_abs_correlation": 0.3508872985839844,
+      "sparsity_0_002_n_represented": 17.0,
+      "sparsity_0_002_mean_dimensionality": 0.24810965359210968,
+      "sparsity_0_002_mean_abs_correlation": 0.3378463089466095,
+      "sparsity_0_001_n_represented": 17.0,
+      "sparsity_0_001_mean_dimensionality": 0.24809348583221436,
+      "sparsity_0_001_mean_abs_correlation": 0.3295327425003052
+    },
+    {
+      "sparsity_0_5_n_represented": 10.0,
+      "sparsity_0_5_mean_dimensionality": 0.24995341897010803,
+      "sparsity_0_5_mean_abs_correlation": 0.2940325438976288,
+      "sparsity_0_2_n_represented": 14.0,
+      "sparsity_0_2_mean_dimensionality": 0.2497001439332962,
+      "sparsity_0_2_mean_abs_correlation": 0.3105960190296173,
+      "sparsity_0_1_n_represented": 18.0,
+      "sparsity_0_1_mean_dimensionality": 0.24969831109046936,
+      "sparsity_0_1_mean_abs_correlation": 0.33321040868759155,
+      "sparsity_0_05_n_represented": 20.0,
+      "sparsity_0_05_mean_dimensionality": 0.24963894486427307,
+      "sparsity_0_05_mean_abs_correlation": 0.348916620016098,
+      "sparsity_0_02_n_represented": 20.0,
+      "sparsity_0_02_mean_dimensionality": 0.2490709125995636,
+      "sparsity_0_02_mean_abs_correlation": 0.3507499694824219,
+      "sparsity_0_01_n_represented": 20.0,
+      "sparsity_0_01_mean_dimensionality": 0.24914252758026123,
+      "sparsity_0_01_mean_abs_correlation": 0.3493959307670593,
+      "sparsity_0_005_n_represented": 20.0,
+      "sparsity_0_005_mean_dimensionality": 0.24891598522663116,
+      "sparsity_0_005_mean_abs_correlation": 0.35022079944610596,
+      "sparsity_0_002_n_represented": 18.0,
+      "sparsity_0_002_mean_dimensionality": 0.24826684594154358,
+      "sparsity_0_002_mean_abs_correlation": 0.3500233590602875,
+      "sparsity_0_001_n_represented": 15.0,
+      "sparsity_0_001_mean_dimensionality": 0.2462100237607956,
+      "sparsity_0_001_mean_abs_correlation": 0.3359645903110504
+    }
+  ],
+  "aggregate": {
+    "sparsity_0_5_mean_abs_correlation": {
+      "mean": 0.2992459535598755,
+      "std": 0.003852193644466756,
+      "min": 0.2940325438976288,
+      "max": 0.303221732378006,
+      "n": 3.0
+    },
+    "sparsity_0_005_mean_abs_correlation": {
+      "mean": 0.35095512866973877,
+      "std": 0.0006290998561042538,
+      "min": 0.35022079944610596,
+      "max": 0.351757287979126,
+      "n": 3.0
+    },
+    "sparsity_0_002_mean_abs_correlation": {
+      "mean": 0.3456294337908427,
+      "std": 0.005518764516693067,
+      "min": 0.3378463089466095,
+      "max": 0.3500233590602875,
+      "n": 3.0
+    },
+    "sparsity_0_01_mean_dimensionality": {
+      "mean": 0.24939416348934174,
+      "std": 0.00019304757580994056,
+      "min": 0.24914252758026123,
+      "max": 0.24961169064044952,
+      "n": 3.0
+    },
+    "sparsity_0_1_mean_abs_correlation": {
+      "mean": 0.3370515505472819,
+      "std": 0.0033022753644001623,
+      "min": 0.33321040868759155,
+      "max": 0.3412725031375885,
+      "n": 3.0
+    },
+    "sparsity_0_002_mean_dimensionality": {
+      "mean": 0.24793285131454468,
+      "std": 0.00036684462375251515,
+      "min": 0.24742205440998077,
+      "max": 0.24826684594154358,
+      "n": 3.0
+    },
+    "sparsity_0_1_n_represented": {
+      "mean": 18.333333333333332,
+      "std": 0.4714045207910317,
+      "min": 18.0,
+      "max": 19.0,
+      "n": 3.0
+    },
+    "sparsity_0_02_mean_abs_correlation": {
+      "mean": 0.3497500518957774,
+      "std": 0.0010708455375275554,
+      "min": 0.3482651114463806,
+      "max": 0.3507499694824219,
+      "n": 3.0
+    },
+    "sparsity_0_002_n_represented": {
+      "mean": 18.0,
+      "std": 0.816496580927726,
+      "min": 17.0,
+      "max": 19.0,
+      "n": 3.0
+    },
+    "sparsity_0_01_n_represented": {
+      "mean": 20.0,
+      "std": 0.0,
+      "min": 20.0,
+      "max": 20.0,
+      "n": 3.0
+    },
+    "sparsity_0_5_mean_dimensionality": {
+      "mean": 0.24995839099089304,
+      "std": 9.671150817102037e-06,
+      "min": 0.2499498426914215,
+      "max": 0.2499719113111496,
+      "n": 3.0
+    },
+    "sparsity_0_02_mean_dimensionality": {
+      "mean": 0.24935032924016318,
+      "std": 0.00023906941334593353,
+      "min": 0.2490709125995636,
+      "max": 0.2496548891067505,
+      "n": 3.0
+    },
+    "sparsity_0_001_n_represented": {
+      "mean": 16.333333333333332,
+      "std": 0.9428090415820634,
+      "min": 15.0,
+      "max": 17.0,
+      "n": 3.0
+    },
+    "sparsity_0_05_mean_dimensionality": {
+      "mean": 0.24976255496342978,
+      "std": 0.00010297628999482775,
+      "min": 0.24963894486427307,
+      "max": 0.24989104270935059,
+      "n": 3.0
+    },
+    "sparsity_0_001_mean_dimensionality": {
+      "mean": 0.2476057360569636,
+      "std": 0.0010017166259846406,
+      "min": 0.2462100237607956,
+      "max": 0.24851369857788086,
+      "n": 3.0
+    },
+    "sparsity_0_2_mean_abs_correlation": {
+      "mean": 0.31460962692896527,
+      "std": 0.004552131894754399,
+      "min": 0.3105960190296173,
+      "max": 0.3209754526615143,
+      "n": 3.0
+    },
+    "sparsity_0_2_mean_dimensionality": {
+      "mean": 0.2496648927529653,
+      "std": 0.00011698687357111962,
+      "min": 0.24950727820396423,
+      "max": 0.24978725612163544,
+      "n": 3.0
+    },
+    "sparsity_0_05_mean_abs_correlation": {
+      "mean": 0.3486963411172231,
+      "std": 0.0003363707214455394,
+      "min": 0.3482210636138916,
+      "max": 0.3489513397216797,
+      "n": 3.0
+    },
+    "sparsity_0_05_n_represented": {
+      "mean": 20.0,
+      "std": 0.0,
+      "min": 20.0,
+      "max": 20.0,
+      "n": 3.0
+    },
+    "sparsity_0_1_mean_dimensionality": {
+      "mean": 0.2497084935506185,
+      "std": 1.9902334123501355e-05,
+      "min": 0.24969086050987244,
+      "max": 0.24973630905151367,
+      "n": 3.0
+    },
+    "sparsity_0_005_mean_dimensionality": {
+      "mean": 0.24898223082224527,
+      "std": 0.0002131348718419383,
+      "min": 0.24876070022583008,
+      "max": 0.2492700070142746,
+      "n": 3.0
+    },
+    "sparsity_0_01_mean_abs_correlation": {
+      "mean": 0.3486645023028056,
+      "std": 0.0024843742751159857,
+      "min": 0.34532272815704346,
+      "max": 0.35127484798431396,
+      "n": 3.0
+    },
+    "sparsity_0_005_n_represented": {
+      "mean": 20.0,
+      "std": 0.0,
+      "min": 20.0,
+      "max": 20.0,
+      "n": 3.0
+    },
+    "sparsity_0_2_n_represented": {
+      "mean": 14.666666666666666,
+      "std": 0.4714045207910317,
+      "min": 14.0,
+      "max": 15.0,
+      "n": 3.0
+    },
+    "sparsity_0_02_n_represented": {
+      "mean": 20.0,
+      "std": 0.0,
+      "min": 20.0,
+      "max": 20.0,
+      "n": 3.0
+    },
+    "sparsity_0_001_mean_abs_correlation": {
+      "mean": 0.33631781737009686,
+      "std": 0.005689679685511732,
+      "min": 0.3295327425003052,
+      "max": 0.34345611929893494,
+      "n": 3.0
+    },
+    "sparsity_0_5_n_represented": {
+      "mean": 10.0,
+      "std": 0.0,
+      "min": 10.0,
+      "max": 10.0,
+      "n": 3.0
+    }
+  },
+  "wall_clock_seconds": 0.0,
+  "git_sha": "2abbfe2",
+  "git_dirty": false,
+  "device": "cpu",
+  "torch_version": "2.14.1+cpu",
+  "numpy_version": "2.5.3",
+  "python_version": "3.14.7",
+  "n_parameters": 120,
+  "created_at": "2026-11-17T11:41:20+00:00",
+  "notes": null,
+  "neuron_ablation": null,
+  "source_provenance": null
+}

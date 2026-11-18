@@ -6,9 +6,13 @@
     2
   ],
   "args": {
-    "seed": 42,
     "vocab_size": 2048,
     "seq_len": 64,
+    "content_standard": false,
+    "task": "periodic",
+    "key_len": null,
+    "copy_blocks": null,
+    "copy_block_len": null,
     "d_model": 64,
     "n_layers": 2,
     "n_heads": 4,
@@ -40,93 +44,112 @@
   },
   "per_seed_metrics": [
     {
-      "final_val_acc": 0.5082620287698413,
+      "final_val_acc": 0.5082465277777778,
       "total_induction_heads": 3.0,
       "total_mass_heads": 3.0,
       "confirmed_heads_first_layer": 3.0,
       "confirmed_heads_later_layers": 0.0,
       "mechanism_confirmed": 0.0,
-      "peak_induction_mass": 0.9454270005226135,
-      "peak_prev_token_mass": 0.051441822201013565,
-      "k_composition_score": 0.06413904577493668,
-      "l0_duplicate_head_mass": 0.01659287139773369,
-      "mean_ablation_drop": 0.0679615162037037,
+      "peak_induction_mass": 0.9740141034126282,
+      "peak_prev_token_mass": 0.03639856353402138,
+      "peak_content_mass": 0.9602131843566895,
+      "peak_offset_mass": 0.9740141034126282,
+      "k_composition_score": 0.055418167263269424,
+      "l0_duplicate_head_mass": 0.018777012825012207,
       "confirmed_epoch": 100.0,
       "epochs_run": 100.0,
       "steps_run": 12800.0,
-      "probe_content_mass": 0.029575543478131294,
-      "probe_period_mass": 0.8996869921684265,
+      "probe_content_mass": 0.03132327273488045,
+      "probe_period_mass": 0.974490225315094,
+      "probe_offset_mass": 0.974490225315094,
       "probe_content_wins": 0.0,
+      "copy_accuracy": 1.0,
+      "copy_accuracy_nonmodal": 0.0,
+      "fixed_offset_baseline": 1.0,
+      "copy_gap": 0.0,
+      "n_copy_queries": 31294.0,
+      "n_copy_distances": 1.0,
+      "confirmed_content_mass": 0.9602131843566895,
+      "mean_ablation_drop": 0.0018911210317460458,
+      "mean_copy_ablation_drop": 0.0033552757717133876,
       "batch_mode": 1.0
     },
     {
-      "final_val_acc": 0.5081845238095238,
+      "final_val_acc": 0.5081380208333334,
       "total_induction_heads": 3.0,
       "total_mass_heads": 3.0,
       "confirmed_heads_first_layer": 3.0,
       "confirmed_heads_later_layers": 0.0,
       "mechanism_confirmed": 0.0,
-      "peak_induction_mass": 0.9449374675750732,
-      "peak_prev_token_mass": 0.02048053964972496,
-      "k_composition_score": 0.1096816137433052,
-      "l0_duplicate_head_mass": 0.018589001148939133,
-      "mean_ablation_drop": 0.004133597883597906,
+      "peak_induction_mass": 0.949944794178009,
+      "peak_prev_token_mass": 0.01747177168726921,
+      "peak_content_mass": 0.9162686467170715,
+      "peak_offset_mass": 0.9302865266799927,
+      "k_composition_score": 0.0545433945953846,
+      "l0_duplicate_head_mass": 0.023916952311992645,
       "confirmed_epoch": 100.0,
       "epochs_run": 100.0,
       "steps_run": 12800.0,
-      "probe_content_mass": 0.03105146624147892,
-      "probe_period_mass": 0.9301730990409851,
+      "probe_content_mass": 0.03138275071978569,
+      "probe_period_mass": 0.9291609525680542,
+      "probe_offset_mass": 0.9291609525680542,
       "probe_content_wins": 0.0,
+      "copy_accuracy": 1.0,
+      "copy_accuracy_nonmodal": 0.0,
+      "fixed_offset_baseline": 1.0,
+      "copy_gap": 0.0,
+      "n_copy_queries": 31265.0,
+      "n_copy_distances": 1.0,
+      "confirmed_content_mass": 0.9162686467170715,
+      "mean_ablation_drop": 0.02918836805555558,
+      "mean_copy_ablation_drop": 0.05483234714003945,
       "batch_mode": 1.0
     },
     {
-      "final_val_acc": 0.5082620287698413,
-      "total_induction_heads": 3.0,
-      "total_mass_heads": 3.0,
-      "confirmed_heads_first_layer": 3.0,
+      "final_val_acc": 0.5081690228174603,
+      "total_induction_heads": 4.0,
+      "total_mass_heads": 4.0,
+      "confirmed_heads_first_layer": 4.0,
       "confirmed_heads_later_layers": 0.0,
       "mechanism_confirmed": 0.0,
-      "peak_induction_mass": 0.9506152272224426,
-      "peak_prev_token_mass": 0.026792561635375023,
-      "k_composition_score": 0.06692243367433548,
-      "l0_duplicate_head_mass": 0.02190813422203064,
-      "mean_ablation_drop": 0.04111896494708996,
+      "peak_induction_mass": 0.9627248644828796,
+      "peak_prev_token_mass": 0.026314429938793182,
+      "peak_content_mass": 0.926110565662384,
+      "peak_offset_mass": 0.9412782192230225,
+      "k_composition_score": 0.08811673521995544,
+      "l0_duplicate_head_mass": 0.010365916416049004,
       "confirmed_epoch": 100.0,
       "epochs_run": 100.0,
       "steps_run": 12800.0,
-      "probe_content_mass": 0.0317467525601387,
-      "probe_period_mass": 0.8958961963653564,
+      "probe_content_mass": 0.028454745188355446,
+      "probe_period_mass": 0.9408673644065857,
+      "probe_offset_mass": 0.9408673644065857,
       "probe_content_wins": 0.0,
+      "copy_accuracy": 1.0,
+      "copy_accuracy_nonmodal": 0.0,
+      "fixed_offset_baseline": 1.0,
+      "copy_gap": 0.0,
+      "n_copy_queries": 31232.0,
+      "n_copy_distances": 1.0,
+      "confirmed_content_mass": 0.926110565662384,
+      "mean_ablation_drop": 0.023821149553571452,
+      "mean_copy_ablation_drop": 0.04474577356557377,
       "batch_mode": 1.0
     }
   ],
   "aggregate": {
-    "k_composition_score": {
-      "mean": 0.08024769773085912,
-      "std": 0.020843917912593872,
-      "min": 0.06413904577493668,
-      "max": 0.1096816137433052,
+    "peak_induction_mass": {
+      "mean": 0.9622279206911722,
+      "std": 0.009832535332829741,
+      "min": 0.949944794178009,
+      "max": 0.9740141034126282,
       "n": 3.0
     },
-    "total_induction_heads": {
-      "mean": 3.0,
+    "n_copy_distances": {
+      "mean": 1.0,
       "std": 0.0,
-      "min": 3.0,
-      "max": 3.0,
-      "n": 3.0
-    },
-    "final_val_acc": {
-      "mean": 0.5082361937830688,
-      "std": 3.6536188677372e-05,
-      "min": 0.5081845238095238,
-      "max": 0.5082620287698413,
-      "n": 3.0
-    },
-    "confirmed_heads_later_layers": {
-      "mean": 0.0,
-      "std": 0.0,
-      "min": 0.0,
-      "max": 0.0,
+      "min": 1.0,
+      "max": 1.0,
       "n": 3.0
     },
     "mechanism_confirmed": {
@@ -136,60 +159,74 @@
       "max": 0.0,
       "n": 3.0
     },
-    "peak_induction_mass": {
-      "mean": 0.9469932317733765,
-      "std": 0.0025689231079025912,
-      "min": 0.9449374675750732,
-      "max": 0.9506152272224426,
+    "confirmed_heads_later_layers": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
       "n": 3.0
     },
-    "peak_prev_token_mass": {
-      "mean": 0.032904974495371185,
-      "std": 0.013358429237338421,
-      "min": 0.02048053964972496,
-      "max": 0.051441822201013565,
+    "total_induction_heads": {
+      "mean": 3.3333333333333335,
+      "std": 0.4714045207910317,
+      "min": 3.0,
+      "max": 4.0,
       "n": 3.0
     },
-    "l0_duplicate_head_mass": {
-      "mean": 0.019030002256234486,
-      "std": 0.0021922387651766855,
-      "min": 0.01659287139773369,
-      "max": 0.02190813422203064,
+    "probe_offset_mass": {
+      "mean": 0.9481728474299113,
+      "std": 0.019213073736338234,
+      "min": 0.9291609525680542,
+      "max": 0.974490225315094,
       "n": 3.0
     },
-    "mean_ablation_drop": {
-      "mean": 0.03773802634479719,
-      "std": 0.026167076624948375,
-      "min": 0.004133597883597906,
-      "max": 0.0679615162037037,
+    "mean_copy_ablation_drop": {
+      "mean": 0.034311132159108866,
+      "std": 0.022273055846711104,
+      "min": 0.0033552757717133876,
+      "max": 0.05483234714003945,
       "n": 3.0
     },
     "total_mass_heads": {
-      "mean": 3.0,
-      "std": 0.0,
+      "mean": 3.3333333333333335,
+      "std": 0.4714045207910317,
       "min": 3.0,
-      "max": 3.0,
+      "max": 4.0,
       "n": 3.0
     },
-    "confirmed_epoch": {
-      "mean": 100.0,
-      "std": 0.0,
-      "min": 100.0,
-      "max": 100.0,
+    "n_copy_queries": {
+      "mean": 31263.666666666668,
+      "std": 25.32894698868383,
+      "min": 31232.0,
+      "max": 31294.0,
       "n": 3.0
     },
-    "steps_run": {
-      "mean": 12800.0,
+    "confirmed_content_mass": {
+      "mean": 0.934197465578715,
+      "std": 0.018829570003631956,
+      "min": 0.9162686467170715,
+      "max": 0.9602131843566895,
+      "n": 3.0
+    },
+    "peak_offset_mass": {
+      "mean": 0.9485262831052145,
+      "std": 0.01857284871808636,
+      "min": 0.9302865266799927,
+      "max": 0.9740141034126282,
+      "n": 3.0
+    },
+    "copy_accuracy": {
+      "mean": 1.0,
       "std": 0.0,
-      "min": 12800.0,
-      "max": 12800.0,
+      "min": 1.0,
+      "max": 1.0,
       "n": 3.0
     },
     "probe_content_mass": {
-      "mean": 0.030791254093249638,
-      "std": 0.0009052881644398967,
-      "min": 0.029575543478131294,
-      "max": 0.0317467525601387,
+      "mean": 0.030386922881007195,
+      "std": 0.0013664717059292699,
+      "min": 0.028454745188355446,
+      "max": 0.03138275071978569,
       "n": 3.0
     },
     "batch_mode": {
@@ -199,11 +236,74 @@
       "max": 1.0,
       "n": 3.0
     },
+    "peak_content_mass": {
+      "mean": 0.934197465578715,
+      "std": 0.018829570003631956,
+      "min": 0.9162686467170715,
+      "max": 0.9602131843566895,
+      "n": 3.0
+    },
     "epochs_run": {
       "mean": 100.0,
       "std": 0.0,
       "min": 100.0,
       "max": 100.0,
+      "n": 3.0
+    },
+    "fixed_offset_baseline": {
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0,
+      "n": 3.0
+    },
+    "steps_run": {
+      "mean": 12800.0,
+      "std": 0.0,
+      "min": 12800.0,
+      "max": 12800.0,
+      "n": 3.0
+    },
+    "confirmed_heads_first_layer": {
+      "mean": 3.3333333333333335,
+      "std": 0.4714045207910317,
+      "min": 3.0,
+      "max": 4.0,
+      "n": 3.0
+    },
+    "probe_period_mass": {
+      "mean": 0.9481728474299113,
+      "std": 0.019213073736338234,
+      "min": 0.9291609525680542,
+      "max": 0.974490225315094,
+      "n": 3.0
+    },
+    "copy_accuracy_nonmodal": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 3.0
+    },
+    "confirmed_epoch": {
+      "mean": 100.0,
+      "std": 0.0,
+      "min": 100.0,
+      "max": 100.0,
+      "n": 3.0
+    },
+    "final_val_acc": {
+      "mean": 0.5081845238095238,
+      "std": 4.563368503185887e-05,
+      "min": 0.5081380208333334,
+      "max": 0.5082465277777778,
+      "n": 3.0
+    },
+    "mean_ablation_drop": {
+      "mean": 0.018300212880291027,
+      "std": 0.01180806165528447,
+      "min": 0.0018911210317460458,
+      "max": 0.02918836805555558,
       "n": 3.0
     },
     "probe_content_wins": {
@@ -213,30 +313,45 @@
       "max": 0.0,
       "n": 3.0
     },
-    "probe_period_mass": {
-      "mean": 0.9085854291915894,
-      "std": 0.015343036430251264,
-      "min": 0.8958961963653564,
-      "max": 0.9301730990409851,
+    "copy_gap": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
       "n": 3.0
     },
-    "confirmed_heads_first_layer": {
-      "mean": 3.0,
-      "std": 0.0,
-      "min": 3.0,
-      "max": 3.0,
+    "k_composition_score": {
+      "mean": 0.06602609902620316,
+      "std": 0.015624520523601325,
+      "min": 0.0545433945953846,
+      "max": 0.08811673521995544,
+      "n": 3.0
+    },
+    "peak_prev_token_mass": {
+      "mean": 0.026728255053361256,
+      "std": 0.007732369228192893,
+      "min": 0.01747177168726921,
+      "max": 0.03639856353402138,
+      "n": 3.0
+    },
+    "l0_duplicate_head_mass": {
+      "mean": 0.017686627184351284,
+      "std": 0.005585657173947569,
+      "min": 0.010365916416049004,
+      "max": 0.023916952311992645,
       "n": 3.0
     }
   },
-  "wall_clock_seconds": 390.642888605,
-  "git_sha": "e9b5707",
+  "wall_clock_seconds": 393.442543569,
+  "git_sha": "191cde3",
   "git_dirty": false,
   "device": "cuda",
   "torch_version": "2.11.0+cu128",
   "numpy_version": "2.1.3",
   "python_version": "3.13.15",
   "n_parameters": 299392,
-  "created_at": "2026-10-19T23:12:30+00:00",
+  "created_at": "2026-11-17T10:11:20+00:00",
   "notes": null,
-  "neuron_ablation": null
+  "neuron_ablation": null,
+  "source_provenance": null
 }
