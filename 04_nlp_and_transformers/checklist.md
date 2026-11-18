@@ -31,7 +31,7 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
 - [~] **Attribution patching (AtP)**
 
 ## Tooling
-- [~] **TransformerLens:** HookedTransformer, hook points, ActivationCache, built-in patching (note: [[04_nlp_and_transformers/notes/mi-tooling]])
+- [-] **TransformerLens:** (descoped 2026-11-17: the library was never used; the repository's hooks are hand-written and are validated against the Hugging Face reference on GPT-2 small instead, see [[docs/adr/0034-gpt2-small-real-model-test]]) HookedTransformer, hook points, ActivationCache, built-in patching (note: [[04_nlp_and_transformers/notes/mi-tooling]])
 - [-] (descoped: the dependency was dropped 2026-08-01 because nothing imported it (`pyproject.toml`); the repository trains its own SAE in `exp5`) **SAELens:** training and loading sparse autoencoders (same note)
 - [-] **nnsight:** (descoped 2026-10-11: no remote execution needed, see the descope register) PyTorch-compatible intervention graphs (optional, for larger models) (same note)
 - [-] (descoped: the dependency was dropped 2026-08-01 because nothing imported it (`pyproject.toml`); the figures are drawn by the experiments) **circuitsvis:** attention-pattern visualization (same note)
