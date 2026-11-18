@@ -131,6 +131,12 @@ that epoch/scale budget) still stands. See
 > of the logit difference and path patching attributes **0.82** of its direct
 > effect on the logits to it. A content-based induction claim needs a task with
 > repeats at *varying* distances (v1.1).
+>
+> **2026-11-17 - re-measured after the seeding fix.** The run was repeated with the model seeded before it
+> was constructed: **3 heads per seed**, copy-offset mass **0.81**, K-composition **0.08**,
+> probe period mass **0.81** against content mass **0.03**; ablation now costs **0.59** and path
+> patching attributes **0.71** (they were 0.44 and 0.82). The qualitative reading above did not change; the two
+> intervention numbers did, by more than their earlier spread. See `portfolio/RESULTS.md`.
 
 A second, independent question this pass added the tooling to test: does the fixed
 dataset (generated once, then only reshuffled across epochs) let the model **memorize**

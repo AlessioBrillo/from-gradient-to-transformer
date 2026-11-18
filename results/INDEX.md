@@ -53,6 +53,18 @@ document that cites it.
 | `results/probe_capstone_fixcheck.json` | 03_progress-log.md:333 | **ORPHAN (allowlist)** | Kill-drill fixcheck, cited in 03_progress-log.md:333. Not in RESULTS.md, the paper or the writeup. |
 | `results/probe_capstone_resume.json` | 03_progress-log.md:335 | **ORPHAN (allowlist)** | Kill-drill resume, cited in 03_progress-log.md:335. Not in RESULTS.md, the paper or the writeup. |
 | `results/probe_capstone_shakedown.json` | — | orphan (scratch) | Capstone shakedown |
+| `results/exp1_induction_fixed_batches_pre_seedfix.json` | RESULTS.md (as history) | history | Rung 1 arm A, as measured before the seeding fix (2026-11-16). Kept unedited; the live manifest is `results/exp1_induction_fixed_batches.json` |
+| `results/exp1_induction_fresh_batches_pre_seedfix.json` | RESULTS.md (as history) | history | Rung 1 arm B, as measured before the seeding fix (2026-11-16). Kept unedited; the live manifest is `results/exp1_induction_fresh_batches.json` |
+| `results/exp1_induction_heads_pre_seedfix.json` | RESULTS.md (as history) | history | Rung 1 quick multi-seed, as measured before the seeding fix (2026-11-16). Kept unedited; the live manifest is `results/exp1_induction_heads.json` |
+| `results/exp3_superposition_pre_seedfix.json` | RESULTS.md (as history) | history | Rung 3 single sparsity, as measured before the seeding fix (2026-11-16). Kept unedited; the live manifest is `results/exp3_superposition.json` |
+| `results/exp3_superposition_sweep_pre_seedfix.json` | RESULTS.md (as history) | history | Rung 3 sparsity sweep, as measured before the seeding fix (2026-11-16). Kept unedited; the live manifest is `results/exp3_superposition_sweep.json` |
+| `results/exp4_circuit_patching_pre_seedfix.json` | RESULTS.md (as history) | history | Rung 4 quick multi-seed, as measured before the seeding fix (2026-11-16). Kept unedited; the live manifest is `results/exp4_circuit_patching.json` |
+| `results/exp4_content_pre_seedfix.json` | RESULTS.md (as history) | history | Rung 1b causal addendum, as measured before the seeding fix (2026-11-16). Kept unedited; the live manifest is `results/exp4_content.json` |
+| `results/exp4_standard_pre_seedfix.json` | RESULTS.md (as history) | history | Rung 4 cascade on the standard-scale checkpoint, as measured before the seeding fix (2026-11-16). Kept unedited; the live manifest is `results/exp4_standard.json` |
+| `results/exp5_real_activations_pre_seedfix.json` | RESULTS.md (as history) | history | Rung 5 real activations, as measured before the seeding fix (2026-11-16). Kept unedited; the live manifest is `results/exp5_real_activations.json` |
+| `results/induction_content_pre_seedfix.json` | RESULTS.md (as history) | history | Rung 1b content task, as measured before the seeding fix (2026-11-16). Kept unedited; the live manifest is `results/induction_content.json` |
+| `results/induction_standard_pre_seedfix.json` | RESULTS.md (as history) | history | Rung 1 standard scale, as measured before the seeding fix (2026-11-16). Kept unedited; the live manifest is `results/induction_standard.json` |
+| `results/induction_standard_emergence_pre_seedfix.json` | RESULTS.md (as history) | history | Rung 1 emergence run, as measured before the seeding fix (2026-11-16). Kept unedited; the live manifest is `results/induction_standard_emergence.json` |
 
 ## Explicit allowlist (capstone / probe)
 
