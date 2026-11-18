@@ -198,6 +198,8 @@ unedited, as `results/<name>_pre_seedfix.json`. What the re-measurement showed:
 - **Rung 3: the contradiction closed.** The single-sparsity manifest and the sweep's 0.010 row
   now agree (20.00 ± 0.00 both), which is the 2026-11-12 diagnosis confirmed. The phase transition did not
   move; the extreme-sparsity tail moved within its spread (16.33 ± 0.94 at 0.001).
+  The pentagon geometry check (5 features into 2 dimensions) has no manifest and was **not** re-run in this pass
+  (it takes hours on the CPU used here): its figure and its gap statistics predate the fix and are reported as such.
 - **Rung 1 and the fixed-vs-fresh comparison: the findings held.** Heads form early, in the first layer,
   and copy by position; fixed batches still memorize (0.0046 ± 0.0003
   against 0.5352 ± 0.0001).
