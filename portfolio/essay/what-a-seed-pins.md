@@ -31,7 +31,9 @@ Each command reproduced its own manifest exactly. The defect was not non-determi
 
 Seed immediately before the model is constructed, in one helper per experiment. The test uses the audit's own instrument: a digest of the initial weights. It asks that a seed's digest be the same when the seed is built alone, after another seed, after a throwaway model has consumed the stream, and at every level of the sweep. It fails on the old code and passes on the new.
 
-The tracked manifests of the three affected experiments were recorded before the fix. They are not edited: they remain the record of what the old code measured, and the [Honesty Ledger](../RESULTS.md) says that re-running those commands now starts from different weights. Re-measuring is separate work, with new numbers, and it was not done in anticipation.
+The tracked manifests of the three affected experiments were recorded before the fix. They are not edited: they remain, renamed `*_pre_seedfix.json`, the record of what the old code measured. The experiments were then re-run.
+
+For Rung 3 the contradiction that started this closed: with the model seeded before it is constructed, the single-sparsity path and the sweep path both report 20.00 ± 0.00 features represented at sparsity 0.01, where before they reported 19.67 ± 0.47 and 20.00 ± 0.00. That agreement is the diagnosis confirmed, not merely a fix: the two numbers differed because of where the model sat in the random stream, and removing that dependence removed the difference. The phase transition itself did not move.
 
 ## What to take from it
 

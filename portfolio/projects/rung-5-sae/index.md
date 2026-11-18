@@ -16,7 +16,8 @@ rung: 5
 
 **Key Result**:
 <!-- manifest: results/exp5_sae_dashboard.json -->
-Synthetic baseline (manifest-backed): FVE 0.9749, L0 96.6/512, 39/512 dead. Real-activation run (prose, plots never saved): 99.97% FVE but L0 136/256 (53% active) with 0 dead — reconstructs better but far less sparsely. Read honestly: a dense linear autoencoder on a small undertrained residual stream, not genuinely sparse interpretable features yet.
+<!-- manifest: results/exp5_real_activations.json -->
+Synthetic baseline (manifest-backed): FVE 0.9749, L0 96.6/512, 39/512 dead. On the real residual stream of Rung 1's confirmed-head checkpoint (`results/exp5_real_activations.json`, re-measured 2026-11-17): FVE 0.99998, L0 19.0/512 (3.7% active), but 66% of the features never fire. The dictionary is sparse and about eight times wider than the 64-dimensional stream it covers: the size, not the sparsity, is the open question. An older run on an undertrained checkpoint read dense (53% active); that was a statement about the model, not the SAE.
 
 **Figures**:
 ![Sparsity Tradeoff](../../figures/exp5_sparsity_tradeoff.png) <!-- manifest: results/exp5_sae_dashboard.json -->

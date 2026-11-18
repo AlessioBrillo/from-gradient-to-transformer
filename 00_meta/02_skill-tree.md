@@ -93,8 +93,8 @@ Some exercises and proofs were written by an AI assistant to close gaps this rul
   ~17-20h `--standard` scale — see the proof's own limitations).
 
 ## Research Skills (Mechanistic Interpretability)
-- [~] **Induction head reproduction** — a head forms at standard scale (2–3 per
-  seed, copy-offset mass 0.945, GPU, 3 seeds, 2026-10-20) and the causal
+- [~] **Induction head reproduction** — a head forms at standard scale (3 per
+  seed, copy-offset mass 0.81, GPU, 3 seeds, re-measured 2026-11-17) and the causal
   interventions land on it, but the dissociation probe puts the copy on a
   **fixed offset**: on the periodic task the two mechanisms are the same
   function, so the head is a *prefix-copying* head. The content-based task
@@ -118,14 +118,14 @@ Some exercises and proofs were written by an AI assistant to close gaps this rul
   <!-- manifest: results/exp3_superposition_sweep.json -->
 - [x] **Circuit discovery via activation + path patching** — find + causally validate
   (patch site and metric fixed 2026-08-01). The cascade ran end to end on Rung 1's
-  own checkpoint: head ablation 0.4445 ± 0.0425, path patching 0.8215 ± 0.1255
+  own checkpoint: head ablation 0.5895 ± 0.1405, path patching 0.7052 ± 0.0411
   (GPU, 3 seeds). The head is a prefix-copying one, so this validates the
   *method* on a real head; an induction circuit needs the content-based run.
   <!-- manifest: results/exp4_standard.json -->
 - [~] **Sparse autoencoder training** — feature dashboard; real-activation harvesting
   shipped 2026-08-02 (`--activations-from`, pre-encoder bias added). On Rung 1's
-  checkpoint the real-activation dictionary is sparse (L0 3.0% of 512, FVE
-  0.99998) but ~8× wider than the 64-dimensional residual stream, with 78% of
+  checkpoint the real-activation dictionary is sparse (L0 3.7% of 512, FVE
+  0.99998) but ~8× wider than the 64-dimensional residual stream, with 66% of
   its features never firing: the over-completeness, not the sparsity, is the
   open question — see [[portfolio/RESULTS]] Rung 5.
   <!-- manifest: results/exp5_real_activations.json -->
@@ -142,7 +142,7 @@ Some exercises and proofs were written by an AI assistant to close gaps this rul
   <!-- manifest: results/grokking_nanda_p113.json -->
 - [x] At least one circuit verification (activation patching on the capstone model) — exp4, end to end on Rung 1's own checkpoint
   <!-- manifest: results/exp4_standard.json -->
-- [~] SAE feature dashboard (browsable artifact) — the real-activation path exists and is sparse (L0 3.0%), but the dictionary is ~8× too wide with 78% dead features; the browsable artifact itself is descoped
+- [~] SAE feature dashboard (browsable artifact) — the real-activation path exists and is sparse (L0 3.7%), but the dictionary is ~8× too wide with 66% dead features; the browsable artifact itself is descoped
   <!-- manifest: results/exp5_real_activations.json -->
 - [x] Mini-paper with all ablations and primary-literature citations — `portfolio/paper/main.tex`, written from the manifests
   <!-- manifest: results/grokking_nanda_p113.json -->
