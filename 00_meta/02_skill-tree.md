@@ -56,7 +56,7 @@ Some exercises and proofs were written by an AI assistant to close gaps this rul
 - [x] **Activation patching / path patching** — proof: [[04_nlp_and_transformers/proofs/circuit-analysis-complete]], [[05_llm_engineering/proofs/intervention-validity]]. — exercise: [[04_nlp_and_transformers/exercises/ex-03-activation-patching]]
   Both had real bugs (wrong patch site, wrong metric; path patching had no implementation at all) fixed 2026-08-01 — see the intervention-validity proof.
   Attribution patching (AtP) is a distinct gradient-based approximation and is genuinely not implemented — see the Research Skills section below.
-- [~] **TransformerLens: HookedTransformer, hook points, ActivationCache** — note: [[04_nlp_and_transformers/notes/mi-tooling]]
+- [-] **TransformerLens: HookedTransformer, hook points, ActivationCache** (descoped 2026-11-17: the library was never used; the repository's hooks are hand-written and are validated against the Hugging Face reference on GPT-2 small instead, see [[docs/adr/0034-gpt2-small-real-model-test]]) — note: [[04_nlp_and_transformers/notes/mi-tooling]]
 - [~] Scaling Laws (Kaplan, Chinchilla) — note: [[04_nlp_and_transformers/notes/scaling-laws]]
 - [ ] Computational optimizations (FlashAttention, KV cache) — breadth
 
