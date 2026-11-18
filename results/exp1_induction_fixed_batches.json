@@ -6,9 +6,13 @@
     2
   ],
   "args": {
-    "seed": 42,
     "vocab_size": 256,
     "seq_len": 16,
+    "content_standard": false,
+    "task": "periodic",
+    "key_len": null,
+    "copy_blocks": null,
+    "copy_block_len": null,
     "d_model": 24,
     "n_layers": 2,
     "n_heads": 4,
@@ -21,12 +25,18 @@
     "quick": false,
     "standard": false,
     "wandb": false,
+    "scale": null,
     "save_model": false,
     "fresh_batches": false,
     "checkpoint_dir": "checkpoints",
     "checkpoint_every": 0,
     "resume": false,
     "resume_from": null,
+    "detect_every": 50,
+    "stop_on_confirmed": false,
+    "stop_rule": "mechanism",
+    "detect_patience": 2,
+    "probe_dissociation": true,
     "save_manifest": false,
     "manifest_path": "results/exp1_induction_fixed_batches.json",
     "batches": null,
@@ -34,39 +44,131 @@
   },
   "per_seed_metrics": [
     {
-      "final_val_acc": 0.0049479166666666664,
+      "final_val_acc": 0.005013020833333334,
       "total_induction_heads": 0.0,
-      "peak_diag1_mass": 0.21604463085532188,
-      "k_composition_score": 0.16024479269981384,
-      "l0_duplicate_head_mass": 0.2003938853740692,
-      "mean_ablation_drop": 0.0,
-      "batch_mode": 0.0
-    },
-    {
-      "final_val_acc": 0.004166666666666667,
-      "total_induction_heads": 0.0,
-      "peak_diag1_mass": 0.22985446080565453,
-      "k_composition_score": 0.1394241899251938,
-      "l0_duplicate_head_mass": 0.22592942416667938,
-      "mean_ablation_drop": 0.0,
+      "total_mass_heads": 0.0,
+      "confirmed_heads_first_layer": 0.0,
+      "confirmed_heads_later_layers": 0.0,
+      "mechanism_confirmed": 0.0,
+      "peak_induction_mass": 0.16811081767082214,
+      "peak_prev_token_mass": 0.1502402275800705,
+      "peak_content_mass": 0.15237116813659668,
+      "peak_offset_mass": 0.15382596850395203,
+      "k_composition_score": 0.13625456392765045,
+      "l0_duplicate_head_mass": 0.10551140457391739,
+      "confirmed_epoch": -1.0,
+      "epochs_run": 800.0,
+      "steps_run": 6400.0,
+      "probe_content_mass": 0.10302966833114624,
+      "probe_period_mass": 0.17995937168598175,
+      "probe_offset_mass": 0.17995937168598175,
+      "probe_content_wins": 0.0,
+      "copy_accuracy": 0.004839168801594079,
+      "copy_accuracy_nonmodal": 0.0,
+      "fixed_offset_baseline": 1.0,
+      "copy_gap": -0.9951608311984059,
+      "n_copy_queries": 7026.0,
+      "n_copy_distances": 3.0,
       "batch_mode": 0.0
     },
     {
       "final_val_acc": 0.004296875,
       "total_induction_heads": 0.0,
-      "peak_diag1_mass": 0.20619726553559303,
-      "k_composition_score": 0.13571548461914062,
-      "l0_duplicate_head_mass": 0.18836139142513275,
-      "mean_ablation_drop": 0.0,
+      "total_mass_heads": 0.0,
+      "confirmed_heads_first_layer": 0.0,
+      "confirmed_heads_later_layers": 0.0,
+      "mechanism_confirmed": 0.0,
+      "peak_induction_mass": 0.18774139881134033,
+      "peak_prev_token_mass": 0.10634595155715942,
+      "peak_content_mass": 0.14470961689949036,
+      "peak_offset_mass": 0.191721111536026,
+      "k_composition_score": 0.1378946304321289,
+      "l0_duplicate_head_mass": 0.1298869550228119,
+      "confirmed_epoch": -1.0,
+      "epochs_run": 800.0,
+      "steps_run": 6400.0,
+      "probe_content_mass": 0.12268803268671036,
+      "probe_period_mass": 0.151959627866745,
+      "probe_offset_mass": 0.151959627866745,
+      "probe_content_wins": 0.0,
+      "copy_accuracy": 0.004746152739824536,
+      "copy_accuracy_nonmodal": 0.0,
+      "fixed_offset_baseline": 1.0,
+      "copy_gap": -0.9952538472601755,
+      "n_copy_queries": 6953.0,
+      "n_copy_distances": 1.0,
+      "batch_mode": 0.0
+    },
+    {
+      "final_val_acc": 0.0044921875,
+      "total_induction_heads": 0.0,
+      "total_mass_heads": 0.0,
+      "confirmed_heads_first_layer": 0.0,
+      "confirmed_heads_later_layers": 0.0,
+      "mechanism_confirmed": 0.0,
+      "peak_induction_mass": 0.18365870416164398,
+      "peak_prev_token_mass": 0.08899682760238647,
+      "peak_content_mass": 0.17611458897590637,
+      "peak_offset_mass": 0.17966106534004211,
+      "k_composition_score": 0.15669651329517365,
+      "l0_duplicate_head_mass": 0.13524474203586578,
+      "confirmed_epoch": -1.0,
+      "epochs_run": 800.0,
+      "steps_run": 6400.0,
+      "probe_content_mass": 0.12868960201740265,
+      "probe_period_mass": 0.16056926548480988,
+      "probe_offset_mass": 0.16056926548480988,
+      "probe_content_wins": 0.0,
+      "copy_accuracy": 0.004890678941311853,
+      "copy_accuracy_nonmodal": 0.0,
+      "fixed_offset_baseline": 1.0,
+      "copy_gap": -0.9951093210586881,
+      "n_copy_queries": 6952.0,
+      "n_copy_distances": 3.0,
       "batch_mode": 0.0
     }
   ],
   "aggregate": {
-    "mean_ablation_drop": {
+    "confirmed_epoch": {
+      "mean": -1.0,
+      "std": 0.0,
+      "min": -1.0,
+      "max": -1.0,
+      "n": 3.0
+    },
+    "steps_run": {
+      "mean": 6400.0,
+      "std": 0.0,
+      "min": 6400.0,
+      "max": 6400.0,
+      "n": 3.0
+    },
+    "copy_gap": {
+      "mean": -0.9951746665057565,
+      "std": 5.9808123897506486e-05,
+      "min": -0.9952538472601755,
+      "max": -0.9951093210586881,
+      "n": 3.0
+    },
+    "final_val_acc": {
+      "mean": 0.004600694444444445,
+      "std": 0.00030226537059861383,
+      "min": 0.004296875,
+      "max": 0.005013020833333334,
+      "n": 3.0
+    },
+    "total_mass_heads": {
       "mean": 0.0,
       "std": 0.0,
       "min": 0.0,
       "max": 0.0,
+      "n": 3.0
+    },
+    "peak_prev_token_mass": {
+      "mean": 0.11519433557987213,
+      "std": 0.025773486830031295,
+      "min": 0.08899682760238647,
+      "max": 0.1502402275800705,
       "n": 3.0
     },
     "batch_mode": {
@@ -76,25 +178,32 @@
       "max": 0.0,
       "n": 3.0
     },
-    "final_val_acc": {
-      "mean": 0.004470486111111111,
-      "std": 0.00034175381397620695,
-      "min": 0.004166666666666667,
-      "max": 0.0049479166666666664,
+    "epochs_run": {
+      "mean": 800.0,
+      "std": 0.0,
+      "min": 800.0,
+      "max": 800.0,
       "n": 3.0
     },
-    "peak_diag1_mass": {
-      "mean": 0.2173654523988565,
-      "std": 0.009703063061867072,
-      "min": 0.20619726553559303,
-      "max": 0.22985446080565453,
+    "probe_offset_mass": {
+      "mean": 0.1641627550125122,
+      "std": 0.011709861619592307,
+      "min": 0.151959627866745,
+      "max": 0.17995937168598175,
       "n": 3.0
     },
-    "k_composition_score": {
-      "mean": 0.1451281557480494,
-      "std": 0.010795775664903192,
-      "min": 0.13571548461914062,
-      "max": 0.16024479269981384,
+    "probe_content_wins": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 3.0
+    },
+    "probe_period_mass": {
+      "mean": 0.1641627550125122,
+      "std": 0.011709861619592307,
+      "min": 0.151959627866745,
+      "max": 0.17995937168598175,
       "n": 3.0
     },
     "total_induction_heads": {
@@ -104,23 +213,115 @@
       "max": 0.0,
       "n": 3.0
     },
+    "confirmed_heads_first_layer": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 3.0
+    },
+    "confirmed_heads_later_layers": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 3.0
+    },
+    "copy_accuracy_nonmodal": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 3.0
+    },
+    "mechanism_confirmed": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 3.0
+    },
+    "peak_content_mass": {
+      "mean": 0.15773179133733115,
+      "std": 0.01336962424316921,
+      "min": 0.14470961689949036,
+      "max": 0.17611458897590637,
+      "n": 3.0
+    },
+    "fixed_offset_baseline": {
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0,
+      "n": 3.0
+    },
     "l0_duplicate_head_mass": {
-      "mean": 0.20489490032196045,
-      "std": 0.015663835687943425,
-      "min": 0.18836139142513275,
-      "max": 0.22592942416667938,
+      "mean": 0.12354770054419835,
+      "std": 0.012939795198404862,
+      "min": 0.10551140457391739,
+      "max": 0.13524474203586578,
+      "n": 3.0
+    },
+    "probe_content_mass": {
+      "mean": 0.11813576767841975,
+      "std": 0.010959026317000048,
+      "min": 0.10302966833114624,
+      "max": 0.12868960201740265,
+      "n": 3.0
+    },
+    "n_copy_queries": {
+      "mean": 6977.0,
+      "std": 34.650637319776195,
+      "min": 6952.0,
+      "max": 7026.0,
+      "n": 3.0
+    },
+    "copy_accuracy": {
+      "mean": 0.00482533349424349,
+      "std": 5.98081238974668e-05,
+      "min": 0.004746152739824536,
+      "max": 0.004890678941311853,
+      "n": 3.0
+    },
+    "peak_induction_mass": {
+      "mean": 0.17983697354793549,
+      "std": 0.008457507420094672,
+      "min": 0.16811081767082214,
+      "max": 0.18774139881134033,
+      "n": 3.0
+    },
+    "k_composition_score": {
+      "mean": 0.14361523588498434,
+      "std": 0.009274061265936835,
+      "min": 0.13625456392765045,
+      "max": 0.15669651329517365,
+      "n": 3.0
+    },
+    "peak_offset_mass": {
+      "mean": 0.17506938179334006,
+      "std": 0.015807659213181585,
+      "min": 0.15382596850395203,
+      "max": 0.191721111536026,
+      "n": 3.0
+    },
+    "n_copy_distances": {
+      "mean": 2.3333333333333335,
+      "std": 0.9428090415820634,
+      "min": 1.0,
+      "max": 3.0,
       "n": 3.0
     }
   },
-  "wall_clock_seconds": 460.909700299846,
-  "git_sha": "62685e7",
+  "wall_clock_seconds": 1671.3038256000145,
+  "git_sha": "4406229",
   "git_dirty": false,
   "device": "cpu",
-  "torch_version": "2.12.1+cpu",
-  "numpy_version": "2.5.0",
+  "torch_version": "2.14.1+cpu",
+  "numpy_version": "2.5.3",
   "python_version": "3.14.7",
   "n_parameters": 17424,
-  "created_at": "2026-10-12T15:32:05+00:00",
+  "created_at": "2026-11-17T17:48:28+00:00",
   "notes": null,
-  "neuron_ablation": null
+  "neuron_ablation": null,
+  "source_provenance": null
 }
