@@ -96,15 +96,17 @@ when the K-composition mechanism agrees.
 
 **The standard-scale run, with the corrected detector (GPU, 3 seeds, 3000
 epochs = 384k steps per seed):** a head is confirmed on **every seed —
-2.67 ± 0.47 heads**, all of them in the first layer (0.00 above it), with
-copy-offset mass **0.9451 ± 0.0013** against a previous-token control of
-0.0458 ± 0.0072. It appears early: the emergence run confirms it at
-**epoch 100** (3 heads per seed, 12.8k steps). The two-step circuit is
-absent: the K-composition score is 0.0521 ± 0.0075.
+3.00 ± 0.00 heads**, all of them in the first layer (0.00 above it), with
+copy-offset mass **0.8084 ± 0.0700** at the final checkpoint against a previous-token control of
+0.0470 ± 0.0251. It appears early: the emergence run confirms it at
+**epoch 100** (3.33 ± 0.47 heads per seed, 12.8k steps, mass 0.9485 ± 0.0186). The two-step circuit is
+absent: the K-composition score is 0.0833 ± 0.0335. (Re-measured on 2026-11-17 after the
+seeding fix; the first measurement, 2026-10-20, was 2.67 ± 0.47 heads, mass 0.9451 ± 0.0013,
+K-composition 0.0521 ± 0.0075, and is kept as `results/induction_standard_pre_seedfix.json`.)
 
 **And it is not an induction head.** The dissociation probe — the only
 measurement that can separate the two mechanisms on this task — reads
-**content mass 0.0312 ± 0.0004 against period mass 0.6950 ± 0.0997**:
+**content mass 0.0311 ± 0.0001 against period mass 0.8088 ± 0.0696**:
 the copy follows the fixed offset. That is not a detector artefact and not a
 scale problem: on a perfectly periodic task the previous occurrence of a token
 is *always* at `q-L`, so "attend to `q-L+1`" and "attend to the token after
@@ -116,37 +118,39 @@ The task that does contain the question — the same structure with the repeats
 at *varying* distances, where the best single fixed offset explains 17.6% of
 the copy queries — is specified in ADR-0033 and pre-registered in
 [[07_capstone/notes/variable-distance-induction-preregistration]]. It **ran on
-GPU on 2026-11-09** (3 seeds × 3000 epochs, manifest
-`results/induction_content.json`), and the result is sharper than the
-pre-registration could have predicted:
+GPU on 2026-11-09 and was run again on 2026-11-17, after the seeding fix** (3 seeds
+× 3000 epochs, manifest `results/induction_content.json`; the first run is kept as
+`results/induction_content_pre_seedfix.json`). The re-run is the record, and it
+changes the verdict:
 
-- the **behaviour** is content-based on 3/3 seeds — copy accuracy 1.0000 /
-  0.9976 / 0.9988 and non-modal accuracy 1.0000 / 0.9972 / 0.9986, against
-  a best-single-fixed-offset baseline of 0.1646 / 0.1550 / 0.1584;
-- the **causal** measurement is a **single head** on 3/3 seeds — the largest
-  single-head ablation drop is 0.2067 / 0.9298 / 0.9402 and the group
-  ablation 0.9989 / 0.9298 / 0.9852;
-- the **pre-registered per-head rule** confirms a head on 1/3 seeds only: on
-  seeds 1–2 the confirmed head's content mass (0.0886 / 0.1223) stays below
-  the 0.30 screen and the K-composition score (0.0580 / 0.0711) far below
+- the **behaviour** is content-based on 3/3 seeds — copy accuracy 0.9968 / 0.9997 / 0.9995
+  and non-modal accuracy 0.9962 / 0.9996 / 0.9995, against a
+  best-single-fixed-offset baseline of 0.1646 / 0.1550 / 0.1584;
+- the **causal** measurement is **not the same circuit on every seed**: the
+  largest single-head ablation drop is 0.8903 / 0.9469 / 0.0275 and the group
+  ablation 0.9938 / 0.9469 / 0.9940 — one head on seed 1, a distributed
+  group on seeds 0 and 2;
+- the **pre-registered per-head rule confirms no head on any seed**: the
+  K-composition score (0.0407 / 0.0347 / 0.1311) stays far below
   the 0.40 bar.
 
-So the verdict is **PARTIAL** (pre-registered) with a causal addendum that
-certifies seed 0 only, and the open question is no longer "does the model
-copy by content" — it is **"why does the head that carries the copy not put
-its attention mass on the content key"**. The candidate explanation (a
-two-stage circuit in which the first layer writes *where* and the second
-reads *what*) is untested, and the K-composition measure cannot see it,
-because it assumes the first layer's argmax *is* the previous occurrence.
-See [[portfolio/RESULTS]] for the full table and the audit entry of
-2026-11-11.
+So the verdict is **NEGATIVE**, for the pre-registered reading and for the causal
+addendum alike. Before the fix it was PARTIAL (one head confirmed on seed 0, "a single
+head on 3/3 seeds"); the behaviour is unchanged and the circuit is not, which makes
+"the circuit on this task" a description of one initialization. The open question is
+now **what the distributed groups compute**. The candidate explanation (a two-stage
+circuit in which the first layer writes *where* and the second reads *what*) is
+untested, and the K-composition measure cannot see it, because it assumes the first
+layer's argmax *is* the previous occurrence. See [[portfolio/RESULTS]] for the full
+table.
+
 <!-- manifest: results/induction_content.json -->
 <!-- manifest: results/exp4_content.json -->
 
 The one solid, matched finding is **fixed versus fresh batches** at otherwise
-identical configs: validation accuracy **0.45% ± 0.03%** (fixed, reused every
-epoch) versus **53.53% ± 0.03%** (fresh, resampled every epoch), matched
-3-seed comparison at 800 epochs. The fixed-batch regime makes the task
+identical configs: validation accuracy **0.46% ± 0.03%** (fixed, reused every
+epoch) versus **53.52% ± 0.01%** (fresh, resampled every epoch), matched
+3-seed comparison at 800 epochs (re-measured 2026-11-17 after the seeding fix; first measurement 0.45% against 53.53%). The fixed-batch regime makes the task
 ill-posed (birthday-problem collision >99.99% at the old V=32 default), and the
 fixed dataset actively harms generalization (val loss climbs to 24.3). The
 default config (`vocab_size=2048` standard / `256` quick) was not the config
@@ -184,14 +188,14 @@ head it found is a prefix-copying one (2026-10-20).**
 Since 2026-10-19 this rung analyses **Rung 1's own checkpoint**
 (`--from-checkpoint`) instead of training a second, differently shaped model,
 so the three rungs measure one model. On the standard-scale checkpoint
-(epoch 3000, 3 seeds) the interventions land: **head ablation 0.4445 ±
-0.0425** and **path patching 0.8215 ± 0.1255** of the answer-vs-counterfactual
-logit difference — the first end-to-end path-patching result in this
+(epoch 3000, 3 seeds) the interventions land: **head ablation 0.5895 ± 0.1405** and **path patching 0.7052 ± 0.0411** of the answer-vs-counterfactual
+logit difference (re-measured 2026-11-17; the first measurement was 0.4445 ± 0.0425 and
+0.8215 ± 0.1255) — the first end-to-end path-patching result in this
 repository against a real head.
 
 What the interventions validate is the **method**. The head they point at
-copies by a fixed offset (probe: content 0.0309 ± 0.0003 against period
-0.6950 ± 0.0996), so the circuit they certify is a prefix-copying circuit,
+copies by a fixed offset (probe: content 0.0310 ± 0.0002 against period
+0.8096 ± 0.0694), so the circuit they certify is a prefix-copying circuit,
 not an induction circuit. The cascade has to be re-run on a content-based
 checkpoint before it says anything about induction.
 
@@ -215,10 +219,10 @@ dead features — the sparsity/reconstruction tradeoff behaves as Bricken et al.
 
 On the real residual-stream activations of Rung 1's standard-scale checkpoint
 (d_model 64) the reconstruction is essentially perfect (FVE 0.99998, MSE
-0.0004) and the features are *sparse*: **L0 15.12/512 (3.0% active)**. The
+0.0005) and the features are *sparse*: **L0 19.01/512 (3.7% active)**. The
 open question is not the sparsity but the **size**: the dictionary is about
 eight times wider than the 64-dimensional residual stream it has to cover,
-and **78.1% of its features never fire** (dead rate 0.7812) — a dictionary
+and **65.6% of its features never fire** (dead rate 0.6562) — a dictionary
 that is too large for its input has to be, and the honest reading is that the
 sparsity measurement is evidence about the *over-completeness*, not yet about
 a disentangled feature set. See [[06_production_ai/notes/results-manifests-and-provenance]].
@@ -264,34 +268,32 @@ See [[archive/process/capstone-notes/mp-89-retune-verdict]].
   metric (k_energy_90 = 49.0 of 56, sparse on 0/3 seeds).
 - No *content-based* induction head has been confirmed here. A prefix-copying
   head forms at standard scale and the causal interventions land on it
-  (ablation 0.4445, path patching 0.8215), but on the periodic task the two
+  (ablation 0.5895, path patching 0.7052), but on the periodic task the two
   mechanisms are the same function, and the probe says the copy is the
   positional one. The content-based task that separates them ran on GPU
-  (issue #200, 2026-11-09): the copy **is** content-based on 3/3 seeds
-  (0.9976–1.0000, non-modal 0.9972–1.0000, against a 0.155–0.165
-  fixed-offset baseline) and **is** carried by a single head on 3/3 seeds
-  (largest single-head ablation drop 0.9298 / 0.9402), but the pre-registered
-  per-head rule — content mass ≥ 0.30 on the confirmed head, K-composition
-  ≥ 0.40 — confirms a head on 1/3 seeds only. The pre-registered verdict is
-  therefore **PARTIAL** and the word "induction head" is not used for this
-  task. What is still missing is the *mechanism*: the head that carries the
-  copy does not put its attention mass on the content key, and the candidate
-  explanation (a two-stage circuit the K-composition measure cannot see)
-  is untested. Two verdicts are published side by side — the pre-registered
-  one and the causal addendum — with the commit difference declared.
+  (issue #200, 2026-11-09, repeated 2026-11-17 after the seeding fix): the copy **is**
+  content-based on 3/3 seeds (0.9968–0.9997, non-modal 0.9962–0.9996,
+  against a 0.155–0.165 fixed-offset baseline), but the pre-registered per-head rule
+  — content mass ≥ 0.30 on the confirmed head, K-composition ≥ 0.40 — confirms a
+  head on **no** seed (before the fix: 1/3). The pre-registered verdict is therefore
+  **NEGATIVE**, and so is the causal addendum, and the word "induction head" is not
+  used for this task. The circuit is one head on one seed and a distributed group on
+  the other two, so what is still missing is the *mechanism*, and the candidate
+  explanation (a two-stage circuit the K-composition measure cannot see) is untested.
   <!-- manifest: results/induction_content.json -->
   <!-- manifest: results/exp4_content.json -->
   The standard-geometry CPU de-risk of 2026-10-25
   (`results/induction_content_derisk_standard.json`) was a pilot — 600
   epochs on 2048 training samples against the run's 3000 epochs on 8192 —
-  and it read differently from the full run: a group ablation of 0.9956 with
+  and it read differently from the first full run: a group ablation of 0.9956 with
   a largest single-head drop of 0.0986, i.e. a **distributed** circuit where
-  the full run measures a **single** head. The verdict did not depend on it
-  (the full run's own numbers are the ones that count), but it is the reason
+  the first full run measured a **single** head. The 2026-11-17 re-run after the seeding fix
+  agrees with the pilot on two seeds out of three (a distributed group), which suggests the
+  pilot was not the outlier. The verdict never depended on it, but it is the reason
   the pre-registration asked for a circuit-level report at all.
   <!-- manifest: results/induction_content_derisk_standard.json -->
-- The real-activation SAE is sparse (L0 3.0%) but its dictionary is ~8× wider
-  than the residual stream and 78% of its features never fire: the sparsity is
+- The real-activation SAE is sparse (L0 3.7%) but its dictionary is ~8× wider
+  than the residual stream and 66% of its features never fire: the sparsity is
   evidence about the over-completeness, not yet about disentanglement.
 - Attribution patching is a first-order approximation and is **not implemented**
   in this repo — see [[04_nlp_and_transformers/notes/attribution-patching]] for

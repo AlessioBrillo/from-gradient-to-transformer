@@ -11,7 +11,7 @@ number.
 | 3 Superposition | Phase transition and pentagon geometry reproduced; three-seed sparsity sweep | [Rung 3](../portfolio/projects/rung-3-superposition/index.md) |
 | 4 Circuit patching | The ablation and path-patching cascade runs end to end on a real head. That head copies by position, so this validates the method, not an induction circuit | [Rung 4](../portfolio/projects/rung-4-circuit-patching/index.md) |
 | 1 Prefix copying | Heads form, but the dissociation probe shows a fixed-offset copy: the periodic task admits a positional shortcut | [Rung 1](../portfolio/projects/rung-1-induction-heads/index.md), [ADR-0032](adr/0032-induction-detector-and-the-positional-shortcut.md) |
-| 1b Content-based copying | Behaviour is content-based on three seeds of three; the pre-registered per-head rule confirms a head on one. Two verdicts are published and kept apart | [ADR-0033](adr/0033-content-based-induction-task.md), [Honesty Ledger](../portfolio/RESULTS.md) |
+| 1b Content-based copying | Behaviour is content-based on three seeds of three, but the pre-registered per-head rule confirms no head on any seed and the circuit differs between seeds. Both verdicts are NEGATIVE (the first run said PARTIAL) | [ADR-0033](adr/0033-content-based-induction-task.md), [Honesty Ledger](../portfolio/RESULTS.md) |
 | 5 Sparse autoencoder | Reproduces on synthetic activations. On real activations the dictionary is sparse but most features are dead | [Rung 5](../portfolio/projects/rung-5-sae/index.md) |
 
 Not attempted: automated circuit discovery (descoped), and anything on a
@@ -19,16 +19,19 @@ natural-language model.
 
 ## Known defects that are still open
 
-- **Manifests older than the seeding fix.** Until 2026-11-16, `exp1`, `exp3`
+- **The seeding fix and the pre-fix manifests.** Until 2026-11-16, `exp1`, `exp3`
   and `exp4` constructed the model before the per-seed `set_seed` call, so a
   seed pinned the data and the batch order but not the initial weights. The
-  code is fixed and tested, but the tracked manifests of those three
-  experiments predate the fix: re-running their commands today will not
-  reproduce their per-seed values to the digit. The re-measurement is open
-  work. See the 2026-11-12 entry of the
-  [Honesty Ledger](../portfolio/RESULTS.md).
-- **Open question on Rung 1b.** One head carries the copy causally, yet it does
-  not put its attention mass on the content key. Why is not known.
+  code is fixed and tested, and the affected experiments were re-measured on
+  2026-11-17; the tracked manifests are the new ones. The old ones are kept as
+  `results/*_pre_seedfix.json`, and re-running their commands today will not
+  reproduce them. The re-measurement changed one verdict (the content task,
+  PARTIAL to NEGATIVE) and moved two Rung 4 numbers by more than their error
+  bar; see the 2026-11-12 entry of the
+  [Honesty Ledger](../portfolio/RESULTS.md) and its 2026-11-17 addendum.
+- **Open question on Rung 1b.** The copy is content-based on every seed, but the circuit is one head on
+  one seed and a distributed group on the other two, and no head passes the frozen per-head rule. What
+  the distributed groups compute is not known.
 - **Phase diagram.** The protocol-ablation sweep (issue #168) has not produced a
   tracked manifest. No claim about it appears in the record.
 

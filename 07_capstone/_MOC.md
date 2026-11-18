@@ -27,8 +27,8 @@ Index and links for the capstone phase. Detailed plan: [[07_capstone/README]].
 | 1 | Induction heads | ⚠️ A prefix-copying head forms at standard scale; on the **content-based** task (issue #200, run 2026-11-09) the copy is content-based on 3/3 seeds and carried by a single head, but the pre-registered per-head rule confirms a head on 1/3 seeds → verdict PARTIAL | `src/experiments/exp1_induction_heads.py` |
 | 2 | Grokking modular addition ★ | ✅ REPRODUCED 2026-10-14 (sparse circuit, energy metric) | `src/experiments/exp2_grokking.py` |
 | 3 | Superposition geometry | ✅ Phase transition confirmed | `src/experiments/exp3_superposition.py` |
-| 4 | Circuit verification (patching) | ✅ The cascade ran end to end on Rung 1's own checkpoint (ablation 0.4445, path patching 0.8215) — on a prefix-copying head | `src/experiments/exp4_circuit_patching.py` |
-| 5 | SAE feature dashboard | ⚠️ Real activations sparse (L0 3.0%) but the dictionary is ~8× too wide, 78% dead | `src/experiments/exp5_sae_dashboard.py` |
+| 4 | Circuit verification (patching) | ✅ The cascade ran end to end on Rung 1's own checkpoint (ablation 0.5895, path patching 0.7052) — on a prefix-copying head | `src/experiments/exp4_circuit_patching.py` |
+| 5 | SAE feature dashboard | ⚠️ Real activations sparse (L0 3.7%) but the dictionary is ~8× too wide, 66% dead | `src/experiments/exp5_sae_dashboard.py` |
 | 6 | Automated vs hand-found circuit | ❌ Descoped | — |
 
 See [[portfolio/RESULTS]] for exact per-rung numbers and the 2026-08-02 Micro-Phase 8
