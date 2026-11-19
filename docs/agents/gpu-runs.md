@@ -1,7 +1,7 @@
 # GPU runs: Kaggle / Colab
 
-The repository's GPU-gated work (issue #168 is the one still open; #167, #169,
-#170 and #200 ran through this contract) needs GPU hours. This repo has no GPU; the free tiers cover it. Both runtimes share
+The repository's GPU-gated work needs GPU hours (issue 168 is the one still open;
+issues 167, 169, 170 and 200 ran through this contract). This repo has no GPU; the free tiers cover it. Both runtimes share
 **one contract**, so which one you use changes nothing downstream:
 
 ```
