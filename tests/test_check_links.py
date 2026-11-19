@@ -59,12 +59,36 @@ class TestResolveIsPlatformIndependent:
             m = check_links.WIKILINK.search(text)
             assert m is not None
             target = m.group(1).strip()
-            assert check_links._resolve(target, known), (
-                f"{text!r} produced target {target!r} which does not resolve"
-            )
+            assert check_links._resolve(
+                target, known
+            ), f"{text!r} produced target {target!r} which does not resolve"
 
     def test_broken_link_is_still_detected(self) -> None:
         known = {"07_capstone/notes/real-note"}
         m = check_links.WIKILINK.search("[[07_capstone/notes/never-written\\|x]]")
         assert m is not None
         assert not check_links._resolve(m.group(1).strip(), known)
+
+
+class TestOnlyResultsRemoteIsSkipped:
+    """`results/remote/` is gitignored staging full of whole downloaded copies of the repository,
+    so the checker must not walk it. An earlier version skipped every directory *named* `remote`,
+    which would also have hidden dead links in a tracked `docs/remote/`."""
+
+    def _tree(self, root: Path) -> None:
+        for rel in ("docs/remote", "results/remote/run"):
+            (root / rel).mkdir(parents=True)
+        (root / "docs/remote/a.md").write_text("[[nowhere]]", encoding="utf-8")
+        (root / "results/remote/run/b.md").write_text("[[elsewhere]]", encoding="utf-8")
+
+    def test_a_tracked_directory_called_remote_is_still_collected(self, tmp_path: Path) -> None:
+        self._tree(tmp_path)
+        files, _ = check_links._collect(tmp_path)
+        names = {p.relative_to(tmp_path).as_posix() for p in files}
+        assert "docs/remote/a.md" in names
+
+    def test_results_remote_is_skipped(self, tmp_path: Path) -> None:
+        self._tree(tmp_path)
+        files, _ = check_links._collect(tmp_path)
+        names = {p.relative_to(tmp_path).as_posix() for p in files}
+        assert "results/remote/run/b.md" not in names

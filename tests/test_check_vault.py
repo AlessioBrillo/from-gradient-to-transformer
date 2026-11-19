@@ -266,3 +266,16 @@ def test_unchecked_and_studied_items_are_not_flagged(vault: Path) -> None:
 def test_a_descoped_item_must_say_why(vault: Path) -> None:
     assert _evidence_vault(vault, "- [-] quietly dropped\n")[0].endswith("`descoped` and why.")
     assert _evidence_vault(vault, "- [-] dropped (descoped 2026-10-11: no need)\n") == []
+
+
+def test_a_directory_named_in_backticks_is_not_a_deliverable(vault: Path) -> None:
+    """Only a file evidences a deliverable; `portfolio/` alone must not pass an item."""
+    (vault / "portfolio").mkdir()
+    problems = _evidence_vault(vault, "- [x] Wrote it - `portfolio/`\n")
+    assert len(problems) == 1
+
+
+def test_an_existing_deliverable_file_is_evidence(vault: Path) -> None:
+    (vault / "portfolio").mkdir()
+    (vault / "portfolio" / "paper.tex").write_text("x", encoding="utf-8")
+    assert _evidence_vault(vault, "- [x] Wrote it - `portfolio/paper.tex`\n") == []

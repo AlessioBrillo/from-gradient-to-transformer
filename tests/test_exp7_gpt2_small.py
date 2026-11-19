@@ -142,3 +142,8 @@ def test_the_frozen_thresholds_match_adr_0034() -> None:
     assert (exp7.IOI_MIN_MEAN, exp7.IOI_MIN_POSITIVE, exp7.NAME_MOVER_DROP) == (2.0, 0.9, 0.30)
     assert exp7.INDUCTION_HEADS == ((5, 5), (6, 9))
     assert exp7.NAME_MOVERS == ((9, 6), (9, 9), (10, 0))
+
+
+def test_ties_count_against_the_target_head() -> None:
+    m = np.array([[0.9, 0.9], [0.9, 0.1]])
+    assert exp7.rank_of(m, 0, 0) == 3  # three heads share the top score: the target is last

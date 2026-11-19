@@ -20,8 +20,9 @@ This script checks, for every markdown file under `01_*` .. `07_*`:
 5. **Skill evidence** — the rule `00_meta/02_skill-tree.md` has always stated
    ("check a skill only when an exercise **and** a proof demonstrate it"),
    enforced on the skill tree and on every phase checklist. A `[x]` item must
-   link an existing exercise and an existing proof, or cite a tracked manifest
-   (a research deliverable is evidenced by its run, not by an exercise). A gate
+   link an existing exercise and an existing proof, or cite a manifest that exists in
+   `results/` (a research deliverable is evidenced by its run, not by an exercise; that the
+   manifest is tracked is `verify-claims`' job, not this script's). A gate
    line (`**Proof passed**`) needs only the proof, and a deliverable (a tracked
    file under `portfolio/`, `notebooks/` or `src/experiments/`) is evidenced by
    the file itself. Anything else is `[~]` (studied, not yet verified). An item
@@ -300,7 +301,7 @@ def check_skill_evidence(root: Path, problems: list[str]) -> None:
             has_proof = any(_exists(x, "proofs", root) for x in targets)
             if any((root / "results" / m).is_file() for m in MANIFEST_REF.findall(text)):
                 continue
-            if any((root / d).exists() for d in DELIVERABLE_REF.findall(text)):
+            if any((root / d).is_file() for d in DELIVERABLE_REF.findall(text)):
                 continue
             if any(x.startswith("portfolio/") and (root / f"{x}.md").is_file() for x in targets):
                 continue

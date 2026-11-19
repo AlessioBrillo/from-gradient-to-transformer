@@ -49,7 +49,6 @@ LIVE_ROOT_DOCS = ("README.md", "CLAUDE.md", "CONTEXT.md")
 ARCHIVE_DIRS = "archive/ and 00_meta/"
 
 SKIP_DIRS = {".venv", ".git", ".obsidian", "_site", "node_modules", "__pycache__", ".pytest_cache"}
-SKIP_DIRS.add("remote")
 # The alias separator may be written `\|` — the Markdown-table escape for a
 # pipe, which is how wikilinks with aliases must appear inside tables
 # (e.g. `[[note\|alias]]` in a `|`-delimited row). Without the optional
@@ -69,6 +68,8 @@ def _collect(root: Path) -> tuple[list[Path], set[str]]:
         if not path.is_file():
             continue
         if any(part in SKIP_DIRS for part in path.parts):
+            continue
+        if path.relative_to(root).parts[:2] == ("results", "remote"):
             continue
         rel = path.relative_to(root)
         known.add(rel.with_suffix("").as_posix())

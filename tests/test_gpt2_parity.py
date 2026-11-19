@@ -106,3 +106,27 @@ def test_ablating_a_head_changes_the_output_and_clearing_restores_it() -> None:
         restored = mine(x)[0]
     assert not torch.allclose(base, ablated, atol=1e-4)
     assert torch.allclose(base, restored)
+
+
+def test_ablate_restores_the_model_even_when_the_body_raises() -> None:
+    _, mine = _pair(6)
+    x = torch.randint(0, SMALL["vocab_size"], (1, 9))
+    with torch.no_grad():
+        base = mine(x)[0]
+        with pytest.raises(RuntimeError):
+            with mine.ablate([(0, 1)]):
+                assert not torch.allclose(mine(x)[0], base, atol=1e-4)
+                raise RuntimeError("boom")
+        assert torch.allclose(mine(x)[0], base)
+
+
+def test_set_head_mask_rejects_indices_outside_the_model_and_changes_nothing() -> None:
+    _, mine = _pair(7)
+    x = torch.randint(0, SMALL["vocab_size"], (1, 9))
+    with torch.no_grad():
+        mine.set_head_mask([(0, 0)])
+        masked = mine(x)[0]
+        for bad in ([(-1, 0)], [(0, 99)], [(99, 0)]):
+            with pytest.raises(ValueError):
+                mine.set_head_mask(bad)
+        assert torch.allclose(mine(x)[0], masked)  # the earlier mask is still in force

@@ -18,7 +18,8 @@ Parity with `transformers.GPT2LMHeadModel` is stage 1 of ADR-0034 and is tested 
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Optional, cast
 
@@ -63,7 +64,7 @@ class GPT2Attention(nn.Module):
         probs = scores.softmax(dim=-1)
         heads = probs @ v  # (B, heads, S, d_head)
         if self.head_mask is not None:
-            heads = heads * self.head_mask.to(heads.dtype).view(1, -1, 1, 1)
+            heads = heads * self.head_mask.to(heads.device, heads.dtype).view(1, -1, 1, 1)
         out: torch.Tensor = self.c_proj(heads.transpose(1, 2).reshape(B, S, D))
         if cache is not None:
             cache[f"{prefix}.attn.attn_probs"] = probs.detach()
@@ -123,6 +124,12 @@ class GPT2(nn.Module):
     def set_head_mask(self, heads: Iterable[tuple[int, int]]) -> None:
         """Zero the output of the given (layer, head) pairs; an empty list clears it."""
         heads = list(heads)
+        for layer, head in heads:
+            if not (0 <= layer < self.cfg.n_layers and 0 <= head < self.cfg.n_heads):
+                raise ValueError(
+                    f"head ({layer}, {head}) is outside "
+                    f"{self.cfg.n_layers} layers x {self.cfg.n_heads} heads"
+                )
         attns = [cast(GPT2Block, block).attn for block in self.blocks]
         for attn in attns:
             attn.head_mask = None
@@ -132,6 +139,15 @@ class GPT2(nn.Module):
                 if lay == layer:
                     mask[head] = 0.0
             attns[layer].head_mask = mask
+
+    @contextmanager
+    def ablate(self, heads: Iterable[tuple[int, int]]) -> Iterator[None]:
+        """Zero the given heads inside the `with` block and always restore the model."""
+        self.set_head_mask(heads)
+        try:
+            yield
+        finally:
+            self.set_head_mask([])
 
     # ------------------------------------------------------------------ weights
     def load_hf_state_dict(self, sd: dict[str, torch.Tensor]) -> None:

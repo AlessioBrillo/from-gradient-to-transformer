@@ -65,3 +65,16 @@ def test_gradient_clipping_bounds_the_update_norm() -> None:
         max_grad_norm=0.5)
     moved = torch.cat([(p.detach() - b).flatten() for p, b in zip(model.parameters(), before)])
     assert moved.norm() <= 0.5 + 1e-5
+
+
+def test_a_trailing_partial_group_is_stepped_not_dropped() -> None:
+    """10 batches with accum_steps=4 leave a group of 2. It must be applied, rescaled to the mean
+    over the 2 batches it holds, and its gradients must not be left behind in .grad."""
+    x, y = _data(40)
+    micro = [(x[i : i + 4], y[i : i + 4]) for i in range(0, 40, 4)]  # 10 micro-batches
+    model = _model()
+    before = [p.detach().clone() for p in model.parameters()]
+    losses = fit(model, micro, AdamW(model.parameters(), lr=0.05), _mse, accum_steps=4)
+    assert len(losses) == 3  # two full groups and the remainder
+    assert any(not torch.equal(a, b) for a, b in zip(before, model.parameters()))
+    assert all(p.grad is None or float(p.grad.abs().sum()) == 0.0 for p in model.parameters())

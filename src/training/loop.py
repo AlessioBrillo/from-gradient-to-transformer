@@ -32,6 +32,7 @@ def fit(
     losses: list[float] = []
     running = 0.0
     optimizer.zero_grad()  # type: ignore[attr-defined]
+    i = 0
     for i, (x, y) in enumerate(batches, start=1):
         loss = loss_fn(model(x), y) / accum_steps
         loss.backward()  # type: ignore[no-untyped-call]
@@ -43,4 +44,16 @@ def fit(
             optimizer.zero_grad()  # type: ignore[attr-defined]
             losses.append(running)
             running = 0.0
+    remainder = i % accum_steps
+    if remainder:
+        # The last group is shorter than accum_steps. Dropping it would leave its gradients in
+        # .grad and discard its loss; rescale to the mean over the batches it holds and step.
+        for p in model.parameters():
+            if p.grad is not None:
+                p.grad.mul_(accum_steps / remainder)
+        if max_grad_norm is not None:
+            nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
+        optimizer.step()  # type: ignore[attr-defined]
+        optimizer.zero_grad()  # type: ignore[attr-defined]
+        losses.append(running * accum_steps / remainder)
     return losses

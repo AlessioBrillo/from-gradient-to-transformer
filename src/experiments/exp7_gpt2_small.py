@@ -105,7 +105,9 @@ def induction_sequences(
 def rank_of(matrix: np.ndarray, layer: int, head: int) -> int:
     """1-based rank of one head among all heads, by descending score."""
     flat = matrix.flatten()
-    return int((flat > matrix[layer, head]).sum()) + 1
+    # Ties count against the target: every other head with an equal or higher score ranks
+    # above it, so a tie can never help a stage pass.
+    return int((flat >= matrix[layer, head]).sum())
 
 
 def top_heads(matrix: np.ndarray, k: int = TOP_K) -> list[tuple[int, int, float]]:
@@ -201,11 +203,12 @@ def stage2_seed(model: GPT2, seed: int) -> tuple[dict[str, float], list[tuple[in
 def stage3_seed(model: GPT2, seed: int, top: list[tuple[int, int, float]]) -> dict[str, float]:
     tokens = induction_sequences(seed)
     base = icl_gain(model, tokens)
-    model.set_head_mask(INDUCTION_HEADS)
-    ablated = icl_gain(model, tokens)
-    model.set_head_mask([(layer, head) for layer, head, _ in top])
-    control = icl_gain(model, tokens)
-    model.set_head_mask([])
+    with model.ablate(INDUCTION_HEADS):
+        ablated = icl_gain(model, tokens)
+    # NB: this set contains the two ablated heads (stage 2 requires them to be in the top 10),
+    # so it measures the size of the redundant family, not the specificity of the two.
+    with model.ablate([(layer, head) for layer, head, _ in top]):
+        control = icl_gain(model, tokens)
     drop = relative_drop(base, ablated)
     return {
         "icl_gain": base,
@@ -283,13 +286,14 @@ def stage4_5_seed(
         "n_prompts": float(len(base)),
         "stage4_pass": float(mean_base >= IOI_MIN_MEAN and (base > 0).mean() >= IOI_MIN_POSITIVE),
     }
-    model.set_head_mask(NAME_MOVERS)
-    nm = relative_drop(mean_base, float(logit_differences(model, batches).mean()))
+    with model.ablate(NAME_MOVERS):
+        nm = relative_drop(mean_base, float(logit_differences(model, batches).mean()))
     controls = []
     for triple in control_triples():
-        model.set_head_mask(triple)
-        controls.append(relative_drop(mean_base, float(logit_differences(model, batches).mean())))
-    model.set_head_mask([])
+        with model.ablate(triple):
+            controls.append(
+                relative_drop(mean_base, float(logit_differences(model, batches).mean()))
+            )
     p95 = float(np.percentile(controls, 95))
     s5 = {
         "name_mover_drop": nm,
@@ -317,7 +321,7 @@ def write_manifest(
         per_seed_metrics=rows,
         aggregate=aggregate_metrics(rows),
         wall_clock_seconds=wall,
-        device="cpu",
+        device=str(next(model.parameters()).device),
         n_parameters=count_parameters(model),
         notes=notes,
     )

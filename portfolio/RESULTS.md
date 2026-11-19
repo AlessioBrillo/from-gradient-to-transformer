@@ -1572,6 +1572,14 @@ repository does not claim that circuit. A follow-up with mean ablation and with 
 patching, which is how the paper localised the name movers, would be a new
 pre-registered ADR superseding none of this one; it has not been run.
 
+**Two limits of the instrument, found in review (2026-11-19).** The stage-3 "top-10" set (the manifest key
+`icl_gain_drop_top10_control`) contains the two ablated heads, because stage 2 requires them to be in the top ten; it
+therefore measures how large the redundant family of induction-like heads is, not whether 5.5 and 6.9 are specific, and
+it carries no criterion in the ADR. And the `wall_clock_seconds` of stages 2 to 5 is the combined time of the whole
+seed loop (about 15 minutes), written into each of the four manifests. The run was not repeated for either point: the
+numbers above are as recorded, and the code was tightened afterwards (a context manager that always restores the
+model, a rank that counts ties against the target head, the device read from the model) without changing a result.
+
 **Reproduce**: `uv run --extra real python -m src.experiments.exp7_gpt2_small` (about 15
 minutes on CPU after a one-time weight download).
 
