@@ -73,7 +73,7 @@ class AttentionOnlyBlock(nn.Module):
             out = out * head_mask
         out = out.transpose(1, 2).contiguous().view(B, S, D)
         attn_out = self.W_O(out)
-        block_out = residual + attn_out
+        block_out: torch.Tensor = residual + attn_out
 
         if cache is not None:
             cache[f"{cache_prefix}.resid_pre"] = residual.detach().cpu()
@@ -83,8 +83,7 @@ class AttentionOnlyBlock(nn.Module):
             cache[f"{cache_prefix}.resid_mid"] = block_out.detach().cpu()
             cache[f"{cache_prefix}.resid_post"] = block_out.detach().cpu()
 
-        out: torch.Tensor = block_out
-        return out
+        return block_out
 
 
 class AttentionOnlyTransformer(nn.Module):
