@@ -1,7 +1,7 @@
 # GPU runs: Kaggle / Colab
 
-The repository's remaining v1.1 work (issues #200 and #168) needs GPU
-hours. This repo has no GPU; the free tiers cover it. Both runtimes share
+The repository's GPU-gated work needs GPU hours (issue 168 is the one still open;
+issues 167, 169, 170 and 200 ran through this contract). This repo has no GPU; the free tiers cover it. Both runtimes share
 **one contract**, so which one you use changes nothing downstream:
 
 ```
@@ -63,8 +63,9 @@ manifest and skips completed cells.
 
 ## One-time host setup
 
-- `python -m pip install kaggle` into the project venv (the driver invokes it
-  as `sys.executable -m kaggle`, so no PATH gymnastics are needed).
+- The Kaggle CLI is the optional `remote` extra: `uv sync --extra remote`
+  (the `make remote-run-*` targets request it themselves). The driver invokes
+  it as `sys.executable -m kaggle`, so no PATH gymnastics are needed.
 - Credentials: kaggle.com → Settings → Account → **Create New Token** →
   save the `KGAT_...` token to `~/.kaggle/access_token`
   (Windows: `C:\Users\<you>\.kaggle\access_token`), or export

@@ -315,7 +315,7 @@ shakedown complete, resume guardrail landed test-first
   phrasing). Wrote
   [[88_micro-phase-88-from-transcripts-to-verdicts|MP-88 · From
   Transcripts to Verdicts]] (Sessions 0–6, zero new candidates) +
-  [[07_capstone/notes/mp-88-shakedown-verdict|MP-88 shakedown verdict]],
+  [[archive/process/capstone-notes/mp-88-shakedown-verdict|MP-88 shakedown verdict]],
   the ADR-0028 MP-88 stamp, and home wiring.
 - **Open question**: Does the retune A/B move modular off chance —
   interference (offset fixes it) or schedule (reweight fixes it) —
@@ -333,7 +333,7 @@ shakedown complete, resume guardrail landed test-first
   max K-comp 0.31, step-500 checkpoint 51 MB, `results/probe_capstone_fixcheck.json`).
   Resume-proven: `--save-model --resume 500 --steps 510` reloaded `ckpt['step'] == 500`
   (`results/probe_capstone_resume.json`). Wrote
-  [[00_meta/87_micro-phase-87-from-roadmaps-to-transcripts|MP-87 roadmap]] (Sessions 0–6,
+  [[archive/process/micro-phases/87_micro-phase-87-from-roadmaps-to-transcripts|MP-87 roadmap]] (Sessions 0–6,
   anti-stall gate: no merge without transcript) + ADR-0028 MP-87 stamp + home wiring.
   Recorded warts: resume is a silent no-op without `--save-model` (follow-up); frozen
   shakedown measures ~100+ min (4.26M params), Session 1 runs it in background.
@@ -342,43 +342,43 @@ shakedown complete, resume guardrail landed test-first
 ## 2026-09-06 — Micro-Phase 86, Session 0: roadmap + execution-record plan + live baseline pinning
 
 - **Studied**: MP-85 intake plus ADR-0028 row states (R1/R3/R4/R5 PENDING, rest GATED; GPU grokking IN_PROGRESS 13 days with no manifest, extended induction NOT_STARTED, clean-clone GREEN 2026-08-27). Baseline re-verified live with no numbers inherited: 212 tests pass and collect, `ruff check src/ tests/` clean, blocking `mypy --strict` clean, full-tree mypy 201 errors exit 1 no crash (Makefile/CI "176" stays as dated 2026-08-18 fact), `verify-claims` at 0, six manifests on disk. Toolchains pinned live: no pdflatex/latexmk, `.github/workflows/pages.yml` exists, wandb 0.28.0 present login-unverified, `huggingface_hub` absent (import fails — MP-83 correction holds, install only when Row 7 needs it).
-- **Built**: [[00_meta/86_micro-phase-86-from-stamps-to-record|MP-86 roadmap]] (Sessions 0–6, ADR-0028's eight frozen rows, zero new candidates — the execution-record arc) + ADR-0028 MP-86 intake stamp + home wiring. Expert decisions: hybrid premise (consume MP-85 transcripts if they exist, otherwise force the shakedown — never an eighth intake-only roadmap); scope locked at zero new candidates; shakedown frozen at 1 seed by 2k steps under the MP-82/83/84/85 invocation; GPU watch gets a hard close at Session 2 (consume or PENDING-EXTERNAL with one dated reason); paper via dated memo, no CI-PDF rehearsal.
+- **Built**: [[archive/process/micro-phases/86_micro-phase-86-from-stamps-to-record|MP-86 roadmap]] (Sessions 0–6, ADR-0028's eight frozen rows, zero new candidates — the execution-record arc) + ADR-0028 MP-86 intake stamp + home wiring. Expert decisions: hybrid premise (consume MP-85 transcripts if they exist, otherwise force the shakedown — never an eighth intake-only roadmap); scope locked at zero new candidates; shakedown frozen at 1 seed by 2k steps under the MP-82/83/84/85 invocation; GPU watch gets a hard close at Session 2 (consume or PENDING-EXTERNAL with one dated reason); paper via dated memo, no CI-PDF rehearsal.
 - **Open question**: Does the joint modular-plus-induction shakedown move K-comp off zero, or confirm the dense attractor at joint scale — answered by Row 1 checkpoints, not by argument.
 
 ## 2026-09-06 — Micro-Phase 85, Session 0: roadmap + execution-verdict plan + live baseline pinning
 
 - **Studied**: MP-84 intake plus ADR-0028 row states (R1/R3/R4/R5 PENDING, rest GATED; GPU grokking IN_PROGRESS 13 days with no manifest, extended induction NOT_STARTED, clean-clone GREEN 2026-08-27). Baseline re-verified live with no numbers inherited: 212 tests pass and collect, `ruff check src/ tests/` clean, blocking `mypy --strict` clean, full-tree mypy 201 errors exit 1 no crash (Makefile/CI "176" stays as dated 2026-08-18 fact), `verify-claims` at 0, six manifests on disk. Toolchains pinned live: no pdflatex/latexmk, `.github/workflows/pages.yml` exists, wandb 0.28.0 present login-unverified, `huggingface_hub` absent (import fails — MP-83 correction holds, install only when Row 7 needs it).
-- **Built**: [[00_meta/85_micro-phase-85-from-stall-to-stamps|MP-85 roadmap]] (Sessions 0–6, ADR-0028's eight frozen rows, zero new candidates — the execution-verdict arc) + ADR-0028 MP-85 intake stamp + home wiring. Expert decisions: scope locked at zero new candidates; shakedown frozen at 1 seed by 2k steps under the MP-82/83/84 invocation; GPU watch gets a hard close at Session 2 (consume or PENDING-EXTERNAL with one dated reason); paper via dated memo, no CI-PDF rehearsal.
+- **Built**: [[archive/process/micro-phases/85_micro-phase-85-from-stall-to-stamps|MP-85 roadmap]] (Sessions 0–6, ADR-0028's eight frozen rows, zero new candidates — the execution-verdict arc) + ADR-0028 MP-85 intake stamp + home wiring. Expert decisions: scope locked at zero new candidates; shakedown frozen at 1 seed by 2k steps under the MP-82/83/84 invocation; GPU watch gets a hard close at Session 2 (consume or PENDING-EXTERNAL with one dated reason); paper via dated memo, no CI-PDF rehearsal.
 - **Open question**: Does the joint modular-plus-induction shakedown move K-comp off zero, or confirm the dense attractor at joint scale — answered by Row 1 checkpoints, not by argument.
 
 ## 2026-09-06 — Micro-Phase 84, Session 0: roadmap + breakthrough execution plan + live baseline pinning
 
 - **Studied**: MP-83 intake plus ADR-0028 row states (R1/R3/R4/R5 PENDING, rest GATED; GPU grokking IN_PROGRESS 13 days with no manifest, extended induction NOT_STARTED, clean-clone GREEN 2026-08-27). Baseline re-verified live with no numbers inherited: 212 tests pass and collect, `ruff check src/ tests/` clean, blocking `mypy --strict` clean, full-tree mypy 201 errors exit 1 no crash (Makefile/CI "176" stays as dated 2026-08-18 fact), `verify-claims` at 0, six manifests on disk. Toolchains pinned live: no pdflatex/latexmk, `.github/workflows/pages.yml` exists, wandb 0.28.0 present login-unverified, `huggingface_hub` absent (import fails — MP-83 correction holds, install only when Row 7 needs it).
-- **Built**: [[00_meta/84_micro-phase-84-from-roadmaps-to-verdicts|MP-84 roadmap]] (Sessions 0–6, ADR-0028's eight frozen rows, zero new candidates — the breakthrough execution arc) + ADR-0028 MP-84 intake stamp + home wiring. Expert decisions: scope locked at zero new candidates; shakedown frozen at 1 seed by 2k steps under the MP-82/83 invocation; GPU watch gets a hard close at Session 2 (consume or PENDING-EXTERNAL with one dated reason); paper via dated memo, no CI-PDF rehearsal.
+- **Built**: [[archive/process/micro-phases/84_micro-phase-84-from-roadmaps-to-verdicts|MP-84 roadmap]] (Sessions 0–6, ADR-0028's eight frozen rows, zero new candidates — the breakthrough execution arc) + ADR-0028 MP-84 intake stamp + home wiring. Expert decisions: scope locked at zero new candidates; shakedown frozen at 1 seed by 2k steps under the MP-82/83 invocation; GPU watch gets a hard close at Session 2 (consume or PENDING-EXTERNAL with one dated reason); paper via dated memo, no CI-PDF rehearsal.
 - **Open question**: Does the joint modular-plus-induction shakedown move K-comp off zero, or confirm the dense attractor at joint scale — answered by Row 1 checkpoints, not by argument.
 
 ## 2026-09-06 — Micro-Phase 83, Session 0: roadmap + truthing (212, hf-absent) + live toolchain pinning
 
 - **Studied**: MP-82 intake plus ADR-0028 row states (R1/R3/R4/R5 PENDING, rest GATED; GPU grokking IN_PROGRESS, extended induction NOT_STARTED, clean-clone GREEN 2026-08-27). Baseline re-verified live: 212 tests pass and collect (ADR-0028 claimed 213 — fixed at source), `ruff check src/ tests/` clean, blocking `mypy --strict` clean, full-tree mypy 201 errors exit 1 no crash (Makefile/CI "176" stays as dated 2026-08-18 fact), `verify-claims` at 0, six manifests on disk. Toolchains pinned live: no pdflatex/latexmk, `.github/workflows/pages.yml` exists, wandb 0.28.0 present login-unverified, `huggingface_hub` absent (import + `uv pip list` agree — MP-81/82 "hf installed" claim struck, install only when Row 7 needs it). GPG signing live (HEAD shows Good signature). GitHub: latest dev push green on all three checks; one superseded Conventional Commits failure already pardoned in-commit and merged via PR #133; no open PRs; `dev == main`.
-- **Built**: [[00_meta/83_micro-phase-83-from-invocation-to-evidence|MP-83 roadmap]] (Sessions 0–6, ADR-0028's eight frozen rows, zero new candidates — the execution arc) + ADR-0028 MP-83 intake stamp + home wiring. Expert decisions: shakedown stays 1 seed × 2k (second seed only if seed 0 GREEN by S2); paper via dated memo, no CI-PDF rehearsal.
+- **Built**: [[archive/process/micro-phases/83_micro-phase-83-from-invocation-to-evidence|MP-83 roadmap]] (Sessions 0–6, ADR-0028's eight frozen rows, zero new candidates — the execution arc) + ADR-0028 MP-83 intake stamp + home wiring. Expert decisions: shakedown stays 1 seed × 2k (second seed only if seed 0 GREEN by S2); paper via dated memo, no CI-PDF rehearsal.
 - **Open question**: Does the joint modular-plus-induction shakedown move K-comp off zero, or confirm the dense attractor at joint scale — answered by Row 1 checkpoints, not by argument.
 
 ## 2026-09-06 — Micro-Phase 82, Session 0: roadmap + invocation freeze + killer tests + portfolio truthing
 
 - **Studied**: MP-81 intake plus ADR-0028 row states (R1/R3/R4/R5 PENDING, rest GATED; GPU grokking IN_PROGRESS, extended induction NOT_STARTED, clean-clone GREEN 2026-08-27). Baseline re-verified live: 208 tests pass pre-change, `ruff check src/ tests/` clean, blocking `mypy --strict` clean, `verify-claims` at 0, six manifests on disk. Toolchains pinned live: no pdflatex/latexmk, `pages.yml` exists, wandb/hf installed (logins unverified — Row 5 work). Expert calls: harden-first for the two killer tests (minutes, mergeable), shakedown warmup cut 1000 → 100 so the 2k window observes early dynamics, portfolio links all three orphaned PNGs now rather than striking.
-- **Built**: [[00_meta/82_micro-phase-82-from-debt-to-verdict|MP-82 roadmap]] (Sessions 0–6, eight frozen rows + frozen shakedown invocation) + ADR-0028 MP-82 intake stamp + home wiring. Test-first: `--steps`/`--warmup-steps` overrides + `resolve_manifest_path()` in `src/experiments/exp6_capstone.py`, unequal-tail + manifest-integration tests. Portfolio: rung-1 800-epoch fix, rung-3 16/20 fix, `exp2_progress_measures` + `exp3_phase_change` + `exp3_feature_geometry` linked with manifest tags.
+- **Built**: [[archive/process/micro-phases/82_micro-phase-82-from-debt-to-verdict|MP-82 roadmap]] (Sessions 0–6, eight frozen rows + frozen shakedown invocation) + ADR-0028 MP-82 intake stamp + home wiring. Test-first: `--steps`/`--warmup-steps` overrides + `resolve_manifest_path()` in `src/experiments/exp6_capstone.py`, unequal-tail + manifest-integration tests. Portfolio: rung-1 800-epoch fix, rung-3 16/20 fix, `exp2_progress_measures` + `exp3_phase_change` + `exp3_feature_geometry` linked with manifest tags.
 - **Open question**: Does the joint modular-plus-induction shakedown move K-comp off zero, or confirm the dense attractor at joint scale — answered by Row 1 checkpoints, not by argument.
 
 ## 2026-09-06 — Micro-Phase 81, Session 0: roadmap + ledger + toolchain pinning
 
 - **Studied**: MP-80 intake plus ADR-0028 row states (R1/R3/R4/R5 PENDING, rest GATED; GPU grokking IN_PROGRESS, extended induction NOT_STARTED, clean-clone GREEN 2026-08-27). Baseline re-verified live: 208 tests pass, `ruff check src/ tests/` clean, blocking `mypy --strict` clean on `src/results.py` + `src/experiments/runner.py`, `verify-claims` at 0, six manifests on disk. Toolchains pinned live: no pdflatex/latexmk, `pages.yml` exists, wandb 0.28.0 / hf 1.28.0 installed (logins unverified — Row 5 work). One MD013 line-length violation in the new roadmap fixed before commit.
-- **Built**: [[00_meta/81_micro-phase-81-from-shakedown-to-evidence|MP-81 roadmap]] (Sessions 0–6, eight frozen rows, execution-first: no new roadmap until ADR-0028 hits zero UNDECIDED) + home wiring. Decisions: CPU shakedown runs regardless of the pending GPU manifest (consumed, never waited on); path-patching vacuous zeros reported as vacuous, never plotted; sparse-GPU-manifest override stands (Rows 6–7 pivot to the sparse circuit if it lands).
+- **Built**: [[archive/process/micro-phases/81_micro-phase-81-from-shakedown-to-evidence|MP-81 roadmap]] (Sessions 0–6, eight frozen rows, execution-first: no new roadmap until ADR-0028 hits zero UNDECIDED) + home wiring. Decisions: CPU shakedown runs regardless of the pending GPU manifest (consumed, never waited on); path-patching vacuous zeros reported as vacuous, never plotted; sparse-GPU-manifest override stands (Rows 6–7 pivot to the sparse circuit if it lands).
 - **Open question**: Does the joint modular-plus-induction shakedown move K-comp off zero, or confirm the dense attractor at joint scale — answered by Row 1 checkpoints, not by argument.
 
 ## 2026-09-05 — Micro-Phase 80, Session 0: roadmap + ledger + toolchain pinning
 
 - **Studied**: MP-79 intake plus ADR-0027 row states (R1/R3/R5 PENDING, rest GATED; GPU grokking IN_PROGRESS, extended induction NOT_STARTED, clean-clone GREEN 2026-08-27). Verified baseline live: 208 tests pass, `ruff check src/ tests/` clean, blocking `mypy` clean, `verify-claims` at 0, six manifests on disk. Toolchains pinned live: no pdflatex/latexmk, `pages.yml` exists, wandb 0.28.0 / hf 1.28.0 installed (logins unverified — Row 5 work).
-- **Built**: [[00_meta/80_micro-phase-80-from-shakedown-to-showcase|MP-80 roadmap]] (Sessions 0–6, eight frozen rows, shakedown-first + vocab-offset-at-Session-4 decisions) + `docs/adr/0028-continuum-ledger-23.md` with Ex-T32 execution memo + home wiring. Decisions: CPU shakedown runs regardless of the pending GPU manifest (consumed, never waited on); path-patching vacuous zeros reported as vacuous, never plotted.
+- **Built**: [[archive/process/micro-phases/80_micro-phase-80-from-shakedown-to-showcase|MP-80 roadmap]] (Sessions 0–6, eight frozen rows, shakedown-first + vocab-offset-at-Session-4 decisions) + `docs/adr/0028-continuum-ledger-23.md` with Ex-T32 execution memo + home wiring. Decisions: CPU shakedown runs regardless of the pending GPU manifest (consumed, never waited on); path-patching vacuous zeros reported as vacuous, never plotted.
 - **Open question**: Does the joint modular-plus-induction shakedown move K-comp off zero, or confirm the dense attractor at joint scale — answered by Row 1 checkpoints, not by argument.
 
 ## 2026-09-05 — Micro-Phase 80: stabilize-then-showcase execution (exp6 guardrail + real K-comp + portfolio repair)
@@ -486,7 +486,7 @@ shakedown complete, resume guardrail landed test-first
   not just its observation), and the honest branch transcript: `origin/dev`
   at `2e74577`, `origin/main` at `ea90829`, `git diff origin/main
   origin/dev` empty — no deviation at intake this time, never a silence.
-- **Built**: [[00_meta/69_micro-phase-69-review-and-roadmap]] — the MP-69
+- **Built**: [[archive/process/micro-phases/69_micro-phase-69-review-and-roadmap]] — the MP-69
   review and execution roadmap, wired into home as a companion pointer (NOT
   counted against any cap — the cap is spent): state review verified against
   the repo (189 tests collected in this drafting sitting, stable across five
@@ -572,7 +572,7 @@ shakedown complete, resume guardrail landed test-first
   live in this sitting), and the honest branch transcript: `origin/dev` at
   `5a8bc9d`, `origin/main` at `5d1d3c7`, `git diff origin/main origin/dev`
   empty — no deviation at intake this time, never a silence.
-- **Built**: [[00_meta/68_micro-phase-68-review-and-roadmap]] — the MP-68
+- **Built**: [[archive/process/micro-phases/68_micro-phase-68-review-and-roadmap]] — the MP-68
   review and execution roadmap, wired into home as a companion pointer (NOT
   counted against any cap — the cap is spent): state review verified against
   the repo (189 tests collected in this drafting sitting, stable across four
@@ -656,7 +656,7 @@ shakedown complete, resume guardrail landed test-first
   `origin/dev` at `a67757e`, `origin/main` at `eb5598d`, `git diff
   origin/main origin/dev` empty — no deviation at intake this time, never a
   silence.
-- **Built**: [[00_meta/67_micro-phase-67-review-and-roadmap]] — the MP-67
+- **Built**: [[archive/process/micro-phases/67_micro-phase-67-review-and-roadmap]] — the MP-67
   review and execution roadmap, wired into home as a companion pointer (NOT
   counted against any cap — the cap is spent): state review verified against
   the repo (189 tests collected in this drafting sitting, stable across
@@ -731,7 +731,7 @@ shakedown complete, resume guardrail landed test-first
   this sitting), and the honest branch transcript: `origin/dev` at `a6df2ea`,
   `origin/main` at `72927d7`, `git diff origin/main origin/dev` empty — no
   deviation at intake this time, never a silence.
-- **Built**: [[00_meta/66_micro-phase-66-review-and-roadmap]] — the MP-66
+- **Built**: [[archive/process/micro-phases/66_micro-phase-66-review-and-roadmap]] — the MP-66
   review and execution roadmap, wired into home as a companion pointer (NOT
   counted against any cap — the cap is spent): state review verified against
   the repo (189 tests collected in this drafting sitting, unchanged since PR
@@ -800,7 +800,7 @@ shakedown complete, resume guardrail landed test-first
   audit's tenth pass (Ex-Ψ10)** as the anti-ceremony gate, and the honest
   branch transcript: `git diff main origin/dev` empty — no deviation at
   intake this time.
-- **Built**: [[00_meta/62_micro-phase-62-review-and-roadmap]] — the MP-62
+- **Built**: [[archive/process/micro-phases/62_micro-phase-62-review-and-roadmap]] — the MP-62
   review and execution roadmap, wired into home as a companion pointer (NOT
   counted against any cap — the cap is spent): state review verified against
   the repo (190 tests collected and green at the last release, ruff clean
@@ -883,7 +883,7 @@ shakedown complete, resume guardrail landed test-first
   **pre-draft stack audit's eleventh pass (Ex-Ψ11)** as the anti-ceremony
   gate, and the honest branch transcript: `origin/dev` at `80d1d66` — one
   dated deviation at intake (the reconcile correction), never a silence.
-- **Built**: [[00_meta/63_micro-phase-63-review-and-roadmap]] — the MP-63
+- **Built**: [[archive/process/micro-phases/63_micro-phase-63-review-and-roadmap]] — the MP-63
   review and execution roadmap, wired into home as a companion pointer (NOT
   counted against any cap — the cap is spent): state review verified against
   the repo (190 tests collected in this sitting, ruff clean and blocking
@@ -951,7 +951,7 @@ shakedown complete, resume guardrail landed test-first
   pass (Ex-Ψ12)** as the anti-ceremony gate, and the honest branch
   transcript: `dev` and `main` equal at `e7e211e`/`14ab49d` — no deviation
   at intake this time, never a silence.
-- **Built**: [[00_meta/64_micro-phase-64-review-and-roadmap]] — the MP-64
+- **Built**: [[archive/process/micro-phases/64_micro-phase-64-review-and-roadmap]] — the MP-64
   review and execution roadmap, wired into home as a companion pointer (NOT
   counted against any cap — the cap is spent): state review verified against
   the repo (190 tests collected in this drafting sitting, ruff clean and
@@ -1021,7 +1021,7 @@ shakedown complete, resume guardrail landed test-first
   (Ex-Ψ4)** as the anti-ceremony gate, and the honest branch transcript:
   `git diff main dev` holds exactly the MP-55 roadmap, its wiring and the
   scoped CI pardon, never a reconciled silence.
-- **Built**: [[00_meta/56_micro-phase-56-review-and-roadmap]] — the MP-56
+- **Built**: [[archive/process/micro-phases/56_micro-phase-56-review-and-roadmap]] — the MP-56
   review and execution roadmap, wired into home as a companion pointer (NOT
   counted against any cap — the cap is spent): state review verified against
   the repo (190 tests collected and green at the last release, ruff clean
@@ -1097,7 +1097,7 @@ shakedown complete, resume guardrail landed test-first
   prior waiting windows, never re-drafts them — and the honest branch
   transcript: `git diff main dev` holds exactly the MP-57 roadmap and its
   home wiring, never a reconciled silence.
-- **Built**: [[00_meta/57_micro-phase-57-review-and-roadmap]] — the MP-57
+- **Built**: [[archive/process/micro-phases/57_micro-phase-57-review-and-roadmap]] — the MP-57
   review and execution roadmap, wired into home as a companion pointer (NOT
   counted against any cap — the cap is spent): state review verified against
   the repo (190 tests collected and green at the last release, ruff clean
@@ -1181,7 +1181,7 @@ shakedown complete, resume guardrail landed test-first
   pre-registration from the prior waiting windows, never re-drafts them —
   and the honest branch transcript: `git diff main dev` holds exactly the
   MP-57 roadmap's dated correction, never a reconciled silence.
-- **Built**: [[00_meta/58_micro-phase-58-review-and-roadmap]] — the MP-58
+- **Built**: [[archive/process/micro-phases/58_micro-phase-58-review-and-roadmap]] — the MP-58
   review and execution roadmap, wired into home as a companion pointer (NOT
   counted against any cap — the cap is spent): state review verified against
   the repo (190 tests collected in this drafting sitting, 6.10 s; ruff clean
@@ -1250,7 +1250,7 @@ shakedown complete, resume guardrail landed test-first
   (Ex-Ψ2)** as the anti-ceremony gate, and the honest branch transcript:
   `git diff main dev` holds exactly the scoped CI pardon, never a
   reconciled silence.
-- **Built**: [[00_meta/54_micro-phase-54-review-and-roadmap]] — the MP-54
+- **Built**: [[archive/process/micro-phases/54_micro-phase-54-review-and-roadmap]] — the MP-54
   review and execution roadmap, wired into home as a companion pointer (NOT
   counted against any cap — the cap is spent): state review verified against
   the repo (190 tests collected in this drafting sitting, ruff clean and
@@ -1326,7 +1326,7 @@ shakedown complete, resume guardrail landed test-first
   evaluation norms for the C84 lane); and the intake re-verification of the
   standing shelf facts (README still stale, exp6 residue confirmed, annexes
   absent from the repo, `gate-debt.md` still absent, ADR-0001–0010 only).
-- **Built**: [[00_meta/52_micro-phase-52-review-and-roadmap]] — the MP-52
+- **Built**: [[archive/process/micro-phases/52_micro-phase-52-review-and-roadmap]] — the MP-52
   review and roadmap, wired into home as a companion pointer (NOT counted
   against any cap — the cap is spent): state review verified against the
   repo (190 collected, ruff clean on `src/` and `tests/`, blocking mypy
@@ -1400,7 +1400,7 @@ shakedown complete, resume guardrail landed test-first
   channels that produced the first twenty transcripts re-used plus one new
   channel), and the `typecheck-new` strict-allowlist ratchet as the rule for
   all new research code.
-- **Built**: [[00_meta/51_micro-phase-51-review-and-roadmap]] — the MP-51
+- **Built**: [[archive/process/micro-phases/51_micro-phase-51-review-and-roadmap]] — the MP-51
   review and roadmap, wired into home as a companion pointer (NOT counted
   against any cap — the cap is spent): state review verified against the
   repo (190 collected, ruff clean on `src/` and `tests/`, blocking mypy
@@ -1458,7 +1458,7 @@ shakedown complete, resume guardrail landed test-first
   the law at the record's edge, eighth task; PR-24 the record as a course,
   seventh edition), stamped as the post-record arc's eighth dated direction,
   never a mood.
-- **Built**: [[00_meta/49_micro-phase-49-review-and-roadmap]] — the MP-49
+- **Built**: [[archive/process/micro-phases/49_micro-phase-49-review-and-roadmap]] — the MP-49
   review and roadmap, wired into home as a companion pointer (NOT counted
   against any cap — the cap is spent): state review verified against the
   repo (190 collected, ruff clean, blocking mypy clean, `verify-claims` at
@@ -1514,7 +1514,7 @@ shakedown complete, resume guardrail landed test-first
   cross-recipe law; PR-20 the law at the record's edge, seventh task; PR-21
   the record as a course, sixth edition), stamped as the post-record arc's
   seventh dated direction, never a mood.
-- **Built**: [[00_meta/48_micro-phase-48-review-and-roadmap]] — the MP-48
+- **Built**: [[archive/process/micro-phases/48_micro-phase-48-review-and-roadmap]] — the MP-48
   review and roadmap, wired into home as a companion pointer (NOT counted
   against any cap — the cap is spent): state review verified against the
   repo (190 collected, ruff clean, blocking mypy clean, `verify-claims` at
@@ -1565,7 +1565,7 @@ shakedown complete, resume guardrail landed test-first
   science's binding constraint (budget the wall-clock at launch, never at
   Session 7); and the microscope budget one failure away from exhaustion —
   trial 3's falsifier column filled before trial 2's verdict is read.
-- **Built**: [[00_meta/48b_micro-phase-48-execution-roadmap]] — the MP-48
+- **Built**: [[archive/process/micro-phases/48b_micro-phase-48-execution-roadmap]] — the MP-48
   execution roadmap (architect's review), wired into home as a companion
   pointer (NOT counted against any cap — the cap is spent): state review
   verified against the repo, the bottleneck analysis eight generations deep
@@ -1647,7 +1647,7 @@ shakedown complete, resume guardrail landed test-first
   provenanced by the manifests, never by git), and — new to this sitting —
   `docs/adr/` holds 0001–0010 and nothing else, the stacked phases' ledgers
   opening at their own Session 0s.
-- **Built**: [[00_meta/47_micro-phase-47-review-and-roadmap]] — the MP-47
+- **Built**: [[archive/process/micro-phases/47_micro-phase-47-review-and-roadmap]] — the MP-47
   review and roadmap, wired into home as a companion pointer (NOT counted
   against any cap — the cap is spent): state review verified against the
   repo (190 collected, ruff clean, blocking mypy clean, `verify-claims` at
@@ -1728,7 +1728,7 @@ shakedown complete, resume guardrail landed test-first
   shelf fact carried from MP-45's sitting: `figures/` holds zero tracked
   files, the corpus is gitignored build product provenanced by the
   manifests, never by git.
-- **Built**: [[00_meta/46_micro-phase-46-review-and-roadmap]] — the MP-46
+- **Built**: [[archive/process/micro-phases/46_micro-phase-46-review-and-roadmap]] — the MP-46
   review and roadmap, wired into home as a companion pointer (NOT counted
   against any cap — the cap is spent): state review verified against the
   repo (190 collected, ruff clean, blocking mypy clean, `verify-claims` at
@@ -1809,7 +1809,7 @@ shakedown complete, resume guardrail landed test-first
   shelf fact carried from MP-44's sitting: `figures/` holds zero tracked
   files, the corpus is gitignored build product provenanced by the
   manifests, never by git.
-- **Built**: [[00_meta/45_micro-phase-45-review-and-roadmap]] — the MP-45
+- **Built**: [[archive/process/micro-phases/45_micro-phase-45-review-and-roadmap]] — the MP-45
   review and roadmap, wired into home as a companion pointer (NOT counted
   against any cap — the cap is spent): state review verified against the
   repo (190 collected, ruff clean, blocking mypy clean, `verify-claims` at
@@ -1889,7 +1889,7 @@ shakedown complete, resume guardrail landed test-first
   one fact new to this sitting: `figures/` holds zero tracked files, the
   corpus is gitignored build product provenanced by the manifests, never
   by git.
-- **Built**: [[00_meta/44_micro-phase-44-review-and-roadmap]] — the MP-44
+- **Built**: [[archive/process/micro-phases/44_micro-phase-44-review-and-roadmap]] — the MP-44
   review and roadmap, wired into home as a companion pointer (NOT counted
   against any cap — the cap is spent): state review verified against the
   repo (190 collected, ruff clean, blocking mypy clean, `verify-claims` at
@@ -1964,7 +1964,7 @@ shakedown complete, resume guardrail landed test-first
   live shelf), Rung 6 residue on disk (deleted 2026-08-01, pyc + figure
   survive), and `checklists/gate-debt.md` absent (a re-verification cannot
   claim a file that is not there).
-- **Built**: [[00_meta/43_micro-phase-43-review-and-roadmap]] — the MP-43
+- **Built**: [[archive/process/micro-phases/43_micro-phase-43-review-and-roadmap]] — the MP-43
   review and roadmap, wired into home as a companion pointer (NOT counted
   against any cap — the cap is spent): state review verified against the
   repo, the bottleneck analysis, design decisions (ADR-0017 the twelfth
@@ -2029,7 +2029,7 @@ shakedown complete, resume guardrail landed test-first
   successor: the phase that stamps the record complete is the strongest
   release this program can make, and the deepest candidate past it earns the
   record's *first new paragraph*.
-- **Built**: [[00_meta/42_micro-phase-42-review-and-roadmap]] — the MP-42
+- **Built**: [[archive/process/micro-phases/42_micro-phase-42-review-and-roadmap]] — the MP-42
   review and roadmap, wired into home as a companion pointer (NOT counted
   against any cap — the cap is spent): state review verified against the
   repo, the bottleneck analysis, design decisions (ADR-0016 the eleventh
@@ -2087,7 +2087,7 @@ shakedown complete, resume guardrail landed test-first
   stop-and-publish (ADR-0004 row 5) is a row, not a threat — the phase that
   stamps the record complete is the strongest release this program can
   make.
-- **Built**: [[00_meta/41_micro-phase-41-review-and-roadmap]] — the MP-41
+- **Built**: [[archive/process/micro-phases/41_micro-phase-41-review-and-roadmap]] — the MP-41
   review and roadmap, wired into home as a companion pointer (NOT counted
   against any cap — the cap is spent): state review verified against the
   repo, the bottleneck analysis, design decisions (ADR-0015 the tenth
@@ -2141,7 +2141,7 @@ shakedown complete, resume guardrail landed test-first
   is done, and the ninth question may be the last one — a decision MP-40
   forces into a dated row (Ex-N, the terminal-state drill) rather than a
   mood.
-- **Built**: [[00_meta/40_micro-phase-40-review-and-roadmap]] — the MP-40
+- **Built**: [[archive/process/micro-phases/40_micro-phase-40-review-and-roadmap]] — the MP-40
   review and roadmap, wired into home as a companion pointer (NOT counted
   against any cap — the cap is spent): state review verified against the
   repo, the bottleneck analysis, design decisions (ADR-0014 the ninth
@@ -2187,7 +2187,7 @@ shakedown complete, resume guardrail landed test-first
   (six transcripts land only if the stack ships), and stop-and-publish
   (ADR-0004 row 5) is a row, not a threat — every candidate must beat the
   honest exit.
-- **Built**: [[00_meta/39_micro-phase-39-review-and-roadmap]] — the MP-39
+- **Built**: [[archive/process/micro-phases/39_micro-phase-39-review-and-roadmap]] — the MP-39
   review and roadmap, wired into home as a companion pointer (NOT counted
   against any cap — the cap is spent): state review verified against the
   repo, the bottleneck analysis, design decisions (ADR-0013 the eighth
@@ -2232,7 +2232,7 @@ shakedown complete, resume guardrail landed test-first
   future (five transcripts land only if the stack ships), and
   stop-and-publish (ADR-0004 row 5) is a row, not a threat — every candidate
   must beat the honest exit.
-- **Built**: [[00_meta/38_micro-phase-38-review-and-roadmap]] — the MP-38
+- **Built**: [[archive/process/micro-phases/38_micro-phase-38-review-and-roadmap]] — the MP-38
   review and roadmap, wired into home as a companion pointer (NOT counted
   against any cap — the cap is spent): state review verified against the
   repo, the bottleneck analysis, design decisions (ADR-0012 the seventh
@@ -2278,7 +2278,7 @@ shakedown complete, resume guardrail landed test-first
   S3's dense characterization decides whether C18's reading has data); the
   showcase's receipts are still future (portfolio/projects empty, teaching
   register reaches four transcripts only if MP-33–36 ship).
-- **Built**: [[00_meta/36_micro-phase-37-the-sixth-question]] — the MP-37
+- **Built**: [[archive/process/micro-phases/36_micro-phase-37-the-sixth-question]] — the MP-37
   conditional draft, NOT wired into home and NOT counted against the cap:
   DRAFT banner, state review verified against the repo, design decisions
   (ADR-0011 the sixth ledger, consumption-is-execution, paper v7 rule,
@@ -2322,8 +2322,8 @@ shakedown complete, resume guardrail landed test-first
   lane compounding a fourth time: the fourth runnable artifact is only worth
   shipping because the first three stranger-run transcripts proved the
   receipt works.
-- **Built**: [[00_meta/35_micro-phase-36-the-fifth-question]] — the MP-36
-  pre-registration, wired into home as pre-registered; [[docs/adr/0010-
+- **Built**: [[archive/process/micro-phases/35_micro-phase-36-the-fifth-question]] — the MP-36
+  pre-registration, wired into home as pre-registered; [[archive/process/adr/0010-
   continuum-ledger-5]] — the fifth continuum ledger with its eight rows
   pre-stamped and the frozen candidate set C17–C20 (the likely survivor
   C18 — the dense→memorized transition, the order-parameter study that
@@ -2370,8 +2370,8 @@ shakedown complete, resume guardrail landed test-first
   front of it, never improvises), and the teaching lane compounding a third
   time: the third runnable artifact is only worth shipping because the first
   two stranger-run transcripts proved the receipt works.
-- **Built**: [[00_meta/34_micro-phase-35-the-fourth-question]] — the MP-35
-  pre-registration, wired into home as pre-registered; [[docs/adr/0009-
+- **Built**: [[archive/process/micro-phases/34_micro-phase-35-the-fourth-question]] — the MP-35
+  pre-registration, wired into home as pre-registered; [[archive/process/adr/0009-
   continuum-ledger-4]] — the fourth continuum ledger with its eight rows
   pre-stamped and the frozen candidate set C13–C16 (the likely survivor C14 —
   the solution-regime phase diagram, the only candidate that converts the
@@ -2414,8 +2414,8 @@ shakedown complete, resume guardrail landed test-first
   teaching lane compounding: the second runnable artifact is only worth
   shipping because the first one's stranger-run transcript proved the
   receipt works.
-- **Built**: [[00_meta/33_micro-phase-34-the-third-question]] — the MP-34
-  pre-registration, wired into home as pre-registered; [[docs/adr/0008-
+- **Built**: [[archive/process/micro-phases/33_micro-phase-34-the-third-question]] — the MP-34
+  pre-registration, wired into home as pre-registered; [[archive/process/adr/0008-
   continuum-ledger-3]] — the third continuum ledger with its eight rows
   pre-stamped and the frozen candidate set C9–C12 (the likely survivor C10 —
   always answerable from the checkpoints on disk, the reading MP-29's dense
@@ -2452,8 +2452,8 @@ shakedown complete, resume guardrail landed test-first
   candidate set frozen in the roadmap file itself (never improvised at S0),
   and the teaching lane as a first-class row: the showcase's deepest upgrade
   is one artifact a stranger can run, with the run-transcript as its receipt.
-- **Built**: [[00_meta/32_micro-phase-33-the-second-question]] — the MP-33
-  pre-registration, wired into home as pre-registered; [[docs/adr/0007-
+- **Built**: [[archive/process/micro-phases/32_micro-phase-33-the-second-question]] — the MP-33
+  pre-registration, wired into home as pre-registered; [[archive/process/adr/0007-
   continuum-ledger-2]] — the second continuum ledger with its eight rows
   pre-stamped and the frozen candidate set C5–C8 (the wd-frontier at P=113,
   the head-formation floor, the SAE-on-dense-stream reading, the ACDC/EAP
@@ -2527,7 +2527,7 @@ shakedown complete, resume guardrail landed test-first
   MP-30's release), ADR-0002's five undated public-arc rows reopening as NEW
   rows, and the same-sitting launch rule that makes "planning it" an illegal
   final state.
-- **Built**: [[00_meta/30_micro-phase-31-the-premiere]] — the MP-31
+- **Built**: [[archive/process/micro-phases/30_micro-phase-31-the-premiere]] — the MP-31
   pre-registration, wired into home as pre-registered; the phase's spine is
   the premiere ledger (ADR-0005) stamped LAUNCHED-with-URL or
   CLOSED-with-one-reason, the hard Session-0 gate on MP-30's release (no PDF,
@@ -2557,7 +2557,7 @@ shakedown complete, resume guardrail landed test-first
   never executed: this phase is that synthesis on a new clock, consuming
   MP-29 instead of MP-23, with the premiere (ADR-0005) and the continuum
   (ADR-0006) frozen by design.
-- **Built**: [[00_meta/29_micro-phase-30-the-consumption]] — the MP-30
+- **Built**: [[archive/process/micro-phases/29_micro-phase-30-the-consumption]] — the MP-30
   pre-registration, wired into home as pre-registered; the phase's spine is
   the paper as flagship artifact (sections open only for disks' manifests,
   `make paper` in the CI mirror from S0, the hostile-webmaster reverse audit
@@ -2593,7 +2593,7 @@ shakedown complete, resume guardrail landed test-first
   ideal full-support DFT expansion of the addition table — both implement the
   same function exactly, which is precisely why the frozen criterion is
   conjunctive, accuracy AND sparsity).
-- **Built**: [[00_meta/28_micro-phase-29-the-positive-negative]] — the MP-29
+- **Built**: [[archive/process/micro-phases/28_micro-phase-29-the-positive-negative]] — the MP-29
   pre-registration, wired into home; the phase's spine is the positive
   control (does this harness ever go sparse?) gating the microscope's
   three-trial budget, with the dense solution as the contribution either way;
@@ -2633,7 +2633,7 @@ shakedown complete, resume guardrail landed test-first
   (manifest producer that reads the final checkpoints — the analysis side of
   the parallel launch) + `scripts/probe_checkpoints.py`; (5) the scheduled
   negatives drafted in full before the finals ([[07_capstone/notes/scheduled-negatives-mp28]]);
-  (6) [[00_meta/27_micro-phase-28-the-execution]] wired into home as current.
+  (6) [[archive/process/micro-phases/27_micro-phase-28-the-execution]] wired into home as current.
 - **Open question**: none new — MP-27 closed the intake questions by executing
   them. The named suspects if P=113's Fourier analysis is negative (embedding
   re-normalization, cosine schedule) are already the microscope lane's rows in
@@ -2656,7 +2656,7 @@ shakedown complete, resume guardrail landed test-first
   ×3 seeds ≈ one parallel overnight; R1 standard ≈ a second overnight under
   checkpoint-every-250) makes the "needs a GPU" framing of the P=113 lane an
   artifact of the MP-9 era, not a fact about the machine.
-- **Built**: [[00_meta/26_micro-phase-27-the-unblock]] — the unblock roadmap,
+- **Built**: [[archive/process/micro-phases/26_micro-phase-27-the-unblock]] — the unblock roadmap,
   run by design on the record's own law: it executes ADR-0003's frozen protocols
   instead of pre-registering anything new; its hard gate is a live machine-budget
   audit (no audit, no launch); Session 1 is the exp2 checkpoint/resume port with
@@ -2697,7 +2697,7 @@ shakedown complete, resume guardrail landed test-first
   resume" disconnect promise is not mechanically real until the machinery is
   ported to exp2 (a decision for MP-23's Session 0, now recorded here either
   way).
-- **Built**: [[00_meta/25_micro-phase-26-the-continuation]] — the
+- **Built**: [[archive/process/micro-phases/25_micro-phase-26-the-continuation]] — the
   continuation roadmap with its hard break against the record's own rule: a
   fourth unexecuted pre-registration is drift in the ledger's terms, so
   Session 0 is gated on MP-25's release (premiere ledger zero UNDECIDED, the
@@ -2705,7 +2705,7 @@ shakedown complete, resume guardrail landed test-first
   into artifacts (Rung-6 section or trial table; scaled-R1 paragraph or
   no-head negative), never re-opened; the negatives are drafted first; the
   shelf is maintained as dated rows with heartbeats, never as mood. Also
-  built the phase's gate artifact: [[docs/adr/0006-continuum-ledger]] —
+  built the phase's gate artifact: [[archive/process/adr/0006-continuum-ledger]] —
   eight rows (consumed artifacts, the first new research question with its
   pre-registered candidate set C1–C4, essay annex v2, paper v2 diff, shelf
   maintenance, stranger round 2, standing gate debt) under the two-state
@@ -2741,7 +2741,7 @@ shakedown complete, resume guardrail landed test-first
   clean, blocking mypy clean, full-tree mypy at its tracked 171,
   `verify-claims` at its designed 2 problems (Rungs 2 and 5 manifestless
   by design), markdownlint 0 on the changed notes.
-- **Built**: [[00_meta/24_micro-phase-25-the-premiere]] — the premiere
+- **Built**: [[archive/process/micro-phases/24_micro-phase-25-the-premiere]] — the premiere
   roadmap with its hard break against the record's second temper: a fourth
   unexecuted pre-registration is drift in the ledger's own terms, so
   Session 0 is gated on MP-24's release (no paper PDF on disk, no phase).
@@ -2753,7 +2753,7 @@ shakedown complete, resume guardrail landed test-first
   decided; toolchains (Quartz v4, Gradio CPU Space) are pinned in Step 0,
   never discovered at Session 7. Eight sessions in a 14-day window; the
   terminus is release = this merge + 14 days. Also built the phase's gate
-  artifact: [[docs/adr/0005-premiere-ledger]] — eight rows (five public
+  artifact: [[archive/process/adr/0005-premiere-ledger]] — eight rows (five public
   surfaces, the revision cycle, the ACDC pilot execution, the scaled-up R1
   execution) under the two-state rule, verdict criteria and falsification
   columns written before any launch, the same-sitting rule inscribed in
@@ -2786,14 +2786,14 @@ shakedown complete, resume guardrail landed test-first
   mirror (the tracked 185); `make verify-claims` at its designed 2
   problems (Rungs 2 and 5 manifestless by design); markdownlint 0 on the
   changed notes.
-- **Built**: [[00_meta/23_micro-phase-24-the-synthesis]] — the synthesis
+- **Built**: [[archive/process/micro-phases/23_micro-phase-24-the-synthesis]] — the synthesis
   roadmap with its hard break against the record's one remaining temper:
   a section opens only when its manifest exists, whatever MP-23's rows
   decided. Eight sessions in a 14-day window; Step 0 is the truthing of
   MP-23's release (the intake table rows → sections) plus the paper's
   compile gate; the stranger review and the 10-minute talk are scheduled
   rows with kill-dates, not hopes; the horizon opens as
-  [[docs/adr/0004-horizon-ledger]] (five rows: real-ACDC pilot, stranger
+  [[archive/process/adr/0004-horizon-ledger]] (five rows: real-ACDC pilot, stranger
   review, scaled-up R1, the talk, stop-and-publish — each with
   pre-registered criteria and a falsification column); RESULTS v-final
   and the model card close the record. Wired into [[00_meta/00_home]] as
@@ -2836,7 +2836,7 @@ shakedown complete, resume guardrail landed test-first
   tests because no real head has ever existed to target, and the real-activation
   SAE result sat on a no-head checkpoint. MP-22's essay will publish exactly
   those negatives; this phase exists to give the annex a chance to amend them.
-- **Built**: [[00_meta/22_micro-phase-23-the-research-return]] — the
+- **Built**: [[archive/process/micro-phases/22_micro-phase-23-the-research-return]] — the
   research-return roadmap with the decisive break from the previous nine: the
   launches are the phase's Session-1 exit gate, not a promise for later. The
   P=113 ×3-seeds lane and the R1 `--standard` fresh-batches lane reopen as NEW
@@ -2849,7 +2849,7 @@ shakedown complete, resume guardrail landed test-first
   re-normalization and the cosine schedule); R4/R5 chain off the real head with
   the scheduled negative as a first-class result; the essay is never rewritten,
   it is amended via the dated annex. Also built the phase's gate artifact:
-  [[docs/adr/0003-research-return-ledger]] — seven rows, verdict criteria
+  [[archive/process/adr/0003-research-return-ledger]] — seven rows, verdict criteria
   pre-registered in the row cells with the "what would falsify it" column
   written before any launch (Gelman & Loken applied at the source). Wired into
   [[00_meta/00_home]] as current (MP-22 relabelled in flight); terminus
@@ -2882,7 +2882,7 @@ shakedown complete, resume guardrail landed test-first
   problems (Rungs 2 and 5 manifestless by design), markdownlint 0 issues on the changed
   notes. Re-read the ADR-0001 closure ledger and the paper %-prose state before the
   roadmap claimed anything about them.
-- **Built**: [[00_meta/21_micro-phase-22-the-public-arc]] — the public-arc roadmap:
+- **Built**: [[archive/process/micro-phases/21_micro-phase-22-the-public-arc]] — the public-arc roadmap:
   the essay as the flagship public artifact (every number file-cited, re-derived from
   manifest + code in the claims audit); the HF Spaces row reopened as a NEW row scoped
   to CPU (the Superposition Explorer — a Gradio demo with a live engine check); Quartz
@@ -2926,14 +2926,14 @@ shakedown complete, resume guardrail landed test-first
   designed 2 problems (Rungs 2 and 5 manifestless by design), markdownlint 0 issues on
   178 files. Read the paper scaffold and the ledger row-by-row before the roadmap
   claimed anything about them.
-- **Built**: [[00_meta/20_micro-phase-21-the-record-assembly]] — the record-assembly
+- **Built**: [[archive/process/micro-phases/20_micro-phase-21-the-record-assembly]] — the record-assembly
   roadmap: consumes MP-20's release whatever its lanes decided; the actual-state sheet
   as the phase's Step 1; the paper's argument skeleton (claims → evidence → warrants)
   before prose; the five gate rows (nnsight, W&B, HF Spaces, clean-clone proof,
   graduation) each ending LAUNCHED or CLOSED in one sitting; the graduation proof scoped
   to the actual record. Terminus stamped: release = this merge + 14 days. Wired into
   [[00_meta/00_home]] as current (MP-20 relabelled); the ledger ADR
-  [[docs/adr/0001-verdict-closure-ledger]] remains the single gate artifact.
+  [[archive/process/adr/0001-verdict-closure-ledger]] remains the single gate artifact.
 - **Verified**: tree clean vs origin before writing; every number, command and gate in
   the roadmap cross-checked against the Makefile, `src/results.py` and the workflows on
   disk; markdownlint 0 issues on the changed notes; CI mirror green (lint, blocking
@@ -2960,7 +2960,7 @@ shakedown complete, resume guardrail landed test-first
   (Rungs 2 and 5 manifestless by design). Also read the CI machinery cold: commitlint's
   `body-max-line-length` (200) is enforced only on PRs — and my own commit still tripped
   it (below, incident).
-- **Built**: [[00_meta/19_micro-phase-20-execution-arc]] — the execution phase with the
+- **Built**: [[archive/process/micro-phases/19_micro-phase-20-execution-arc]] — the execution phase with the
   two terms the verdict ledger was missing: a **terminal date** (the release = 14
   calendar days after Step 0, the calendar works backwards from it) and a **kill-date
   per ledger row** (the row names the condition that ends it; a row that outlives its
@@ -2971,7 +2971,7 @@ shakedown complete, resume guardrail landed test-first
   20-minute launch rehearsal (the launch becomes boring before it is real) and the
   adversarial-reader pass (five attack sentences written before the verdicts land).
   Wired into [[00_meta/00_home]] as current (MP-18/MP-19 relabelled); the ledger ADR
-  [[docs/adr/0001-verdict-closure-ledger]] remains the single gate artifact.
+  [[archive/process/adr/0001-verdict-closure-ledger]] remains the single gate artifact.
 - **Verified**: tree clean vs origin before writing; every number, command and gate in
   the roadmap cross-checked against the Makefile, `src/results.py` and the workflows on
   disk; markdownlint 0 issues on the changed notes; CI green on GitHub (`ci` 2m04s,
@@ -3006,7 +3006,7 @@ shakedown complete, resume guardrail landed test-first
   (Rungs 2 and 5 manifestless by design). Confirmed the notes that absorb the next
   instruments already exist (`activation-patching.md`, `path-patching.md`,
   `induction-heads.md` in Phase 4).
-- **Built**: [[00_meta/18_micro-phase-19-verdicts-to-publication]] — the phase that
+- **Built**: [[archive/process/micro-phases/18_micro-phase-19-verdicts-to-publication]] — the phase that
   turns MP-18's clocked verdict window into delivered artifacts, verdict-agnostic by
   design: the paper draft v0.1 (all four writable sections in prose with per-file
   citations), the reconciled release (verify-claims zero, real clean-clone transcript,
@@ -3015,7 +3015,7 @@ shakedown complete, resume guardrail landed test-first
   test-first with falsifications; SAE sanity against a known circuit). Session 0
   re-check: ledger zero undated rows gates the phase's start. Wired into
   [[00_meta/00_home]]; the ledger ADR
-  [[docs/adr/0001-verdict-closure-ledger]] remains the single gate artifact.
+  [[archive/process/adr/0001-verdict-closure-ledger]] remains the single gate artifact.
 - **Verified**: tree clean vs `origin/dev` before writing anything; the roadmap's
   session calendar, gate criteria and every claim cross-checked against the
   Makefile/source on disk (`make verify-claims`, `make paper`, `--geometry-check`,
@@ -3034,12 +3034,12 @@ shakedown complete, resume guardrail landed test-first
   the bottleneck is launch discipline, and the treatment has to be mechanical, not
   rhetorical. MP-17's own design (closure over continuation, lane 6d) is right; what
   was missing is *session shaping* — steps without clocks get re-planned.
-- **Built**: [[00_meta/17_micro-phase-18-verdict-window]] — the execution vehicle that
+- **Built**: [[archive/process/micro-phases/17_micro-phase-18-verdict-window]] — the execution vehicle that
   binds MP-17's Steps 1–7 to eight clocked sessions (S0 pre-flight through S7 release)
   with wall-clock budgets and exit criteria, inherits MP-17's study topics bound to
   sessions, and adds the Phase's own new exercises (the closure sitting, the 60-second
   clock check, the release rehearsal). Created the mechanical spine first:
-  [[docs/adr/0001-verdict-closure-ledger]] — the Verdict Closure Ledger ADR with ten
+  [[archive/process/adr/0001-verdict-closure-ledger]] — the Verdict Closure Ledger ADR with ten
   materially empty rows, the artifact Session 1 fills (launched with date + window +
   heartbeat, or closed with one named reason; zero undated rows gates the session).
   Wired into [[00_meta/00_home]] as the current roadmap, superseding MP-17 in the
@@ -3072,7 +3072,7 @@ shakedown complete, resume guardrail landed test-first
   discipline, so this phase's Step 1 makes the closure decision an explicit gate with
   a *mechanical* artifact: the Verdict Closure Ledger, zero un-decided rows, or the
   session isn't over.
-- **Built**: [[00_meta/16_micro-phase-17-closure-and-release]] — the closure roadmap
+- **Built**: [[archive/process/micro-phases/16_micro-phase-17-closure-and-release]] — the closure roadmap
   with the design principle "closure over continuation": every open item from
   MP-14/15/16 either lands under a date or is closed with one named reason; the paper
   spine (Related Work, Methods, Superposition, refined Limitations) proceeds in
@@ -3099,7 +3099,7 @@ shakedown complete, resume guardrail landed test-first
   decision an explicit gate; the K-composition detector and Rung 3's manifest-backed
   pentagon result are the two artifacts that make the phase robust to either verdict; the
   full-tree mypy ratchet stands at 171 (drift from 154 after the lockfile rebuild).
-- **Built**: [[00_meta/15_micro-phase-16-the-execution]] — the roadmap that executes
+- **Built**: [[archive/process/micro-phases/15_micro-phase-16-the-execution]] — the roadmap that executes
   MP-15's steps (watchdog + full-scale R3 regeneration, clean-clone dry run, mypy de-drift
   to ≤160 with one module moved to the blocking allowlist, paper spine for the four
   evidencable sections) with the pre-registered verdict lanes (6a/6b/6c) and the release
@@ -3123,7 +3123,7 @@ shakedown complete, resume guardrail landed test-first
   the phase's committed fallback deliverable is a figure generator, not a promise; the
   mypy ratchet slipped (154 → 171 full-tree errors after the numpy 2.5.0 / torch 2.12.1+cpu
   lockfile rebuild — the same class of silent environment drift the vault distrusts).
-- **Built**: [[00_meta/14_micro-phase-15-from-verdicts-to-showcase]] — the pre-registration
+- **Built**: [[archive/process/micro-phases/14_micro-phase-15-from-verdicts-to-showcase]] — the pre-registration
   roadmap with the "no idle verdict time" design principle: Steps 0–5 need nothing but this
   machine (R3 watchdog regeneration, clean-clone dry run, mypy de-drift, paper spine for
   the four evidence-backed sections, claims audit); Steps 6a–6c consume MP-14's verdicts
@@ -3148,8 +3148,8 @@ shakedown complete, resume guardrail landed test-first
   its Steps 1–7 remain entirely unexecuted: no R1 `--standard` run, no P=113 run
   (Rung 2 still has no manifest ever produced), no R3 full-scale geometry re-run, no
   clean-clone gate transcript, no paper prose. That verified baseline became
-  [[00_meta/13_micro-phase-14-the-verdicts]].
-- **Built**: [[00_meta/13_micro-phase-14-the-verdicts]] — the pre-registration roadmap
+  [[archive/process/micro-phases/13_micro-phase-14-the-verdicts]].
+- **Built**: [[archive/process/micro-phases/13_micro-phase-14-the-verdicts]] — the pre-registration roadmap
   for the verdicts phase (both flagships in one wall-clock window, the cascade, the
   watchdog R3 regeneration, clean-clone gate, paper prose in evidence order, gate
   criteria); wired into [[00_meta/00_home]] as the current phase.
@@ -3185,7 +3185,7 @@ shakedown complete, resume guardrail landed test-first
   `\some\path`) and passes only on CI. Not a logic bug — a genuinely platform-dependent
   assertion that has been carried as "pre-existing and unrelated" when it is exactly the
   kind of cross-platform status that should never have stayed red.
-- **Built**: [[00_meta/12_micro-phase-13-flagships-landed]] — the full roadmap for the
+- **Built**: [[archive/process/micro-phases/12_micro-phase-13-flagships-landed]] — the full roadmap for the
   phase that lands both flagships (R1 `--standard` supervised + P=113 ×3 Colab async),
   includes the R3 full-scale regeneration under a watchdog, the conditional R4/R5 cascade,
   the clean-clone gate, paper prose in evidence order, exercises, and gate criteria. Wired
@@ -3200,7 +3200,7 @@ shakedown complete, resume guardrail landed test-first
 
 Executed Step 1 of the roadmap `cd384b0` rewrote this morning — the figure-provenance gap,
 not just documented as a copy step but enforced mechanically. See
-[[00_meta/11_micro-phase-12-resilient-flagship-run]]'s execution record for the full
+[[archive/process/micro-phases/11_micro-phase-12-resilient-flagship-run]]'s execution record for the full
 transcript.
 
 - **Studied**: process supervision and job durability groundwork ahead of the kill drill
@@ -3271,7 +3271,7 @@ transcript.
 - Studied: state review of all five rungs ahead of the flagship sprint; confirmed the
   dependency chain that blocks the paper (Rung 1 domino → Rungs 4/5), the stale-manifest
   problem, and the environment trap (bare `python`/`pytest` resolve outside `.venv`).
-- Built: [[00_meta/08_micro-phase-09-flagship-sprint]] (full roadmap: 8 steps, deep-dive
+- Built: [[archive/process/micro-phases/08_micro-phase-09-flagship-sprint]] (full roadmap: 8 steps, deep-dive
   topics, exercises, gate criteria); wired the home MOC; fixed Makefile targets to run via
   `uv run` and made `src/`/`src/experiments/` package init lazy (no more importing every
   experiment's torch/matplotlib stack on `import src`); re-baselined the exp1/3/4
@@ -3577,7 +3577,7 @@ hours are spent once, correctly. See [[09_micro-phase-10-evidence-run]].
   one from Rung 6, which was deleted 2026-08-01 for containing fabricated data. Added as
   Step 1 of the new roadmap: a small curated `portfolio/figures/` set, committed and
   bound to the manifest that backs each figure.
-- **Rewrote** [[00_meta/11_micro-phase-12-resilient-flagship-run]] with the corrected
+- **Rewrote** [[archive/process/micro-phases/11_micro-phase-12-resilient-flagship-run]] with the corrected
   state review and the figure-provenance step promoted to first-class. The genuinely
   open items — Rung 1 standard-scale verdict, P=113 GPU run, paper prose, clean-clone
   gate — are unchanged by the correction; they were never about git hygiene.

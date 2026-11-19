@@ -25,62 +25,108 @@
     "batches": null,
     "no_train": false,
     "manifest_path": "results/exp4_standard.json",
-    "from_checkpoint": "results/remote/induction-standard/output/repo/checkpoints/induction_standard",
+    "from_checkpoint": "results/remote/induction-standard-v2/output/repo/checkpoints/induction_standard",
     "source_vocab_size": 2048,
     "source_seq_len": 64,
     "source_d_model": 64,
     "source_n_layers": 2,
     "source_n_heads": 4,
+    "source_task": "periodic",
+    "source_epochs": null,
+    "source_git_sha": null,
+    "source_key_len": null,
+    "source_copy_blocks": null,
+    "source_copy_block_len": null,
+    "counterfactual": "disjoint",
     "batch_mode": "fixed"
   },
   "per_seed_metrics": [
     {
       "final_val_acc": 0.5079365372657776,
       "total_induction_heads": 3.0,
-      "mean_activation_recovery": 0.08359656526528077,
-      "mean_ablation_effect": 0.5005171810258154,
-      "mean_path_patch_effect": 0.7356828487427386,
-      "probe_content_mass": 0.03123774193227291,
-      "probe_period_mass": 0.7015885710716248,
+      "n_candidate_heads": 3.0,
+      "mean_activation_recovery": 0.08378395863389115,
+      "path_patch_measured": 1.0,
+      "group_path_patch_measured": 1.0,
+      "counterfactual_minimal_pair": 0.0,
+      "probe_content_mass": 0.030765648931264877,
+      "probe_period_mass": 0.7605244517326355,
       "probe_content_wins": 0.0,
-      "checkpoint_epoch": 3000.0
+      "checkpoint_epoch": 3000.0,
+      "source_model_seed": 0.0,
+      "mean_ablation_effect": 0.4637539773200479,
+      "mean_path_patch_effect": 0.7420743223744627,
+      "group_path_patch_effect": 1.8511672288081358
     },
     {
-      "final_val_acc": 0.5084325671195984,
-      "total_induction_heads": 2.0,
-      "mean_activation_recovery": 0.08311892183660685,
-      "mean_ablation_effect": 0.3974787702493875,
-      "mean_path_patch_effect": 0.9989584771287358,
-      "probe_content_mass": 0.031064607203006744,
-      "probe_period_mass": 0.8136249780654907,
-      "probe_content_wins": 0.0,
-      "checkpoint_epoch": 3000.0
-    },
-    {
-      "final_val_acc": 0.5084325671195984,
+      "final_val_acc": 0.5079365372657776,
       "total_induction_heads": 3.0,
-      "mean_activation_recovery": 0.08357553968363612,
-      "mean_ablation_effect": 0.4355837746401671,
-      "mean_path_patch_effect": 0.7297296172017397,
-      "probe_content_mass": 0.030426058918237686,
-      "probe_period_mass": 0.5698530077934265,
+      "n_candidate_heads": 3.0,
+      "mean_activation_recovery": 0.08319248487073658,
+      "path_patch_measured": 1.0,
+      "group_path_patch_measured": 1.0,
+      "counterfactual_minimal_pair": 0.0,
+      "probe_content_mass": 0.031251467764377594,
+      "probe_period_mass": 0.7605845332145691,
       "probe_content_wins": 0.0,
-      "checkpoint_epoch": 3000.0
+      "checkpoint_epoch": 3000.0,
+      "source_model_seed": 1.0,
+      "mean_ablation_effect": 0.5192249485596624,
+      "mean_path_patch_effect": 0.7256486854854186,
+      "group_path_patch_effect": 1.792645668133923
+    },
+    {
+      "final_val_acc": 0.5089285969734192,
+      "total_induction_heads": 3.0,
+      "n_candidate_heads": 3.0,
+      "mean_activation_recovery": 0.08335899474494542,
+      "path_patch_measured": 1.0,
+      "group_path_patch_measured": 1.0,
+      "counterfactual_minimal_pair": 0.0,
+      "probe_content_mass": 0.031049074605107307,
+      "probe_period_mass": 0.9078230261802673,
+      "probe_content_wins": 0.0,
+      "checkpoint_epoch": 3000.0,
+      "source_model_seed": 2.0,
+      "mean_ablation_effect": 0.7856307140095989,
+      "mean_path_patch_effect": 0.647893814973786,
+      "group_path_patch_effect": 1.999404906179605
     }
   ],
   "aggregate": {
-    "mean_ablation_effect": {
-      "mean": 0.44452657530512335,
-      "std": 0.04253789515739922,
-      "min": 0.3974787702493875,
-      "max": 0.5005171810258154,
+    "probe_content_wins": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
       "n": 3.0
     },
-    "mean_activation_recovery": {
-      "mean": 0.08343034226184125,
-      "std": 0.00022037472588109697,
-      "min": 0.08311892183660685,
-      "max": 0.08359656526528077,
+    "probe_content_mass": {
+      "mean": 0.031022063766916592,
+      "std": 0.00019925222489192626,
+      "min": 0.030765648931264877,
+      "max": 0.031251467764377594,
+      "n": 3.0
+    },
+    "path_patch_measured": {
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0,
+      "n": 3.0
+    },
+    "group_path_patch_effect": {
+      "mean": 1.8810726010405547,
+      "std": 0.08701760011851017,
+      "min": 1.792645668133923,
+      "max": 1.999404906179605,
+      "n": 3.0
+    },
+    "n_candidate_heads": {
+      "mean": 3.0,
+      "std": 0.0,
+      "min": 3.0,
+      "max": 3.0,
       "n": 3.0
     },
     "checkpoint_epoch": {
@@ -90,58 +136,104 @@
       "max": 3000.0,
       "n": 3.0
     },
-    "probe_content_wins": {
+    "mean_path_patch_effect": {
+      "mean": 0.7052056076112224,
+      "std": 0.04107660784672195,
+      "min": 0.647893814973786,
+      "max": 0.7420743223744627,
+      "n": 3.0
+    },
+    "source_model_seed": {
+      "mean": 1.0,
+      "std": 0.816496580927726,
+      "min": 0.0,
+      "max": 2.0,
+      "n": 3.0
+    },
+    "group_path_patch_measured": {
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0,
+      "n": 3.0
+    },
+    "probe_period_mass": {
+      "mean": 0.8096440037091573,
+      "std": 0.06942305689266433,
+      "min": 0.7605244517326355,
+      "max": 0.9078230261802673,
+      "n": 3.0
+    },
+    "counterfactual_minimal_pair": {
       "mean": 0.0,
       "std": 0.0,
       "min": 0.0,
       "max": 0.0,
       "n": 3.0
     },
+    "mean_ablation_effect": {
+      "mean": 0.5895365466297697,
+      "std": 0.1404966168581006,
+      "min": 0.4637539773200479,
+      "max": 0.7856307140095989,
+      "n": 3.0
+    },
+    "mean_activation_recovery": {
+      "mean": 0.08344514608319105,
+      "std": 0.000249033923975823,
+      "min": 0.08319248487073658,
+      "max": 0.08378395863389115,
+      "n": 3.0
+    },
     "total_induction_heads": {
-      "mean": 2.6666666666666665,
-      "std": 0.4714045207910317,
-      "min": 2.0,
+      "mean": 3.0,
+      "std": 0.0,
+      "min": 3.0,
       "max": 3.0,
-      "n": 3.0
-    },
-    "mean_path_patch_effect": {
-      "mean": 0.8214569810244047,
-      "std": 0.12553604019271938,
-      "min": 0.7297296172017397,
-      "max": 0.9989584771287358,
-      "n": 3.0
-    },
-    "probe_period_mass": {
-      "mean": 0.695022185643514,
-      "std": 0.09962774525125659,
-      "min": 0.5698530077934265,
-      "max": 0.8136249780654907,
-      "n": 3.0
-    },
-    "probe_content_mass": {
-      "mean": 0.030909469351172447,
-      "std": 0.0003490540966881275,
-      "min": 0.030426058918237686,
-      "max": 0.03123774193227291,
       "n": 3.0
     },
     "final_val_acc": {
       "mean": 0.5082672238349915,
-      "std": 0.00023383071553844008,
+      "std": 0.00046766143107688016,
       "min": 0.5079365372657776,
-      "max": 0.5084325671195984,
+      "max": 0.5089285969734192,
       "n": 3.0
     }
   },
-  "wall_clock_seconds": 3.8277109999908134,
-  "git_sha": "04b5173",
+  "wall_clock_seconds": 8.721360100025777,
+  "git_sha": "4406229",
   "git_dirty": false,
   "device": "cpu",
-  "torch_version": "2.12.1+cpu",
-  "numpy_version": "2.5.0",
+  "torch_version": "2.14.1+cpu",
+  "numpy_version": "2.5.3",
   "python_version": "3.14.7",
   "n_parameters": 299392,
-  "created_at": "2026-10-20T04:37:31+00:00",
+  "created_at": "2026-11-17T15:08:31+00:00",
   "notes": null,
-  "neuron_ablation": null
+  "neuron_ablation": null,
+  "source_provenance": {
+    "checkpoints": [
+      {
+        "path": "results\\remote\\induction-standard-v2\\output\\repo\\checkpoints\\induction_standard\\exp1_checkpoint_seed0.pt",
+        "seed": 0,
+        "epoch": 3000,
+        "git_sha": "191cde3",
+        "git_dirty": false
+      },
+      {
+        "path": "results\\remote\\induction-standard-v2\\output\\repo\\checkpoints\\induction_standard\\exp1_checkpoint_seed1.pt",
+        "seed": 1,
+        "epoch": 3000,
+        "git_sha": "191cde3",
+        "git_dirty": false
+      },
+      {
+        "path": "results\\remote\\induction-standard-v2\\output\\repo\\checkpoints\\induction_standard\\exp1_checkpoint_seed2.pt",
+        "seed": 2,
+        "epoch": 3000,
+        "git_sha": "191cde3",
+        "git_dirty": false
+      }
+    ]
+  }
 }

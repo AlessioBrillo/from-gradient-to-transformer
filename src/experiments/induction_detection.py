@@ -432,6 +432,11 @@ def attention_patterns_for_inputs(
     """
     model.eval()
     n_layers = len(getattr(model, "blocks", []))
+    # Inputs built on the CPU (every task generator does) must follow the model to its
+    # device. `collect_patterns_and_tokens` already did this; `detect_from_inputs` did
+    # not, so the exp4 cascade crashed on a GPU with "index is on cpu, ... cuda:0"
+    # after a three-hour training run (2026-11-17).
+    x = x.to(model_device(model))
     with torch.no_grad():
         if _supports(model, "cache"):
             _, cache = model(x, cache={})

@@ -909,6 +909,10 @@ def _build_model(
     checkpoint can be up to `--checkpoint-every` epochs behind the run that
     wrote it, and the manifest has to say which model was actually analysed.
     """
+    # Seed before constructing: until 2026-11-16 the weights were drawn
+    # before the training function seeded, so a seed did not pin the
+    # initialization (Honesty Ledger, 2026-11-12).
+    set_seed(seed)
     checkpoint = _checkpoint_for_seed(args, seed)
     if checkpoint is None:
         model = DecoderOnlyTransformer(

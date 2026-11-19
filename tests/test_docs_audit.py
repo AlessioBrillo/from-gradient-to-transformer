@@ -87,10 +87,10 @@ class TestTheAuditFires:
         target = REPO_ROOT / "README.md"
         original = target.read_bytes()
         text = original.decode("utf-8")
-        assert "twelve audits" in text
+        assert "thirteen audits" in text
         try:
             target.write_bytes(
-                text.replace("twelve audits", "nine audits", 1).encode("utf-8")
+                text.replace("thirteen audits", "nine audits", 1).encode("utf-8")
             )
             problems = check_audit_count()
             assert any("README.md" in p and "nine" in p for p in problems), problems
@@ -287,13 +287,16 @@ class TestTheRung3TableIsManifestBacked:
         target = REPO_ROOT / "portfolio" / "RESULTS.md"
         original = target.read_bytes()
         text = original.decode("utf-8")
-        assert "| 0.100 | 17.67 ± 1.25 |" in text
+        # Read the row from the manifest rather than hard-coding it: the sweep was
+        # re-measured on 2026-11-17 and a literal here broke on the first re-run.
+        stats = json.loads(
+            (REPO_ROOT / "results" / "exp3_superposition_sweep.json").read_text(encoding="utf-8")
+        )["aggregate"]["sparsity_0_1_n_represented"]
+        good = f"| 0.100 | {stats['mean']:.2f} ± {stats['std']:.2f} |"
+        bad = f"| 0.100 | {stats['mean'] - 6:.2f} ± {stats['std']:.2f} |"
+        assert good in text
         try:
-            target.write_bytes(
-                text.replace(
-                    "| 0.100 | 17.67 ± 1.25 |", "| 0.100 | 11.67 ± 1.25 |", 1
-                ).encode("utf-8")
-            )
+            target.write_bytes(text.replace(good, bad, 1).encode("utf-8"))
             problems = check_numbers_against_manifests()
             assert any("RESULTS.md" in p for p in problems), problems
         finally:

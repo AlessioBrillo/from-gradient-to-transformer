@@ -37,3 +37,7 @@ deleted ADR. They were reserved or skipped, never written.
 
 ADRs after this one record architecture or research decisions only, when a decision has
 alternatives worth keeping.
+
+**2026-11-16.** ADR-0001 to ADR-0030, the `00_meta/` micro-phase roadmaps and
+`checklists/gate-debt.md` were moved to `archive/process/`. The paths above are the paths
+of 2026-10-08.

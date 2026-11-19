@@ -24,11 +24,13 @@ Index and links for this phase. Detailed topics/resources/exercises: see [[00_me
 - [[02_classical_ml/exercises/ex-02-decision-trees-and-ensembles|Decision Trees and Random Forests]]
 - [[02_classical_ml/exercises/ex-03-pca-and-feature-geometry|PCA, Feature Geometry, and the SAE Connection]]
 - [[02_classical_ml/exercises/ex-04-gradient-boosting-and-naive-bayes|Gradient Boosting and Naive Bayes]]
+- [[02_classical_ml/exercises/ex-05-metrics-cross-validation-and-leakage|Metrics, cross-validation and leakage you can measure]] (written by Claude)
 
 ## Proofs to myself
 - [[02_classical_ml/proofs/linear-logistic-regression|Linear and Logistic Regression]]
 - [[02_classical_ml/proofs/trees-ensembles-pca|Decision Trees, Ensembles, PCA — with MI Forward Links]]
 - [[02_classical_ml/proofs/complete-ml-pipeline|Gate Proof: Complete ML Pipeline]]
+- [[02_classical_ml/proofs/cross-validation-estimates-and-leakage|When cross-validation is honest, and why leakage breaks it]] (written by Claude)
 
 ## Phase checklist → [[02_classical_ml/checklist]]
 

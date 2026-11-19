@@ -86,7 +86,7 @@ no-head baseline stays the reference, and the honest delta is reported).
 
 ## Links
 
-- [[docs/adr/0003-research-return-ledger]] — the rows these negatives would close.
-- [[00_meta/27_micro-phase-28-the-execution]] — the session whose S3 drafted them.
+- [[archive/process/adr/0003-research-return-ledger]] — the rows these negatives would close.
+- [[archive/process/micro-phases/27_micro-phase-28-the-execution]] — the session whose S3 drafted them.
 - [[07_capstone/research-plan]] · [[portfolio/RESULTS]] — where the struck/kept
   verdict lands.

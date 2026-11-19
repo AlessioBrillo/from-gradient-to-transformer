@@ -20,7 +20,9 @@ concurrency:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # The suite is ~800 tests and takes about 10 minutes on its own (2026-11-19);
+    # 10 left no room for the dependency sync, the type checks and the claim checks.
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v4
@@ -70,7 +72,7 @@ jobs:
           uv run python scripts/check_links.py
 
       - name: Type check — blocking (modules built clean from the start)
-        run: uv run mypy src/results.py src/experiments/runner.py src/experiments/induction_tasks.py src/experiments/induction_detection.py src/experiments/copy_circuit.py src/experiments/content_verdict.py --ignore-missing-imports --follow-imports=silent
+        run: uv run mypy src/results.py src/experiments/runner.py src/experiments/induction_tasks.py src/experiments/induction_detection.py src/experiments/copy_circuit.py src/experiments/content_verdict.py src/models/gpt2.py src/models/attention_only_transformer.py src/models/one_layer_transformer.py src/training/optim.py src/training/loop.py src/evaluation/metrics.py src/evaluation/leakage.py src/experiments/exp7_gpt2_small.py --ignore-missing-imports --follow-imports=silent
         # The blocking allowlist matches Makefile's `typecheck-new` target
         # (six modules held to mypy with zero tolerance). New/rewritten modules
         # land here as their error count is paid down — a ratchet, not a

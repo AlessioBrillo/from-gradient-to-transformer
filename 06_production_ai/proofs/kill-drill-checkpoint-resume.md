@@ -73,7 +73,7 @@ covers rather than padded into a claim about the full run:
 ## Links
 - [[06_production_ai/notes/checkpoint-resume-durability]]
 - [[06_production_ai/exercises/ex-04-kill-drill]]
-- [[00_meta/11_micro-phase-12-resilient-flagship-run]]
+- [[archive/process/micro-phases/11_micro-phase-12-resilient-flagship-run]]
 - Code: `src/experiments/exp1_induction_heads.py` (`save_training_checkpoint`,
   `load_training_checkpoint`)
 

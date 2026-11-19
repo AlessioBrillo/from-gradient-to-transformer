@@ -16,55 +16,61 @@
     "num_samples": 8000,
     "batch_size": 512,
     "single_sparsity": 0.01,
-    "quick": false
+    "quick": false,
+    "geometry_check": false,
+    "sweep_seeds": null,
+    "manifest_path": null
   },
   "per_seed_metrics": [
     {
-      "n_represented": 19.0,
-      "mean_dimensionality": 0.24816462397575378,
-      "mean_abs_correlation": 0.3498401939868927
+      "n_represented": 20.0,
+      "mean_dimensionality": 0.24961169064044952,
+      "mean_abs_correlation": 0.34532272815704346
     },
     {
       "n_represented": 20.0,
-      "mean_dimensionality": 0.24939897656440735,
-      "mean_abs_correlation": 0.3511601984500885
+      "mean_dimensionality": 0.24942827224731445,
+      "mean_abs_correlation": 0.35127484798431396
     },
     {
       "n_represented": 20.0,
-      "mean_dimensionality": 0.24864450097084045,
-      "mean_abs_correlation": 0.3514813184738159
+      "mean_dimensionality": 0.24914252758026123,
+      "mean_abs_correlation": 0.3493959307670593
     }
   ],
   "aggregate": {
-    "n_represented": {
-      "mean": 19.666666666666668,
-      "std": 0.4714045207910317,
-      "min": 19.0,
-      "max": 20.0,
+    "mean_dimensionality": {
+      "mean": 0.24939416348934174,
+      "std": 0.00019304757580994056,
+      "min": 0.24914252758026123,
+      "max": 0.24961169064044952,
       "n": 3.0
     },
     "mean_abs_correlation": {
-      "mean": 0.3508272369702657,
-      "std": 0.0007101501745776911,
-      "min": 0.3498401939868927,
-      "max": 0.3514813184738159,
+      "mean": 0.3486645023028056,
+      "std": 0.0024843742751159857,
+      "min": 0.34532272815704346,
+      "max": 0.35127484798431396,
       "n": 3.0
     },
-    "mean_dimensionality": {
-      "mean": 0.24873603383700052,
-      "std": 0.0005080618580904938,
-      "min": 0.24816462397575378,
-      "max": 0.24939897656440735,
+    "n_represented": {
+      "mean": 20.0,
+      "std": 0.0,
+      "min": 20.0,
+      "max": 20.0,
       "n": 3.0
     }
   },
-  "wall_clock_seconds": 103.7294336949999,
-  "git_sha": "092cb92",
+  "wall_clock_seconds": 438.17492530000163,
+  "git_sha": "2abbfe2",
   "git_dirty": false,
   "device": "cpu",
-  "torch_version": "2.12.1+cu130",
-  "numpy_version": "2.5.0",
-  "python_version": "3.12.12",
+  "torch_version": "2.14.1+cpu",
+  "numpy_version": "2.5.3",
+  "python_version": "3.14.7",
   "n_parameters": 120,
-  "created_at": "2026-08-05T21:39:07+00:00"
+  "created_at": "2026-11-17T10:29:43+00:00",
+  "notes": null,
+  "neuron_ablation": null,
+  "source_provenance": null
 }

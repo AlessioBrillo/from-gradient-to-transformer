@@ -976,9 +976,9 @@ class TestTheCircuitReport:
         )
         for key in always_keys:
             assert key in metrics, f"{key} missing from the circuit report"
-            assert isinstance(metrics[key], float), f"{key} non è un float"
-        # Le chiavi di ablazione causale esistono solo quando c'è almeno un
-        # candidato; altrimenti sono assenti (mai 0.0 fabbricato).
+            assert isinstance(metrics[key], float), f"{key} is not a float"
+        # The causal-ablation keys exist only when there is at least one
+        # candidate; otherwise they are absent (never a fabricated 0.0).
         causal_keys = (
             "group_ablation_drop",
             "max_single_ablation_drop",
@@ -988,15 +988,15 @@ class TestTheCircuitReport:
         n_candidates = int(metrics.get("n_candidate_heads", 0))
         if n_candidates > 0:
             for key in causal_keys:
-                assert key in metrics, f"{key} manca pur essendoci candidati"
+                assert key in metrics, f"{key} is missing although there are candidates"
                 assert isinstance(metrics[key], float)
         else:
             for key in causal_keys:
-                assert key not in metrics, f"{key} non deve esserci senza candidati"
+                assert key not in metrics, f"{key} must be absent without candidates"
 
     def test_no_candidates_omits_causal_zeros(self) -> None:
-        """Senza candidati, le chiavi di ablazione causale sono assenti: non
-        sono 0.0, che sembrerebbe una misura."""
+        """Without candidates the causal-ablation keys are absent: they are
+        not 0.0, which would read as a measurement."""
         from unittest import mock
 
         from src.experiments.exp1_induction_heads import _circuit_report
@@ -1015,7 +1015,7 @@ class TestTheCircuitReport:
             "mean_single_ablation_drop",
             "exploratory_group_ablation_drop",
         ):
-            assert key not in metrics, f"{key} non deve esserci senza candidati"
+            assert key not in metrics, f"{key} must be absent without candidates"
 
     def test_no_confirmed_head_does_not_fabricate_an_ablation_zero(self) -> None:
         """An empty confirmed set has no mean ablation drop: absent, not 0.0."""

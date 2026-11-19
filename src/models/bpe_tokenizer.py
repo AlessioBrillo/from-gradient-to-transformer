@@ -32,7 +32,12 @@ class BPETokenizer:
         self.vocab_size = vocab_size
         self.merges: Dict[Tuple[int, int], int] = {}
         self.vocab: dict[int, bytes] = {}
-        self.pattern = r"""'(?:[sdmt]|ll|ve|re)| ?\w+| ?\S+"""
+        # The last two alternatives keep whitespace that no word or punctuation
+        # chunk claims (newlines, tabs, repeated or trailing spaces). Without
+        # them `findall` silently dropped it and the round trip was lossy
+        # (fixed 2026-11-17). `\s+(?!\S)` leaves the last space of a run to the
+        # following word, the GPT-2 convention.
+        self.pattern = r"""'(?:[sdmt]|ll|ve|re)| ?\w+| ?\S+|\s+(?!\S)|\s+"""
         self._special_tokens: dict[str, int] = {}
 
     def _bytes_to_ids(self, text: str) -> List[int]:

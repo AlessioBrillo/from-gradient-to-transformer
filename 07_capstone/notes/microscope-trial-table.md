@@ -61,11 +61,11 @@ the trials, it does not consume the budget.
 
 ## Links
 
-- [[docs/adr/0003-research-return-ledger]] — row 2, whose budget this table
+- [[archive/process/adr/0003-research-return-ledger]] — row 2, whose budget this table
   spends.
 - [[07_capstone/notes/grokking-verdict-p113]] — the verdict that names
   the suspects.
 - [[07_capstone/notes/positive-control-protocol]] — the gate before
   this table.
-- [[00_meta/28_micro-phase-29-the-positive-negative]] — Session 2, the
+- [[archive/process/micro-phases/28_micro-phase-29-the-positive-negative]] — Session 2, the
   roadmap that executes it.

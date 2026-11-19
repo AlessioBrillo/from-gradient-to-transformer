@@ -146,6 +146,20 @@ class ToyAutoencoder(nn.Module):
 # ---------------------------------------------------------------------------
 # Training
 # ---------------------------------------------------------------------------
+def build_autoencoder(n_features: int, n_dimensions: int, seed: int) -> "ToyAutoencoder":
+    """The model one seed starts from: seeded **before** it is constructed.
+
+    Until 2026-11-16 every caller built the model first and seeded inside
+    `train_autoencoder`, one line after the weights had been drawn, so a
+    seed pinned the data and the batch order but not the initialization
+    (Honesty Ledger, 2026-11-12). Seeding here makes "seed N" mean the same
+    starting point on every code path: alone, after another seed, or at
+    any level of the sparsity sweep.
+    """
+    set_seed(seed)
+    return ToyAutoencoder(n_features=n_features, n_dimensions=n_dimensions)
+
+
 def train_autoencoder(
     model: nn.Module,
     loader: DataLoader,
@@ -404,9 +418,7 @@ def run_sweep_seed(seed: int, args: argparse.Namespace) -> list[dict]:
             seed=seed,
         )
         loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
-        model = ToyAutoencoder(
-            n_features=args.n_features, n_dimensions=args.n_dimensions
-        )
+        model = build_autoencoder(args.n_features, args.n_dimensions, seed)
         train_autoencoder(
             model=model,
             loader=loader,
@@ -467,7 +479,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
         seed=seed,
     )
     loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
-    model = ToyAutoencoder(n_features=args.n_features, n_dimensions=args.n_dimensions)
+    model = build_autoencoder(args.n_features, args.n_dimensions, seed)
     train_autoencoder(
         model=model,
         loader=loader,
@@ -645,7 +657,7 @@ def main() -> None:
                 seed=args.seed,
             )
             loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
-            model = ToyAutoencoder(n_features=5, n_dimensions=2)
+            model = build_autoencoder(5, 2, args.seed)
             train_autoencoder(
                 model=model,
                 loader=loader,

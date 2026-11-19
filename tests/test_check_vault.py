@@ -199,3 +199,83 @@ def test_missing_frontmatter_is_flagged(vault: Path) -> None:
     _note(vault / "01_foundations" / "notes" / "bare_file.md", "Links [[a|A]] and [[b|B]].")
     problems = _run(vault)
     assert any("bare_file.md" in p and "frontmatter" in p for p in problems)
+
+
+# ---------------------------------------------------------------------------
+# Skill evidence: the skill tree's own rule, enforced
+# ---------------------------------------------------------------------------
+def _evidence_vault(root: Path, checklist: str) -> list[str]:
+    for sub, name in (("exercises", "ex-01"), ("proofs", "pf-01")):
+        _note(root / "01_foundations" / sub / f"{name}.md", "x", fm="tags: [phase/1]")
+    (root / "01_foundations" / "checklist.md").write_text(checklist, encoding="utf-8")
+    problems: list[str] = []
+    check_vault.check_skill_evidence(root, problems)
+    return problems
+
+
+def test_a_checked_skill_with_exercise_and_proof_passes(vault: Path) -> None:
+    item = (
+        "- [x] Skill — exercise: [[01_foundations/exercises/ex-01]]; "
+        "proof: [[01_foundations/proofs/pf-01]]\n"
+    )
+    assert _evidence_vault(vault, item) == []
+
+
+def test_a_checked_skill_with_a_note_only_is_flagged(vault: Path) -> None:
+    problems = _evidence_vault(vault, "- [x] Skill — note: [[01_foundations/notes/n]]\n")
+    assert len(problems) == 1 and "exercise or proof" in problems[0]
+
+
+def test_a_checked_skill_missing_only_the_proof_says_so(vault: Path) -> None:
+    item = "- [x] Skill — exercise: [[01_foundations/exercises/ex-01]]\n"
+    problems = _evidence_vault(vault, item)
+    assert len(problems) == 1 and "links no existing proof" in problems[0]
+
+
+def test_a_link_to_a_file_that_does_not_exist_is_not_evidence(vault: Path) -> None:
+    item = (
+        "- [x] Skill — exercise: [[01_foundations/exercises/nope]]; "
+        "proof: [[01_foundations/proofs/pf-01]]\n"
+    )
+    assert "exercise" in _evidence_vault(vault, item)[0]
+
+
+def test_evidence_on_a_continuation_line_counts(vault: Path) -> None:
+    item = (
+        "- [x] Skill\n  exercise: [[01_foundations/exercises/ex-01]],\n"
+        "  proof: [[01_foundations/proofs/pf-01]]\n"
+    )
+    assert _evidence_vault(vault, item) == []
+
+
+def test_a_manifest_is_evidence_for_a_research_item(vault: Path) -> None:
+    (vault / "results").mkdir()
+    (vault / "results" / "run.json").write_text("{}", encoding="utf-8")
+    assert _evidence_vault(vault, "- [x] Reproduced it — `results/run.json`\n") == []
+
+
+def test_a_gate_line_needs_only_the_proof(vault: Path) -> None:
+    gate = "- [x] **Proof passed** → next. (gate proof: [[01_foundations/proofs/pf-01]])\n"
+    assert _evidence_vault(vault, gate) == []
+
+
+def test_unchecked_and_studied_items_are_not_flagged(vault: Path) -> None:
+    assert _evidence_vault(vault, "- [ ] todo\n- [~] studied, not verified\n") == []
+
+
+def test_a_descoped_item_must_say_why(vault: Path) -> None:
+    assert _evidence_vault(vault, "- [-] quietly dropped\n")[0].endswith("`descoped` and why.")
+    assert _evidence_vault(vault, "- [-] dropped (descoped 2026-10-11: no need)\n") == []
+
+
+def test_a_directory_named_in_backticks_is_not_a_deliverable(vault: Path) -> None:
+    """Only a file evidences a deliverable; `portfolio/` alone must not pass an item."""
+    (vault / "portfolio").mkdir()
+    problems = _evidence_vault(vault, "- [x] Wrote it - `portfolio/`\n")
+    assert len(problems) == 1
+
+
+def test_an_existing_deliverable_file_is_evidence(vault: Path) -> None:
+    (vault / "portfolio").mkdir()
+    (vault / "portfolio" / "paper.tex").write_text("x", encoding="utf-8")
+    assert _evidence_vault(vault, "- [x] Wrote it - `portfolio/paper.tex`\n") == []

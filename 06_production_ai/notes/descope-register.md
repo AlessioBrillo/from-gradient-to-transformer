@@ -29,9 +29,9 @@ descoped item with a dated reason is information.
 | **RLHF / DPO** | Phase 5 breadth | **Descoped 2026-10-11** | Same reasoning as LoRA: preference-tuning presupposes a pretrained policy. |
 | **DVC / lakeFS (data versioning)** | Phase 6 breadth | **Descoped 2026-10-11** | All data here is synthetic and generated from a seed (`src/data/datasets.py`, and every experiment's `make_*_data`). There is no external dataset to version. The provenance problem is *code + config + seed*, which `src/results.py` manifests already solve; duplicating that in a data-VCS would create two sources of truth for the same fact. |
 | **Docker / containerised deploys** | Phase 6 breadth | **Descoped 2026-10-11** | `uv.lock` plus `make ci-check` already pins the environment; the clean-clone proof (`06_production_ai/proofs/reproducible-from-clean-clone`) demonstrates it. A container would be a second, slower-to-update definition of the same environment. |
-| **HF Spaces SAE dashboard** | Phase 6 checklist, Rung 5 | **Descoped 2026-10-11** — *conditional* | Blocked on a confirmed induction head. The "0/8" this entry cited was retracted on 2026-10-19 (the detector measured the wrong offset), so the blocker is now simply "no confirmed head yet" — the standard-scale run (issue #169) is the open work. An interactive feature browser over 53%-dense features would be a demo of the SAE *not working*. Revisit if and only if a checkpoint with a confirmed head lands. |
-| **W&B experiment tracking** | Phase 6 checklist | **CLOSED-WITH-ONE-REASON 2026-09-08** | Credentials never configured; the manifests on disk carry the same per-seed and aggregate numbers W&B would. Recorded in `checklists/gate-debt.md` and `07_capstone/notes/mp-90-wandb-gpu-close`. |
-| **Compiled paper PDF** | Phase 6 checklist | **In progress — not descoped** | `.github/workflows/paper.yml` compiles `main.tex` on push; the prosa itself is issue #171. The PDF is a build product, not a capability. |
+| **HF Spaces SAE dashboard** | Phase 6 checklist, Rung 5 | **Descoped 2026-10-11** | Originally blocked on a confirmed head. That blocker is gone: issue #169 closed on 2026-10-20 and the standard-scale checkpoint exists. The reason that stands is the one in `portfolio/README.md`: a browsable dashboard is a product, and the science it would show (a sparse dictionary, most of its features dead) is already in the manifest `results/exp5_real_activations.json`. The earlier wording of this row ("53%-dense features", "0/8") quoted measurements that were retracted on 2026-10-19 and 2026-10-20. |
+| **W&B experiment tracking** | Phase 6 checklist | **CLOSED-WITH-ONE-REASON 2026-09-08** | Credentials never configured; the manifests on disk carry the same per-seed and aggregate numbers W&B would. Recorded in `archive/process/gate-debt.md` and `archive/process/capstone-notes/mp-90-wandb-gpu-close`. |
+| **Compiled paper PDF** | Phase 6 checklist | **Done 2026-10-12** | Issue #171 is closed: the prose is written from the manifests, the gate's `paper-check` step compiles `main.tex`, and the PDF ships with the live site. The PDF is a build product, not a capability. |
 | **Rung 6 / ACDC** | Phase 7 ladder | **Descoped 2026-08-01** | `exp6_automated_circuit.py` simulated results with random draws. Deleted rather than kept as scaffolding. Revisit only with a real ACDC implementation. |
 | **FlashAttention** | Phase 4 breadth | **Descoped 2026-10-11** | A memory-bandwidth optimisation for long sequences. The longest sequence here is 128 positions on a < 5M-parameter model, where it would be pure overhead. |
 | **BERT / encoder-only** | Phase 4 breadth | **Descoped 2026-10-11** | Now documented rather than absent: see `04_nlp_and_transformers/notes/encoder-only-bert` for why the MI thesis rules it out. |
@@ -40,14 +40,14 @@ descoped item with a dated reason is information.
 
 Deliberately **not** descoped, because they are the actual research:
 
-| Item | Issue |
-|---|---|
-| Rung 2 P=113 positive control and NO-GROK recheck (GPU) | #167 |
-| Phase diagram rebuilt as a protocol ablation | #168 |
-| Rung 1/4/5 standard-scale induction run and head validation (GPU) | #169 |
-| Capstone 3 seeds × 20k steps with W&B | #170 |
-| Paper prose from committed manifests | #171 |
-| **This register** | #172 |
+| Item | Issue | State on 2026-11-16 |
+|---|---|---|
+| Rung 2 P=113 positive control and NO-GROK recheck (GPU) | #167 | closed 2026-10-14 |
+| Phase diagram rebuilt as a protocol ablation | #168 | **open** |
+| Rung 1/4/5 standard-scale induction run and head validation (GPU) | #169 | closed 2026-10-20 |
+| Capstone 3 seeds × 20k steps | #170 | closed 2026-10-15 |
+| Paper prose from committed manifests | #171 | closed 2026-10-12 |
+| **This register** | #172 | closed 2026-10-12 |
 
 ## How to use this note
 

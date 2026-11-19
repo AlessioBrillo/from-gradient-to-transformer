@@ -312,7 +312,7 @@ class TestProfile:
         assert not (tmp_path / "results" / "induction_content.json").exists()
 
     def test_profile_induction_content_passes_with_exp1_only(self, tmp_path: Path) -> None:
-        """exp4 è opzionale: un run negativo valido che salta exp4 è pinnabile."""
+        """exp4 is optional: a valid negative run that skips exp4 can be pinned."""
         src = self._write_manifests(
             tmp_path, ["induction_content.json"]  # exp4_content.json missing — OK
         )
@@ -349,11 +349,11 @@ class TestProfile:
         assert "exp5_content.json" in proc.stderr
 
     def test_profile_phase_diagram_requires_all_ten_cells(self, tmp_path: Path) -> None:
-        """Il profilo phase-diagram richiede tutte e dieci le celle del sweep."""
+        """The phase-diagram profile requires all ten cells of the sweep."""
         src = self._write_manifests(
             tmp_path,
             [
-                "induction_content.json",  # estraneo al profilo: ignorato
+                "induction_content.json",  # not part of the profile: ignored
             ]
             + [f"phase_diagram_{cid}.json" for cid in (
                 "p113_nanda_wd10",
@@ -365,7 +365,7 @@ class TestProfile:
                 "p113_gradclip_1_wd10",
                 "p113_nanda_wd01",
                 "p113_nanda_wd05",
-                # p113_nanda_wd20 mancante: deve fallire
+                # p113_nanda_wd20 is missing: it must fail
             )],
         )
         proc = subprocess.run(

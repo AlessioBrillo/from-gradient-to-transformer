@@ -78,7 +78,7 @@ fixture.
 ## Links
 - [[06_production_ai/notes/results-manifests-and-provenance]]
 - [[06_production_ai/exercises/ex-05-falsify-the-figure-gate]]
-- [[00_meta/11_micro-phase-12-resilient-flagship-run]]
+- [[archive/process/micro-phases/11_micro-phase-12-resilient-flagship-run]]
 - Code: `src/results.py` (`verify_claims`, `_git_tracked`, `FIGURE_CITATION_RE`)
 - Pineau et al., *Improving Reproducibility in Machine Learning Research*, JMLR 2021
 

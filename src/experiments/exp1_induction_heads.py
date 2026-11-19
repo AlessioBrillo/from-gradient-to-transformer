@@ -70,6 +70,10 @@ from src.experiments.induction_tasks import (
     task_datasets,
 )
 from src.experiments.runner import aggregate_metrics, parse_seeds, run_seeds
+from src.models.attention_only_transformer import (
+    AttentionOnlyBlock as AttentionOnlyBlock,
+)
+from src.models.attention_only_transformer import AttentionOnlyTransformer
 from src.reproducibility import set_seed
 from src.results import (
     ResultsManifest,
@@ -234,114 +238,10 @@ def make_task_data(
 # ---------------------------------------------------------------------------
 # Model: 2-layer attention-only transformer
 # ---------------------------------------------------------------------------
-class AttentionOnlyBlock(nn.Module):
-    """A single attention-only block (no MLP)."""
-
-    def __init__(self, d_model: int, n_heads: int) -> None:
-        super().__init__()
-        assert d_model % n_heads == 0
-        self.d_head = d_model // n_heads
-        self.n_heads = n_heads
-
-        self.ln = nn.LayerNorm(d_model)
-        self.W_Q = nn.Linear(d_model, d_model, bias=False)
-        self.W_K = nn.Linear(d_model, d_model, bias=False)
-        self.W_V = nn.Linear(d_model, d_model, bias=False)
-        self.W_O = nn.Linear(d_model, d_model, bias=False)
-
-        # Optional per-head ablation mask: shape (n_heads,), 1.0 = keep,
-        # 0.0 = ablate. Applied to each head's output *before* W_O mixes the
-        # heads together, so a zeroed head is actually a zeroed head — not an
-        # arbitrary post-mixing subspace. See causal_ablation().
-        self.head_mask: Optional[torch.Tensor] = None
-
-    def forward(
-        self,
-        x: torch.Tensor,
-        past_attn: Optional[list] = None,
-        cache: Optional[dict] = None,
-        cache_prefix: str = "",
-    ) -> torch.Tensor:
-        """One attention-only block.
-
-        `cache` records the same tensors the `DecoderOnlyTransformer` records
-        (`resid_pre`, `attn.attn_probs`, `attn.V`, `attn.attn_out`,
-        `resid_mid`, `resid_post`), so the circuit-patching interventions
-        (exp4) can be written once against the cache protocol instead of
-        twice against two model families. `resid_mid == resid_post` here
-        because there is no MLP branch.
-        """
-        residual = x
-        x = self.ln(x)
-        B, S, D = x.shape
-
-        Q = self.W_Q(x).view(B, S, self.n_heads, self.d_head).transpose(1, 2)
-        K = self.W_K(x).view(B, S, self.n_heads, self.d_head).transpose(1, 2)
-        V = self.W_V(x).view(B, S, self.n_heads, self.d_head).transpose(1, 2)
-
-        attn_scores = Q @ K.transpose(-2, -1) / (self.d_head**0.5)
-        # Causal mask
-        mask = torch.triu(torch.full((S, S), float("-inf"), device=x.device), diagonal=1)
-        attn_scores = attn_scores + mask
-        attn_probs = attn_scores.softmax(dim=-1)
-
-        if past_attn is not None:
-            past_attn.append(attn_probs.detach().cpu())
-
-        out = attn_probs @ V  # (B, n_heads, S, d_head)
-        if self.head_mask is not None:
-            head_mask = self.head_mask.view(1, self.n_heads, 1, 1).to(out.device, out.dtype)
-            out = out * head_mask
-        out = out.transpose(1, 2).contiguous().view(B, S, D)
-        attn_out = self.W_O(out)
-        block_out = residual + attn_out
-
-        if cache is not None:
-            cache[f"{cache_prefix}.resid_pre"] = residual.detach().cpu()
-            cache[f"{cache_prefix}.attn.attn_probs"] = attn_probs.detach().cpu()
-            cache[f"{cache_prefix}.attn.V"] = V.detach().cpu()
-            cache[f"{cache_prefix}.attn.attn_out"] = attn_out.detach().cpu()
-            cache[f"{cache_prefix}.resid_mid"] = block_out.detach().cpu()
-            cache[f"{cache_prefix}.resid_post"] = block_out.detach().cpu()
-
-        return block_out
-
-
-class AttentionOnlyTransformer(nn.Module):
-    """Decoder-only transformer with attention-only blocks (no MLP)."""
-
-    def __init__(
-        self,
-        vocab_size: int,
-        d_model: int,
-        n_layers: int,
-        n_heads: int,
-        max_seq_len: int,
-    ) -> None:
-        super().__init__()
-        self.embed = nn.Embedding(vocab_size, d_model)
-        self.pos_embed = nn.Embedding(max_seq_len, d_model)
-        self.blocks = nn.ModuleList([AttentionOnlyBlock(d_model, n_heads) for _ in range(n_layers)])
-        self.ln_final = nn.LayerNorm(d_model)
-        self.unembed = nn.Linear(d_model, vocab_size, bias=False)
-
-    def forward(
-        self,
-        x: torch.Tensor,
-        record_attn: bool = False,
-        cache: Optional[dict] = None,
-    ) -> tuple[torch.Tensor, Optional[list]]:
-        B, S = x.shape
-        positions = torch.arange(S, device=x.device).unsqueeze(0)
-        h = self.embed(x) + self.pos_embed(positions)
-
-        attn_records = [] if record_attn else None
-        for i, block in enumerate(self.blocks):
-            h = block(h, past_attn=attn_records, cache=cache, cache_prefix=f"blocks.{i}")
-
-        h = self.ln_final(h)
-        logits = self.unembed(h)
-        return logits, attn_records
+# The model lives in src/models/attention_only_transformer.py (moved on
+# 2026-11-16); it is imported at the top of this module, so existing
+# `from src.experiments.exp1_induction_heads import AttentionOnlyTransformer`
+# imports keep working.
 
 
 # ---------------------------------------------------------------------------
@@ -1611,6 +1511,25 @@ def _probe_parameter_count(args: argparse.Namespace) -> int:
     )
 
 
+def build_seeded_model(args: argparse.Namespace, seed: int) -> "AttentionOnlyTransformer":
+    """The model one seed starts from: seeded **before** it is constructed.
+
+    Until 2026-11-16 the model was built first and seeded inside the
+    training function, after the weights had been drawn, so a seed pinned
+    the data and the batch order but not the initialization (Honesty Ledger,
+    2026-11-12). In a multi-seed run the stream position even depended on
+    `_probe_parameter_count`, which builds a throwaway model between seeds.
+    """
+    set_seed(seed)
+    return AttentionOnlyTransformer(
+        vocab_size=args.vocab_size,
+        d_model=args.d_model,
+        n_layers=args.n_layers,
+        n_heads=args.n_heads,
+        max_seq_len=args.seq_len,
+    )
+
+
 def _resolved_manifest_path(args: argparse.Namespace) -> Path:
     """Where this run's (multi-seed) manifest goes.
 
@@ -1698,13 +1617,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict[str, float]:
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
 
-    model = AttentionOnlyTransformer(
-        vocab_size=args.vocab_size,
-        d_model=args.d_model,
-        n_layers=args.n_layers,
-        n_heads=args.n_heads,
-        max_seq_len=args.seq_len,
-    )
+    model = build_seeded_model(args, seed)
 
     fresh_batches_fn = _make_fresh_batches_fn(args, seed) if args.fresh_batches else None
 
@@ -2258,13 +2171,7 @@ def main() -> None:
     logger.info(f"Data: train={len(train_dataset)}, val={len(val_dataset)} | task={task}")
 
     # Model
-    model = AttentionOnlyTransformer(
-        vocab_size=args.vocab_size,
-        d_model=args.d_model,
-        n_layers=args.n_layers,
-        n_heads=args.n_heads,
-        max_seq_len=args.seq_len,
-    )
+    model = build_seeded_model(args, args.seed)
     n_params = sum(p.numel() for p in model.parameters())
     logger.info(f"Model parameters: {n_params:,}")
 

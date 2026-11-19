@@ -1,6 +1,6 @@
 [project]
 name = "from-gradient-to-transformer"
-version = "1.1.0"
+version = "2.0.0"
 description = "From gradient descent to mechanistic interpretability: train small transformers and reverse-engineer their internals."
 authors = [{ name = "Alessio Brillo" }]
 license = { text = "MIT" }
@@ -9,14 +9,12 @@ requires-python = ">=3.12"
 dependencies = [
     "torch>=2.2",
     "numpy>=1.26",
-    "wandb>=0.17",
     "matplotlib>=3.8",
     "tqdm>=4.66",
     # Declared explicitly rather than leaned on transitively: exp6_capstone.py
     # and scripts/phase_diagram_sweep.py import yaml directly. It used to work
     # only because wandb happens to depend on PyYAML.
     "pyyaml>=6.0",
-    "kaggle>=1.6",
 ]
 
 # ---------------------------------------------------------------------------
@@ -57,6 +55,23 @@ dev = [
 notebook = [
     "jupyter>=1.0",
     "ipykernel>=6.29",
+]
+# Optional since 2026-11-16. W&B tracking was descoped on 2026-09-08 (no
+# credentials; the manifests are the record) and every import of it is lazy
+# and guarded, so a clone should not have to install it to run an experiment.
+tracking = [
+    "wandb>=0.17",
+]
+# Rung 7 (ADR-0034): the Hugging Face reference that GPT-2 weights are loaded from
+# and checked against, and the GPT-2 tokenizer. Nothing else in the repository
+# imports it, and the unit tests skip the parity check when it is absent.
+real = [
+    "transformers>=4.40,<5",
+]
+# The Kaggle CLI, used only by scripts/kaggle_run.py through a subprocess to
+# push and fetch remote GPU runs. No module in src/ imports it.
+remote = [
+    "kaggle>=1.6",
 ]
 
 [tool.ruff]
@@ -103,8 +118,8 @@ branch = true
 [tool.coverage.report]
 # Ratchet: the floor is the current measured value, and it only goes up.
 # Before this existed there was no threshold anywhere, so coverage could fall
-# indefinitely without CI noticing. Measured 2026-10-11 — raise via PR.
-fail_under = 55
+# indefinitely without CI noticing. Measured 73.79% on 2026-11-17 — raise via PR.
+fail_under = 73
 show_missing = true
 exclude_lines = [
     "pragma: no cover",

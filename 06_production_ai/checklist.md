@@ -18,7 +18,7 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
   wired into exp1/exp3/exp4. See
   [[06_production_ai/notes/results-manifests-and-provenance]],
   [[06_production_ai/notes/multi-seed-experiment-design]].
-- [x] **Experiment tracking:** (descoped 2026-10-11: no credentials; manifests on disk) W&B for loss curves, progress measures, hyperparameter sweeps
+- [-] **Experiment tracking:** (descoped 2026-10-11: no credentials; manifests on disk) W&B for loss curves, progress measures, hyperparameter sweeps
 - [~] **`make reproduce` for every experiment** — pre-existing target regenerates all
   figures; `make reproduce-multiseed` (exp1/exp3/exp4) added 2026-08-02, not yet exp2/exp5.
 - [~] **CI for research:** GitHub Actions running fast smoke tests on every push —
@@ -32,7 +32,7 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
   manifest tags: Rung 2 (`results/grokking_nanda_p113.json`), Rung 5
   (`results/exp5_real_activations.json`), Rung 1 content
   (`results/induction_content_derisk_standard.json`, gate manifest).
-- [x] **Feature dashboard deployment:** (descoped 2026-10-11: no confirmed head) Hugging Face Spaces for SAE feature browser
+- [-] **Feature dashboard deployment:** (descoped 2026-10-11: no confirmed head) Hugging Face Spaces for SAE feature browser
 - [x] **Mini-paper workflow:** LaTeX template, `make paper` (added 2026-08-08), citation
   management — `portfolio/paper/main.tex` + `references.bib` scaffold added 2026-08-02;
   prose written from manifests in paper v20 (2026-09-17), bibliography wired and guarded
@@ -40,7 +40,7 @@ Operational subset of the [[00_meta/02_skill-tree|skill tree]]. Check an item on
   into the site deploy (`pages.yml`, 2026-10-12) so the paper actually ships.
 
 ## Light Touch (context)
-- [x] Data versioning (descoped 2026-10-11: all data synthetic, seed-controlled) (DVC / lakeFS) — for large activation datasets
-- [x] Containerization (descoped 2026-10-11: uv.lock + clean-clone proof sufficient) (Docker) — for reproducible experiment environments
-- [x] System design doc (descoped 2026-10-11: captured in descope register) — for the capstone pipeline
-- [x] Security / privacy / governance (descoped 2026-10-11: no PII) — GDPR compliance, PII handling in datasets
+- [-] Data versioning (descoped 2026-10-11: all data synthetic, seed-controlled) (DVC / lakeFS) — for large activation datasets
+- [-] Containerization (descoped 2026-10-11: uv.lock + clean-clone proof sufficient) (Docker) — for reproducible experiment environments
+- [-] System design doc (descoped 2026-10-11: captured in descope register) — for the capstone pipeline
+- [-] Security / privacy / governance (descoped 2026-10-11: no PII) — GDPR compliance, PII handling in datasets

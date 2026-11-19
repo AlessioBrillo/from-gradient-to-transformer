@@ -1,0 +1,242 @@
+{
+  "experiment": "exp1_induction_heads",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "args": {
+    "seed": 42,
+    "vocab_size": 2048,
+    "seq_len": 64,
+    "d_model": 64,
+    "n_layers": 2,
+    "n_heads": 4,
+    "epochs": 3000,
+    "lr": 0.001,
+    "weight_decay": 0.1,
+    "batch_size": 64,
+    "num_train": 8192,
+    "no_train": false,
+    "quick": false,
+    "standard": true,
+    "wandb": false,
+    "scale": null,
+    "save_model": true,
+    "fresh_batches": true,
+    "checkpoint_dir": "checkpoints/induction_emergence",
+    "checkpoint_every": 250,
+    "resume": true,
+    "resume_from": null,
+    "detect_every": 50,
+    "stop_on_confirmed": true,
+    "stop_rule": "any",
+    "detect_patience": 2,
+    "probe_dissociation": true,
+    "save_manifest": true,
+    "manifest_path": "results/induction_standard_emergence.json",
+    "batches": null,
+    "batch_mode": "fresh"
+  },
+  "per_seed_metrics": [
+    {
+      "final_val_acc": 0.5082620287698413,
+      "total_induction_heads": 3.0,
+      "total_mass_heads": 3.0,
+      "confirmed_heads_first_layer": 3.0,
+      "confirmed_heads_later_layers": 0.0,
+      "mechanism_confirmed": 0.0,
+      "peak_induction_mass": 0.9454270005226135,
+      "peak_prev_token_mass": 0.051441822201013565,
+      "k_composition_score": 0.06413904577493668,
+      "l0_duplicate_head_mass": 0.01659287139773369,
+      "mean_ablation_drop": 0.0679615162037037,
+      "confirmed_epoch": 100.0,
+      "epochs_run": 100.0,
+      "steps_run": 12800.0,
+      "probe_content_mass": 0.029575543478131294,
+      "probe_period_mass": 0.8996869921684265,
+      "probe_content_wins": 0.0,
+      "batch_mode": 1.0
+    },
+    {
+      "final_val_acc": 0.5081845238095238,
+      "total_induction_heads": 3.0,
+      "total_mass_heads": 3.0,
+      "confirmed_heads_first_layer": 3.0,
+      "confirmed_heads_later_layers": 0.0,
+      "mechanism_confirmed": 0.0,
+      "peak_induction_mass": 0.9449374675750732,
+      "peak_prev_token_mass": 0.02048053964972496,
+      "k_composition_score": 0.1096816137433052,
+      "l0_duplicate_head_mass": 0.018589001148939133,
+      "mean_ablation_drop": 0.004133597883597906,
+      "confirmed_epoch": 100.0,
+      "epochs_run": 100.0,
+      "steps_run": 12800.0,
+      "probe_content_mass": 0.03105146624147892,
+      "probe_period_mass": 0.9301730990409851,
+      "probe_content_wins": 0.0,
+      "batch_mode": 1.0
+    },
+    {
+      "final_val_acc": 0.5082620287698413,
+      "total_induction_heads": 3.0,
+      "total_mass_heads": 3.0,
+      "confirmed_heads_first_layer": 3.0,
+      "confirmed_heads_later_layers": 0.0,
+      "mechanism_confirmed": 0.0,
+      "peak_induction_mass": 0.9506152272224426,
+      "peak_prev_token_mass": 0.026792561635375023,
+      "k_composition_score": 0.06692243367433548,
+      "l0_duplicate_head_mass": 0.02190813422203064,
+      "mean_ablation_drop": 0.04111896494708996,
+      "confirmed_epoch": 100.0,
+      "epochs_run": 100.0,
+      "steps_run": 12800.0,
+      "probe_content_mass": 0.0317467525601387,
+      "probe_period_mass": 0.8958961963653564,
+      "probe_content_wins": 0.0,
+      "batch_mode": 1.0
+    }
+  ],
+  "aggregate": {
+    "k_composition_score": {
+      "mean": 0.08024769773085912,
+      "std": 0.020843917912593872,
+      "min": 0.06413904577493668,
+      "max": 0.1096816137433052,
+      "n": 3.0
+    },
+    "total_induction_heads": {
+      "mean": 3.0,
+      "std": 0.0,
+      "min": 3.0,
+      "max": 3.0,
+      "n": 3.0
+    },
+    "final_val_acc": {
+      "mean": 0.5082361937830688,
+      "std": 3.6536188677372e-05,
+      "min": 0.5081845238095238,
+      "max": 0.5082620287698413,
+      "n": 3.0
+    },
+    "confirmed_heads_later_layers": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 3.0
+    },
+    "mechanism_confirmed": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 3.0
+    },
+    "peak_induction_mass": {
+      "mean": 0.9469932317733765,
+      "std": 0.0025689231079025912,
+      "min": 0.9449374675750732,
+      "max": 0.9506152272224426,
+      "n": 3.0
+    },
+    "peak_prev_token_mass": {
+      "mean": 0.032904974495371185,
+      "std": 0.013358429237338421,
+      "min": 0.02048053964972496,
+      "max": 0.051441822201013565,
+      "n": 3.0
+    },
+    "l0_duplicate_head_mass": {
+      "mean": 0.019030002256234486,
+      "std": 0.0021922387651766855,
+      "min": 0.01659287139773369,
+      "max": 0.02190813422203064,
+      "n": 3.0
+    },
+    "mean_ablation_drop": {
+      "mean": 0.03773802634479719,
+      "std": 0.026167076624948375,
+      "min": 0.004133597883597906,
+      "max": 0.0679615162037037,
+      "n": 3.0
+    },
+    "total_mass_heads": {
+      "mean": 3.0,
+      "std": 0.0,
+      "min": 3.0,
+      "max": 3.0,
+      "n": 3.0
+    },
+    "confirmed_epoch": {
+      "mean": 100.0,
+      "std": 0.0,
+      "min": 100.0,
+      "max": 100.0,
+      "n": 3.0
+    },
+    "steps_run": {
+      "mean": 12800.0,
+      "std": 0.0,
+      "min": 12800.0,
+      "max": 12800.0,
+      "n": 3.0
+    },
+    "probe_content_mass": {
+      "mean": 0.030791254093249638,
+      "std": 0.0009052881644398967,
+      "min": 0.029575543478131294,
+      "max": 0.0317467525601387,
+      "n": 3.0
+    },
+    "batch_mode": {
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0,
+      "n": 3.0
+    },
+    "epochs_run": {
+      "mean": 100.0,
+      "std": 0.0,
+      "min": 100.0,
+      "max": 100.0,
+      "n": 3.0
+    },
+    "probe_content_wins": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 3.0
+    },
+    "probe_period_mass": {
+      "mean": 0.9085854291915894,
+      "std": 0.015343036430251264,
+      "min": 0.8958961963653564,
+      "max": 0.9301730990409851,
+      "n": 3.0
+    },
+    "confirmed_heads_first_layer": {
+      "mean": 3.0,
+      "std": 0.0,
+      "min": 3.0,
+      "max": 3.0,
+      "n": 3.0
+    }
+  },
+  "wall_clock_seconds": 390.642888605,
+  "git_sha": "e9b5707",
+  "git_dirty": false,
+  "device": "cuda",
+  "torch_version": "2.11.0+cu128",
+  "numpy_version": "2.1.3",
+  "python_version": "3.13.15",
+  "n_parameters": 299392,
+  "created_at": "2026-10-19T23:12:30+00:00",
+  "notes": null,
+  "neuron_ablation": null
+}

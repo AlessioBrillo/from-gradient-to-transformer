@@ -102,4 +102,4 @@ replace actually launching `--standard` for real and watching it survive hours, 
 - [[00_meta/02_skill-tree]] → candidate new item: reproducible job durability (Phase 6) —
   flips only once this drill's evidence exists, per the vault's own rule
 - [[06_production_ai/notes/checkpoint-resume-durability]]
-- [[00_meta/11_micro-phase-12-resilient-flagship-run]]
+- [[archive/process/micro-phases/11_micro-phase-12-resilient-flagship-run]]

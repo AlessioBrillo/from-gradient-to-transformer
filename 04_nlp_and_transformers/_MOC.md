@@ -28,8 +28,11 @@ Index and links for this phase. Detailed topics/resources/exercises: see [[00_me
 - [[04_nlp_and_transformers/exercises/ex-01-transformer-from-scratch|Build a Decoder-Only Transformer from Scratch]]
 - [[04_nlp_and_transformers/exercises/ex-02-induction-head-detection|Identify Induction Heads via Attention Patterns]]
 - [[04_nlp_and_transformers/exercises/ex-03-activation-patching|Activation Patching to Verify Circuit Components]]
+- [[04_nlp_and_transformers/exercises/ex-04-bpe-from-scratch|A byte-level BPE tokenizer that does not lose text]] (written by Claude)
 
 ## Proofs to myself
+- [[04_nlp_and_transformers/proofs/attention-rope-and-the-cache|Proof: attention, RoPE and the cache are correct]] (written by Claude)
+- [[04_nlp_and_transformers/proofs/bpe-is-lossless-and-ordered|Proof: byte-level BPE is lossless and ordered]] (written by Claude)
 - [[04_nlp_and_transformers/proofs/qk-ov-decomposition|QK/OV Circuit Decomposition]]
 - [[04_nlp_and_transformers/proofs/residual-stream-communication-channel|Residual Stream as Communication Channel]]
 - [[04_nlp_and_transformers/proofs/logit-lens|Logit Lens — Reading the Residual Stream]]

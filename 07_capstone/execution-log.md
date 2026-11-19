@@ -18,8 +18,8 @@ Only runs that actually happened are recorded here.
 | **2026-10-20** | **SAE on the real activations of that checkpoint** | Reconstruction is essentially perfect (FVE 0.99998, MSE 0.0004) and the dictionary is **sparse** (L0 15.12/512 = 3.0% active) — but it is ~8× wider than the 64-dimensional residual stream it covers and **78.1% of its features never fire** | `results/exp5_real_activations.json` (1 seed, device cpu) |
 | **2026-10-14** | **The planned 3-seed, 20,000-step capstone run (`configs/capstone.yaml`), on a Kaggle T4** | **The dissociation persists at full budget**: induction accuracy 0.5034 ± 0.0002, modular accuracy 0.1699 ± 0.0286 (vs 1.0 solo at P=113); Fourier k_99 = 97.4/113 (L1 reading), max K-comp 0.136 ± 0.027 | `results/capstone_20k.json` (git_sha 8243ec5, clean tree, device cuda, torch 2.11.0+cu128) |
 | **2026-10-17** | **Post-audit energy re-analysis of the 3×20k checkpoints** (`scripts/capstone_energy_from_checkpoints.py`, no retraining) | **Fourier regime DENSE under the energy criterion**: k_energy_90 = 49.0 ± 0.0 of 56, energy_sparse = 0/3 seeds, frac_energy_top5 = 0.185 ± 0.013 — the capstone's joint solution is not a sparse Fourier circuit. | `results/capstone_20k_energy.json` (re-analysis of results/capstone_20k.json checkpoints, git tree dirty at analysis time) |
-| 2026-09-07 | MP-88 shakedown, seed 0, 2,000 steps, joint modular + induction | Induction accuracy 0.5041; modular accuracy 0.0047 (chance) | [mp-88-shakedown-verdict](notes/mp-88-shakedown-verdict.md), `results/probe_capstone_shakedown.json` |
-| 2026-09 | MP-89 retune A/B, 500 steps per arm (control, vocab offset, curriculum reweight) | Neither arm moves modular accuracy off chance | [mp-89-retune-verdict](notes/mp-89-retune-verdict.md), `results/probe_capstone_ab_*.json` |
+| 2026-09-07 | MP-88 shakedown, seed 0, 2,000 steps, joint modular + induction | Induction accuracy 0.5041; modular accuracy 0.0047 (chance) | [mp-88-shakedown-verdict](../archive/process/capstone-notes/mp-88-shakedown-verdict.md), `results/probe_capstone_shakedown.json` |
+| 2026-09 | MP-89 retune A/B, 500 steps per arm (control, vocab offset, curriculum reweight) | Neither arm moves modular accuracy off chance | [mp-89-retune-verdict](../archive/process/capstone-notes/mp-89-retune-verdict.md), `results/probe_capstone_ab_*.json` |
 | 2026-10-03 | SAE smoke check on the induction checkpoint | L0 about 250/512, max activation about 8.1; not an induction-circuit test | `scripts/verify_sae_induction.py`, [RESULTS](../portfolio/RESULTS.md) |
 
 **Reading the 2026-10-14 run honestly.** The headline is the *stability* of the
@@ -44,7 +44,7 @@ not CI-reproducible.
 ## What is pending
 
 - Weights & Biases was never connected (no credentials); see
-  [mp-90-wandb-gpu-close](notes/mp-90-wandb-gpu-close.md). The 20k run is recorded
+  [mp-90-wandb-gpu-close](../archive/process/capstone-notes/mp-90-wandb-gpu-close.md). The 20k run is recorded
   manifest-only, which the manifests make reproducible.
 - exp6 gaining the energy metric (so the capstone's Fourier reading is not
   hostage to the falsified L1 classifier) — done 2026-10-17; the 20k run reads

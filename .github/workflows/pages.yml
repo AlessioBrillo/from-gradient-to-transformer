@@ -13,12 +13,10 @@ on:
       # every push to main, including pushes that only touched tests/.
       - 'README.md'
       - 'portfolio/**'
+      - 'docs/for-*.md'
       - 'scripts/build_site.py'
       - 'src/results.py'
       - 'Makefile'
-  schedule:
-    # Weekly refresh of the figures the site ships.
-    - cron: '17 4 * * 1'
   workflow_dispatch:  # Allow manual trigger
 
 permissions:
@@ -34,11 +32,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # The quick sweep (notably exp3's 2000-epoch sparsity sweep) needs
-    # ~20-30 min on a GH CPU runner; the prior 10-min step timeout failed
-    # five consecutive main pushes at ~34% of the sweep. Verified from
-    # run logs (e.g. 2026-09-05): timeout, not a science failure.
-    timeout-minutes: 35
+    # Dependencies, `verify-claims`, the LaTeX build and the site render.
+    # (Until 2026-11-17 this job also re-ran the quick reproduction and needed 35.)
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -62,11 +58,6 @@ jobs:
         run: |
           uv sync --frozen --all-extras
 
-      - name: Verify reproducibility (quick)
-        run: |
-          make reproduce-quick
-        timeout-minutes: 30
-
       - name: Verify claims
         run: |
           uv run python -m src.results verify
@@ -85,8 +76,10 @@ jobs:
           args: -pdf -interaction=nonstopmode -halt-on-error
 
       - name: Build site (README + portfolio -> static HTML)
-        # Curated figures come from the committed portfolio/figures/; the
-        # quick-mode figures generated above are scratch and must not replace them.
+        # Curated figures come from the committed portfolio/figures/. The site no
+        # longer re-runs `make reproduce-quick` (2026-11-17): that step produced
+        # scratch figures the build deliberately ignores, took 20-30 CPU minutes,
+        # and the merge gate (.woodpecker/ci.yml) already covers the record.
         run: uv run python scripts/build_site.py --out _site
 
       - name: Verify the site ships the compiled paper
