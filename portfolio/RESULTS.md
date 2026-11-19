@@ -967,10 +967,11 @@ Reading the table:
 induction. It does not, on this task. The content-based claim is not testable
 here — it needs a task with repeats at *varying* distances.
 
-### The content-based task (issue #200) — run complete, verdict PARTIAL
+### The content-based task (issue #200) — run complete, both verdicts NEGATIVE
 
-The task that *does* contain the question is specified, frozen and waiting for
-its GPU run. The short version:
+The task that *does* contain the question was specified and frozen before its
+GPU run; the run and its verdicts follow the specification below. The short
+version of the specification:
 
 | | |
 |---|---|
@@ -1223,7 +1224,7 @@ as a footnote with its per-seed numbers.
 
 **Still open, now smaller**: the protocol-ablation phase diagram (issue #168)
 unblocks on this result and starts from the Nanda-faithful setup as designed —
-now scheduled for v1.1, with its taxonomy clarified before the first cell runs
+still open and not scheduled, with its taxonomy clarified before the first cell runs
 (see the Open Question below).
 
 **Reference**: Nanda et al., "Progress Measures for Grokking via Mechanistic Interpretability," ICLR 2023 (oral).
@@ -1583,7 +1584,7 @@ model, a rank that counts ties against the target head, the device read from the
 **Reproduce**: `uv run --extra real python -m src.experiments.exp7_gpt2_small` (about 15
 minutes on CPU after a one-time weight download).
 
-## Open Question — Solution-Regime Phase Diagram (protocol ablation, unblocked 2026-10-14; scheduled for v1.1)
+## Open Question — Solution-Regime Phase Diagram (protocol ablation, unblocked 2026-10-14; not scheduled)
 
 **Status**: [ ] No claim yet — but no longer *blocked*. The 2026-10-08 audit removed
 the earlier draft (a 100-epoch test manifest, empty aggregate, models that had not
@@ -1604,6 +1605,11 @@ head validation it unlocks) is still open. The run is therefore scheduled
 its own, and spending the quota on it first would have delayed the rung that
 the milestone is about. Issue #168 was reopened and moved to the v1.1
 milestone for that reason.
+
+**Update 2026-11-19.** #169 is closed and v1.0, v1.1 and v2.0.0 have shipped, but the
+sweep has not run and is **not scheduled**: it still costs one to two weeks of the
+free GPU quota, and no claim in this repository depends on it. Until its manifests
+land, no phase-diagram number appears anywhere in the record.
 
 **Pre-registered taxonomy, clarified before any cell ran** (2026-10-19): the
 runner used to compare the aggregate mean against 0.5 — a *majority* rule —
@@ -1664,4 +1670,4 @@ large. (5) Rung 1's
 fixed-vs-fresh comparison — a real, large, matched effect, though at a scale still
 well below standard. (6) Rung 4's quick multi-seed re-run — activation patching
 runs cleanly; the standard-scale cascade above is the current number. The
-protocol-ablation phase diagram (issue #168) is scheduled for v1.1.
+protocol-ablation phase diagram (issue #168) has not run and is not scheduled.

@@ -13,9 +13,10 @@ number.
 | 1 Prefix copying | Heads form, but the dissociation probe shows a fixed-offset copy: the periodic task admits a positional shortcut | [Rung 1](../portfolio/projects/rung-1-induction-heads/index.md), [ADR-0032](adr/0032-induction-detector-and-the-positional-shortcut.md) |
 | 1b Content-based copying | Behaviour is content-based on three seeds of three, but the pre-registered per-head rule confirms no head on any seed and the circuit differs between seeds. Both verdicts are NEGATIVE (the first run said PARTIAL) | [ADR-0033](adr/0033-content-based-induction-task.md), [Honesty Ledger](../portfolio/RESULTS.md) |
 | 5 Sparse autoencoder | Reproduces on synthetic activations. On real activations the dictionary is sparse but most features are dead | [Rung 5](../portfolio/projects/rung-5-sae/index.md) |
+| 7 GPT-2 small | The hand-written instruments match the Hugging Face reference and rank the two induction heads of the literature first and second of 144. The causal stages (zero ablation of those heads and of the name movers) did not reproduce. Pre-registered in ADR-0034; the mean-ablation and path-patching follow-up has not been run | [Rung 7](../portfolio/projects/rung-7-gpt2-small/index.md), [ADR-0034](adr/0034-gpt2-small-real-model-test.md) |
 
-Not attempted: automated circuit discovery (descoped), and anything on a
-natural-language model.
+Not attempted: automated circuit discovery (descoped), a sparse autoencoder on
+GPT-2, and the indirect-object circuit itself (path patching).
 
 ## Known defects that are still open
 

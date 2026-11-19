@@ -3,9 +3,10 @@ message: "If you use this code or its results, please cite it as below."
 title: "From Gradient to Transformer to Circuit"
 abstract: >-
   Training small decoder-only transformers and reverse-engineering what they
-  learn: superposition geometry, induction heads, grokking on modular addition,
-  activation/path patching and sparse autoencoders, with every public number
-  traced to a committed run manifest.
+  learn: superposition geometry, prefix-copying heads, grokking on modular
+  addition, activation/path patching and sparse autoencoders, plus a
+  pre-registered test of the same instruments on GPT-2 small, with every public
+  number traced to a committed run manifest.
 type: software
 version: 2.0.0
 date-released: 2026-11-18
@@ -25,7 +26,6 @@ preferred-citation:
       given-names: Alessio
   url: "https://alessiobrillo.github.io/from-gradient-to-transformer/"
   repository-code: "https://github.com/AlessioBrillo/from-gradient-to-transformer"
-license: MIT
 keywords:
   - mechanistic interpretability
   - transformers

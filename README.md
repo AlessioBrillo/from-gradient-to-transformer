@@ -34,7 +34,6 @@ included. The full record, with every retraction, is the
 | [3 Superposition](portfolio/projects/rung-3-superposition/index.md) | How do features pack into fewer dimensions as sparsity changes? | Phase transition reproduced: 10/20 features represented when features are dense, 20/20 when they are sparse |
 | [4 Circuit patching](portfolio/projects/rung-4-circuit-patching/index.md) | Can a circuit be validated causally, end to end? | Yes, on Rung 1's own checkpoint: head ablation 0.5895 ± 0.1405, path patching 0.7052 ± 0.0411 |
 | [5 Sparse autoencoder](portfolio/projects/rung-5-sae/index.md) | Can a dictionary recover features from a real residual stream? | Partly: the dictionary is sparse (3.7% of 512 features active) but 66% of its features never fire. The dictionary size is the open question |
-
 | [7 GPT-2 small](portfolio/projects/rung-7-gpt2-small/index.md) | Do the same instruments work on a real pretrained model? | **The instruments do**: the implementation matches the Hugging Face reference, and the detector ranks the two induction heads of the literature first and second of 144. **The causal stages did not reproduce**: ablating those two heads, or the name movers, changed the behaviour no more than random heads do. Pre-registered (ADR-0034); two of five stages failed and are reported |
 
 ★ Flagship. A sixth rung (automated circuit discovery) was descoped on
