@@ -95,8 +95,8 @@ select = ["E", "F", "I", "N", "W"]
 "scripts/*.py" = ["E402"]  # plotting scripts do work at import time
 
 [tool.mypy]
-# Matches the interpreter uv.lock actually resolves to (3.12.12), not the
-# `>=3.11` floor in requires-python above. A `python_version = "3.11"`
+# Matches the interpreter uv.lock actually resolves to (3.12.12) and the
+# `>=3.12` floor in requires-python above. A `python_version = "3.11"`
 # mismatch here made mypy crash on numpy's stub files (which use 3.12-only
 # PEP 695 `type` statement syntax) before checking a single line of src/ —
 # CI's `mypy ... || true` silently swallowed that crash, so the "54

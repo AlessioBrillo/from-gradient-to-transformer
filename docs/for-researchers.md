@@ -60,6 +60,7 @@ uv sync
 make reproduce-quick            # every rung, reduced configuration, CPU, minutes
 make reproduce-superposition    # Rung 3, full scale, CPU
 make reproduce-grokking         # Rung 2, full scale; hours on CPU, use a GPU
+make reproduce-gpt2             # Rung 7, GPT-2 small; ~15 minutes on CPU, needs the `real` extra
 ```
 
 The GPU rungs run on free Kaggle or Colab through one driver: see

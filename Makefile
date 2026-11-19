@@ -4,7 +4,7 @@
 	reproduce-multiseed verify-claims clean paper paper-check figures \
 	reproduce-grokking-probe reproduce-induction-standard reproduce-induction-1layer \
 	reproduce-exp3-geometry commitlint-head neuron-ablation \
-	check-links vault-check reproduce-induction-batches reproduce-induction-fixed \
+	reproduce-gpt2 vault-check reproduce-induction-batches reproduce-induction-fixed \
 	reproduce-induction-fresh reproduce-notebook \
 	reproduce-retune reproduce-retune-control reproduce-retune-offset reproduce-retune-reweight \
 	remote-dry-grokking remote-run-grokking remote-run-induction remote-run-capstone remote-run-sweep remote-pin \
@@ -170,6 +170,12 @@ reproduce-quick:
 reproduce-notebook:
 	@echo "=== Executing the capstone teaching artifact ==="
 	uv run python -m pytest tests/test_teaching_artifact.py -v
+
+# Rung 7 (ADR-0034): the five pre-registered stages on pretrained GPT-2 small.
+# Needs the optional `real` extra and a one-time weight download; CPU, about 15 minutes.
+reproduce-gpt2:
+	@echo "=== Rung 7: the instruments on GPT-2 small ==="
+	uv run --extra real python -m src.experiments.exp7_gpt2_small
 
 reproduce-grokking:
 	@echo "=== Rung 2: Grokking modular addition (FLAGSHIP) ==="

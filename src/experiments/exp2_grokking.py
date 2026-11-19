@@ -106,9 +106,7 @@ def make_modular_addition_data(
 # Model: 1-layer decoder-only transformer (Nanda et al. config)
 # ---------------------------------------------------------------------------
 # The model lives in src/models/one_layer_transformer.py (moved on
-# 2026-11-16); it is imported at the top of this module, so existing
-# `from src.experiments.exp2_grokking import OneLayerTransformer` imports
-# keep working.
+# 2026-11-16) and is imported at the top of this module. Import it from there.
 
 
 # ---------------------------------------------------------------------------

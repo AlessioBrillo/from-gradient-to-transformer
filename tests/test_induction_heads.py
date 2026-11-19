@@ -709,7 +709,7 @@ class TestEarlyStopAndCheckpoint:
         earlier layer to compose with) — exactly the object the "any" stop
         rule fires on and the "mechanism" rule does not.
         """
-        from src.experiments.exp1_induction_heads import AttentionOnlyTransformer
+        from src.models.attention_only_transformer import AttentionOnlyTransformer
 
         torch.manual_seed(0)
         vocab, seq_len, d_model = 64, 16, 16

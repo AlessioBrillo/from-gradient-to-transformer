@@ -18,7 +18,7 @@ from scripts.manifest_from_checkpoints import (
     arch_for_protocol,
     exp2_metrics,
 )
-from src.experiments.exp2_grokking import OneLayerTransformer
+from src.models.one_layer_transformer import OneLayerTransformer
 
 
 def _tmp_checkpoint(tmp_path, modulus: int, protocol: str, seed: int = 42) -> str:
