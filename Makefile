@@ -99,7 +99,7 @@ typecheck-strict:
 # errors in whatever these two files transitively import (caught in CI —
 # see .github/workflows/python-ci.yml's blocking step comment).
 typecheck-new:
-	uv run python -m mypy src/results.py src/experiments/runner.py src/experiments/induction_tasks.py src/experiments/induction_detection.py src/experiments/copy_circuit.py src/experiments/content_verdict.py --ignore-missing-imports --follow-imports=silent
+	uv run python -m mypy src/results.py src/experiments/runner.py src/experiments/induction_tasks.py src/experiments/induction_detection.py src/experiments/copy_circuit.py src/experiments/content_verdict.py src/models/gpt2.py src/models/attention_only_transformer.py src/models/one_layer_transformer.py src/training/optim.py src/training/loop.py src/evaluation/metrics.py src/evaluation/leakage.py src/experiments/exp7_gpt2_small.py --ignore-missing-imports --follow-imports=silent
 
 # --- CI mirror (local replica of .github/workflows/python-ci.yml) ---
 # commitlint-head is part of the mirror since 2026-08-08: the PR-only

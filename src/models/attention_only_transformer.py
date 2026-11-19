@@ -37,8 +37,8 @@ class AttentionOnlyBlock(nn.Module):
     def forward(
         self,
         x: torch.Tensor,
-        past_attn: Optional[list] = None,
-        cache: Optional[dict] = None,
+        past_attn: Optional[list[torch.Tensor]] = None,
+        cache: Optional[dict[str, torch.Tensor]] = None,
         cache_prefix: str = "",
     ) -> torch.Tensor:
         """One attention-only block.
@@ -83,7 +83,8 @@ class AttentionOnlyBlock(nn.Module):
             cache[f"{cache_prefix}.resid_mid"] = block_out.detach().cpu()
             cache[f"{cache_prefix}.resid_post"] = block_out.detach().cpu()
 
-        return block_out
+        out: torch.Tensor = block_out
+        return out
 
 
 class AttentionOnlyTransformer(nn.Module):
@@ -108,13 +109,13 @@ class AttentionOnlyTransformer(nn.Module):
         self,
         x: torch.Tensor,
         record_attn: bool = False,
-        cache: Optional[dict] = None,
-    ) -> tuple[torch.Tensor, Optional[list]]:
+        cache: Optional[dict[str, torch.Tensor]] = None,
+    ) -> tuple[torch.Tensor, Optional[list[torch.Tensor]]]:
         B, S = x.shape
         positions = torch.arange(S, device=x.device).unsqueeze(0)
         h = self.embed(x) + self.pos_embed(positions)
 
-        attn_records = [] if record_attn else None
+        attn_records: Optional[list[torch.Tensor]] = [] if record_attn else None
         for i, block in enumerate(self.blocks):
             h = block(h, past_attn=attn_records, cache=cache, cache_prefix=f"blocks.{i}")
 

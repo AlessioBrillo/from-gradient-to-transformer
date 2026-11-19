@@ -73,7 +73,7 @@ class OneLayerTransformer(nn.Module):
 
     def forward(
         self, x: torch.Tensor, return_activations: bool = False
-    ) -> tuple[torch.Tensor, Optional[dict]]:
+    ) -> tuple[torch.Tensor, Optional[dict[str, torch.Tensor]]]:
         """Forward pass.
 
         Args:
@@ -88,7 +88,7 @@ class OneLayerTransformer(nn.Module):
 
         h = self.embed(x) + self.pos_embed(positions)  # (B, 2, d_model)
 
-        activations = {} if return_activations else None
+        activations: Optional[dict[str, torch.Tensor]] = {} if return_activations else None
 
         # Attention block
         h_ln = self.ln1(h)
@@ -100,7 +100,7 @@ class OneLayerTransformer(nn.Module):
         # No causal mask needed for 2 positions (full visibility)
         attn_probs = attn_scores.softmax(dim=-1)
 
-        if return_activations:
+        if activations is not None:
             activations["attn_probs"] = attn_probs.detach().cpu()
             activations["embed"] = self.embed.weight.data.detach().cpu()
 

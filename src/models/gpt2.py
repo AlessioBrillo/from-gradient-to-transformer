@@ -53,7 +53,7 @@ class GPT2Attention(nn.Module):
         self.register_buffer("causal", mask, persistent=False)
 
     def forward(
-        self, x: torch.Tensor, cache: Optional[dict] = None, prefix: str = ""
+        self, x: torch.Tensor, cache: Optional[dict[str, torch.Tensor]] = None, prefix: str = ""
     ) -> torch.Tensor:
         B, S, D = x.shape
         q, k, v = self.c_attn(x).split(D, dim=2)
@@ -64,7 +64,7 @@ class GPT2Attention(nn.Module):
         heads = probs @ v  # (B, heads, S, d_head)
         if self.head_mask is not None:
             heads = heads * self.head_mask.to(heads.dtype).view(1, -1, 1, 1)
-        out = self.c_proj(heads.transpose(1, 2).reshape(B, S, D))
+        out: torch.Tensor = self.c_proj(heads.transpose(1, 2).reshape(B, S, D))
         if cache is not None:
             cache[f"{prefix}.attn.attn_probs"] = probs.detach()
             cache[f"{prefix}.attn.V"] = v.detach()
@@ -85,7 +85,7 @@ class GPT2Block(nn.Module):
         )
 
     def forward(
-        self, x: torch.Tensor, cache: Optional[dict] = None, prefix: str = ""
+        self, x: torch.Tensor, cache: Optional[dict[str, torch.Tensor]] = None, prefix: str = ""
     ) -> torch.Tensor:
         if cache is not None:
             cache[f"{prefix}.resid_pre"] = x.detach()
@@ -108,8 +108,8 @@ class GPT2(nn.Module):
         self.ln_f = nn.LayerNorm(cfg.d_model, eps=cfg.layer_norm_eps)
 
     def forward(
-        self, x: torch.Tensor, cache: Optional[dict] = None
-    ) -> tuple[torch.Tensor, Optional[dict]]:
+        self, x: torch.Tensor, cache: Optional[dict[str, torch.Tensor]] = None
+    ) -> tuple[torch.Tensor, Optional[dict[str, torch.Tensor]]]:
         pos = torch.arange(x.size(1), device=x.device)
         h = self.wte(x) + self.wpe(pos)
         for i, block in enumerate(self.blocks):

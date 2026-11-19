@@ -34,7 +34,7 @@ def fit(
     optimizer.zero_grad()  # type: ignore[attr-defined]
     for i, (x, y) in enumerate(batches, start=1):
         loss = loss_fn(model(x), y) / accum_steps
-        loss.backward()
+        loss.backward()  # type: ignore[no-untyped-call]
         running += loss.item()
         if i % accum_steps == 0:
             if max_grad_norm is not None:

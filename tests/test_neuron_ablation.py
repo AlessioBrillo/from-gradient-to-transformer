@@ -204,52 +204,52 @@ class TestRunFourierAblationForComparison:
 
 
 class TestMainFunction:
-    @patch("src.experiments.neuron_ablation.Path.exists")
+    """`main()` end to end with the heavy parts stubbed.
+
+    It used to patch `Path.exists`, `json.dump` and `plt.savefig` globally. On
+    Python 3.14 a global `Path.exists` stub makes pytest's own machinery see a
+    MagicMock and the whole process died mid-test (found 2026-11-19, and it did the
+    same on the code before this work). The test now runs in a temporary working
+    directory (`FIGURES_DIR` is cwd-relative by design) with a real, empty
+    checkpoint file, so nothing global is patched and nothing is written into the
+    repository.
+    """
+
     @patch("src.experiments.neuron_ablation.load_checkpoint")
     @patch("src.experiments.neuron_ablation.make_modular_addition_data")
     @patch("src.experiments.neuron_ablation.run_neuron_ablation_sweep")
     @patch("src.experiments.neuron_ablation.run_fourier_ablation_for_comparison")
-    @patch("src.experiments.neuron_ablation.plt.savefig")
-    @patch("json.dump")
     def test_main_runs_without_error(
         self,
-            mock_json_dump,
-            mock_savefig,
-            mock_fourier_ablation,
-            mock_neuron_ablation,
-            mock_make_data,
-            mock_load_checkpoint,
-            mock_exists,
+        mock_fourier_ablation,
+        mock_neuron_ablation,
+        mock_make_data,
+        mock_load_checkpoint,
+        tmp_path,
+        monkeypatch,
     ):
         from src.experiments import neuron_ablation
 
-        mock_exists.return_value = True
+        monkeypatch.chdir(tmp_path)
+        checkpoints = tmp_path / "checkpoints"
+        checkpoints.mkdir()
+        (checkpoints / "exp2_checkpoint_seed0.pt").write_bytes(b"")
 
         mock_model = MagicMock()
         mock_model.d_mlp = 512
         mock_model.modulus = 113
-        mock_checkpoint = {"epoch": 5000}
-        mock_load_checkpoint.return_value = (mock_model, mock_checkpoint)
-
-        mock_val_dataset = MagicMock()
-        mock_make_data.return_value = (MagicMock(), mock_val_dataset)
-
+        mock_load_checkpoint.return_value = (mock_model, {"epoch": 5000})
+        mock_make_data.return_value = (MagicMock(), MagicMock())
         mock_neuron_ablation.return_value = ([0, 128, 256], [1.0, 0.5, 0.0])
         mock_fourier_ablation.return_value = ([0, 56, 113], [1.0, 0.5, 0.0])
 
-        argv_patch = [
-            "neuron_ablation.py",
-            "--seeds",
-            "0",
-            "--checkpoint-epoch",
-            "5000",
-        ]
-        with patch("sys.argv", argv_patch):
+        argv = ["neuron_ablation.py", "--seeds", "0", "--checkpoint-epoch", "5000"]
+        with patch("sys.argv", argv):
             neuron_ablation.main()
 
         assert mock_load_checkpoint.called
         assert mock_make_data.called
         assert mock_neuron_ablation.called
         assert mock_fourier_ablation.called
-        assert mock_savefig.called
-        assert mock_json_dump.called
+        assert (tmp_path / "figures" / "exp2_neuron_ablation.png").is_file()
+        assert (tmp_path / "figures" / "exp2_neuron_ablation_results.json").is_file()

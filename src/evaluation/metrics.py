@@ -1,3 +1,5 @@
+from typing import Any
+
 import numpy as np
 
 
@@ -114,7 +116,7 @@ def roc_auc_score(y_true: np.ndarray, y_score: np.ndarray) -> float:
 
 
 def cross_val_score(
-    model: object,
+    model: Any,
     X: np.ndarray,
     y: np.ndarray,
     cv: int = 5,
