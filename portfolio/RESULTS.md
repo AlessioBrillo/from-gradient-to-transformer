@@ -11,6 +11,56 @@ smoke tests (`make reproduce-quick`) and a full-scale mode (`make reproduce`).
 
 ---
 
+## Summary
+
+The current status of every rung, and what to trust in what order. The audit trail
+that explains how each number came to be this one (thirteen audits, each with what
+was wrong and what changed) is the [Honesty Ledger](#honesty-ledger) below; the
+per-rung detail follows the ledger.
+
+| Rung | Status | Key Result |
+|------|--------|------------|
+| 1 — Prefix-Copying Heads (fallback flagship) | ✅ **A head forms at standard scale — and it is positional** (2026-10-20) | Corrected detector, GPU, 3 seeds, 3000 epochs: **3 heads/seed**, copy-offset mass **0.81** (previous-token control 0.05), all in the first layer; ablation effect **0.59**, path-patch effect **0.71** (re-measured 2026-11-17 after the seeding fix); the dissociation probe says the copy follows the **fixed offset** (period 0.81 vs content 0.03), and the K-composition is 0.08 — a single-head prefix-copying circuit, not the two-step induction circuit (ADR-0032) |
+| 2 — Grokking (primary flagship) | ✅ **REPRODUCED 2026-10-14** (the 2026-08-11 NO-GROK was a metric artifact) | Nanda protocol, P=113, GPU, 3 seeds: val accuracy 0.9999 ± 0.0002, **k_energy_90 = 5.7 ± 1.2 of 56 — sparse on 3/3 seeds**; the historical repo protocol re-reads the same way |
+| 3 — Superposition | ✅ Phase transition confirmed | Root cause found (no real bottleneck); rewritten, reproduces cleanly: 10/20 → 20/20 features represented |
+| 4 — Circuit Patching | ✅ **Cascade ran end to end on Rung 1's checkpoint** (2026-10-20, re-measured 2026-11-17) | Head ablation **0.5895 ± 0.1405**, path patching **0.7052 ± 0.0411** — the first end-to-end path-patching result against a real head; activation recovery 0.0834 |
+| 5 — SAE Dashboard | ✅ Synthetic reproduced; ✅ **the real-activation gap closed** (2026-10-20, re-measured 2026-11-17) | On the confirmed-head checkpoint the SAE is now *sparse*: L0 19.0/512 (3.7%), FVE 99.998%, MSE 0.0005 — against 53% L0 for the old undertrained model. What remains is a dictionary 8× too large (66% dead features) |
+| 6 — ACDC | ❌ Deleted | Was fabricated data; removed 2026-08-01 rather than fixed |
+| 1b — Content-based induction (issue #200) | [x] **Complete, verdict NEGATIVE (run 2026-11-09, re-run 2026-11-17)** | The task that removes the positional shortcut (repeats at varying distances; the best fixed offset explains 15.5–16.5% of the copy queries) is frozen in [ADR-0033](../docs/adr/0033-content-based-induction-task.md) and the [pre-registration](../07_capstone/notes/variable-distance-induction-preregistration.md). The 2026-11-09 run (PARTIAL, kept as `results/induction_content_pre_seedfix.json`) was repeated on GPU after the seeding fix (tag `v2.0.0-rc1`, `results/induction_content.json`; cascade on CPU, `results/exp4_content.json`). Both verdicts are now **NEGATIVE on all three seeds**: no head passes the frozen per-head rule. The behaviour is content-based on 3/3 seeds; the circuit is one head on one seed and a distributed group on two. Verdict artifact: `results/content_verdict.json` (derived, `make content-verdict`). |
+| 7 — GPT-2 small (pre-registered, ADR-0034) | ⚠️ **Instruments validated; causal stages not reproduced** (2026-11-17) | The hand-written implementation equals the Hugging Face reference; the shared detector ranks the two induction heads of the literature first and second of 144 heads; the model solves the indirect-object task. Zero-ablating those two heads, or the three name movers, changed the behaviour no more than random heads do |
+
+The manifests behind that table: Rung 1
+<!-- manifest: results/induction_standard.json -->, Rung 2
+<!-- manifest: results/grokking_nanda_p113.json -->, Rung 3
+<!-- manifest: results/exp3_superposition.json -->, Rung 4
+<!-- manifest: results/exp4_standard.json -->, Rung 5
+<!-- manifest: results/exp5_real_activations.json -->, Rung 1b
+<!-- manifest: results/induction_content.json -->
+<!-- manifest: results/exp4_content.json -->, Rung 7
+<!-- manifest: results/gpt2_small_stage2.json -->.
+
+**What to trust right now, in order**: (1) Rung 2's sparse-circuit reproduction —
+GPU, 3 seeds, both protocols, post-audit energy metric, manifests pinned with
+provenance; the checkpoints are on disk
+(`results/remote/grokking-p113/output2/repo/checkpoints/nanda/`) and the four
+`exp2_*` figures were regenerated from them 2026-10-17. (2) Rung 1's
+prefix-copying head — GPU, 3 seeds, standard scale, 3000 epochs, with the
+causal interventions (ablation 0.59, path patching 0.71, re-measured after the seeding fix) and the dissociation
+probe that says the copy is positional rather than content-based; the
+detector behind it is planted-tested, and the previous "0 / 8" was a detector
+artifact. (3) Rung 3's phase
+transition — reproduced cleanly, root cause understood, multi-seed manifest
+backs it. (4) Rung 5's real-activation SAE on the confirmed-head checkpoint:
+L0 3.7% with FVE 99.998% — the old "dense reconstruction" was a statement
+about the old undertrained model, and what remains is a dictionary 8× too
+large. (5) Rung 1's
+fixed-vs-fresh comparison — a real, large, matched effect, though at a scale still
+well below standard. (6) Rung 4's quick multi-seed re-run — activation patching
+runs cleanly; the standard-scale cascade above is the current number. The
+protocol-ablation phase diagram (issue #168) has not run and is not scheduled.
+
+---
+
 ## Honesty Ledger
 
 <!-- manifest: results/grokking_nanda_p113.json -->
@@ -1639,35 +1689,3 @@ every cell, so no reader has to infer them from an aggregate.
 | 5 — LLM Engineering | [~] Instrumentation done (hooks, determinism, harvesting, circuit datasets proven; nnsight pending — not installed, and the capture protocol the repo uses does not need it) | — |
 | 6 — Production AI | [~] Reproducibility harness built (multi-seed + manifests + `verify-claims` + figure-provenance gate 2026-08-07, kill drill + bit-identical checkpoint/resume, CI/mypy fixed, paper compiled and shipped) — **W&B descoped 2026-09-08** (no credential ever worked; the manifests are the record), **HF Spaces descoped 2026-10-11** (the dashboard is a product, the science is in the manifests), **the mini-paper prose is written** (`portfolio/paper/main.tex`) | [reproducible-from-clean-clone](../06_production_ai/proofs/reproducible-from-clean-clone.md) (GREEN 2026-08-27, transcript committed) |
 | 7 — Capstone | ✅ Gate passed 2026-10-12 on the honest negative, **upgraded to the positive 2026-10-14** | [capstone-gate-honest-negative](../07_capstone/notes/capstone-gate-honest-negative.md) (dense mechanism defended with manifests) → superseded: the sparse circuit is real ([Rung 2](#rung-2--grokking-modular-addition-primary-flagship--reproduced-2026-10-14-the-2026-08-11-no-grok-was-a-metric-artifact)). The planned 3×20k joint run executed 2026-10-14: the modular/induction **dissociation persists at full budget** (induction 0.5034 ± 0.0002 — the same plateau as the 2k shakedown; modular 0.1699 ± 0.0286 vs 1.0 solo), recorded in the [capstone execution log](../07_capstone/execution-log.md), `results/capstone_20k.json` |
-
-## Summary
-
-| Rung | Status | Key Result |
-|------|--------|------------|
-| 1 — Prefix-Copying Heads (fallback flagship) | ✅ **A head forms at standard scale — and it is positional** (2026-10-20) | Corrected detector, GPU, 3 seeds, 3000 epochs: **3 heads/seed**, copy-offset mass **0.81** (previous-token control 0.05), all in the first layer; ablation effect **0.59**, path-patch effect **0.71** (re-measured 2026-11-17 after the seeding fix); the dissociation probe says the copy follows the **fixed offset** (period 0.81 vs content 0.03), and the K-composition is 0.08 — a single-head prefix-copying circuit, not the two-step induction circuit (ADR-0032) |
-| 2 — Grokking (primary flagship) | ✅ **REPRODUCED 2026-10-14** (the 2026-08-11 NO-GROK was a metric artifact) | Nanda protocol, P=113, GPU, 3 seeds: val accuracy 0.9999 ± 0.0002, **k_energy_90 = 5.7 ± 1.2 of 56 — sparse on 3/3 seeds**; the historical repo protocol re-reads the same way |
-| 3 — Superposition | ✅ Phase transition confirmed | Root cause found (no real bottleneck); rewritten, reproduces cleanly: 10/20 → 20/20 features represented |
-| 4 — Circuit Patching | ✅ **Cascade ran end to end on Rung 1's checkpoint** (2026-10-20, re-measured 2026-11-17) | Head ablation **0.5895 ± 0.1405**, path patching **0.7052 ± 0.0411** — the first end-to-end path-patching result against a real head; activation recovery 0.0834 |
-| 5 — SAE Dashboard | ✅ Synthetic reproduced; ✅ **the real-activation gap closed** (2026-10-20, re-measured 2026-11-17) | On the confirmed-head checkpoint the SAE is now *sparse*: L0 19.0/512 (3.7%), FVE 99.998%, MSE 0.0005 — against 53% L0 for the old undertrained model. What remains is a dictionary 8× too large (66% dead features) |
-| 6 — ACDC | ❌ Deleted | Was fabricated data; removed 2026-08-01 rather than fixed |
-| 1b — Content-based induction (issue #200) | [x] **Complete, verdict NEGATIVE (run 2026-11-09, re-run 2026-11-17)** | The task that removes the positional shortcut (repeats at varying distances; the best fixed offset explains 15.5–16.5% of the copy queries) is frozen in [ADR-0033](../docs/adr/0033-content-based-induction-task.md) and the [pre-registration](../07_capstone/notes/variable-distance-induction-preregistration.md). The 2026-11-09 run (PARTIAL, kept as `results/induction_content_pre_seedfix.json`) was repeated on GPU after the seeding fix (tag `v2.0.0-rc1`, `results/induction_content.json`; cascade on CPU, `results/exp4_content.json`). Both verdicts are now **NEGATIVE on all three seeds**: no head passes the frozen per-head rule. The behaviour is content-based on 3/3 seeds; the circuit is one head on one seed and a distributed group on two. Verdict artifact: `results/content_verdict.json` (derived, `make content-verdict`). |
-
-**What to trust right now, in order**: (1) Rung 2's sparse-circuit reproduction —
-GPU, 3 seeds, both protocols, post-audit energy metric, manifests pinned with
-provenance; the checkpoints are on disk
-(`results/remote/grokking-p113/output2/repo/checkpoints/nanda/`) and the four
-`exp2_*` figures were regenerated from them 2026-10-17. (2) Rung 1's
-prefix-copying head — GPU, 3 seeds, standard scale, 3000 epochs, with the
-causal interventions (ablation 0.59, path patching 0.71, re-measured after the seeding fix) and the dissociation
-probe that says the copy is positional rather than content-based; the
-detector behind it is planted-tested, and the previous "0 / 8" was a detector
-artifact. (3) Rung 3's phase
-transition — reproduced cleanly, root cause understood, multi-seed manifest
-backs it. (4) Rung 5's real-activation SAE on the confirmed-head checkpoint:
-L0 3.7% with FVE 99.998% — the old "dense reconstruction" was a statement
-about the old undertrained model, and what remains is a dictionary 8× too
-large. (5) Rung 1's
-fixed-vs-fresh comparison — a real, large, matched effect, though at a scale still
-well below standard. (6) Rung 4's quick multi-seed re-run — activation patching
-runs cleanly; the standard-scale cascade above is the current number. The
-protocol-ablation phase diagram (issue #168) has not run and is not scheduled.
