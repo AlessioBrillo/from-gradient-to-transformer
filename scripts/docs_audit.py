@@ -290,6 +290,72 @@ STALE_CLAIMS: list[tuple[str, str, str, str]] = [
         "prints today",
         "2026-11-16",
     ),
+    (
+        "portfolio/model-card.md",
+        "confirms a head on one seed of",
+        "the re-measured per-head rule confirms no head on any seed "
+        "(results/induction_content.json)",
+        "2026-11-19",
+    ),
+    (
+        "07_capstone/_MOC.md",
+        "confirms a head on 1/3 seeds → verdict PARTIAL",
+        "both content-task verdicts are NEGATIVE after the seeding fix "
+        "(results/induction_content.json)",
+        "2026-11-19",
+    ),
+    (
+        "portfolio/RESULTS.md",
+        "waiting for\nits GPU run",
+        "the content task ran on 2026-11-09 and again on 2026-11-17",
+        "2026-11-19",
+    ),
+    (
+        "portfolio/RESULTS.md",
+        "run complete, verdict PARTIAL",
+        "both verdicts are NEGATIVE since the 2026-11-17 re-run",
+        "2026-11-19",
+    ),
+    (
+        "portfolio/RESULTS.md",
+        "scheduled for v1.1",
+        "issue #168 has not run and is not scheduled; v1.1 has shipped",
+        "2026-11-19",
+    ),
+    (
+        "CONTEXT.md",
+        "Rung 3 is the only fully reproduced rung",
+        "Rung 2 was reproduced on 2026-10-14 "
+        "(results/grokking_nanda_p113.json)",
+        "2026-11-19",
+    ),
+    (
+        "docs/for-hiring.md",
+        "Nothing here was run on a production-scale language model.",
+        "Rung 7 runs the instruments on pretrained GPT-2 small "
+        "(results/gpt2_small_stage2.json)",
+        "2026-11-19",
+    ),
+    (
+        "docs/for-researchers.md",
+        "and anything on a\nnatural-language model",
+        "Rung 7 runs the instruments on pretrained GPT-2 small "
+        "(results/gpt2_small_stage2.json)",
+        "2026-11-19",
+    ),
+    (
+        "portfolio/projects/rung-2-grokking/index.md",
+        "re-measure pending, issue #196",
+        "the P=59 control was re-measured on 2026-10-19: 2 of 3 seeds "
+        "sparse, MIXED (results/grokking_p59_repo_energy.json)",
+        "2026-11-19",
+    ),
+    (
+        "07_capstone/execution-log.md",
+        "It is the only open item that can",
+        "issue #200 is closed; the run finished NEGATIVE",
+        "2026-11-19",
+    ),
 ]
 
 
@@ -333,6 +399,11 @@ CURRENT_FACING = (
     "portfolio/projects/rung-3-superposition/index.md",
     "portfolio/projects/rung-4-circuit-patching/index.md",
     "portfolio/projects/rung-5-sae/index.md",
+    "portfolio/projects/rung-7-gpt2-small/index.md",
+    "00_meta/00_home.md",
+    "docs/for-hiring.md",
+    "docs/for-researchers.md",
+    "docs/for-learners.md",
 )
 
 #: Numbers that are structural, not measurements: dates, seed counts, and
@@ -718,6 +789,46 @@ def check_stale_claims() -> list[str]:
     return problems
 
 
+def broken_tables(text: str) -> list[int]:
+    """1-based line numbers of an HTML comment sitting between two table rows.
+
+    GitHub ends a table at a comment line, so the rows after it render as
+    pipes. Found on 2026-11-19 in CONTEXT.md and portfolio/README.md.
+    """
+    lines = text.splitlines()
+    return [
+        i + 1
+        for i in range(1, len(lines) - 1)
+        if lines[i].strip().startswith("<!--")
+        and lines[i - 1].lstrip().startswith("|")
+        and lines[i + 1].lstrip().startswith("|")
+    ]
+
+
+def check_tables_render() -> list[str]:
+    """No tracked Markdown file has a comment inside a table."""
+    out = subprocess.run(
+        ["git", "ls-files", "*.md"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    problems: list[str] = []
+    for rel in out.stdout.splitlines():
+        if rel.startswith(("archive/", "results/")):
+            continue
+        path = REPO_ROOT / rel
+        if not path.exists():
+            continue
+        for lineno in broken_tables(path.read_text(encoding="utf-8")):
+            problems.append(
+                f"{rel}:{lineno}: an HTML comment between two table rows ends "
+                "the table on GitHub; move the manifest tag below the table"
+            )
+    return problems
+
+
 def check_required_manifests() -> list[str]:
     """Every current-facing document has to name the manifest behind its status."""
     problems: list[str] = []
@@ -816,6 +927,7 @@ def check_audit_count() -> list[str]:
 def main() -> int:
     problems = (
         check_stale_claims()
+        + check_tables_render()
         + check_required_manifests()
         + check_audit_count()
         + check_numbers_against_manifests()

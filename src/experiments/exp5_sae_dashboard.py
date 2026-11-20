@@ -472,12 +472,12 @@ def harvest_activations_from_checkpoint(
         features" exist for real activations, unlike ActivationGenerator's
         synthetic output.
     """
-    from src.experiments.exp1_induction_heads import AttentionOnlyTransformer
     from src.experiments.induction_tasks import (
         TASK_VARIABLE,
         TaskSpec,
         task_datasets,
     )
+    from src.models.attention_only_transformer import AttentionOnlyTransformer
 
     model = AttentionOnlyTransformer(
         vocab_size=vocab_size,

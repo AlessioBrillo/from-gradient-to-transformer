@@ -7,7 +7,6 @@ from unittest.mock import MagicMock, patch
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
-from src.experiments.exp2_grokking import OneLayerTransformer
 from src.experiments.neuron_ablation import (
     ablate_neurons,
     compute_neuron_importance,
@@ -16,6 +15,7 @@ from src.experiments.neuron_ablation import (
     run_fourier_ablation_for_comparison,
     run_neuron_ablation_sweep,
 )
+from src.models.one_layer_transformer import OneLayerTransformer
 from src.reproducibility import set_seed
 
 

@@ -77,7 +77,8 @@ single-seed run.
 
 ## Limitations
 
-- **Scale**: the largest model here has about 4.3 million parameters. Circuits
+- **Scale**: the largest model trained here has about 4.3 million parameters
+  (pretrained GPT-2 small, 124M, is used for inference and ablation only). Circuits
   in production-scale models may be qualitatively different.
 - **Task specificity**: every task is algorithmic and synthetic, and Rung 7 only tests
   instruments on a pretrained model. Its causal stages did not reproduce, so nothing
@@ -85,7 +86,7 @@ single-seed run.
 - **Method limitations**: activation patching can mislead through
   normalization-denominator effects, and SAE features can be illusory (see
   Makelov, Lange & Nanda 2023).
-- **Open results**: Rung 1b's per-head rule confirms a head on one seed of
-  three, and Rung 5's dictionary has most of its features dead. Both are
+- **Open results**: Rung 1b's per-head rule confirms no head on any of three
+  seeds, and Rung 5's dictionary has most of its features dead. Both are
   reported as measured in [RESULTS](RESULTS.md).
 - See the mini-paper's limitations section for the full discussion.

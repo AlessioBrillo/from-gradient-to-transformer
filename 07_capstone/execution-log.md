@@ -50,11 +50,12 @@ not CI-reproducible.
   hostage to the falsified L1 classifier) — done 2026-10-17; the 20k run reads
   dense under the energy criterion (see the table above and
   `results/capstone_20k_energy.json`).
-- **The content-based induction run** (issue #200): the task, its thresholds,
-  its budget and its decision rule are pre-registered in
+- **Done: the content-based induction run** (issue #200, closed). Task, thresholds,
+  budget and decision rule were pre-registered in
   [variable-distance-induction-preregistration](notes/variable-distance-induction-preregistration.md)
-  (ADR-0033), the GPU notebook is `notebooks/kaggle_induction_content.ipynb`
-  (`make remote-run-induction-content`). It is the only open item that can
-  change a headline claim.
-- **The phase-diagram protocol ablation** (issue #168): ten pre-registered
-  cells, `configs/phase_diagram_ablation.yaml`, `make remote-run-sweep`.
+  (ADR-0033); the run (2026-11-09) was repeated after the seeding fix
+  (2026-11-17): both verdicts NEGATIVE on 3/3 seeds. See
+  [[portfolio/RESULTS]].
+- **The phase-diagram protocol ablation** (issue #168) is still open and not
+  scheduled: ten pre-registered cells, `configs/phase_diagram_ablation.yaml`,
+  `make remote-run-sweep`.

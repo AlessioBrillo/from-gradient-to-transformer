@@ -98,6 +98,14 @@ GitHub Actions is not the gate. The single source of truth is `.woodpecker/ci.ym
   Never run `woodpecker-cli exec` directly on the checkout: it bind-mounts the repo and
   install steps would overwrite host dependencies.
 - **Server:** push the branch; the check is `ci/woodpecker/push/ci` (`gh pr checks <n> --watch`).
+- **Status for GitHub:** no Woodpecker server reports to GitHub, so a green local gate is
+  posted as the commit status `ci/local` by `make gate-status` (`scripts/gate_status.sh`: clean
+  tree, pushed commit, `ci-local` exit 0). It is a statement by the maintainer machine, not an
+  independent runner.
+- **Low RAM:** if `ci-local` is killed for memory, run the same steps from a container whose
+  working copy is on the container's own filesystem (a bind-mounted `.venv` makes mypy ~50x
+  slower): `lint vault-check typecheck-new typecheck check-refs docs-audit`, `src.results verify`,
+  pytest in 6 chunks with `--cov-append` (floor 73), then `make paper-check` in the texlive image.
 - **Not in the gate:** the two commitlint targets (commit-msg hook and conventional-commits workflow cover them), paper LaTeX build, markdown-lint.
 - **Status:** first green run recorded 2026-10-16 (lint, vault-check, test-cov 393 passed,
   verify-claims=0). `typecheck-new`/mypy require the CI Docker image and are blocked on this

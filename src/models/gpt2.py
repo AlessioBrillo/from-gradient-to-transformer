@@ -42,7 +42,11 @@ class GPT2Config:
 
 
 class GPT2Attention(nn.Module):
-    """Causal multi-head self-attention. `head_mask` zeroes a head's output."""
+    """Causal multi-head self-attention.
+
+    `head_mask` zeroes a head's output; `head_replace` replaces it with a stored mean
+    (mean ablation, ADR-0035). The cached `attn.z` is the head outputs *before* either.
+    """
 
     def __init__(self, cfg: GPT2Config) -> None:
         super().__init__()
@@ -50,6 +54,8 @@ class GPT2Attention(nn.Module):
         self.c_attn = nn.Linear(cfg.d_model, 3 * cfg.d_model)
         self.c_proj = nn.Linear(cfg.d_model, cfg.d_model)
         self.head_mask: Optional[torch.Tensor] = None
+        # (which heads, their mean outputs of shape (heads, positions, d_head))
+        self.head_replace: Optional[tuple[torch.Tensor, torch.Tensor]] = None
         mask = torch.tril(torch.ones(cfg.n_positions, cfg.n_positions, dtype=torch.bool))
         self.register_buffer("causal", mask, persistent=False)
 
@@ -63,6 +69,14 @@ class GPT2Attention(nn.Module):
         scores = scores.masked_fill(~self.causal[:S, :S], float("-inf"))  # type: ignore[index]
         probs = scores.softmax(dim=-1)
         heads = probs @ v  # (B, heads, S, d_head)
+        if cache is not None:
+            cache[f"{prefix}.attn.z"] = heads.detach()
+        if self.head_replace is not None:
+            which, mean = self.head_replace
+            if mean.shape[1] < S:
+                raise ValueError(f"mean covers {mean.shape[1]} positions but the input has {S}")
+            replaced = mean[:, :S].to(heads.device, heads.dtype).unsqueeze(0).expand_as(heads)
+            heads = torch.where(which.to(heads.device).view(1, -1, 1, 1), replaced, heads)
         if self.head_mask is not None:
             heads = heads * self.head_mask.to(heads.device, heads.dtype).view(1, -1, 1, 1)
         out: torch.Tensor = self.c_proj(heads.transpose(1, 2).reshape(B, S, D))
@@ -148,6 +162,45 @@ class GPT2(nn.Module):
             yield
         finally:
             self.set_head_mask([])
+
+    def mean_head_outputs(
+        self, tokens: torch.Tensor, batch_size: int = 50
+    ) -> dict[int, torch.Tensor]:
+        """Mean over `tokens` of every head's output, per layer: (heads, positions, d_head).
+
+        The mean is taken position by position, so all rows must have the same length.
+        """
+        total: dict[int, torch.Tensor] = {}
+        with torch.no_grad():
+            for start in range(0, len(tokens), batch_size):
+                cache: dict[str, torch.Tensor] = {}
+                self(tokens[start : start + batch_size], cache=cache)
+                for layer in range(self.cfg.n_layers):
+                    z = cache[f"blocks.{layer}.attn.z"].sum(dim=0)
+                    total[layer] = total[layer] + z if layer in total else z
+        return {layer: z / len(tokens) for layer, z in total.items()}
+
+    @contextmanager
+    def ablate_mean(
+        self, heads: Iterable[tuple[int, int]], means: dict[int, torch.Tensor]
+    ) -> Iterator[None]:
+        """Replace the given heads' outputs with `means` inside the block (ADR-0035).
+
+        `means` is what `mean_head_outputs` returns. Always restores the model.
+        """
+        heads = list(heads)
+        attns = [cast(GPT2Block, block).attn for block in self.blocks]
+        try:
+            for layer in {layer for layer, _ in heads}:
+                which = torch.zeros(self.cfg.n_heads, dtype=torch.bool)
+                for lay, head in heads:
+                    if lay == layer:
+                        which[head] = True
+                attns[layer].head_replace = (which, means[layer])
+            yield
+        finally:
+            for attn in attns:
+                attn.head_replace = None
 
     # ------------------------------------------------------------------ weights
     def load_hf_state_dict(self, sd: dict[str, torch.Tensor]) -> None:

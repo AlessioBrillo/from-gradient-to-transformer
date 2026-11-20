@@ -23,12 +23,14 @@ from scripts.docs_audit import (
     REQUIRED_MANIFESTS,
     STALE_CLAIMS,
     _is_gitignored,
+    broken_tables,
     check_audit_count,
     check_numbers_against_manifests,
     check_referenced_manifests_exist,
     check_required_manifests,
     check_results_index,
     check_stale_claims,
+    check_tables_render,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -302,6 +304,22 @@ class TestTheRung3TableIsManifestBacked:
         finally:
             target.write_bytes(original)
         assert check_numbers_against_manifests() == []
+
+
+class TestTablesRender:
+    """A comment between two table rows ends the table on GitHub."""
+
+    def test_a_comment_inside_a_table_is_found(self) -> None:
+        text = "| a | b |\n|---|---|\n<!-- manifest: results/x.json -->\n| 1 | 2 |\n"
+        assert broken_tables(text) == [3]
+
+    def test_a_comment_below_a_table_is_fine(self) -> None:
+        text = "| a | b |\n|---|---|\n| 1 | 2 |\n\n<!-- manifest: results/x.json -->\n"
+        assert broken_tables(text) == []
+
+    def test_no_tracked_document_has_a_broken_table(self) -> None:
+        problems = check_tables_render()
+        assert problems == [], "\n".join(problems)
 
 
 def test_the_audit_script_runs_as_a_program() -> None:

@@ -5,7 +5,6 @@ from pathlib import Path
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
-from src.experiments.exp1_induction_heads import AttentionOnlyTransformer
 from src.experiments.exp5_sae_dashboard import (
     ActivationGenerator,
     SparseAutoencoder,
@@ -14,6 +13,7 @@ from src.experiments.exp5_sae_dashboard import (
     evaluate_reconstruction,
     harvest_activations_from_checkpoint,
 )
+from src.models.attention_only_transformer import AttentionOnlyTransformer
 
 
 class TestSparseAutoencoder:

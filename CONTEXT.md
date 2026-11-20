@@ -15,10 +15,7 @@ number traced to a committed run manifest**.
 
 | Term | Meaning here |
 |---|---|
-<!-- manifest: results/induction_standard.json -->
-<!-- manifest: results/induction_content.json -->
-<!-- manifest: results/grokking_nanda_p113.json -->
-| **Rung** | One experiment on the capstone ladder (1–5; Rung 6 descoped 2026-08-01). Lives in `src/experiments/expN_*.py`. |
+| **Rung** | One experiment on the capstone ladder (1–5 and 7; Rung 6 descoped 2026-08-01). Lives in `src/experiments/expN_*.py`. |
 | **Manifest** | `results/<experiment>.json` written by `src/results.py::ResultsManifest`. Carries seeds, args, per-seed metrics, aggregate (mean/std/min/max/n), wall clock, git SHA + dirty flag, device, param count. |
 | **Ledger** | `portfolio/RESULTS.md` — the Honesty Ledger. Audit findings, retractions, and pending items. The authority on what is true. |
 | **Claim** | Any public number. A claim is *backed* only if a `<!-- manifest: ... -->` tag in a tracked document resolves to a tracked, non-empty manifest. `make verify-claims` enforces this. |
@@ -31,9 +28,14 @@ number traced to a committed run manifest**.
 | **Variable-distance task** | The content-based task of ADR-0033: a key of distinct tokens, verbatim copy blocks whose source windows and positions are resampled per sequence, so the distance between a token and its previous occurrence changes from block to block. The best single fixed offset explains 0.155–0.165 of its copy queries (measured on the run), so a fixed-offset head cannot solve it and the content hypothesis is testable. `src/experiments/induction_tasks.py`. Run on GPU 2026-11-09 and again 2026-11-17 after the seeding fix: the copy is content-based on 3/3 seeds (0.9968–0.9997 against the fixed-offset baseline), the per-head confirmation fires on 0/3 seeds (it fired on 1/3 before the fix), and the circuit is one head on one seed and a distributed group on the others. |
 | **Two verdicts** | The content task publishes **two** verdicts, never one: the **pre-registered** one (the training run alone — criterion 7 was not part of it) and the **causal addendum** (the same run plus the cascade that measures criterion 7, executed later, at another commit, and declared as such in the artifact's provenance). `src/experiments/content_verdict.py`, schema `content-verdict/2`. |
 | **Copy query** | A position `q` where "copy the token that followed the previous occurrence" is the right answer: `tokens[q+1] == tokens[prev(q)+1]`. Derived from the tokens alone, so the detector never has to trust the generator. |
-| **Superposition** | More features than dimensions, represented as non-orthogonal directions. Rung 3 is the only fully reproduced rung. |
-| **k₉₀ / k₉₉** | Number of Fourier frequencies needed to hold 90% / 99% of embedding energy. `k₉₉ < P/2` is the sparsity criterion. |
+| **Superposition** | More features than dimensions, represented as non-orthogonal directions. Rung 3 reproduces its phase transition (10/20 features represented when dense, 20/20 when sparse). |
+| **k₉₀ / k₉₉** | Number of Fourier frequencies needed to hold 90% / 99% of embedding energy. The sparsity criterion is the energy one (`k₉₀ < P/2`, see **energy_sparse**); `k₉₉` is the retracted L1-mass variant and is kept only to explain the 2026-10-14 reversal. |
 | **P** | Modulus of the modular-addition task (P=113 is the flagship scale). |
+
+The manifests behind the terms above: **Induction head** and **Prefix-copying
+head** <!-- manifest: results/induction_standard.json -->, **Variable-distance
+task** <!-- manifest: results/induction_content.json -->, **Grokking**
+<!-- manifest: results/grokking_nanda_p113.json -->.
 
 ## Rung → module map
 
@@ -54,11 +56,14 @@ The manifests behind that table, one per rung: Rung 1
 <!-- manifest: results/exp4_standard.json -->, Rung 5
 <!-- manifest: results/exp5_real_activations.json -->, Rung 1b content task
 <!-- manifest: results/induction_content.json -->, Rung 1b causal addendum
-<!-- manifest: results/exp4_content.json -->.
+<!-- manifest: results/exp4_content.json -->, Rung 7
+<!-- manifest: results/gpt2_small_stage2.json -->.
 
 Shared model: `src/models/decoder_only_transformer.py` (RMSNorm + RoPE + causal
-multi-head attention + KV cache). Experiments `exp1`–`exp5` use their own local
-model classes; `exp6` (capstone) uses the shared one.
+multi-head attention + KV cache), used by `exp6` (capstone). Rung 1 uses
+`src/models/attention_only_transformer.py`, Rung 2
+`src/models/one_layer_transformer.py`, Rung 7 `src/models/gpt2.py`; Rungs 3 and
+5 define their small autoencoders in their own experiment module.
 
 ## Repo map
 
@@ -84,6 +89,6 @@ checklists/           ← reproducibility checklist
 
 ## Open decisions
 
-Current status lives in `portfolio/RESULTS.md` and the `v1.0` GitHub milestone.
+Current status lives in `portfolio/RESULTS.md` and the open GitHub issues.
 Do not re-derive status from the ADR ledgers (0001–0030 are historical and closed,
 see `docs/adr/0031-closure.md`; they live in `archive/process/adr/`).

@@ -407,7 +407,7 @@ class TestAttentionOnlyInterventions:
 
     @staticmethod
     def _model():
-        from src.experiments.exp1_induction_heads import AttentionOnlyTransformer
+        from src.models.attention_only_transformer import AttentionOnlyTransformer
 
         torch.manual_seed(0)
         return AttentionOnlyTransformer(
@@ -527,8 +527,8 @@ class TestFromCheckpoint:
     def test_build_model_loads_the_checkpoint(self, tmp_path) -> None:
         from pathlib import Path
 
-        from src.experiments.exp1_induction_heads import AttentionOnlyTransformer
         from src.experiments.exp4_circuit_patching import _build_model
+        from src.models.attention_only_transformer import AttentionOnlyTransformer
 
         self._train_exp1_checkpoint(tmp_path)
         args = self._args(tmp_path)

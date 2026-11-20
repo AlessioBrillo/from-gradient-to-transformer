@@ -32,7 +32,6 @@ from typing import Callable, Optional
 import torch
 from torch.utils.data import DataLoader
 
-from src.experiments.exp1_induction_heads import AttentionOnlyTransformer
 from src.experiments.exp2_grokking import (
     FIGURES_DIR,
     OneLayerTransformer,
@@ -47,6 +46,7 @@ from src.experiments.exp2_grokking import (
     run_ablation_sweep,
 )
 from src.experiments.runner import aggregate_metrics
+from src.models.attention_only_transformer import AttentionOnlyTransformer
 from src.results import ResultsManifest, count_parameters
 
 # Row-3 frozen verdict criteria (ADR-0003): diag+1 mass threshold and the

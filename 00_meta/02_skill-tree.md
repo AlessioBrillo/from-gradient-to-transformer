@@ -73,15 +73,15 @@ Some exercises and proofs were written by an AI assistant to close gaps this rul
   runner + provenance manifests built 2026-08-02
   (`src/experiments/runner.py`, `src/results.py`); wired into 3 of 5 experiments (exp1,
   exp3, exp4). Exercise: [[06_production_ai/exercises/ex-02-results-manifest]]. Proof:
-  [[06_production_ai/proofs/reproducible-from-clean-clone]] (not yet passed — needs a
-  post-commit clean-clone run, see the proof's own Outcome).
-- [ ] **Experiment tracking: W&B for loss curves and progress measures**
+  [[06_production_ai/proofs/reproducible-from-clean-clone]] (passed GREEN 2026-08-27,
+  transcript committed). Still `[~]`: the multi-seed runner is wired into 3 of 5 experiments.
+- [-] **Experiment tracking: W&B for loss curves and progress measures** — descoped 2026-09-08: no W&B credential ever worked; the run manifests are the record
 - [~] **`make reproduce` for every experiment** — pre-existing target still works; new
   `make reproduce-multiseed` covers exp1/exp3/exp4, not yet exp2/exp5.
 - [~] **CI smoke tests** (fast per-experiment shape/gradient checks) — pre-existing pytest
   step; 2026-08-02 fixed a `python-version` mismatch (3.11 pinned vs. 3.12 resolved) and
   made the non-blocking mypy step distinguish "reported errors" from "mypy crashed."
-- [ ] **Feature dashboard deployment** (Hugging Face Spaces for SAE browser)
+- [-] **Feature dashboard deployment** (Hugging Face Spaces for SAE browser) — descoped 2026-10-11: a browsable dashboard is a product, and the science it would show is already in the manifests
 - [ ] ML system design (minimal — design doc for the capstone pipeline)
 - [x] **Reproducible job durability: checkpoint/resume survives a real process kill** — atomic
   checkpoint write + RNG-state capture in `save_training_checkpoint`/
@@ -98,8 +98,10 @@ Some exercises and proofs were written by an AI assistant to close gaps this rul
   interventions land on it, but the dissociation probe puts the copy on a
   **fixed offset**: on the periodic task the two mechanisms are the same
   function, so the head is a *prefix-copying* head. The content-based task
-  that separates them is pre-registered (ADR-0033) and its run is the open
-  item of issue #200.
+  that separates them (ADR-0033, issue #200, closed) ran on 3 seeds: the copy
+  is content-based, but no head passes the frozen per-head rule and both
+  verdicts are NEGATIVE (re-measured 2026-11-17). Stays `[~]`: the content
+  circuit is not stable across seeds.
   <!-- manifest: results/induction_standard.json -->
 - [x] **Grokking reproduction + Fourier reverse-engineering** — the primary
   flagship, **reproduced 2026-10-14**: val accuracy 0.9999 ± 0.0002 with a
@@ -129,7 +131,7 @@ Some exercises and proofs were written by an AI assistant to close gaps this rul
   its features never firing: the over-completeness, not the sparsity, is the
   open question — see [[portfolio/RESULTS]] Rung 5.
   <!-- manifest: results/exp5_real_activations.json -->
-- [ ] **Automated circuit discovery** — ACDC, AtP, attribution patching. Descoped 2026-08-01: the placeholder implementation simulated results with random draws instead of running ACDC; deleted.
+- [-] **Automated circuit discovery** — ACDC, AtP, attribution patching. Descoped 2026-08-01: the placeholder implementation simulated results with random draws instead of running ACDC; deleted.
 - [x] **Instrumentation validated on a pretrained model (GPT-2 small)** — pure-PyTorch GPT-2 with parity to the reference, the shared detector ranks the two induction heads of the literature first and second of 144; the causal stages failed and are reported as such: `results/gpt2_small_stage2.json`
 - [x] Mini-paper writing (LaTeX, citations, ablations, limitations) — `portfolio/paper/`
   is written from the manifests, with the retracted claims retracted in place.

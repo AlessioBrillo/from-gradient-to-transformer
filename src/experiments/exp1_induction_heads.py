@@ -239,9 +239,7 @@ def make_task_data(
 # Model: 2-layer attention-only transformer
 # ---------------------------------------------------------------------------
 # The model lives in src/models/attention_only_transformer.py (moved on
-# 2026-11-16); it is imported at the top of this module, so existing
-# `from src.experiments.exp1_induction_heads import AttentionOnlyTransformer`
-# imports keep working.
+# 2026-11-16) and is imported at the top of this module. Import it from there.
 
 
 # ---------------------------------------------------------------------------

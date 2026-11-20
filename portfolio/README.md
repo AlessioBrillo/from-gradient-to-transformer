@@ -19,8 +19,12 @@ multi-seed manifest. See [RESULTS](RESULTS.md) for exact status per rung.
 | Mini-paper | LaTeX source at [`paper/main.tex`](paper/main.tex); PDF compiled and shipped on the [live site](https://alessiobrillo.github.io/from-gradient-to-transformer/paper.pdf) (`make paper` compiles locally when a TeX toolchain is present) |
 | Model card | [model-card](model-card.md) |
 | Interactive demo (SAE feature browser) | descoped 2026-10-11: a browsable dashboard is a product, and the science it would show (a sparse dictionary on a 64-dimensional residual stream, with 66% of its features dead) is already in the manifests |
-<!-- manifest: results/grokking_nanda_p113.json -->
-<!-- manifest: results/exp5_real_activations.json -->
 | Experiment tracking | descoped 2026-10-11: no W&B credentials; manifests on disk are the record (issue #167/#169/#170) |
 | Code (experiments) | `src/experiments/` |
 | Code (capstone model) | `src/models/decoder_only_transformer.py`; see [_MOC](../07_capstone/_MOC.md) |
+| Real model (GPT-2 small) | [Rung 7](projects/rung-7-gpt2-small/index.md); pre-registered in [ADR-0034](../docs/adr/0034-gpt2-small-real-model-test.md) |
+| Essays | [essay index](essay/README.md) |
+
+The manifests behind the numbers above: Rung 2
+<!-- manifest: results/grokking_nanda_p113.json -->, Rung 5
+<!-- manifest: results/exp5_real_activations.json -->.

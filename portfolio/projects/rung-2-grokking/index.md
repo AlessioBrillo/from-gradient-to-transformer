@@ -60,15 +60,16 @@ On the same embeddings the old L1-mass k₉₉ reads 109–110/113 (dense) — t
 ## Reproduce
 
 `uv run python -m src.experiments.exp2_grokking --quick` (smoke test); full P=113 via
-`notebooks/kaggle_grokking_p113.ipynb` on GPU (issue #196 re-measurement uses the
-P=59 control config; issue #168 runs the phase-sweep notebook).
+`notebooks/kaggle_grokking_p113.ipynb` on GPU (the P=59 control config re-measures
+the positive control; `notebooks/kaggle_phase_sweep.ipynb` is the phase-sweep notebook of issue #168).
 
 ## Limitations
 
 - No sparse Fourier solution was ever produced under the L1-mass reading; the energy reading is
   the one that classifies the solution as sparse
-- The P=59 positive control's NO-GROK label carries the same L1 metric defect (checkpoints gone;
-  re-measure pending, issue #196)
+- The P=59 positive control's NO-GROK label carried the same L1 metric defect. It was
+  re-measured with the energy metric on 2026-10-19 (issue #196): 2 of 3 seeds sparse, a
+  MIXED verdict, not a clean reproduction
 - Small model (1-layer, d_model=128) — larger models may behave differently
 
 ## Links
@@ -80,6 +81,5 @@ P=59 control config; issue #168 runs the phase-sweep notebook).
 
 ## Next Steps
 
-- Re-measure the P=59 positive control with the energy metric (issue #196)
-- Extend energy-metric coverage to the capstone joint-training run
-- Standard-scale Rung 1 induction run + head-validation cascade (exp4 path patching, exp5 real-activation SAE)
+- Extend energy-metric coverage to the capstone joint-training run (49 of 56 frequencies: dense under the energy metric)
+- The protocol-ablation phase diagram (issue #168), which is not scheduled and carries no claim
