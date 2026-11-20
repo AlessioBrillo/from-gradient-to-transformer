@@ -147,3 +147,44 @@ def test_the_frozen_thresholds_match_adr_0034() -> None:
 def test_ties_count_against_the_target_head() -> None:
     m = np.array([[0.9, 0.9], [0.9, 0.1]])
     assert exp7.rank_of(m, 0, 0) == 3  # three heads share the top score: the target is last
+
+
+def test_adr0035_resumes_from_the_seeds_already_done(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A killed run must not redo finished seeds, and the manifests must cover every seed."""
+    calls: list[int] = []
+
+    class _Model:
+        def mean_head_outputs(self, tokens: torch.Tensor) -> dict[int, torch.Tensor]:
+            return {0: torch.zeros(1)}
+
+    def stage2(model: object, seed: int) -> tuple[dict, list]:
+        calls.append(seed)
+        if len(calls) == 2:
+            raise MemoryError("killed")  # the process dies during the second seed
+        return {}, [(0, 0, 1.0)]
+
+    monkeypatch.setattr(exp7, "induction_sequences", lambda s: torch.zeros(1, 2, dtype=torch.long))
+    monkeypatch.setattr(exp7, "ioi_reference_means", lambda *a: {0: {0: torch.zeros(1)}})
+    monkeypatch.setattr(exp7, "ioi_groups", lambda *a: {})
+    monkeypatch.setattr(exp7, "stage2_seed", stage2)
+    monkeypatch.setattr(
+        exp7, "stage6_seed", lambda *a: {"icl_gain_drop": 0.5, "control_pairs_drop_p95": 0.1}
+    )
+    monkeypatch.setattr(exp7, "stage7_seed", lambda *a: {"stage7_pass": 1.0})
+    monkeypatch.setattr(exp7, "stage8_seed", lambda *a: ({"stage8_pass": 1.0}, [(0, 0, 0.5)]))
+    saved: dict[int, list[int]] = {}
+
+    def save(stage: int, seeds: list[int], *_: object, **__: object) -> None:
+        saved[stage] = seeds
+
+    with pytest.raises(MemoryError):
+        exp7.run_adr0035(_Model(), None, [], save, cache=tmp_path)  # type: ignore[arg-type]
+    assert saved == {}  # nothing is written until every seed exists
+
+    calls.clear()
+    monkeypatch.setattr(exp7, "stage2_seed", lambda m, s: (calls.append(s), ({}, [(0, 0, 1.0)]))[1])
+    assert exp7.run_adr0035(_Model(), None, [], save, cache=tmp_path) == 0  # type: ignore[arg-type]
+    assert calls == [1, 2]  # seed 0 was finished before the kill and is not redone
+    assert saved == {6: [0, 1, 2], 7: [0, 1, 2], 8: [0, 1, 2]}

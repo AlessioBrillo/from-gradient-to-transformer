@@ -19,6 +19,7 @@ form re-runs only the stage 1 gate and writes stages 6 to 8, leaving 1 to 5 unto
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import time
 from collections.abc import Iterator
@@ -507,43 +508,79 @@ def stage8_seed(
     return metrics, top_heads(effect)
 
 
-def run_adr0035(model: GPT2, tokenizer: Any, names: list[str], save: Any) -> int:
-    """Stages 6 to 8, each with its own wall clock."""
+def run_adr0035(
+    model: GPT2,
+    tokenizer: Any,
+    names: list[str],
+    save: Any,
+    cache: Path = Path("checkpoints/adr0035"),
+) -> int:
+    """Stages 6 to 8, each with its own wall clock.
+
+    One file per finished seed, plus the reference means, lives in `cache`: if the process is
+    killed (this run was, twice, for memory) the next start skips every seed already done, and
+    the manifests are written once all of them exist.
+    # ponytail: resume = one json per seed, no scheduler; delete `cache` to start over.
+    """
+    cache.mkdir(parents=True, exist_ok=True)
     seeds: list[int] = list(SEEDS)
-    clocks = {6: 0.0, 7: 0.0, 8: 0.0}
-    rows6, rows7, rows8, tops8 = [], [], [], []
-    t = time.monotonic()
-    induction_means = model.mean_head_outputs(
-        torch.cat([induction_sequences(s) for s in REFERENCE_SEEDS])
-    )
-    ioi_means = ioi_reference_means(model, tokenizer, names)
-    setup = time.monotonic() - t
-    for seed in seeds:
+    pending = [s for s in seeds if not (cache / f"seed{s}.json").exists()]
+    means_path = cache / "reference_means.pt"
+    if pending:
+        if means_path.exists():
+            means = torch.load(means_path, weights_only=True)
+        else:
+            t = time.monotonic()
+            means = {
+                "induction": model.mean_head_outputs(
+                    torch.cat([induction_sequences(s) for s in REFERENCE_SEEDS])
+                ),
+                "ioi": ioi_reference_means(model, tokenizer, names),
+                "setup": torch.tensor(0.0),
+            }
+            means["setup"] = torch.tensor(time.monotonic() - t)
+            torch.save(means, means_path)
+    for seed in pending:
         set_seed(seed)
         t = time.monotonic()
         _, top = stage2_seed(model, seed)
-        rows6.append(stage6_seed(model, seed, top, induction_means))
-        clocks[6] += time.monotonic() - t
+        row6 = stage6_seed(model, seed, top, means["induction"])
+        c6 = time.monotonic() - t
         groups = ioi_groups(tokenizer, names, seed)
         t = time.monotonic()
-        rows7.append(stage7_seed(model, groups, ioi_means))
-        clocks[7] += time.monotonic() - t
+        row7 = stage7_seed(model, groups, means["ioi"])
+        c7 = time.monotonic() - t
         t = time.monotonic()
-        m8, top8 = stage8_seed(model, tokenizer, names, seed, groups)
-        rows8.append(m8)
+        row8, top8 = stage8_seed(model, tokenizer, names, seed, groups)
+        c8 = time.monotonic() - t
         ranked = ", ".join(f"{a}.{b}={v:.3f}" for a, b, v in top8)
-        tops8.append(f"seed {seed} top-{TOP_K}: {ranked}")
-        clocks[8] += time.monotonic() - t
-        logger.info(f"seed {seed}: {rows6[-1]} {rows7[-1]} {m8}")
+        done = {
+            "row6": row6,
+            "row7": row7,
+            "row8": row8,
+            "top8": f"seed {seed} top-{TOP_K}: {ranked}",
+            "clock": [c6, c7, c8],
+        }
+        # Written last and atomically, so a kill never leaves a half seed that looks finished.
+        tmp = cache / f"seed{seed}.json.tmp"
+        tmp.write_text(json.dumps(done), encoding="utf-8")
+        tmp.replace(cache / f"seed{seed}.json")
+        logger.info(f"seed {seed}: {row6} {row7} {row8}")
+    done_all = [json.loads((cache / f"seed{s}.json").read_text(encoding="utf-8")) for s in seeds]
+    rows6 = [d["row6"] for d in done_all]
+    rows7 = [d["row7"] for d in done_all]
+    rows8 = [d["row8"] for d in done_all]
+    clocks = [sum(d["clock"][k] for d in done_all) for k in range(3)]
     # Stage 6 is judged on the seed average (ADR-0035), so every row carries the same verdict.
     drop = float(np.mean([r["icl_gain_drop"] for r in rows6]))
     p95 = float(np.mean([r["control_pairs_drop_p95"] for r in rows6]))
     for r in rows6:
         r["stage6_pass"] = float(drop >= ICL_GAIN_DROP and drop > p95)
+    setup = float(torch.load(means_path, weights_only=True)["setup"])
     note = f"mean over reference seeds {REFERENCE_SEEDS}; setup {setup:.0f}s not counted below."
-    save(6, seeds, rows6, f"{note} Judged on the seed average.", clocks[6], adr="0035")
-    save(7, seeds, rows7, f"{note} PASS needs every seed to pass.", clocks[7], adr="0035")
-    save(8, seeds, rows8, " | ".join(tops8), clocks[8], adr="0035")
+    save(6, seeds, rows6, f"{note} Judged on the seed average.", clocks[0], adr="0035")
+    save(7, seeds, rows7, f"{note} PASS needs every seed to pass.", clocks[1], adr="0035")
+    save(8, seeds, rows8, " | ".join(d["top8"] for d in done_all), clocks[2], adr="0035")
     return 0
 
 
