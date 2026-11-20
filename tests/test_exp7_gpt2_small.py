@@ -188,3 +188,29 @@ def test_adr0035_resumes_from_the_seeds_already_done(
     assert exp7.run_adr0035(_Model(), None, [], save, cache=tmp_path) == 0  # type: ignore[arg-type]
     assert calls == [1, 2]  # seed 0 was finished before the kill and is not redone
     assert saved == {6: [0, 1, 2], 7: [0, 1, 2], 8: [0, 1, 2]}
+
+
+class _IdTokenizer:
+    def __call__(self, text: str, return_tensors: str = "pt") -> dict[str, torch.Tensor]:
+        return {"input_ids": torch.tensor([[ord(c) % 90 for c in text[:6]]])}
+
+    def convert_ids_to_tokens(self, ids: list[int]) -> list[str]:
+        return [str(i) for i in ids]
+
+
+def test_explorer_payload_has_causal_patterns_that_sum_to_one() -> None:
+    payload = exp7.explorer_payload(_tiny(), _IdTokenizer(), "rev", (("p", "abcdef"),))
+    assert payload["sources"] and payload["revision"] == "rev"
+    for prompt in payload["prompts"]:
+        n = len(prompt["tokens"])
+        assert len(prompt["patterns"]) == 2 and len(prompt["patterns"][0]) == 4
+        m = np.array(prompt["patterns"][1][2])
+        assert m.shape == (n, n)
+        assert np.allclose(m.sum(axis=1), 1.0, atol=0.01)
+        assert np.allclose(np.triu(m, k=1), 0.0)  # no head looks ahead
+
+
+def test_explorer_sources_are_tracked_manifests() -> None:
+    repo = Path(__file__).resolve().parents[1]
+    for rel in exp7.EXPLORER_SOURCES:
+        assert (repo / rel).is_file(), rel

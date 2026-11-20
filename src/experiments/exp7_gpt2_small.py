@@ -584,6 +584,48 @@ def run_adr0035(
     return 0
 
 
+# --- Explorer export ------------------------------------------------------------------
+EXPLORER_PATH = Path("portfolio/explorer/gpt2_heads.json")
+EXPLORER_SOURCES = ("results/gpt2_small_stage1.json", "results/gpt2_small_stage2.json")
+EXPLORER_PROMPTS = (
+    ("IOI", TEMPLATES[0].format(first=" Mary", second=" John", s=" John")),
+    ("Plain sentence", "The quick brown fox jumps over the lazy dog because the dog was asleep"),
+)
+
+
+def explorer_payload(
+    model: GPT2, tokenizer: Any, revision: str, prompts: tuple[tuple[str, str], ...]
+) -> dict[str, Any]:
+    """Attention patterns of every head on a few fixed prompts, for the static explorer page.
+
+    Values are rounded to 3 decimals. The prompts and the repeated-random-token sequence are
+    fixed, so the file is reproducible; `sources` names the manifests that back the scores
+    the page quotes next to it.
+    """
+    rng_prefix = induction_sequences(
+        0, n=1, prefix_len=10, max_id=min(MAX_TOKEN_ID, model.cfg.vocab_size)
+    )
+    items = [(name, tokenizer(text, return_tensors="pt")["input_ids"]) for name, text in prompts]
+    items.append(("Induction (random tokens, repeated)", rng_prefix))
+    out = []
+    for name, ids in items:
+        layers = attention_patterns_for_inputs(model, ids)  # per layer: (1, heads, S, S)
+        patterns = [[p[0, h].round(decimals=3).tolist() for h in range(p.shape[1])] for p in layers]
+        out.append(
+            {
+                "name": name,
+                "tokens": tokenizer.convert_ids_to_tokens(ids[0].tolist()),
+                "patterns": patterns,
+            }
+        )
+    return {
+        "model": MODEL_NAME,
+        "revision": revision,
+        "sources": list(EXPLORER_SOURCES),
+        "prompts": out,
+    }
+
+
 # --- Driver ---------------------------------------------------------------------------
 def write_manifest(
     stage: int,
@@ -620,6 +662,11 @@ def main() -> int:
         action="store_true",
         help="run stages 6 to 8 only (ADR-0035); stages 1 to 5 stay as recorded",
     )
+    parser.add_argument(
+        "--export-explorer",
+        action="store_true",
+        help=f"write {EXPLORER_PATH} (attention patterns for the site's head explorer) and stop",
+    )
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
@@ -630,6 +677,13 @@ def main() -> int:
     revision = str(getattr(reference.config, "_commit_hash", None))
     model = GPT2.from_pretrained(args.model)
     torch.set_grad_enabled(False)
+
+    if args.export_explorer:
+        payload = explorer_payload(model, tokenizer, revision, EXPLORER_PROMPTS)
+        EXPLORER_PATH.parent.mkdir(parents=True, exist_ok=True)
+        EXPLORER_PATH.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
+        logger.info(f"wrote {EXPLORER_PATH}")
+        return 0
 
     def save(
         stage: int,

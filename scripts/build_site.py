@@ -59,6 +59,7 @@ blockquote {{ margin:0; padding:0 16px; color:var(--muted); border-left:4px soli
 </style></head><body>
 <nav><a href="{root}index.html">Home</a><a href="{root}portfolio/RESULTS.html">Results</a>
 <a href="{root}portfolio/LEDGER.html">Ledger</a>
+<a href="{root}explorer/index.html">Head explorer</a>
 <a href="{root}docs/for-hiring.html">For hiring</a>
 <a href="{root}docs/for-researchers.html">For researchers</a>
 <a href="{root}docs/for-learners.html">For learners</a>
@@ -126,6 +127,9 @@ def build_site(out: Path, root: Path = Path(".")) -> None:
     figures = root / "portfolio" / "figures"
     if figures.exists():
         shutil.copytree(figures, out / "portfolio" / "figures", dirs_exist_ok=True)
+    explorer = root / "portfolio" / "explorer"
+    if explorer.exists():
+        shutil.copytree(explorer, out / "explorer", dirs_exist_ok=True)
     pdf = root / "portfolio" / "paper" / "main.pdf"
     if pdf.exists():
         shutil.copy(pdf, out / "paper.pdf")
