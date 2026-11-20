@@ -18,8 +18,8 @@
 # to cmd.exe, which cannot run `code=$$?; if [ ... ]` recipes and misruns the
 # `typecheck` target ("unrecognized arguments" passed to mypy). Git ships
 # sh.exe at C:\Program Files\Git\bin; resolved at runtime so the documented
-# prerequisite ("Git's bin/ on PATH", see the MP-21 incident in the progress
-# log) is all that is needed. Linux/macOS keep the platform default.
+# prerequisite ("Git's bin/ on PATH", documented in
+# the progress log) is all that is needed. Linux/macOS keep the platform default.
 ifneq ($(OS),Windows_NT)
 SHELL := /bin/sh
 else
@@ -60,7 +60,7 @@ lint-fix:
 
 # Non-blocking: strict mode currently reports 250 errors (2026-11-07 count;
 # the 2026-08-01 baseline was 154, +22 by 2026-08-18, +20 since through new
-# research code — see the progress log's MP-52 entry — not from a tool
+# research code — not from a tool
 # upgrade: verified identical under mypy 1.20.2, 2.1.0, and 2.3.0. After fixing a
 # python_version mismatch that previously made mypy crash on numpy's stubs
 # before checking a single line of src/ — see pyproject.toml
@@ -108,7 +108,7 @@ typecheck-new:
 # GitHub's PR check, exactly like micro-18/19). The mirror lints the HEAD
 # commit against the same config:
 #   npx --yes commitlint --from HEAD~1 --to HEAD --config commitlint.config.mjs
-# commitlint-new closes the gap that let the mp-52 roadmap commit ship with a
+# commitlint-new closes the gap that let a roadmap commit ship with a
 # >200-char footer line (2026-08-18): commitlint-head lints the existing HEAD
 # (usually the reconcile merge), never the commit being created, so a
 # violation introduced by the new commit escapes it. The new-commit mirror
@@ -297,7 +297,7 @@ content-verdict:
 
 # --- Retune A/B (Micro-Phase 89, Row 2) ---
 # Frozen 500-step arms, seed 0, warmup 100, probe manifests only.
-# Control: exact MP-88 shakedown config at short horizon.
+# Control: the frozen shakedown config at short horizon.
 # Offset (Arm A): modular ids in [2048, 2161), pad 2161 — disjoint from
 #   induction [0, 2048); tests the shared-embedding interference hypothesis.
 # Reweight (Arm B): modular 5.0 / induction 0.5 (10x relative boost) —
