@@ -31,7 +31,7 @@ entries stay here — the point of this section is to make it easy to
 see the trend (are correctness problems getting caught faster, or accumulating?),
 not to keep only the latest one.
 
-### 2026-11-17 — The record described models it never trained, and a rule nobody enforced
+## 2026-11-17 — The record described models it never trained, and a rule nobody enforced
 
 The thirteenth audit, and the first to audit the repository's *own documentation of
 itself* rather than a result. It started from one question: does every sentence a
@@ -71,7 +71,7 @@ roadmaps and ledger ADRs) moved to `archive/process/`, where they are marked as 
 **What it does not change.** No published number moved: none of the defects touched a
 manifest. The two code defects are in functions no experiment calls.
 
-### 2026-11-12 — The run seed did not pin the model's initial weights: two commands of one configuration disagreed
+## 2026-11-12 — The run seed did not pin the model's initial weights: two commands of one configuration disagreed
 
 The twelfth audit, and the first one about *what a seed means* rather than
 about a number being wrong: it found that the run seed `exp3` reports does
@@ -207,7 +207,7 @@ unedited, as `results/<name>_pre_seedfix.json`. What the re-measurement showed:
 No threshold, budget or decision rule was changed after seeing a number, and no seed was dropped. The
 documents that quote these numbers were updated in the same change, and `make docs-audit` checks the tables.
 
-### 2026-11-11 — The published verdict was not the verdict the code computes, and the run's strongest numbers were never published
+## 2026-11-11 — The published verdict was not the verdict the code computes, and the run's strongest numbers were never published
 
 The eleventh audit, and the first one that audits the repository's own
 *conclusion* rather than its instrument: it found that the headline result of
@@ -274,7 +274,7 @@ verdict stands as the frozen rule applied to the frozen instrument, and what
 changes is that the record now also carries the measurements that explain
 what the verdict is about.
 
-### 2026-11-04 — Finalization of Content Task Instrumentation
+## 2026-11-04 — Finalization of Content Task Instrumentation
 The standard-geometry CPU de-risk (`results/induction_content_derisk_standard.json`) was successfully run, and the verdict module (`src/experiments/content_verdict.py`) computed the verdict. The run is `INCOMPLETE` (due to being a de-risk pilot with seed 0 only), but the instrumentation and verdict criteria are verified. The full GPU run is queued and pending.
 
 The tenth audit, again before the GPU run. The 2026-10-25 de-risk made the
@@ -343,7 +343,7 @@ rewritten from "a head" to "a circuit": the repository reports that no
 single head passed the frozen per-head criteria and that the behaviour was
 carried by a group.
 
-### 2026-10-25 — The content-task instrument cannot measure its own question: wrong chance level, invalid shares, an empty candidate group, and a missing standard-geometry de-risk
+## 2026-10-25 — The content-task instrument cannot measure its own question: wrong chance level, invalid shares, an empty candidate group, and a missing standard-geometry de-risk
 
 The ninth audit, and the one that reaches furthest forward again: it is about
 the experiment that is supposed to **close** Rung 1's open question, and it
@@ -412,7 +412,7 @@ remains **secondary**.
 decision rule are untouched. No number is re-tuned after seeing the de-risk
 data.
 
-### 2026-10-22 — The content-task run could not have produced a verdict: a `KeyError`, a gate with no manifest, and a probe that contradicted the addendum
+## 2026-10-22 — The content-task run could not have produced a verdict: a `KeyError`, a gate with no manifest, and a probe that contradicted the addendum
 
 The eighth audit, and the one that reaches furthest forward: it is about the
 experiment that is supposed to **close** Rung 1's open question, and it found
@@ -500,7 +500,7 @@ decision rule are untouched, and the mechanism report is explicitly
 periodic task's numbers, the Rung 2/3/5 results and the 2026-10-19 audit's
 verdicts are untouched — this audit is about the instrument of the *next* run.
 
-### 2026-10-19 — The induction detector measured the *previous-token* head: every "0 / N heads" was a statement about the detector
+## 2026-10-19 — The induction detector measured the *previous-token* head: every "0 / N heads" was a statement about the detector
 
 The seventh audit, and the one that reaches furthest back: it invalidates the
 head counts this repository has published since 2026-08-02 — not by finding them
@@ -595,7 +595,7 @@ now loads exp1's checkpoint and analyses *that* model; the parity test covers
 the batch size and the step count, and the interventions (activation
 patching, head ablation, path patching) run unchanged on either model family.
 
-### 2026-10-14 — The NO-GROK verdict was the metric's fault: the sparse circuit was there all along
+## 2026-10-14 — The NO-GROK verdict was the metric's fault: the sparse circuit was there all along
 
 The 2026-10-08 audit predicted exactly this: an L1-mass `k_99` calls a clean
 sparse embedding dense because noise spreads over every bin. The re-run it asked
@@ -630,7 +630,7 @@ captions corrected to the sparse (energy) reading (`portfolio/figures/exp2_grokk
 `portfolio/figures/exp2_progress_measures.png`;
 re-analysis provenance `results/grokking_p113_gpu_reanalysis.json`).
 
-### 2026-10-11 — Integrity pass: the one solid finding had no manifest behind it
+## 2026-10-11 — Integrity pass: the one solid finding had no manifest behind it
 
 The repo's own headline called the fixed-vs-fresh-batches comparison "the one solid
 finding" and quoted **0.05% vs 52.2%** validation accuracy. That number appeared in nine
@@ -673,7 +673,7 @@ unchanged.
 `verify_claims()` gained three rules that would have caught this class of bug on day one —
 see `src/results.py` and `tests/test_verify_claims_scope.py`.
 
-### 2026-10-08 — Integrity pass: a paper section written ahead of its data
+## 2026-10-08 — Integrity pass: a paper section written ahead of its data
 
 `verify-claims` reported 0 problems while `portfolio/paper/` contained a phase-diagram
 section with claims that no manifest backed. Root cause: the checker only read RESULTS.md
@@ -707,7 +707,7 @@ code (`tests/test_results.py::TestVerifyClaimsPaperAndManifestQuality`). The uns
 section, its 3 figures and the test manifest were deleted rather than caveated, as with
 Rung 6 ACDC on 2026-08-01.
 
-### 2026-08-02 — Micro-Phase 8, the Evidence Pass: correct-but-unmeasured code gets measured
+## 2026-08-02 — Micro-Phase 8, the Evidence Pass: correct-but-unmeasured code gets measured
 
 The 2026-08-01 Validity Pass fixed *what the code measures*. It left the repository
 correct and almost entirely **unmeasured**: Rung 2 had never run, Rungs 1 and 4 had no
@@ -779,7 +779,7 @@ that fits this machine's CPU budget. What it found:
   itself needs a GPU this environment doesn't have. This is still the single most important
   open item in the repository.
 
-### 2026-08-01 — Validity Pass: three causal claims were measuring the wrong thing
+## 2026-08-01 — Validity Pass: three causal claims were measuring the wrong thing
 
 A code-level audit (not a re-run — a *reading* of what each intervention actually touches)
 found that Rungs 1 and 4's causal claims rested on interventions that didn't do what their
@@ -848,7 +848,7 @@ names said:
   directory as a side effect (each experiment module ran `FIGURES_DIR.mkdir()` at module
   scope). Moved into each `main()`.
 
-### 2026-07-26 — Reproducibility Audit: Real Bug Found, Claims Reconciled to Evidence
+## 2026-07-26 — Reproducibility Audit: Real Bug Found, Claims Reconciled to Evidence
 
 `figures/` did not exist prior to this audit despite being referenced throughout this
 document and `00_meta/00_home.md`. This session installed the minimal runtime deps

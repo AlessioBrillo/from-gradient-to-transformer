@@ -65,7 +65,6 @@ protocol-ablation phase diagram (issue #168) has not run and is not scheduled.
 
 The audit trail (thirteen audits, newest first) is in [LEDGER](LEDGER.md). It stays a separate file so this page starts with results, not with corrections. Every retraction that changes a number quoted here is applied here too.
 
-
 ---
 
 ## Rung 1 — Prefix-Copying Heads (Fallback Flagship — the detector was wrong; a head does form, and it is positional)
