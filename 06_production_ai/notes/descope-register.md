@@ -36,6 +36,15 @@ descoped item with a dated reason is information.
 | **FlashAttention** | Phase 4 breadth | **Descoped 2026-10-11** | A memory-bandwidth optimisation for long sequences. The longest sequence here is 128 positions on a < 5M-parameter model, where it would be pure overhead. |
 | **BERT / encoder-only** | Phase 4 breadth | **Descoped 2026-10-11** | Now documented rather than absent: see `04_nlp_and_transformers/notes/encoder-only-bert` for why the MI thesis rules it out. |
 
+## Next, not promised (2026-11-20)
+
+Two extensions were designed and not run. They are listed so that nobody reads their absence as an oversight.
+
+| Item | What it would add | Why not now |
+|---|---|---|
+| SAE dictionary-size sweep (next ADR) | How the dead-feature rate moves with dictionary width at the Rung 5 setting | Needs a frozen dead-feature metric and a pre-registration before any run |
+| Induction-head formation across Pythia-70m checkpoints (next ADR) | Whether the Rung 1 question (positional shortcut or content) shows up in a model trained on text | Needs about twenty checkpoint downloads and a pre-registration |
+
 ## What stays open
 
 Deliberately **not** descoped, because they are the actual research:
@@ -43,7 +52,7 @@ Deliberately **not** descoped, because they are the actual research:
 | Item | Issue | State on 2026-11-16 |
 |---|---|---|
 | Rung 2 P=113 positive control and NO-GROK recheck (GPU) | #167 | closed 2026-10-14 |
-| Phase diagram rebuilt as a protocol ablation | #168 | **open** |
+| Phase diagram rebuilt as a protocol ablation | #168 | **descoped 2026-11-20**: weeks of GPU quota for one open question; the closed rungs do not depend on it |
 | Rung 1/4/5 standard-scale induction run and head validation (GPU) | #169 | closed 2026-10-20 |
 | Capstone 3 seeds × 20k steps | #170 | closed 2026-10-15 |
 | Paper prose from committed manifests | #171 | closed 2026-10-12 |
