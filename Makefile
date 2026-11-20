@@ -4,7 +4,7 @@
 	reproduce-multiseed verify-claims clean paper paper-check figures \
 	reproduce-grokking-probe reproduce-induction-standard reproduce-induction-1layer \
 	reproduce-exp3-geometry commitlint-head neuron-ablation \
-	reproduce-gpt2 vault-check reproduce-induction-batches reproduce-induction-fixed \
+	reproduce-gpt2 gate-status vault-check reproduce-induction-batches reproduce-induction-fixed \
 	reproduce-induction-fresh reproduce-notebook \
 	reproduce-retune reproduce-retune-control reproduce-retune-offset reproduce-retune-reweight \
 	remote-dry-grokking remote-run-grokking remote-run-induction remote-run-capstone remote-run-sweep remote-pin \
@@ -115,6 +115,10 @@ typecheck-new:
 # lints exactly what the push will add:
 #   npx --yes commitlint --from origin/dev --to HEAD --config commitlint.config.mjs
 ci-check: lint vault-check typecheck-new typecheck test-cov check-refs docs-audit commitlint-new commitlint-head
+
+# Run the gate on HEAD and post the GitHub status `ci/local` (see scripts/gate_status.sh).
+gate-status:
+	bash scripts/gate_status.sh
 
 commitlint-new:
 	@echo "=== commitlint (unpushed commits origin/dev..HEAD, mirror of the PR range) ==="
