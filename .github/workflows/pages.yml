@@ -16,6 +16,7 @@ on:
       - 'docs/for-*.md'
       - 'scripts/build_site.py'
       - 'src/results.py'
+      - 'results/**'
       - 'Makefile'
   workflow_dispatch:  # Allow manual trigger
 
@@ -65,8 +66,8 @@ jobs:
       - name: Compile the mini-paper (LaTeX)
         # build_site.py copies portfolio/paper/main.pdf to the site only if it
         # exists, and the file is not tracked — so before this step the live
-        # site never shipped the paper at all. paper.yml compiles it as a CI
-        # artifact only; the site needs its own build so the PDF always
+        # site never shipped the paper at all. The paper-check step of
+        # .woodpecker/ci.yml compiles it as a CI check only; the site needs its own build so the PDF always
         # matches the committed .tex source. Two passes for \bibliography.
         uses: xu-cheng/latex-action@v3
         with:

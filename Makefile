@@ -68,7 +68,7 @@ lint-fix:
 # Any], DataLoader -> DataLoader[Any]), not caught bugs, but 250 is real
 # work, not something to silently claim fixed. Tracked as follow-up. Unlike
 # `|| true`, this still fails on a genuine mypy crash (exit 2) — see
-# .github/workflows/python-ci.yml for why that distinction matters.
+# .woodpecker/ci.yml for why that distinction matters.
 # `python -m mypy`, not the `mypy` console script: on Windows the
 # console-script shims are blocked by Application Control (os error 4551),
 # so the local mirror of this gate could not run the very commands the
@@ -97,11 +97,11 @@ typecheck-strict:
 # them.
 # --follow-imports=silent: without it, mypy also fails this target on
 # errors in whatever these two files transitively import (caught in CI —
-# see .github/workflows/python-ci.yml's blocking step comment).
+# see .woodpecker/ci.yml's blocking step comment).
 typecheck-new:
 	uv run python -m mypy src/results.py src/experiments/runner.py src/experiments/induction_tasks.py src/experiments/induction_detection.py src/experiments/copy_circuit.py src/experiments/content_verdict.py src/models/gpt2.py src/models/attention_only_transformer.py src/models/one_layer_transformer.py src/training/optim.py src/training/loop.py src/evaluation/metrics.py src/evaluation/leakage.py src/experiments/exp7_gpt2_small.py --ignore-missing-imports --follow-imports=silent
 
-# --- CI mirror (local replica of .github/workflows/python-ci.yml) ---
+# --- CI mirror (local replica of .woodpecker/ci.yml) ---
 # commitlint-head is part of the mirror since 2026-08-08: the PR-only
 # Conventional Commits workflow never runs on a local push, and that gap let
 # the micro-phase-20 step-0 commit ship with a >200-char body line (caught by

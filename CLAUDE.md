@@ -48,7 +48,7 @@ make reproduce-sae          # Rung 5: SAE feature dashboard
 make figures                # rebuild portfolio/figures/ from the manifests
 make verify-claims          # every public number traces to a tracked manifest
 make vault-check            # note link/orphan + tag-schema gate
-make ci-check               # local mirror of .github/workflows/python-ci.yml
+make ci-check               # local mirror of .woodpecker/ci.yml
 
 # Remote GPU runs (Kaggle/Colab) — see docs/agents/gpu-runs.md
 make remote-dry-grokking    # validate the GPU notebook, push nothing
@@ -106,7 +106,7 @@ GitHub Actions is not the gate. The single source of truth is `.woodpecker/ci.ym
   working copy is on the container's own filesystem (a bind-mounted `.venv` makes mypy ~50x
   slower): `lint vault-check typecheck-new typecheck check-refs docs-audit`, `src.results verify`,
   pytest in 6 chunks with `--cov-append` (floor 73), then `make paper-check` in the texlive image.
-- **Not in the gate:** the two commitlint targets (commit-msg hook and conventional-commits workflow cover them), paper LaTeX build, markdown-lint.
+- **In the gate:** `lint vault-check typecheck-new typecheck test-cov check-refs docs-audit`, `src.results verify`, `paper-check`, `markdown-lint`, and `commitlint` on HEAD. `ci-local` ships no git history, so commitlint skips there and the commit-msg hook enforces messages. GitHub Actions only deploys Pages (`pages.yml`).
 - **Status:** first green run recorded 2026-10-16 (lint, vault-check, test-cov 393 passed,
   verify-claims=0). `typecheck-new`/mypy require the CI Docker image and are blocked on this
   host by an Application Control policy — they run in CI. If a step fails for an environment
