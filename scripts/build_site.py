@@ -23,6 +23,7 @@ PUBLISHED_GLOBS = [
     "README.md",
     "portfolio/README.md",
     "portfolio/RESULTS.md",
+    "portfolio/LEDGER.md",
     "portfolio/model-card.md",
     "portfolio/projects/*/index.md",
     "portfolio/essay/*.md",
@@ -57,6 +58,7 @@ pre {{ padding:12px; overflow-x:auto; }} pre code {{ padding:0; }}
 blockquote {{ margin:0; padding:0 16px; color:var(--muted); border-left:4px solid var(--line); }}
 </style></head><body>
 <nav><a href="{root}index.html">Home</a><a href="{root}portfolio/RESULTS.html">Results</a>
+<a href="{root}portfolio/LEDGER.html">Ledger</a>
 <a href="{root}docs/for-hiring.html">For hiring</a>
 <a href="{root}docs/for-researchers.html">For researchers</a>
 <a href="{root}docs/for-learners.html">For learners</a>

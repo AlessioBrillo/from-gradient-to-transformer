@@ -406,6 +406,7 @@ CURRENT_FACING = (
     "07_capstone/checklist.md",
     "portfolio/README.md",
     "portfolio/RESULTS.md",
+    "portfolio/LEDGER.md",
     "portfolio/model-card.md",
     "portfolio/paper/main.tex",
     "portfolio/projects/rung-1-induction-heads/index.md",
@@ -903,20 +904,20 @@ NUMBER_WORDS = {
 def check_audit_count() -> list[str]:
     """The public documents agree on how many audits the ledger records."""
     problems: list[str] = []
-    ledger = REPO_ROOT / "portfolio/RESULTS.md"
+    ledger = REPO_ROOT / "portfolio/LEDGER.md"
     if not ledger.exists():
-        return ["portfolio/RESULTS.md: file not found - cannot read the audit count"]
+        return ["portfolio/LEDGER.md: file not found - cannot read the audit count"]
     text = ledger.read_text(encoding="utf-8")
     match = AUDIT_HEADER_RE.search(text)
     if match is None:
         return [
-            "portfolio/RESULTS.md: no '<N> audits have now caught' header "
+            "portfolio/LEDGER.md: no '<N> audits have now caught' header "
             "- the audit count has no single source of truth"
         ]
     expected = match.group(1).lower()
     if expected not in NUMBER_WORDS:
         problems.append(
-            f"portfolio/RESULTS.md: '{match.group(1)} audits' is not a number word"
+            f"portfolio/LEDGER.md: '{match.group(1)} audits' is not a number word"
         )
     for rel in AUDIT_COUNT_DOCS:
         path = REPO_ROOT / rel
@@ -928,7 +929,7 @@ def check_audit_count() -> list[str]:
         wrong = sorted(word for word in found if word != expected)
         if wrong:
             problems.append(
-                f"{rel}: says '{wrong[0]} audits', but portfolio/RESULTS.md "
+                f"{rel}: says '{wrong[0]} audits', but portfolio/LEDGER.md "
                 f"says '{expected} audits'"
             )
         elif expected not in found:

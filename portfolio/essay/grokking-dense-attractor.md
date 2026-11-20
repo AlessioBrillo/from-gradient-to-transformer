@@ -135,7 +135,7 @@ Verification: `uv run python -m src.results verify` → all claims check out.
 ## Links
 
 - Results ledger: [RESULTS](../RESULTS.md)
-- Honesty Ledger: [RESULTS](../RESULTS.md#honesty-ledger)
+- Honesty Ledger: [RESULTS](../LEDGER.md)
 - Rung 2 project page: [Rung 2: Grokking Modular Addition](../projects/rung-2-grokking/index.md)
 - Code: [src/experiments/exp2_grokking.py](https://github.com/AlessioBrillo/from-gradient-to-transformer/blob/main/src/experiments/exp2_grokking.py)
 - Repository: [github.com/AlessioBrillo/from-gradient-to-transformer](https://github.com/AlessioBrillo/from-gradient-to-transformer)

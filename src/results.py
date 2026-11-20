@@ -441,7 +441,12 @@ def _main() -> None:
         "verify", help="Verify results/*.json manifests and RESULTS.md's manifest tags"
     )
     verify_p.add_argument("--results-dir", type=Path, default=Path("results"))
-    verify_p.add_argument("--claims-file", type=Path, default=Path("portfolio/RESULTS.md"))
+    verify_p.add_argument(
+        "--claims-file",
+        type=Path,
+        nargs="+",
+        default=[Path("portfolio/RESULTS.md"), Path("portfolio/LEDGER.md")],
+    )
 
     verify_p.add_argument("--paper-dir", type=Path, default=Path("portfolio/paper"))
 
@@ -449,7 +454,10 @@ def _main() -> None:
 
     if args.command == "verify":
         paper_files = sorted(args.paper_dir.glob("*.tex")) if args.paper_dir.exists() else []
-        problems = verify_claims(args.results_dir, args.claims_file, paper_files)
+        problems = []
+        for claims_file in args.claims_file:
+            problems += verify_claims(args.results_dir, claims_file, paper_files)
+        problems = list(dict.fromkeys(problems))  # manifest checks repeat per file
         if problems:
             print(f"verify-claims: {len(problems)} problem(s) found:")
             for p in problems:

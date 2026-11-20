@@ -8,7 +8,7 @@ This card describes a *family* of small models, one per experiment, not a single
 released checkpoint. Every figure below is read from a tracked run manifest
 (`n_parameters` and `args`); the 2026-11-16 revision replaced an earlier card
 that described models this repository never trained (see the
-[Honesty Ledger](RESULTS.md#honesty-ledger) convention: the record follows the
+[Honesty Ledger](LEDGER.md) convention: the record follows the
 manifests, not the plan).
 
 ## Model Overview
