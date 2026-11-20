@@ -34,7 +34,6 @@ from torch.utils.data import DataLoader
 
 from src.experiments.exp2_grokking import (
     FIGURES_DIR,
-    OneLayerTransformer,
     analyze_fourier_sparsity,
     fourier_decompose_embeddings,
     fourier_energy_sparsity,
@@ -47,6 +46,7 @@ from src.experiments.exp2_grokking import (
 )
 from src.experiments.runner import aggregate_metrics
 from src.models.attention_only_transformer import AttentionOnlyTransformer
+from src.models.one_layer_transformer import OneLayerTransformer
 from src.results import ResultsManifest, count_parameters
 
 # Row-3 frozen verdict criteria (ADR-0003): diag+1 mass threshold and the

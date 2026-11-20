@@ -103,13 +103,6 @@ def make_modular_addition_data(
 
 
 # ---------------------------------------------------------------------------
-# Model: 1-layer decoder-only transformer (Nanda et al. config)
-# ---------------------------------------------------------------------------
-# The model lives in src/models/one_layer_transformer.py (moved on
-# 2026-11-16) and is imported at the top of this module. Import it from there.
-
-
-# ---------------------------------------------------------------------------
 # Checkpoint / resume (Micro-Phase 28: ported from exp1)
 # ---------------------------------------------------------------------------
 # save/load/path helpers live in src/experiments/checkpointing.py (shared

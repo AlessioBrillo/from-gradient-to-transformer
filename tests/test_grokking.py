@@ -6,7 +6,6 @@ import torch
 
 from src.experiments.exp2_grokking import (
     FullBatchLoader,
-    OneLayerTransformer,
     analyze_fourier_sparsity,
     apply_protocol,
     build_parser,
@@ -20,6 +19,7 @@ from src.experiments.exp2_grokking import (
     run_single_seed,
     weight_norm_progress,
 )
+from src.models.one_layer_transformer import OneLayerTransformer
 
 
 class TestOneLayerTransformer:

@@ -433,6 +433,7 @@ paper-check:
 		exit 1; \
 	fi
 	@test -f portfolio/paper/main.pdf || { echo "main.pdf not produced — paper-check failed." >&2; exit 1; }
+	@grep -q '\\cite' portfolio/paper/main.tex || { echo "main.tex has no cite commands: the bibliography is empty." >&2; exit 1; }
 	@echo "paper-check: main.pdf compiled."
 
 

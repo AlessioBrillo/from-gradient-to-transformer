@@ -26,7 +26,6 @@ import torch
 from torch.utils.data import DataLoader
 
 from src.experiments.exp1_induction_heads import (
-    AttentionOnlyTransformer,
     _run_task_probe,
     analyze_copy_metrics,
     causal_ablation,
@@ -41,6 +40,7 @@ from src.experiments.induction_tasks import (
     copy_query_batch,
     task_datasets,
 )
+from src.models.attention_only_transformer import AttentionOnlyTransformer
 
 
 def _args(**overrides) -> argparse.Namespace:

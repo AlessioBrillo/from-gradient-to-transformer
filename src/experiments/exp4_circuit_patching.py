@@ -45,7 +45,6 @@ from src.experiments.checkpointing import (
 )
 from src.experiments.copy_circuit import candidate_heads, content_triples
 from src.experiments.exp1_induction_heads import (
-    AttentionOnlyTransformer,
     _BatchesAction,
     _FreshBatchesAction,
     _make_fresh_batches_fn,
@@ -67,6 +66,7 @@ from src.experiments.induction_tasks import (
     task_datasets,
 )
 from src.experiments.runner import aggregate_metrics, parse_seeds, run_seeds
+from src.models.attention_only_transformer import AttentionOnlyTransformer
 from src.models.decoder_only_transformer import DecoderOnlyTransformer
 from src.reproducibility import set_seed
 from src.results import (

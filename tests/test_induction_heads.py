@@ -10,7 +10,6 @@ from torch.utils.data import DataLoader
 
 from src.experiments.exp1_induction_heads import (
     AttentionOnlyBlock,
-    AttentionOnlyTransformer,
     apply_config_presets,
     build_parser,
     causal_ablation,
@@ -21,6 +20,7 @@ from src.experiments.exp1_induction_heads import (
     prefix_duplicate_probability,
     train_model,
 )
+from src.models.attention_only_transformer import AttentionOnlyTransformer
 
 
 class TestAttentionOnlyTransformer:
