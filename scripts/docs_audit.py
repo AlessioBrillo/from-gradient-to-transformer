@@ -95,6 +95,20 @@ REQUIRED_MANIFESTS: dict[str, list[str]] = {
 # (file, the sentence, what replaced it, the date of the measurement)
 STALE_CLAIMS: list[tuple[str, str, str, str]] = [
     (
+        "README.md",
+        "available on its own, for any research repository",
+        "the method is reused by copying src/results.py and scripts/docs_audit.py "
+        "(docs/for-researchers.md); the separate claimcheck library was folded back "
+        "in on 2026-11-20 because nothing used it",
+        "2026-11-20",
+    ),
+    (
+        "docs/for-researchers.md",
+        "it will switch to the library once the library has a release",
+        "same as above",
+        "2026-11-20",
+    ),
+    (
         "07_capstone/writeup.md",
         "path patching unit-tested only",
         "the end-to-end path-patching result on Rung 1's own checkpoint "

@@ -85,10 +85,14 @@ different hardware are especially welcome; see
 
 ## Reusing the method
 
-The manifest and the two checks do not depend on this project's experiments, and
-they have been extracted into a standalone, dependency-free library:
-[**claimcheck**](https://github.com/AlessioBrillo/claimcheck) (`claimcheck verify`,
-`claimcheck audit`, driven by a `claimcheck.toml`). It loads this repository's
-manifests unchanged and passes on its real record. This repository still uses its own
-copy (`src/results.py`, `scripts/docs_audit.py`) with project-specific lists; it will
-switch to the library once the library has a release.
+The manifest and the two checks do not depend on this project's experiments. To reuse them,
+copy `src/results.py` and `scripts/docs_audit.py` (standard library plus the manifest class),
+then:
+
+- save each run as a `ResultsManifest` JSON under `results/`;
+- put `<!-- manifest: results/<name>.json -->` next to every number a document quotes;
+- run `python -m src.results verify` (every tag resolves to a tracked file) and
+  `python scripts/docs_audit.py` (the prose and tables near a tag do not contradict it);
+- list the sentences you have retracted in `STALE_CLAIMS` inside `docs_audit.py`, so they cannot return.
+
+The lists of rungs and retracted sentences in those two files are this project's; replace them with yours.

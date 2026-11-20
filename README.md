@@ -66,8 +66,8 @@ Two checks keep it that way, and both run in CI:
 - `make docs-audit` fails if the prose or a table around a tag contradicts the
   manifest, or if a retracted sentence comes back.
 
-The mechanism is also available on its own, for any research repository:
-[claimcheck](https://github.com/AlessioBrillo/claimcheck).
+The mechanism does not depend on these experiments: see "Reusing the method" in
+[docs/for-researchers.md](docs/for-researchers.md).
 
 ## Essays
 
