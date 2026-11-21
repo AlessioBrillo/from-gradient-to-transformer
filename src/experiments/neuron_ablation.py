@@ -17,11 +17,11 @@ from torch.utils.data import DataLoader
 from src.experiments.exp2_grokking import (
     DEVICE,
     FIGURES_DIR,
-    OneLayerTransformer,
     analyze_fourier_sparsity,
     fourier_decompose_embeddings,
     make_modular_addition_data,
 )
+from src.models.one_layer_transformer import OneLayerTransformer
 from src.reproducibility import set_seed
 
 logger = logging.getLogger(__name__)

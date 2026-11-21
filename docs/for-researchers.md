@@ -13,7 +13,7 @@ number.
 | 1 Prefix copying | Heads form, but the dissociation probe shows a fixed-offset copy: the periodic task admits a positional shortcut | [Rung 1](../portfolio/projects/rung-1-induction-heads/index.md), [ADR-0032](adr/0032-induction-detector-and-the-positional-shortcut.md) |
 | 1b Content-based copying | Behaviour is content-based on three seeds of three, but the pre-registered per-head rule confirms no head on any seed and the circuit differs between seeds. Both verdicts are NEGATIVE (the first run said PARTIAL) | [ADR-0033](adr/0033-content-based-induction-task.md), [Honesty Ledger](../portfolio/RESULTS.md) |
 | 5 Sparse autoencoder | Reproduces on synthetic activations. On real activations the dictionary is sparse but most features are dead | [Rung 5](../portfolio/projects/rung-5-sae/index.md) |
-| 7 GPT-2 small | The hand-written instruments match the Hugging Face reference and rank the two induction heads of the literature first and second of 144. The causal stages (zero ablation of those heads and of the name movers) did not reproduce. Pre-registered in ADR-0034; the mean-ablation and path-patching follow-up has not been run | [Rung 7](../portfolio/projects/rung-7-gpt2-small/index.md), [ADR-0034](adr/0034-gpt2-small-real-model-test.md) |
+| 7 GPT-2 small | The hand-written instruments match the Hugging Face reference and rank the two induction heads of the literature first and second of 144. The ablation stages (zero or mean ablation of those heads and of the name movers) did not reproduce; one-hop path patching ranks the three name movers first to third by direct effect. Pre-registered in ADR-0034 and ADR-0035 | [Rung 7](../portfolio/projects/rung-7-gpt2-small/index.md), [ADR-0034](adr/0034-gpt2-small-real-model-test.md), [ADR-0035](adr/0035-gpt2-mean-ablation-and-direct-path-patching.md) |
 
 Not attempted: automated circuit discovery (descoped), a sparse autoencoder on
 GPT-2, and the indirect-object circuit itself (path patching).
@@ -85,10 +85,14 @@ different hardware are especially welcome; see
 
 ## Reusing the method
 
-The manifest and the two checks do not depend on this project's experiments, and
-they have been extracted into a standalone, dependency-free library:
-[**claimcheck**](https://github.com/AlessioBrillo/claimcheck) (`claimcheck verify`,
-`claimcheck audit`, driven by a `claimcheck.toml`). It loads this repository's
-manifests unchanged and passes on its real record. This repository still uses its own
-copy (`src/results.py`, `scripts/docs_audit.py`) with project-specific lists; it will
-switch to the library once the library has a release.
+The manifest and the two checks do not depend on this project's experiments. To reuse them,
+copy `src/results.py` and `scripts/docs_audit.py` (standard library plus the manifest class),
+then:
+
+- save each run as a `ResultsManifest` JSON under `results/`;
+- put `<!-- manifest: results/<name>.json -->` next to every number a document quotes;
+- run `python -m src.results verify` (every tag resolves to a tracked file) and
+  `python scripts/docs_audit.py` (the prose and tables near a tag do not contradict it);
+- list the sentences you have retracted in `STALE_CLAIMS` inside `docs_audit.py`, so they cannot return.
+
+The lists of rungs and retracted sentences in those two files are this project's; replace them with yours.

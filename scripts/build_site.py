@@ -23,6 +23,7 @@ PUBLISHED_GLOBS = [
     "README.md",
     "portfolio/README.md",
     "portfolio/RESULTS.md",
+    "portfolio/LEDGER.md",
     "portfolio/model-card.md",
     "portfolio/projects/*/index.md",
     "portfolio/essay/*.md",
@@ -46,7 +47,7 @@ PAGE = """<!doctype html>
 body {{ background:var(--bg); color:var(--fg); font:16px/1.6 system-ui,sans-serif; margin:0; }}
 main {{ max-width:860px; margin:0 auto; padding:24px 16px 64px; }}
 nav {{ border-bottom:1px solid var(--line); padding:12px 16px; font-size:14px; }}
-nav a {{ margin-right:16px; }}
+nav a {{ margin-right:16px; white-space:nowrap; line-height:2; }}
 a {{ color:var(--link); }}
 img {{ max-width:100%; height:auto; }}
 table {{ border-collapse:collapse; display:block; overflow-x:auto; }}
@@ -57,11 +58,19 @@ pre {{ padding:12px; overflow-x:auto; }} pre code {{ padding:0; }}
 blockquote {{ margin:0; padding:0 16px; color:var(--muted); border-left:4px solid var(--line); }}
 </style></head><body>
 <nav><a href="{root}index.html">Home</a><a href="{root}portfolio/RESULTS.html">Results</a>
+<a href="{root}portfolio/LEDGER.html">Ledger</a>
+<a href="{root}explorer/index.html">Head explorer</a>
 <a href="{root}docs/for-hiring.html">For hiring</a>
 <a href="{root}docs/for-researchers.html">For researchers</a>
 <a href="{root}docs/for-learners.html">For learners</a>
 <a href="{root}portfolio/essay/index.html">Essays</a>
-<a href="{root}portfolio/model-card.html">Model card</a><a href="{repo}">GitHub</a></nav>
+<a href="{root}portfolio/model-card.html">Model card</a><a href="{repo}">GitHub</a>
+<a href="{root}portfolio/projects/rung-1-induction-heads/index.html">Rung 1 induction</a>
+<a href="{root}portfolio/projects/rung-2-grokking/index.html">Rung 2 grokking</a>
+<a href="{root}portfolio/projects/rung-3-superposition/index.html">Rung 3 superposition</a>
+<a href="{root}portfolio/projects/rung-4-circuit-patching/index.html">Rung 4 circuits</a>
+<a href="{root}portfolio/projects/rung-5-sae/index.html">Rung 5 SAE</a>
+<a href="{root}portfolio/projects/rung-7-gpt2-small/index.html">Rung 7 GPT-2</a></nav>
 <main>
 {body}
 </main></body></html>
@@ -118,6 +127,9 @@ def build_site(out: Path, root: Path = Path(".")) -> None:
     figures = root / "portfolio" / "figures"
     if figures.exists():
         shutil.copytree(figures, out / "portfolio" / "figures", dirs_exist_ok=True)
+    explorer = root / "portfolio" / "explorer"
+    if explorer.exists():
+        shutil.copytree(explorer, out / "explorer", dirs_exist_ok=True)
     pdf = root / "portfolio" / "paper" / "main.pdf"
     if pdf.exists():
         shutil.copy(pdf, out / "paper.pdf")

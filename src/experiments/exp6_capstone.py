@@ -71,7 +71,7 @@ def make_modular_addition_data(
     """Generate modular addition task (a + b mod P) padded to seq_len.
 
     With ``vocab_offset == 0`` (frozen control) ids are ``0..P-1`` with
-    ``pad_id == modulus`` — the MP-88 collision regime. With
+    ``pad_id == modulus`` — the pad-collision regime. With
     ``vocab_offset > 0`` (retune Arm A) ids relocate to the dedicated
     range ``[offset, offset+P)`` with pad at ``offset+P``, disjoint
     from induction ids ``[0, induction_vocab)``.
@@ -273,7 +273,7 @@ def fourier_decomposition(
     a live `model.embed.weight` slice (requires_grad=True), so detach at the
     boundary. Without this, the first `fourier_every` step crashes with
     `RuntimeError: Can't call numpy() on Tensor that requires grad`
-    (MP-87 Session 1, step 500 of the frozen shakedown).
+    (step 500 of the frozen shakedown).
     """
     embeddings = embeddings.detach()
     P = embeddings.shape[0]
@@ -748,7 +748,7 @@ def train_single_seed(
                 with torch.no_grad():
                     # Quick val pass - handle RoundRobinDataLoader batches.
                     # Per-task split: the mixed mean hides modular movement
-                    # (MP-88 dissociation), so log mod/ind separately.
+                    # (modular and induction loss move apart), so log mod/ind separately.
                     mod_losses: list[float] = []
                     mod_accs: list[float] = []
                     ind_losses: list[float] = []

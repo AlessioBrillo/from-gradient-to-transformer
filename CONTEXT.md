@@ -47,7 +47,7 @@ task** <!-- manifest: results/induction_content.json -->, **Grokking**
 | 4 Circuit patching | `src/experiments/exp4_circuit_patching.py` | **The cascade ran end to end on Rung 1's own checkpoint**: head ablation 0.5895 ± 0.1405, path patching 0.7052 ± 0.0411 — on a prefix-copying head, so it validates the method, not yet an induction circuit |
 | 5 SAE dashboard | `src/experiments/exp5_sae_dashboard.py` | Synthetic reproduces; on real activations the dictionary is sparse (L0 3.7%) but ~8× too wide, with 66% of its features dead |
 | 6 Automated circuits | — | **Descoped 2026-08-01** |
-| 7 GPT-2 small | `src/experiments/exp7_gpt2_small.py`, model in `src/models/gpt2.py` | Pre-registered (ADR-0034), run 2026-11-17: parity, induction-head ranking and the indirect-object task pass; the causal stages (ablating the two induction heads, the three name movers) do **not** reproduce under zero ablation |
+| 7 GPT-2 small | `src/experiments/exp7_gpt2_small.py`, model in `src/models/gpt2.py` | Pre-registered (ADR-0034), run 2026-11-17: parity, induction-head ranking and the indirect-object task pass; the ablation stages (the two induction heads, the three name movers) do **not** reproduce under zero or mean ablation (ADR-0035, run 2026-11-21), while one-hop path patching ranks the three name movers first to third |
 
 The manifests behind that table, one per rung: Rung 1
 <!-- manifest: results/induction_standard.json -->, Rung 2

@@ -41,11 +41,11 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from src.experiments.exp1_induction_heads import (
-    AttentionOnlyTransformer,
     analyze_induction_heads,
     compute_attention_entropy,
     make_repeated_token_data,
 )
+from src.models.attention_only_transformer import AttentionOnlyTransformer
 
 THRESHOLD = 0.3  # the per-head detection threshold analyze_induction_heads uses
 VOCAB, SEQ_LEN = 256, 16

@@ -4,7 +4,7 @@ Issue #171 was "the paper never reaches the site": `pages.yml` built the
 site without ever compiling `portfolio/paper/main.tex`, and
 `build_site.py` copies the PDF to the site only when it exists — so the
 live site shipped no paper, silently, for the repo's entire public life.
-`paper.yml` compiled it, but only as a downloadable artifact.
+`paper-check` in the Woodpecker gate compiles it, but ships nothing.
 
 These tests pin the wiring, because the failure mode of that class of bug
 is silence: every step succeeds, and the artifact is simply absent.
@@ -64,9 +64,13 @@ class TestPagesDeploysThePaper:
         assert any(p.startswith("portfolio") for p in push_paths)
 
 
-class TestPaperWorkflow:
-    def test_paper_workflow_guards_empty_bibliography(self) -> None:
-        text = (WORKFLOWS / "paper.yml").read_text(encoding="utf-8")
-        assert "bibliography is empty" in text, (
-            "paper.yml lost its empty-bibliography guard"
+class TestPaperCheck:
+    def test_paper_check_guards_empty_bibliography(self) -> None:
+        text = (REPO_ROOT / "Makefile").read_text(encoding="utf-8")
+        assert "the bibliography is empty" in text, (
+            "the paper-check target lost its empty-bibliography guard"
         )
+
+    def test_woodpecker_runs_paper_check(self) -> None:
+        text = (REPO_ROOT / ".woodpecker" / "ci.yml").read_text(encoding="utf-8")
+        assert "make paper-check" in text

@@ -12,7 +12,7 @@ Built 2026-08-02 (Micro-Phase 8, the Evidence Pass) because
 `src/` had ever run more than one seed. See
 06_production_ai/notes/multi-seed-experiment-design.md.
 
-Optional W&B integration added 2026-09-01 (MP-78) for experiment tracking.
+Optional W&B integration added 2026-09-01 for experiment tracking.
 """
 
 from __future__ import annotations

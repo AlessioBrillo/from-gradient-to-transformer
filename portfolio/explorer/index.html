@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GPT-2 small head explorer</title>
+<style>
+:root { --bg:#fff; --fg:#1b1f24; --muted:#59636e; --line:#d1d9e0; --link:#0969da; --heat:9,105,218; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg:#0d1117; --fg:#e6edf3; --muted:#9198a1; --line:#30363d; --link:#4493f8; --heat:68,147,248; }
+}
+body { background:var(--bg); color:var(--fg); font:16px/1.6 system-ui,sans-serif; margin:0; }
+main { max-width:860px; margin:0 auto; padding:24px 16px 64px; }
+a { color:var(--link); }
+label { margin-right:16px; font-size:14px; white-space:nowrap; }
+select { font:inherit; background:var(--bg); color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:2px 6px; }
+canvas { max-width:100%; border:1px solid var(--line); margin-top:16px; }
+#status, .note { color:var(--muted); font-size:14px; }
+</style></head><body><main>
+<p><a href="../index.html">&larr; Portfolio</a></p>
+<h1>GPT-2 small head explorer</h1>
+<p>Attention pattern of one head on one prompt, from the hand-written model of Rung 7
+(<a href="../portfolio/projects/rung-7-gpt2-small/index.html">the rung page</a>). Row = the token that looks,
+column = the token it looks at; darker means more attention. Every head is causal, so only the lower
+triangle is non-zero.</p>
+<p>
+<label>Prompt <select id="prompt"></select></label>
+<label>Layer <select id="layer"></select></label>
+<label>Head <select id="head"></select></label>
+</p>
+<canvas id="c" width="640" height="640" role="img" aria-label="Attention pattern heatmap"></canvas>
+<p id="status">Loading…</p>
+<p class="note" id="source"></p>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+let data = null;
+function fill(sel, n, label) {
+  sel.innerHTML = "";
+  for (let i = 0; i < n; i++) sel.add(new Option(label(i), i));
+}
+function draw() {
+  const p = data.prompts[+$("prompt").value], l = +$("layer").value, h = +$("head").value;
+  const m = p.patterns[l][h], n = p.tokens.length;
+  const c = $("c"), g = c.getContext("2d"), pad = 110, cell = Math.floor((c.width - pad) / n);
+  const css = getComputedStyle(document.documentElement);
+  g.clearRect(0, 0, c.width, c.height);
+  g.font = "12px system-ui, sans-serif"; g.fillStyle = css.getPropertyValue("--fg");
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j <= i; j++) {
+      g.fillStyle = "rgba(" + css.getPropertyValue("--heat") + "," + m[i][j] + ")";
+      g.fillRect(pad + j * cell, pad + i * cell, cell - 1, cell - 1);
+    }
+    g.fillStyle = css.getPropertyValue("--fg");
+    g.textAlign = "right"; g.fillText(p.tokens[i], pad - 6, pad + i * cell + cell / 2 + 4);
+    g.save(); g.translate(pad + i * cell + cell / 2 + 4, pad - 6); g.rotate(-Math.PI / 2);
+    g.textAlign = "left"; g.fillText(p.tokens[i], 0, 0); g.restore();
+  }
+  $("status").textContent = "Layer " + l + ", head " + h + " on “" + p.name + "” (" + n + " tokens).";
+}
+fetch("gpt2_heads.json").then((r) => r.json()).then((d) => {
+  data = d;
+  fill($("prompt"), d.prompts.length, (i) => d.prompts[i].name);
+  fill($("layer"), d.prompts[0].patterns.length, (i) => i);
+  fill($("head"), d.prompts[0].patterns[0].length, (i) => i);
+  $("layer").value = 5; $("head").value = 5;   // 5.5: top induction score in results/gpt2_small_stage2.json
+  $("source").textContent = "Model " + d.model + ", weights revision " + d.revision +
+    ". Scores for these heads: " + d.sources.join(", ") + ".";
+  ["prompt", "layer", "head"].forEach((id) => $(id).addEventListener("change", draw));
+  draw();
+}).catch((e) => { $("status").textContent = "Could not load gpt2_heads.json (" + e + "). Open this page from the built site, not from a file."; });
+</script>
+</main></body></html>

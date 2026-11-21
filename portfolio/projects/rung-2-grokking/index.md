@@ -11,7 +11,7 @@ status: verified
 **Status: [x] REPRODUCED 2026-10-14.** The 2026-08-11 NO-GROK verdict was an artifact of the
 L1-mass Fourier metric, falsified by the 2026-10-08 audit. Re-reading the same embeddings with
 the post-audit energy metric shows the sparse Fourier circuit was present all along. See the
-[Honesty Ledger](../../RESULTS.md#honesty-ledger) for the full audit trail.
+[Honesty Ledger](../../LEDGER.md) for the full audit trail.
 
 ## Problem
 

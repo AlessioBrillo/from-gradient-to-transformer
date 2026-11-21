@@ -16,7 +16,7 @@ GPUs.
 | Causal interpretability methods, written by hand | Activation patching, head ablation and path patching without an interpretability library: [`exp4_circuit_patching.py`](../src/experiments/exp4_circuit_patching.py), [`copy_circuit.py`](../src/experiments/copy_circuit.py) |
 | Designing an experiment that can fail | A pre-registered task, thresholds and decision rule, frozen before the GPU run: [pre-registration](../07_capstone/notes/variable-distance-induction-preregistration.md), [ADR-0033](adr/0033-content-based-induction-task.md) |
 | Catching a wrong instrument | The detector measured the wrong attention offset, and the "0 of 8 heads" it produced was retracted: [ADR-0032](adr/0032-induction-detector-and-the-positional-shortcut.md) |
-| Reporting negative and partial results | A verdict that changed from PARTIAL to NEGATIVE when the experiment was re-run after a bug fix, published with the numbers that explain it and the first run kept: [`content_verdict.py`](../src/experiments/content_verdict.py), [Honesty Ledger](../portfolio/RESULTS.md) |
+| Reporting negative and partial results | A verdict that changed from PARTIAL to NEGATIVE when the experiment was re-run after a bug fix, published with the numbers that explain it and the first run kept: [`content_verdict.py`](../src/experiments/content_verdict.py), [Honesty Ledger](../portfolio/LEDGER.md) |
 | Retracting my own conclusions | Thirteen dated audits, each with what was wrong and what changed, including a "no grokking" verdict my own metric had manufactured: [Honesty Ledger](../portfolio/RESULTS.md) |
 | Writing it up | A LaTeX mini-paper compiled in CI: [`main.tex`](../portfolio/paper/main.tex) |
 
@@ -37,11 +37,25 @@ GPUs.
 | Skill | Evidence |
 |---|---|
 | Turning a principle into a mechanism | "No public number without evidence" is a program, not a guideline: manifests carry seeds, arguments, git SHA and device, and CI fails on an unbacked claim: [`results.py`](../src/results.py) |
-| Extracting a reusable tool | The record-checking mechanism, extracted into its own dependency-free library with its own tests: [claimcheck](https://github.com/AlessioBrillo/claimcheck) |
+| A self-auditing record | `src/results.py` (`make verify-claims`) and `scripts/docs_audit.py` (`make docs-audit`), with their own tests: any public number needs a committed manifest, and a retracted sentence cannot come back |
 | Guarding against regression of the record | A ratchet of retracted sentences that must never reappear, and a check of table numbers against the manifests they cite: [`docs_audit.py`](../scripts/docs_audit.py) |
 | Recording decisions with their alternatives | [ADRs](adr/README.md), and a [descope register](../06_production_ai/notes/descope-register.md) that gives a dated reason for everything deliberately not built |
 | Stopping a process that stopped paying | The planning method used for two months was closed when it cost more than it returned: [ADR-0031](adr/0031-closure.md) |
 | Removing dependencies | Seven libraries dropped because nothing imported them; the reasoning is in the comments of [`pyproject.toml`](../pyproject.toml) |
+
+## How this was built
+
+I built this repository with Claude Code, an AI coding agent, and I say so because a reader
+can check it. I directed the work and approved each plan; most of the code, the tests and the CI
+wiring was written by the agent and checked against the gate. The commit history cannot
+tell the two apart (every commit is under my account), which is why the `authorship` field exists.
+
+Each learning note carries an `authorship` field: `user` (written by me), `co` (written
+together) or `claude` (written by the agent). Nine exercises and proofs are marked `claude`
+and the skill tree says so; they are reference solutions, and
+[the your-turn page](https://github.com/AlessioBrillo/from-gradient-to-transformer/blob/main/00_meta/07_your-turn.md)
+lists the ones I have not yet solved myself. A skill is only counted as verified when a
+solution I wrote exists next to the reference.
 
 ## What it does not demonstrate
 
@@ -50,7 +64,7 @@ Stated plainly, because the rest of the repository is:
 - **Scale.** The models trained here have at most about 4.3 million parameters
   and every training task is synthetic. The only real language model is
   pretrained GPT-2 small (124M parameters), used for inference and ablation, not
-  trained here, and its causal stages did not reproduce.
+  trained here, and its ablation stages did not reproduce (one-hop path patching did).
 - **Teamwork.** This is solo work. The review discipline is real (pull requests,
   a gate, written audits), but the reviewer was me.
 - **Open results.** Two rungs are not clean wins: the content-based copying

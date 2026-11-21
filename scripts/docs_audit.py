@@ -95,6 +95,26 @@ REQUIRED_MANIFESTS: dict[str, list[str]] = {
 # (file, the sentence, what replaced it, the date of the measurement)
 STALE_CLAIMS: list[tuple[str, str, str, str]] = [
     (
+        "docs/for-researchers.md",
+        "the mean-ablation and path-patching follow-up has not been run",
+        "ADR-0035 ran on 2026-11-21 (results/gpt2_small_stage6.json to stage8.json)",
+        "2026-11-21",
+    ),
+    (
+        "README.md",
+        "available on its own, for any research repository",
+        "the method is reused by copying src/results.py and scripts/docs_audit.py "
+        "(docs/for-researchers.md); the separate claimcheck library was folded back "
+        "in on 2026-11-20 because nothing used it",
+        "2026-11-20",
+    ),
+    (
+        "docs/for-researchers.md",
+        "it will switch to the library once the library has a release",
+        "same as above",
+        "2026-11-20",
+    ),
+    (
         "07_capstone/writeup.md",
         "path patching unit-tested only",
         "the end-to-end path-patching result on Rung 1's own checkpoint "
@@ -392,6 +412,7 @@ CURRENT_FACING = (
     "07_capstone/checklist.md",
     "portfolio/README.md",
     "portfolio/RESULTS.md",
+    "portfolio/LEDGER.md",
     "portfolio/model-card.md",
     "portfolio/paper/main.tex",
     "portfolio/projects/rung-1-induction-heads/index.md",
@@ -889,20 +910,20 @@ NUMBER_WORDS = {
 def check_audit_count() -> list[str]:
     """The public documents agree on how many audits the ledger records."""
     problems: list[str] = []
-    ledger = REPO_ROOT / "portfolio/RESULTS.md"
+    ledger = REPO_ROOT / "portfolio/LEDGER.md"
     if not ledger.exists():
-        return ["portfolio/RESULTS.md: file not found - cannot read the audit count"]
+        return ["portfolio/LEDGER.md: file not found - cannot read the audit count"]
     text = ledger.read_text(encoding="utf-8")
     match = AUDIT_HEADER_RE.search(text)
     if match is None:
         return [
-            "portfolio/RESULTS.md: no '<N> audits have now caught' header "
+            "portfolio/LEDGER.md: no '<N> audits have now caught' header "
             "- the audit count has no single source of truth"
         ]
     expected = match.group(1).lower()
     if expected not in NUMBER_WORDS:
         problems.append(
-            f"portfolio/RESULTS.md: '{match.group(1)} audits' is not a number word"
+            f"portfolio/LEDGER.md: '{match.group(1)} audits' is not a number word"
         )
     for rel in AUDIT_COUNT_DOCS:
         path = REPO_ROOT / rel
@@ -914,7 +935,7 @@ def check_audit_count() -> list[str]:
         wrong = sorted(word for word in found if word != expected)
         if wrong:
             problems.append(
-                f"{rel}: says '{wrong[0]} audits', but portfolio/RESULTS.md "
+                f"{rel}: says '{wrong[0]} audits', but portfolio/LEDGER.md "
                 f"says '{expected} audits'"
             )
         elif expected not in found:

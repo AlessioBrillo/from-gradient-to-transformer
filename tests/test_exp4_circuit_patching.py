@@ -477,10 +477,10 @@ class TestFromCheckpoint:
         from torch.utils.data import DataLoader
 
         from src.experiments.exp1_induction_heads import (
-            AttentionOnlyTransformer,
             make_repeated_token_data,
             train_model,
         )
+        from src.models.attention_only_transformer import AttentionOnlyTransformer
 
         train, val = make_repeated_token_data(
             vocab_size=32, seq_len=16, num_train=32, num_val=8, seed=seed

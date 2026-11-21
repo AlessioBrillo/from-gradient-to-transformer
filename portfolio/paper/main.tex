@@ -689,6 +689,9 @@ seeds -- the joint solution is \textbf{dense}, not a sparse Fourier circuit.
 % manifest: results/gpt2_small_stage3.json
 % manifest: results/gpt2_small_stage4.json
 % manifest: results/gpt2_small_stage5.json
+% manifest: results/gpt2_small_stage6.json
+% manifest: results/gpt2_small_stage7.json
+% manifest: results/gpt2_small_stage8.json
 
 Every model above has at most $4.3$ million parameters and is trained here on a
 synthetic task. A method that only meets such models has not been shown to be a
@@ -726,10 +729,27 @@ are two known candidate explanations; neither was separated here, and the
 pre-registration said in advance that this stage is weaker evidence than the
 parity gate.
 
+\paragraph{Follow-up: mean ablation and path patching.} A second pre-registration
+(ADR-0035) replaced zero ablation by mean ablation, the method of the reference,
+and added one-hop path patching. Mean-ablating the two induction heads lowered the
+in-context gain by $0.0078 \pm 0.0003$ against a $95$th percentile of $0.0055$
+for twenty random pairs (criterion: $10\%$ and above the control), so stage~6
+failed. Mean-ablating the three name movers lowered the logit difference by
+$0.1279 \pm 0.0134$ against a $95$th percentile of $0.2206 \pm 0.0120$ for random
+triples (criterion: $30\%$), so stage~7 failed. Path patching passed (stage~8):
+the three name movers have the largest direct effects on the answer, layer~9 head~9
+first ($0.6819 \pm 0.0411$), layer~9 head~6 second ($0.2337 \pm 0.0151$) and
+layer~10 head~0 third ($0.1821 \pm 0.0098$), on every seed, and the two heads the
+reference reports as opposing the correct name have negative effects
+($-0.3949$ and $-0.1731$). A head can matter directly and still not show in an
+ablation if other heads take over; backup heads are one reading, but this run did
+not test for them.
+
 \paragraph{What it establishes.} The hand-written instruments work on a real
 pretrained model and agree with the literature on \emph{which heads attend like
-induction heads}. The causal claims about the indirect-object circuit did not
-reproduce under zero ablation, and the repository does not claim that circuit.
+induction heads} and, by direct effect, on \emph{which heads write the name}. The
+ablation claims about the indirect-object circuit did not reproduce under zero or
+mean ablation, and the repository does not claim that circuit.
 
 \section{Limitations}
 \label{sec:limitations}

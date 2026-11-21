@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RESULTS_DIR = REPO_ROOT / "results"
-CLAIMS_FILE = REPO_ROOT / "portfolio" / "RESULTS.md"
+CLAIMS_FILES = [REPO_ROOT / "portfolio" / "RESULTS.md", REPO_ROOT / "portfolio" / "LEDGER.md"]
 
 # Declared record profiles per experiment. Naming the record set in one place
 # prevents the silent-missing-file failure mode: a profile's `required` files
@@ -310,7 +310,9 @@ def main() -> None:
     # manifest is cited — an uncited manifest is not a claim, it is just
     # data. So an uncited manifest cannot make verify-claims RED; print the
     # citation snippets as a reminder, not as a gate.
-    problems = verify_claims(results_dir, CLAIMS_FILE)
+    problems = list(
+        dict.fromkeys(p for f in CLAIMS_FILES for p in verify_claims(results_dir, f))
+    )
     print()
     print("verify-claims after install:", "GREEN" if not problems else "RED")
     for p in problems:

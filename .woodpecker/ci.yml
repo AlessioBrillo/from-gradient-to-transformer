@@ -1,5 +1,6 @@
-# CI gate: `make ci-check` minus the two commitlint targets (commit messages stay enforced by the
-# commit-msg hook and the conventional-commits workflow). Local: `ci-local`.
+# CI gate, the only one: GitHub Actions keeps just the Pages deploy. Local: `ci-local`.
+# The commitlint step needs git history, which `ci-local` does not copy (it ships the working
+# tree only); there it skips, and the commit-msg hook is what enforces the messages.
 #
 # `docs-audit` (added 2026-10-20) is the record ratchet: `verify-claims` checks that the
 # manifests exist and that every tag resolves, but not the prose around the tags, and on
@@ -31,3 +32,20 @@ steps:
     image: ghcr.io/xu-cheng/texlive-full:latest
     commands:
       - make paper-check
+
+  - name: markdown-lint
+    image: node:22
+    commands:
+      - npx --yes markdownlint-cli2@0.18 "**/*.md" "#.github" "#LICENSE" "#.venv" "#node_modules"
+
+  - name: commitlint
+    image: node:22
+    commands:
+      - |
+        if git rev-parse HEAD~1 >/dev/null 2>&1; then
+          npm install --no-save --prefix /tmp/cl @commitlint/cli@19 @commitlint/config-conventional@19
+          cp commitlint.config.mjs /tmp/cl/
+          /tmp/cl/node_modules/.bin/commitlint --from HEAD~1 --to HEAD --config /tmp/cl/commitlint.config.mjs
+        else
+          echo "no git history in this checkout: commitlint skipped (commit-msg hook enforces it)"
+        fi

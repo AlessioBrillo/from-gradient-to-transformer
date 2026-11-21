@@ -8,7 +8,7 @@ This card describes a *family* of small models, one per experiment, not a single
 released checkpoint. Every figure below is read from a tracked run manifest
 (`n_parameters` and `args`); the 2026-11-16 revision replaced an earlier card
 that described models this repository never trained (see the
-[Honesty Ledger](RESULTS.md#honesty-ledger) convention: the record follows the
+[Honesty Ledger](LEDGER.md) convention: the record follows the
 manifests, not the plan).
 
 ## Model Overview
@@ -81,7 +81,7 @@ single-seed run.
   (pretrained GPT-2 small, 124M, is used for inference and ablation only). Circuits
   in production-scale models may be qualitatively different.
 - **Task specificity**: every task is algorithmic and synthetic, and Rung 7 only tests
-  instruments on a pretrained model. Its causal stages did not reproduce, so nothing
+  instruments on a pretrained model. Its ablation stages did not reproduce, so nothing
   here is evidence about natural-language circuits.
 - **Method limitations**: activation patching can mislead through
   normalization-denominator effects, and SAE features can be illusory (see

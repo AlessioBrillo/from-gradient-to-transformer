@@ -18,6 +18,7 @@ See [[portfolio/RESULTS]] for the exact per-rung status and the Honesty Ledger, 
 ## Meta
 - [[01_roadmap]] — the complete path, phase by phase
 - [[02_skill-tree]] — competence tree (master checklist)
+- [[07_your-turn]] — nine exercises and proofs to solve yourself, so the skills they cover can turn `[x]`
 - [[03_progress-log]] — dated learning journal
 - [[04_conventions]] — naming rules, tags, links
 - [[05_glossary]] — term glossary (all linked)

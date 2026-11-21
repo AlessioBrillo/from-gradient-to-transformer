@@ -4,7 +4,7 @@
 	reproduce-multiseed verify-claims clean paper paper-check figures \
 	reproduce-grokking-probe reproduce-induction-standard reproduce-induction-1layer \
 	reproduce-exp3-geometry commitlint-head neuron-ablation \
-	reproduce-gpt2 gate-status vault-check reproduce-induction-batches reproduce-induction-fixed \
+	reproduce-gpt2 reproduce-gpt2-adr0035 explorer gate-status vault-check reproduce-induction-batches reproduce-induction-fixed \
 	reproduce-induction-fresh reproduce-notebook \
 	reproduce-retune reproduce-retune-control reproduce-retune-offset reproduce-retune-reweight \
 	remote-dry-grokking remote-run-grokking remote-run-induction remote-run-capstone remote-run-sweep remote-pin \
@@ -18,8 +18,8 @@
 # to cmd.exe, which cannot run `code=$$?; if [ ... ]` recipes and misruns the
 # `typecheck` target ("unrecognized arguments" passed to mypy). Git ships
 # sh.exe at C:\Program Files\Git\bin; resolved at runtime so the documented
-# prerequisite ("Git's bin/ on PATH", see the MP-21 incident in the progress
-# log) is all that is needed. Linux/macOS keep the platform default.
+# prerequisite ("Git's bin/ on PATH", documented in
+# the progress log) is all that is needed. Linux/macOS keep the platform default.
 ifneq ($(OS),Windows_NT)
 SHELL := /bin/sh
 else
@@ -60,7 +60,7 @@ lint-fix:
 
 # Non-blocking: strict mode currently reports 250 errors (2026-11-07 count;
 # the 2026-08-01 baseline was 154, +22 by 2026-08-18, +20 since through new
-# research code — see the progress log's MP-52 entry — not from a tool
+# research code — not from a tool
 # upgrade: verified identical under mypy 1.20.2, 2.1.0, and 2.3.0. After fixing a
 # python_version mismatch that previously made mypy crash on numpy's stubs
 # before checking a single line of src/ — see pyproject.toml
@@ -68,7 +68,7 @@ lint-fix:
 # Any], DataLoader -> DataLoader[Any]), not caught bugs, but 250 is real
 # work, not something to silently claim fixed. Tracked as follow-up. Unlike
 # `|| true`, this still fails on a genuine mypy crash (exit 2) — see
-# .github/workflows/python-ci.yml for why that distinction matters.
+# .woodpecker/ci.yml for why that distinction matters.
 # `python -m mypy`, not the `mypy` console script: on Windows the
 # console-script shims are blocked by Application Control (os error 4551),
 # so the local mirror of this gate could not run the very commands the
@@ -97,18 +97,18 @@ typecheck-strict:
 # them.
 # --follow-imports=silent: without it, mypy also fails this target on
 # errors in whatever these two files transitively import (caught in CI —
-# see .github/workflows/python-ci.yml's blocking step comment).
+# see .woodpecker/ci.yml's blocking step comment).
 typecheck-new:
 	uv run python -m mypy src/results.py src/experiments/runner.py src/experiments/induction_tasks.py src/experiments/induction_detection.py src/experiments/copy_circuit.py src/experiments/content_verdict.py src/models/gpt2.py src/models/attention_only_transformer.py src/models/one_layer_transformer.py src/training/optim.py src/training/loop.py src/evaluation/metrics.py src/evaluation/leakage.py src/experiments/exp7_gpt2_small.py --ignore-missing-imports --follow-imports=silent
 
-# --- CI mirror (local replica of .github/workflows/python-ci.yml) ---
+# --- CI mirror (local replica of .woodpecker/ci.yml) ---
 # commitlint-head is part of the mirror since 2026-08-08: the PR-only
 # Conventional Commits workflow never runs on a local push, and that gap let
 # the micro-phase-20 step-0 commit ship with a >200-char body line (caught by
 # GitHub's PR check, exactly like micro-18/19). The mirror lints the HEAD
 # commit against the same config:
 #   npx --yes commitlint --from HEAD~1 --to HEAD --config commitlint.config.mjs
-# commitlint-new closes the gap that let the mp-52 roadmap commit ship with a
+# commitlint-new closes the gap that let a roadmap commit ship with a
 # >200-char footer line (2026-08-18): commitlint-head lints the existing HEAD
 # (usually the reconcile merge), never the commit being created, so a
 # violation introduced by the new commit escapes it. The new-commit mirror
@@ -180,6 +180,16 @@ reproduce-notebook:
 reproduce-gpt2:
 	@echo "=== Rung 7: the instruments on GPT-2 small ==="
 	uv run --extra real python -m src.experiments.exp7_gpt2_small
+
+# Rung 7 (ADR-0035): stages 6 to 8, mean ablation and one-hop path patching. About 55 minutes
+# on CPU, resumable seed by seed from checkpoints/adr0035 (delete it to start over).
+reproduce-gpt2-adr0035:
+	@echo "=== Rung 7: ADR-0035 stages 6 to 8 on GPT-2 small ==="
+	uv run --extra real python -m src.experiments.exp7_gpt2_small --adr0035
+
+# The attention patterns behind the site's head explorer (portfolio/explorer/gpt2_heads.json).
+explorer:
+	uv run --extra real python -m src.experiments.exp7_gpt2_small --export-explorer
 
 reproduce-grokking:
 	@echo "=== Rung 2: Grokking modular addition (FLAGSHIP) ==="
@@ -297,7 +307,7 @@ content-verdict:
 
 # --- Retune A/B (Micro-Phase 89, Row 2) ---
 # Frozen 500-step arms, seed 0, warmup 100, probe manifests only.
-# Control: exact MP-88 shakedown config at short horizon.
+# Control: the frozen shakedown config at short horizon.
 # Offset (Arm A): modular ids in [2048, 2161), pad 2161 — disjoint from
 #   induction [0, 2048); tests the shared-embedding interference hypothesis.
 # Reweight (Arm B): modular 5.0 / induction 0.5 (10x relative boost) —
@@ -433,6 +443,7 @@ paper-check:
 		exit 1; \
 	fi
 	@test -f portfolio/paper/main.pdf || { echo "main.pdf not produced — paper-check failed." >&2; exit 1; }
+	@grep -q '\\cite' portfolio/paper/main.tex || { echo "main.tex has no cite commands: the bibliography is empty." >&2; exit 1; }
 	@echo "paper-check: main.pdf compiled."
 
 
