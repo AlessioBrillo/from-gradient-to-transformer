@@ -4,7 +4,7 @@
 	reproduce-multiseed verify-claims clean paper paper-check figures \
 	reproduce-grokking-probe reproduce-induction-standard reproduce-induction-1layer \
 	reproduce-exp3-geometry commitlint-head neuron-ablation \
-	reproduce-gpt2 gate-status vault-check reproduce-induction-batches reproduce-induction-fixed \
+	reproduce-gpt2 reproduce-gpt2-adr0035 explorer gate-status vault-check reproduce-induction-batches reproduce-induction-fixed \
 	reproduce-induction-fresh reproduce-notebook \
 	reproduce-retune reproduce-retune-control reproduce-retune-offset reproduce-retune-reweight \
 	remote-dry-grokking remote-run-grokking remote-run-induction remote-run-capstone remote-run-sweep remote-pin \
@@ -180,6 +180,16 @@ reproduce-notebook:
 reproduce-gpt2:
 	@echo "=== Rung 7: the instruments on GPT-2 small ==="
 	uv run --extra real python -m src.experiments.exp7_gpt2_small
+
+# Rung 7 (ADR-0035): stages 6 to 8, mean ablation and one-hop path patching. About 55 minutes
+# on CPU, resumable seed by seed from checkpoints/adr0035 (delete it to start over).
+reproduce-gpt2-adr0035:
+	@echo "=== Rung 7: ADR-0035 stages 6 to 8 on GPT-2 small ==="
+	uv run --extra real python -m src.experiments.exp7_gpt2_small --adr0035
+
+# The attention patterns behind the site's head explorer (portfolio/explorer/gpt2_heads.json).
+explorer:
+	uv run --extra real python -m src.experiments.exp7_gpt2_small --export-explorer
 
 reproduce-grokking:
 	@echo "=== Rung 2: Grokking modular addition (FLAGSHIP) ==="

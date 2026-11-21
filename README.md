@@ -71,7 +71,7 @@ The mechanism does not depend on these experiments: see "Reusing the method" in
 
 ## Essays
 
-Four short pieces on how results here went wrong and how each was caught: [portfolio/essay](portfolio/essay/README.md).
+Five short pieces on how results here went wrong and how each was caught: [portfolio/essay](portfolio/essay/README.md).
 
 ## Quickstart
 
