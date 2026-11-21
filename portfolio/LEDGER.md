@@ -31,6 +31,23 @@ entries stay here — the point of this section is to make it easy to
 see the trend (are correctness problems getting caught faster, or accumulating?),
 not to keep only the latest one.
 
+## 2026-11-21 — ADR-0035 run record: two stages FAIL, one PASSES, and two runs were thrown away
+
+<!-- manifest: results/gpt2_small_stage6.json -->
+<!-- manifest: results/gpt2_small_stage7.json -->
+<!-- manifest: results/gpt2_small_stage8.json -->
+
+This is the run record the pre-registration promised ([ADR-0035](../docs/adr/0035-gpt2-mean-ablation-and-direct-path-patching.md)), not a new audit, so the count of audits above does not change. It lists every stage with its outcome, FAILs included, and what was discarded.
+
+- **Stage 6 (mean ablation of L5H5 and L6H9): FAIL.** The in-context gain falls by 0.0078, the criterion is 10% and above the 95th percentile of 20 random pairs (0.0055). The fall is small whichever way the heads are removed, which keeps the redundancy reading of stage 3.
+- **Stage 7 (mean ablation of L9H6, L9H9, L10H0): FAIL.** The logit difference falls by 0.1279, the criterion is 30% and above the 95th percentile of random triples (0.2206). Mean ablation, the method the paper used, does not change the stage 5 conclusion.
+- **Stage 8 (one-hop path patching): PASS.** L9H9, L9H6 and L10H0 are ranked first, second and third by direct effect on every seed, and the two heads the paper reports as pushing against the correct name have negative effects. The criterion was met on every seed, not on average.
+
+**What was thrown away, and why.** The first attempt was killed twice for memory before it wrote a manifest; its partial numbers were never recorded and are not cited. Two more were destroyed with their containers by an unrelated cleanup on the same machine. A fourth finished but wrote its manifests from a container without a git checkout (`git_sha` unknown, `git_dirty` true), which the repository's own rule treats as unusable evidence; they were discarded, not edited. The three manifests cited here come from a fifth run in a clean clone of commit 568747b and, because the computation is deterministic, agree with the discarded ones to every digit shown. The tool change that made this possible is small: `run_adr0035` now saves one file per finished seed and resumes from them.
+
+**What this does and does not show.** The direct path localises the name movers, and the ablations do not. That is consistent with other heads taking over when the name movers are removed, but this run did not test for it, so it remains a reading. No claim about the full indirect-object circuit is made.
+
+
 ## 2026-11-17 — The record described models it never trained, and a rule nobody enforced
 
 The thirteenth audit, and the first to audit the repository's *own documentation of

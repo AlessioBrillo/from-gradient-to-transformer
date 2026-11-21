@@ -64,7 +64,7 @@ Stated plainly, because the rest of the repository is:
 - **Scale.** The models trained here have at most about 4.3 million parameters
   and every training task is synthetic. The only real language model is
   pretrained GPT-2 small (124M parameters), used for inference and ablation, not
-  trained here, and its causal stages did not reproduce.
+  trained here, and its ablation stages did not reproduce (one-hop path patching did).
 - **Teamwork.** This is solo work. The review discipline is real (pull requests,
   a gate, written audits), but the reviewer was me.
 - **Open results.** Two rungs are not clean wins: the content-based copying

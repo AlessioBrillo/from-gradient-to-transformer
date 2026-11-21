@@ -95,6 +95,12 @@ REQUIRED_MANIFESTS: dict[str, list[str]] = {
 # (file, the sentence, what replaced it, the date of the measurement)
 STALE_CLAIMS: list[tuple[str, str, str, str]] = [
     (
+        "docs/for-researchers.md",
+        "the mean-ablation and path-patching follow-up has not been run",
+        "ADR-0035 ran on 2026-11-21 (results/gpt2_small_stage6.json to stage8.json)",
+        "2026-11-21",
+    ),
+    (
         "README.md",
         "available on its own, for any research repository",
         "the method is reused by copying src/results.py and scripts/docs_audit.py "

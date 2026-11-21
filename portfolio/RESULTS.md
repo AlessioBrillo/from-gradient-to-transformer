@@ -27,7 +27,7 @@ per-rung detail follows the ledger.
 | 5 — SAE Dashboard | ✅ Synthetic reproduced; ✅ **the real-activation gap closed** (2026-10-20, re-measured 2026-11-17) | On the confirmed-head checkpoint the SAE is now *sparse*: L0 19.0/512 (3.7%), FVE 99.998%, MSE 0.0005 — against 53% L0 for the old undertrained model. What remains is a dictionary 8× too large (66% dead features) |
 | 6 — ACDC | ❌ Deleted | Was fabricated data; removed 2026-08-01 rather than fixed |
 | 1b — Content-based induction (issue #200) | [x] **Complete, verdict NEGATIVE (run 2026-11-09, re-run 2026-11-17)** | The task that removes the positional shortcut (repeats at varying distances; the best fixed offset explains 15.5–16.5% of the copy queries) is frozen in [ADR-0033](../docs/adr/0033-content-based-induction-task.md) and the [pre-registration](../07_capstone/notes/variable-distance-induction-preregistration.md). The 2026-11-09 run (PARTIAL, kept as `results/induction_content_pre_seedfix.json`) was repeated on GPU after the seeding fix (tag `v2.0.0-rc1`, `results/induction_content.json`; cascade on CPU, `results/exp4_content.json`). Both verdicts are now **NEGATIVE on all three seeds**: no head passes the frozen per-head rule. The behaviour is content-based on 3/3 seeds; the circuit is one head on one seed and a distributed group on two. Verdict artifact: `results/content_verdict.json` (derived, `make content-verdict`). |
-| 7 — GPT-2 small (pre-registered, ADR-0034) | ⚠️ **Instruments validated; causal stages not reproduced** (2026-11-17) | The hand-written implementation equals the Hugging Face reference; the shared detector ranks the two induction heads of the literature first and second of 144 heads; the model solves the indirect-object task. Zero-ablating those two heads, or the three name movers, changed the behaviour no more than random heads do |
+| 7 — GPT-2 small (pre-registered, ADR-0034) | ⚠️ **Instruments validated; ablation stages not reproduced, path patching is** (2026-11-21) | The hand-written implementation equals the Hugging Face reference; the shared detector ranks the two induction heads of the literature first and second of 144 heads; the model solves the indirect-object task. Ablating those two heads, or the three name movers, changed the behaviour no more than random heads do (zero and mean ablation); one-hop path patching ranks the three name movers first to third by direct effect (ADR-0035) |
 
 The manifests behind that table: Rung 1
 <!-- manifest: results/induction_standard.json -->, Rung 2
@@ -703,6 +703,9 @@ from the evidence is a claim, not a figure.
 <!-- manifest: results/gpt2_small_stage3.json -->
 <!-- manifest: results/gpt2_small_stage4.json -->
 <!-- manifest: results/gpt2_small_stage5.json -->
+<!-- manifest: results/gpt2_small_stage6.json -->
+<!-- manifest: results/gpt2_small_stage7.json -->
+<!-- manifest: results/gpt2_small_stage8.json -->
 
 Every other rung here studies a model of at most 4.3 million parameters trained on a
 synthetic task. This one runs the same hand-written instruments (the hook cache, the
@@ -757,8 +760,28 @@ hook cache, detector and ablation machinery work on a pretrained 124-million-par
 model and agree with the literature on *which heads attend like induction heads*. It
 does **not** reproduce the causal claims about the indirect-object circuit, and the
 repository does not claim that circuit. A follow-up with mean ablation and with path
-patching, which is how the paper localised the name movers, would be a new
-pre-registered ADR superseding none of this one; it has not been run.
+patching, which is how the paper localised the name movers, was then pre-registered as
+[ADR-0035](../docs/adr/0035-gpt2-mean-ablation-and-direct-path-patching.md) and run on
+2026-11-21. Its result follows.
+
+**Follow-up with mean ablation and one-hop path patching (ADR-0035, run 2026-11-21).** Same model and seeds; the
+reference means come from three disjoint seeds (100, 101, 102). Thresholds were frozen before the run.
+
+| Stage | Frozen criterion | Measured (mean over 3 seeds) | Outcome |
+|---|---|---|---|
+| 6. Induction heads are causally used (mean ablation of L5H5 and L6H9) | in-context gain falls by at least 10% and more than the 95th percentile of 20 random pairs | falls by 0.0078 (std 0.0003); random-pair 95th percentile 0.0055 | **FAIL** |
+| 7. Name movers matter for the task (mean ablation of L9H6, L9H9, L10H0) | logit difference falls by at least 30% and more than the 95th percentile of 20 random triples | falls by 0.1279 (std 0.0134); random-triple 95th percentile 0.2206 | **FAIL** |
+| 8. Direct effect of each head on the answer (one-hop path patching) | L9H6, L9H9 and L10H0 each among the 10 largest effects, on every seed | L9H9 rank 1 (effect 0.6819), L9H6 rank 2 (0.2337), L10H0 rank 3 (0.1821), on every seed | **PASS** |
+
+**What this adds.** Mean ablation, the method the paper used, does not rescue stages 3 and 5: removing 5.5 and 6.9
+changes the in-context gain by under 1%, and removing the three name movers lowers the logit difference by about 13%,
+less than random triples reach at their 95th percentile. What does work is the direct path: path patching ranks 9.9, 9.6
+and 10.0 as the three heads with the largest direct effect on the answer, in that order, on all three seeds, and the
+two heads the paper reports as pushing against the correct name, 10.7 and 11.10, have negative effects (-0.3949 and
+-0.1731), which is the sign check the ADR asked for. A head can have a large direct effect and still be absent from
+an ablation result if other heads take over its work; backup heads of this kind are reported for this circuit, but this
+run did not test for them, so that is a reading the data allow and not a result. Two stages failing and one passing
+do not amount to "the circuit", and the repository does not claim it.
 
 **Two limits of the instrument, found in review (2026-11-19).** The stage-3 "top-10" set (the manifest key
 `icl_gain_drop_top10_control`) contains the two ablated heads, because stage 2 requires them to be in the top ten; it
@@ -769,7 +792,9 @@ numbers above are as recorded, and the code was tightened afterwards (a context 
 model, a rank that counts ties against the target head, the device read from the model) without changing a result.
 
 **Reproduce**: `uv run --extra real python -m src.experiments.exp7_gpt2_small` (about 15
-minutes on CPU after a one-time weight download).
+minutes on CPU after a one-time weight download) for stages 1 to 5, and the same command with
+`--adr0035` for stages 6 to 8 (about 55 minutes on CPU, resumable seed by seed). Stages 6 to 8 were
+recorded from a clean clone of commit 568747b.
 
 ## Open Question — Solution-Regime Phase Diagram (protocol ablation, unblocked 2026-10-14; not scheduled)
 

@@ -1,0 +1,85 @@
+{
+  "experiment": "gpt2_small_stage7",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "args": {
+    "model": "openai-community/gpt2",
+    "adr": "0035",
+    "stage": 7
+  },
+  "per_seed_metrics": [
+    {
+      "mean_logit_diff": 2.816621780395508,
+      "name_mover_drop": 0.13753520468659958,
+      "control_drop_mean": 0.030470710107054755,
+      "control_drop_p95": 0.20457518295602223,
+      "stage7_pass": 0.0
+    },
+    {
+      "mean_logit_diff": 2.8495757579803467,
+      "name_mover_drop": 0.10888231387801878,
+      "control_drop_mean": 0.027648360895974868,
+      "control_drop_p95": 0.2238185123527996,
+      "stage7_pass": 0.0
+    },
+    {
+      "mean_logit_diff": 2.594301223754883,
+      "name_mover_drop": 0.13718716019647675,
+      "control_drop_mean": 0.031951470267122785,
+      "control_drop_p95": 0.23337034641487298,
+      "stage7_pass": 0.0
+    }
+  ],
+  "aggregate": {
+    "stage7_pass": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 3.0
+    },
+    "control_drop_mean": {
+      "mean": 0.030023513756717468,
+      "std": 0.0017849698404233609,
+      "min": 0.027648360895974868,
+      "max": 0.031951470267122785,
+      "n": 3.0
+    },
+    "name_mover_drop": {
+      "mean": 0.12786822625369837,
+      "std": 0.013425819287092907,
+      "min": 0.10888231387801878,
+      "max": 0.13753520468659958,
+      "n": 3.0
+    },
+    "control_drop_p95": {
+      "mean": 0.22058801390789826,
+      "std": 0.011975459623952247,
+      "min": 0.20457518295602223,
+      "max": 0.23337034641487298,
+      "n": 3.0
+    },
+    "mean_logit_diff": {
+      "mean": 2.7534995873769126,
+      "std": 0.11337130852384858,
+      "min": 2.594301223754883,
+      "max": 2.8495757579803467,
+      "n": 3.0
+    }
+  },
+  "wall_clock_seconds": 209.86954002499988,
+  "git_sha": "568747b",
+  "git_dirty": false,
+  "device": "cpu",
+  "torch_version": "2.12.1+cu130",
+  "numpy_version": "2.5.0",
+  "python_version": "3.12.12",
+  "n_parameters": 124439808,
+  "created_at": "2026-11-21T01:31:44+00:00",
+  "notes": "weights revision 607a30d783dfa663caf39e06633721c8d4cfcd7e. mean over reference seeds (100, 101, 102); setup 45s not counted below. PASS needs every seed to pass.",
+  "neuron_ablation": null,
+  "source_provenance": null
+}

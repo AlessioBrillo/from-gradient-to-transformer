@@ -1,0 +1,105 @@
+{
+  "experiment": "gpt2_small_stage6",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "args": {
+    "model": "openai-community/gpt2",
+    "adr": "0035",
+    "stage": 6
+  },
+  "per_seed_metrics": [
+    {
+      "icl_gain": 12.862025260925293,
+      "icl_gain_drop": 0.008134020711048743,
+      "control_pairs_drop_mean": 0.0010207083053213988,
+      "control_pairs_drop_p95": 0.005646445998242283,
+      "control_top10_without_pair_drop": 0.06754094796761073,
+      "control_top10_drop": 0.5801750317402683,
+      "stage6_pass": 0.0
+    },
+    {
+      "icl_gain": 12.830525398254395,
+      "icl_gain_drop": 0.007802341958740074,
+      "control_pairs_drop_mean": 0.0010058993824858605,
+      "control_pairs_drop_p95": 0.005383668724799371,
+      "control_top10_without_pair_drop": 0.07006833246356545,
+      "control_top10_drop": 0.5838140965725546,
+      "stage6_pass": 0.0
+    },
+    {
+      "icl_gain": 12.888620376586914,
+      "icl_gain_drop": 0.0073849966902701045,
+      "control_pairs_drop_mean": 0.0010749962744265541,
+      "control_pairs_drop_p95": 0.005551437405408542,
+      "control_top10_without_pair_drop": 0.06987947492426394,
+      "control_top10_drop": 0.5723417571003067,
+      "stage6_pass": 0.0
+    }
+  ],
+  "aggregate": {
+    "control_pairs_drop_p95": {
+      "mean": 0.005527184042816733,
+      "std": 0.0001086405174793766,
+      "min": 0.005383668724799371,
+      "max": 0.005646445998242283,
+      "n": 3.0
+    },
+    "icl_gain": {
+      "mean": 12.860390345255533,
+      "std": 0.023745334121315936,
+      "min": 12.830525398254395,
+      "max": 12.888620376586914,
+      "n": 3.0
+    },
+    "control_top10_drop": {
+      "mean": 0.5787769618043765,
+      "std": 0.004786759021917139,
+      "min": 0.5723417571003067,
+      "max": 0.5838140965725546,
+      "n": 3.0
+    },
+    "control_top10_without_pair_drop": {
+      "mean": 0.06916291845181337,
+      "std": 0.0011494949561310737,
+      "min": 0.06754094796761073,
+      "max": 0.07006833246356545,
+      "n": 3.0
+    },
+    "icl_gain_drop": {
+      "mean": 0.007773786453352974,
+      "std": 0.0003064537035092295,
+      "min": 0.0073849966902701045,
+      "max": 0.008134020711048743,
+      "n": 3.0
+    },
+    "control_pairs_drop_mean": {
+      "mean": 0.001033867987411271,
+      "std": 2.970384984583485e-05,
+      "min": 0.0010058993824858605,
+      "max": 0.0010749962744265541,
+      "n": 3.0
+    },
+    "stage6_pass": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "n": 3.0
+    }
+  },
+  "wall_clock_seconds": 3264.9591961139995,
+  "git_sha": "568747b",
+  "git_dirty": false,
+  "device": "cpu",
+  "torch_version": "2.12.1+cu130",
+  "numpy_version": "2.5.0",
+  "python_version": "3.12.12",
+  "n_parameters": 124439808,
+  "created_at": "2026-11-21T01:31:44+00:00",
+  "notes": "weights revision 607a30d783dfa663caf39e06633721c8d4cfcd7e. mean over reference seeds (100, 101, 102); setup 45s not counted below. Judged on the seed average.",
+  "neuron_ablation": null,
+  "source_provenance": null
+}

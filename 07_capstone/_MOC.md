@@ -24,7 +24,7 @@ Index and links for the capstone phase. Detailed plan: [[07_capstone/README]].
 | 4 | Circuit verification (patching) | ✅ The cascade ran end to end on Rung 1's own checkpoint (ablation 0.5895, path patching 0.7052) — on a prefix-copying head | `src/experiments/exp4_circuit_patching.py` |
 | 5 | SAE feature dashboard | ⚠️ Real activations sparse (L0 3.7%) but the dictionary is ~8× too wide, 66% dead | `src/experiments/exp5_sae_dashboard.py` |
 | 6 | Automated vs hand-found circuit | ❌ Descoped | — |
-| 7 | The instruments on GPT-2 small | ⚠️ Pre-registered (ADR-0034): parity, induction-head ranking and the indirect-object task pass; the causal stages do not reproduce under zero ablation | `src/experiments/exp7_gpt2_small.py` |
+| 7 | The instruments on GPT-2 small | ⚠️ Pre-registered (ADR-0034): parity, induction-head ranking and the indirect-object task pass; the ablation stages do not reproduce under zero or mean ablation (ADR-0035), while one-hop path patching ranks the name movers first to third | `src/experiments/exp7_gpt2_small.py` |
 
 See [[portfolio/RESULTS]] for exact per-rung numbers and the 2026-08-02 Micro-Phase 8
 Honesty Ledger entry — this table is a status summary, not the source of truth.

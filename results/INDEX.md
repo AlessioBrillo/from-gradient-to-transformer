@@ -36,6 +36,9 @@ document that cites it.
 | `results/gpt2_small_stage3.json` | RESULTS.md | active | Rung 7 stage 3: causal use of the induction heads (FAIL, reported). ADR-0034 |
 | `results/gpt2_small_stage4.json` | RESULTS.md | active | Rung 7 stage 4: the indirect-object task. ADR-0034 |
 | `results/gpt2_small_stage5.json` | RESULTS.md | active | Rung 7 stage 5: name movers against a random-triple control (FAIL, reported). ADR-0034 |
+| `results/gpt2_small_stage6.json` | RESULTS.md | active | Rung 7 stage 6: induction heads, mean ablation (FAIL, reported). ADR-0035 |
+| `results/gpt2_small_stage7.json` | RESULTS.md | active | Rung 7 stage 7: name movers, mean ablation (FAIL, reported). ADR-0035 |
+| `results/gpt2_small_stage8.json` | RESULTS.md | active | Rung 7 stage 8: direct effect of each head by one-hop path patching (PASS). ADR-0035 |
 | `results/grokking_nanda_p113.json` | paper, RESULTS.md | active | Rung 2 flagship |
 | `results/grokking_p113_gpu_reanalysis.json` | RESULTS.md | active | GPU re-analysis |
 | `results/grokking_p59_repo_energy.json` | paper | active | Positive control P=59, 2/3 seeds sparse (MIXED) |
