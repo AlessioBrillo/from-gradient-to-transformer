@@ -47,7 +47,6 @@ This is the run record the pre-registration promised ([ADR-0035](../docs/adr/003
 
 **What this does and does not show.** The direct path localises the name movers, and the ablations do not. That is consistent with other heads taking over when the name movers are removed, but this run did not test for it, so it remains a reading. No claim about the full indirect-object circuit is made.
 
-
 ## 2026-11-17 — The record described models it never trained, and a rule nobody enforced
 
 The thirteenth audit, and the first to audit the repository's *own documentation of

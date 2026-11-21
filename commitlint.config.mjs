@@ -13,6 +13,8 @@ export default {
   // will never leave history, so they stay; the process fixes are the local
   // `commitlint-head` + `commitlint-new` mirrors in ci-check.
   ignores: [
+    // 2026-11-21: this pushed commit has body lines over 200 characters; exact-message scope, as above.
+    (message) => message.startsWith('feat(research): record the ADR-0035 run on GPT-2 small: stages 6 and 7 fail, stage 8 passes'),
     (message) => message.startsWith('docs(meta): add micro-phase-18 verdict-window roadmap, wire home, log pre-flight'),
     (message) => message.startsWith('docs(meta): add micro-phase-19 roadmap, wire home, log pre-flight'),
     (message) => message.startsWith('ci(ci): pardon superseded micro-phase-19 step-0 body line'),
