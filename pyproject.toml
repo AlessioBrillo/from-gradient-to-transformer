@@ -66,7 +66,7 @@ tracking = [
 # and checked against, and the GPT-2 tokenizer. Nothing else in the repository
 # imports it, and the unit tests skip the parity check when it is absent.
 real = [
-    "transformers>=4.40,<5",
+    "transformers>=4.40,<6",
 ]
 # The Kaggle CLI, used only by scripts/kaggle_run.py through a subprocess to
 # push and fetch remote GPU runs. No module in src/ imports it.
